@@ -2,7 +2,8 @@
 
 ## Mission
 
-Gerer toute la partie temps reel : rooms, chat, ready system, lancement de partie, synchronisation des joueurs et deconnexions.
+Gerer toute la partie temps reel : rooms, chat, ready system, lancement de
+partie, synchronisation des joueurs, lien avec le gameplay et deconnexions.
 
 ## Responsabilites principales
 
@@ -13,6 +14,7 @@ Gerer toute la partie temps reel : rooms, chat, ready system, lancement de parti
 - gerer le ready check ;
 - transmettre les inputs joueurs ;
 - diffuser l'etat de jeu ;
+- definir les contrats avec le gameplay ;
 - gerer les deconnexions et une reconnexion simple.
 
 ## Events possibles
@@ -56,9 +58,23 @@ game:end
 ### Synchronisation jeu
 
 - recevoir les inputs ;
-- transmettre ou appliquer les updates ;
+- transmettre les inputs au gameplay ;
+- recevoir ou relayer l'etat de jeu ;
 - diffuser l'etat de jeu ;
 - gerer la fin de partie.
+
+### Contrats gameplay
+
+Formats a definir avec le role gameplay :
+
+```txt
+player:input
+game:state
+game:end
+```
+
+Le role WebSocket doit garder ces formats simples, documentes et faciles a
+tester avec plusieurs clients.
 
 ## Definition of done
 
@@ -67,6 +83,8 @@ game:end
 - le lobby reste coherent apres join / leave ;
 - le chat fonctionne en temps reel ;
 - une partie peut etre lancee depuis la room.
+- les formats `player:input`, `game:state` et `game:end` sont compris par les
+  roles concernes.
 
 ## Points a surveiller
 
@@ -74,4 +92,3 @@ game:end
 - definir les payloads des events avec le frontend et le jeu ;
 - eviter que le client decide seul des resultats importants ;
 - gerer les deconnexions sans casser la room.
-

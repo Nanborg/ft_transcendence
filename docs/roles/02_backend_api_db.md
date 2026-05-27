@@ -2,7 +2,8 @@
 
 ## Mission
 
-Construire la base serveur du projet : API REST, structure Fastify, acces DB, schema Prisma et routes utilisees par le frontend.
+Construire la base serveur du projet : API REST, structure Fastify, acces DB,
+schema Prisma et routes utilisees par le frontend.
 
 ## Responsabilites principales
 
@@ -13,6 +14,7 @@ Construire la base serveur du projet : API REST, structure Fastify, acces DB, sc
 - creer les routes REST ;
 - gerer les erreurs API ;
 - proteger les routes necessaires ;
+- recevoir les resultats de partie valides ;
 - fournir une documentation simple des endpoints.
 
 ## Taches principales
@@ -55,6 +57,10 @@ GET    /leaderboard
 POST   /scores
 ```
 
+Les routes de score ne doivent pas accepter aveuglement un score invente par le
+client. Les resultats doivent venir du flux de fin de partie defini avec le
+gameplay et le temps reel.
+
 ## Definition of done
 
 - les routes repondent avec un format stable ;
@@ -62,6 +68,7 @@ POST   /scores
 - les donnees importantes sont persistantes ;
 - le frontend peut consommer les endpoints ;
 - le schema DB est documente.
+- les donnees de partie sont compatibles avec l'historique et le leaderboard.
 
 ## Points a surveiller
 
@@ -69,4 +76,3 @@ POST   /scores
 - garder les reponses API coherentes ;
 - ne pas melanger logique HTTP, DB et logique de jeu sans separation ;
 - prevoir des donnees de test pour la demo.
-

@@ -2,7 +2,8 @@
 
 ## Mission
 
-Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores, historique de parties et leaderboard.
+Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores,
+historique de parties et leaderboard.
 
 ## Responsabilites principales
 
@@ -14,6 +15,7 @@ Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores,
 - sauvegarder les resultats de partie ;
 - afficher ou fournir l'historique ;
 - fournir les donnees du leaderboard.
+- verifier que les resultats sauvegardes viennent du flux de fin de partie.
 
 ## Fonctionnalites utilisateur
 
@@ -71,6 +73,9 @@ Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores,
 - fournir l'historique personnel ;
 - fournir le leaderboard global.
 
+Les scores doivent venir d'un resultat de partie coherent, pas d'une valeur
+libre envoyee par le client.
+
 ## Definition of done
 
 - un utilisateur peut se connecter ;
@@ -78,6 +83,7 @@ Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores,
 - les routes protegees refusent les utilisateurs non connectes ;
 - une partie terminee peut etre sauvegardee ;
 - le leaderboard retourne des donnees lisibles.
+- les stats affichees correspondent aux donnees sauvegardees.
 
 ## Points a surveiller
 
@@ -85,4 +91,3 @@ Gerer l'identite des joueurs et les resultats : OAuth 42, profils, amis, scores,
 - prevoir un fallback dev local si necessaire ;
 - ne pas laisser le client inventer les scores ;
 - garder les donnees compatibles avec le frontend et la demo.
-

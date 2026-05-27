@@ -15,7 +15,7 @@ La personne ne fait pas seulement de la gestion : elle aide aussi sur le fronten
 - tester les branches des autres ;
 - reperer les bugs, les documenter et parfois les corriger ;
 - maintenir une checklist de demo ;
-- preparer le README, la presentation, les modules et le calcul des points ;
+- preparer le README, les documents utiles, les modules et le calcul des points ;
 - verifier que le projet est presentable en evaluation.
 
 ## Pages frontend a prendre en charge
@@ -64,7 +64,7 @@ La personne ne fait pas seulement de la gestion : elle aide aussi sur le fronten
 ### Phase 4 - Integration jeu
 
 - preparer la page Game ;
-- integrer la zone Phaser dans l'application React ;
+- integrer l'affichage du jeu dans l'application React ;
 - afficher les informations utiles autour du jeu si necessaire ;
 - tester que la navigation lobby -> game fonctionne ;
 - documenter les bugs d'affichage ou d'integration.
@@ -128,4 +128,3 @@ Une tache de ce role est terminee quand :
 - tester regulierement avec plusieurs navigateurs ;
 - garder une demo simple et fiable ;
 - ne pas promettre de module qui n'est pas demonstrable.
-
