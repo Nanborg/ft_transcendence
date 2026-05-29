@@ -1,0 +1,65 @@
+name: ft_transcendence
+
+services:
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: ft_frontend
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+    networks:
+      - app_net
+
+  backend:
+    image: node:20-alpine
+    container_name: ft_backend
+    working_dir: /app
+    command: ["sh", "-c", "echo 'backend skeleton ready' && sleep infinity"]
+    environment:
+      BACKEND_PORT: ${BACKEND_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://transcendence:transcendence_dev_only@database:5432/transcendence}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  database:
+    image: postgres:16-alpine
+    container_name: ft_database
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-transcendence}
+      POSTGRES_USER: ${POSTGRES_USER:-transcendence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transcendence_dev_only}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-transcendence} -d ${POSTGRES_DB:-transcendence}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_net
+
+  gameplay-cpp:
+    image: gcc:14
+    container_name: ft_gameplay_cpp
+    working_dir: /app
+    command: ["bash", "-lc", "echo 'gameplay-cpp skeleton ready' && sleep infinity"]
+    ports:
+      - "${GAMEPLAY_PORT:-7000}:7000"
+    networks:
+      - app_net
+
+volumes:
+  postgres_data:
+
+networks:
+  app_net:
+    driver: bridge

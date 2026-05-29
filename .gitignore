@@ -1,0 +1,16 @@
+# Environment files
+.env
+.env.*
+!.env.example
+
+# JS dependencies and build output
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
