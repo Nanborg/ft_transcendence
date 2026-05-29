@@ -3,33 +3,23 @@
 ## 1. Vision commune du projet
 
 Le projet est une application web complete autour d'un jeu cooperatif 2D qui
-melange survie, exploration, progression, ressources et defense de zone, dans l'esprit RPG.
+melange combat, exploration, progression et ressources, dans l'esprit RPG.
 
-L'objectif n'est pas seulement de faire un mini-jeu, mais de construire une
-experience complete :
+L'objectif n'est pas seulement de faire un mini-jeu, mais une experience
+complete : connexion, profil, amis, lobby, rooms, chat, ready system, lancement
+de partie, jeu coop 1 a 4 joueurs, scores, historique, leaderboard et
+progression gameplay.
 
-- connexion utilisateur ;
-- profil ;
-- amis ;
-- lobby ;
-- rooms ;
-- chat ;
-- ready system ;
-- lancement de partie ;
-- jeu coop 1 a 4 joueurs ;
-- sauvegarde des scores ;
-- historique des parties ;
-- leaderboard ;
-- progression gameplay.
-
-La premiere boucle jouable doit rester simple et defendable : plusieurs joueurs
+La premiere boucle jouable doit rester simple et testable : plusieurs joueurs
 apparaissent sur une map 2D, se deplacent, affrontent des menaces, gagnent du
 score, progressent pendant la partie, puis les resultats sont sauvegardes dans
-l'application.
+l'application. Cette base sert a obtenir vite un vrai jeu fonctionnel avant
+d'empiler trop de systemes.
 
-Les idees d'exploration, de ressources, de defense, d'automatisation legere et
-de mini-MMO font partie de la direction du projet. Elles sont organisees en
-etapes progressives pour que chaque ajout repose sur une version deja jouable.
+Les idees d'exploration, de ressources, de construction, de defense,
+d'automatisation legere et de mini-MMO restent des pistes de gameplay. Elles
+doivent se construire autour d'une boucle jouable claire, pas remplacer le jeu
+fonctionnel.
 
 ## 2. Concept final du gameplay
 
@@ -37,22 +27,21 @@ Le gameplay vise une version hybride qui rassemble les idees principales de
 l'equipe autour d'une meme boucle jouable :
 
 1. controle d'un personnage sur une map 2D ;
-2. dangers, ennemis et survie ;
+2. dangers, ennemis et combat ;
 3. progression courte pendant la partie ;
 4. exploration et ressources simples ;
-5. defense de zone ;
-6. automatisation legere, boss, biomes et polish.
+5. objectifs de zone ;
+6. automatisation legere, boss, biomes etc possibles.
 
 Le concept final possible :
 
-> 1 a 4 joueurs explorent une map 2D, affrontent des vagues d'ennemis,
-> recuperent XP et ressources, ameliorent leur personnage, construisent quelques
-> defenses simples, puis protegent une zone centrale le plus longtemps possible.
+> 1 a 4 joueurs explorent une map 2D, affrontent des ennemis, recuperent XP et
+> ressources, ameliorent leur personnage, puis terminent un objectif clair.
 
 Le point de depart doit deja contenir les pieces utilisees par tout le concept :
-deplacement, map, interactions, ennemis, score et multijoueur. Ces elements
-servent autant aux combats qu'a l'exploration, a la collecte, aux defenses et
-aux interactions de groupe.
+deplacement, map, interactions, ennemis, score, conditions de fin et
+multijoueur. Ces elements servent autant aux combats qu'a l'exploration, a la
+collecte, aux objectifs de zone et aux interactions de groupe.
 
 ## 3. Gameplay par couches
 
@@ -61,12 +50,10 @@ aux interactions de groupe.
 Objectif : avoir quelque chose de visible et controlable.
 
 - map 2D simple ;
-- un joueur affiche ;
+- joueur affiche ;
 - deplacement clavier ;
 - camera ou vue centree ;
 - limites de map.
-
-Resultat attendu : on lance le jeu et on peut bouger.
 
 ### Couche 2 - Monde jouable
 
@@ -77,40 +64,37 @@ Objectif : donner une vraie sensation d'espace.
 - zones simples ;
 - HUD minimal ;
 - vie du joueur ;
-- timer.
-
-Resultat attendu : le joueur se deplace dans un espace coherent.
+- indicateur de partie.
 
 ### Couche 3 - Premiers dangers
 
 Objectif : rendre la map vivante et creer une premiere pression de jeu.
 
 - ennemis qui apparaissent ;
-- ennemis qui suivent le joueur ;
+- ennemis qui rodent, poursuivent ou attaquent selon leur type ;
 - contact = degats ;
 - HP joueur ;
 - mort ;
-- score base sur le temps de survie ou les ennemis elimines.
+- score calcule selon les regles de la partie.
 
-Resultat attendu : le jeu devient jouable en solo et permet deja de tester
-collisions, degats, mort et score.
-
-### Couche 4 - Combat automatique
+### Couche 4 - Combat simple
 
 Objectif : avoir la boucle principale.
 
-- arme automatique ;
+- attaque simple ;
+- arme automatique ou semi-automatique a decider ;
 - projectiles ;
 - cooldown ;
 - degats aux ennemis ;
 - ennemis qui meurent ;
-- score par kill.
-
-Boucle obtenue :
+- score lie aux actions importantes : ennemis vaincus, objectif, ressources, etc.
 
 ```txt
-bouger -> eviter -> tirer automatiquement -> tuer -> survivre
+bouger -> eviter -> attaquer -> tuer -> survivre
 ```
+
+L'attaque automatique peut etre utile pour laisser le joueur alterner entre
+combat, recolte et defense, mais ce choix reste a valider avec l'equipe.
 
 ### Couche 5 - XP et upgrades
 
@@ -130,8 +114,6 @@ Exemples d'upgrades :
 - taille de projectile ;
 - regeneration lente.
 
-Boucle obtenue :
-
 ```txt
 tuer -> recuperer XP -> level up -> choisir upgrade -> survivre plus longtemps
 ```
@@ -146,9 +128,8 @@ Objectif : passer du prototype solo a la vraie experience commune du projet.
 - ennemis qui ciblent le joueur le plus proche ;
 - mort individuelle ;
 - fin si tous les joueurs sont morts ;
+- fin si un objectif de zone echoue, selon le mode choisi ;
 - lancement depuis une room.
-
-Resultat attendu : jusqu'a 4 joueurs peuvent jouer ensemble.
 
 ### Couche 7 - Exploration et ressources simples
 
@@ -162,34 +143,27 @@ scope controle.
 - utilisation des ressources pendant la partie ;
 - points d'interet sur la map.
 
-Exemples :
+Exemples : energie, metal, fragments.
 
-- energie ;
-- metal ;
-- fragments.
+### Couche 8 - Objectifs de zone
 
-### Couche 8 - Defense de zone et construction legere
+Objectif : donner des buts plus varies aux parties.
 
-Objectif : ajouter l'idee de base et de construction sans partir sur un systeme
-trop lourd.
-
-- zone centrale a proteger ;
-- murs simples ;
-- tourelles simples ;
-- reparations ;
-- vagues ennemies plus fortes ;
+- zone a proteger ;
+- ressource a extraire ;
+- objectif a terminer ;
+- construction ou defense legere si l'equipe valide cette direction ;
+- ennemis qui rodent, attaquent la base ou arrivent pendant certains evenements ;
 - ameliorations simples avec les ressources.
 
-Nouvelle boucle :
-
 ```txt
-explorer -> collecter -> ameliorer -> defendre -> survivre plus longtemps
+explorer -> collecter -> ameliorer -> remplir un objectif -> survivre plus longtemps
 ```
 
 ### Couche 9 - Automatisation legere, boss, biomes et polish
 
-Objectif : faire evoluer les ressources et la defense vers des systemes plus
-vivants.
+Objectif : faire evoluer les ressources et les objectifs de partie vers des
+systemes plus vivants.
 
 - production automatique tres simple ;
 - generateurs ou collecteurs basiques ;
@@ -201,9 +175,6 @@ vivants.
 - achievements ;
 - statistiques detaillees ;
 - customisation.
-
-Cette partie reste dimensionnee pour garder une partie lisible et rapide a
-tester.
 
 ## 4. Socle commun a rendre stable
 
@@ -219,6 +190,7 @@ Le socle commun correspond a une application ou :
 - 1 a 4 joueurs peuvent participer ;
 - des ennemis apparaissent ;
 - les joueurs peuvent survivre, prendre des degats et mourir ;
+- la partie a une condition de victoire ou de defaite claire ;
 - une partie produit un score ;
 - les resultats sont sauvegardes ;
 - un historique ou un leaderboard affiche ces resultats.
@@ -235,23 +207,25 @@ visibles en partie, utiles au groupe et simples a demontrer.
 | Gaming & UX | Complete web-based game | Major | 2 | Le jeu coop porte la boucle principale |
 | Gaming & UX | Remote players | Major | 2 | Les joueurs peuvent jouer depuis plusieurs machines |
 | Gaming & UX | Multiplayer 3+ | Major | 2 | Le jeu vise 1 a 4 joueurs |
-| Web | Framework frontend + backend | Major | 2 | React + Fastify structurent l'application |
+| Web | Framework frontend + backend | Major | 2 | React + un backend Node.js structurent l'application |
 | Web | Real-time features / WebSocket | Major | 2 | Rooms, chat, ready et synchro temps reel |
 | Web | User interaction | Major | 2 | Chat, profils, amis et interactions sociales |
 | User Management | Standard user management | Major | 2 | Comptes, profils, avatars, statut |
 
 Total : 14 points.
 
-### Extensions possibles - 18 points
+### Extensions possibles pour atteindre 18+ points
 
 | Categorie | Module | Type | Points | Role dans le projet |
 |---|---|---:|---:|---|
 | User Management | Game statistics + match history | Minor | 1 | Historique et stats par partie |
+| User Management | OAuth 42 | Minor | 1 | Connexion via compte 42 pour ajouter un module utile |
 | Web | ORM | Minor | 1 | Prisma pour gerer la DB proprement |
 | Gaming & UX | Game customization | Minor | 1 | Personnages, armes, difficulte ou map |
 | Gaming & UX | Gamification system | Minor | 1 | Achievements, XP profil, badges |
 
-Total vise : 18 points.
+Total possible : 19 points selon les modules retenus. Objectif raisonnable :
+atteindre au moins 18 points sans surcharger le projet.
 
 ## 6. Stack technique
 
@@ -259,12 +233,12 @@ Total vise : 18 points.
 |---|---|---|
 | Frontend | React + TypeScript | Pages, UI, lobby, profil, leaderboard, affichage jeu |
 | Styling | Tailwind CSS ou CSS simple | Interface claire et rapide a maintenir |
-| Backend API | Fastify + Node.js | Auth, users, friends, scores, history |
+| Backend API | Node.js + Express | Auth, users, friends, scores, history |
 | Temps reel | Socket.IO | Rooms, chat, ready, inputs, etats de partie |
 | Gameplay simulation | C++ | Deplacements, collisions, ennemis, combat, score |
 | Database | PostgreSQL ou MySQL | Donnees persistantes |
 | ORM | Prisma | Migrations, modeles, relations |
-| Auth | OAuth 42 | Connexion utilisateur |
+| Auth | Auth standard + OAuth 42 | Connexion utilisateur |
 | DevOps | Docker Compose | Lancement complet du projet |
 | Tests | Checklists + tests simples | Validation avant merge et demo |
 
@@ -298,7 +272,7 @@ Browser
     - player inputs
     - game state
 
-Backend Fastify
+Backend Node.js / Express
   REST API
     - auth
     - users
@@ -350,7 +324,7 @@ game:state
   projectiles
   xp
   resources
-  timer
+  objectiveState
   score
 
 game:end
@@ -369,7 +343,7 @@ lisibles et faciliter l'integration.
 | Membre | Role principal | Responsabilites |
 |---|---|---|
 | Membre 1 | Scrum Master + Front/UI + QA | Organisation, suivi, front, integration, tests, demo |
-| Membre 2 | Backend API / DB | Fastify, Prisma, schema DB, routes REST |
+| Membre 2 | Backend API / DB | Node.js, Prisma, schema DB, routes REST |
 | Membre 3 | WebSocket / Multiplayer / Game integration | Rooms, chat, ready, synchro, contrat avec le jeu |
 | Membre 4 | Gameplay simulation | boucle de jeu, collisions, ennemis, degats, score |
 | Membre 5 | Game / Auth / Scores selon besoin | soutien gameplay, OAuth, profils, scores, history |
@@ -382,17 +356,9 @@ Decoupage possible cote gameplay :
 | Gameplay content | Game dev 2 | ennemis, armes, upgrades, vagues, balancing |
 | Integration multiplayer | Game dev 3 / WebSocket | inputs, game state, room -> partie, fin de partie |
 
-Le Scrum Master peut rester sur :
-
-- organisation ;
-- issues ;
-- planning ;
-- front ;
-- pages simples ;
-- integration UI ;
-- QA ;
-- tests manuels ;
-- preparation de la demo.
+Le Scrum Master aide l'equipe a garder clairs les issues, le planning, les
+points d'equipe, les blocages et la coordination. Il peut rester sur
+organisation, front, integration UI, QA, tests et preparation de la demo.
 
 Le front reste central pour assembler les parties visibles du projet et suivre
 la qualite globale de l'experience.
@@ -427,11 +393,9 @@ Le soutien doit etre concret :
 
 Objectif : avoir un projet qui demarre chez tout le monde.
 
-Taches :
-
 - creer la structure du repo ;
 - installer le frontend ;
-- installer le backend ;
+- installer le backend Node.js ;
 - connecter Socket.IO ;
 - configurer la base de donnees ;
 - configurer Prisma ;
@@ -444,8 +408,6 @@ Resultat attendu : chaque membre peut lancer les services principaux.
 ### Phase 2 - API, auth et users
 
 Objectif : avoir des utilisateurs reels ou un fallback dev utilisable.
-
-Taches :
 
 - preparer les routes utilisateur ;
 - integrer OAuth 42 ;
@@ -460,8 +422,6 @@ Resultat attendu : un utilisateur peut se connecter et voir son profil.
 ### Phase 3 - Lobby, rooms et chat
 
 Objectif : preparer le lancement d'une partie multijoueur.
-
-Taches :
 
 - creer une room ;
 - rejoindre une room ;
@@ -478,15 +438,14 @@ chatter et se mettre ready.
 
 Objectif : obtenir un jeu jouable avant la synchronisation complete.
 
-Taches :
-
 - afficher une map ;
 - afficher un joueur ;
 - gerer les deplacements ;
 - ajouter collisions simples ;
 - faire apparaitre des ennemis ;
-- ajouter une arme automatique ;
+- ajouter une attaque simple ;
 - gerer degats, HP et mort ;
+- ajouter une condition de victoire ou defaite claire ;
 - produire un score.
 
 Resultat attendu : une partie locale jouable existe et produit un resultat.
@@ -495,8 +454,6 @@ Resultat attendu : une partie locale jouable existe et produit un resultat.
 
 Objectif : definir clairement les donnees echangees entre le backend temps reel
 et le gameplay.
-
-Taches :
 
 - definir les inputs envoyes au jeu ;
 - definir le format de l'etat de jeu ;
@@ -511,8 +468,6 @@ jeu exploitable.
 ### Phase 6 - Jeu coop 1 a 4 joueurs
 
 Objectif : transformer le prototype en vraie partie coop.
-
-Taches :
 
 - connecter les inputs joueurs ;
 - synchroniser les positions ;
@@ -530,8 +485,6 @@ navigateurs ou machines.
 
 Objectif : rendre les parties persistantes.
 
-Taches :
-
 - sauvegarder une partie ;
 - sauvegarder les stats par joueur ;
 - afficher l'historique personnel ;
@@ -541,19 +494,16 @@ Taches :
 Resultat attendu : apres une partie, les resultats sont visibles dans
 l'application.
 
-### Phase 8 - Exploration, ressources et defense
+### Phase 8 - Exploration, ressources et objectifs
 
-Objectif : developper l'exploration, les ressources, la defense et
+Objectif : developper l'exploration, les ressources, les objectifs de zone et
 l'automatisation a partir des systemes deja poses.
-
-Taches possibles :
 
 - ressources simples ;
 - inventaire leger ;
 - points d'interet sur la map ;
-- zone centrale a defendre ;
-- murs ;
-- tourelles ;
+- objectif de zone ;
+- defense ou construction legere si validee par l'equipe ;
 - production automatique tres simple ;
 - boss ;
 - biomes ;
@@ -568,8 +518,6 @@ des choix de groupe et des objectifs plus varies.
 ### Phase 9 - Stabilisation et evaluation
 
 Objectif : rendre le projet stable, clair et defendable.
-
-Taches :
 
 - corriger les bugs visibles ;
 - nettoyer les pages ;
@@ -605,7 +553,7 @@ Resultat attendu : l'equipe peut faire une demonstration claire.
 
 ### Backend API
 
-- structure Fastify ;
+- structure Node.js avec Express ;
 - configuration env ;
 - routes users ;
 - routes friends ;
@@ -632,12 +580,12 @@ Tables probables :
 Donnees a sauvegarder pour une partie :
 
 - date ;
-- duree ;
 - resultat ;
-- score total ;
+- score final ;
 - joueurs presents ;
-- kills par joueur ;
-- niveau atteint ;
+- stats utiles selon le mode choisi ;
+- ennemis vaincus si cette stat est retenue ;
+- progression atteinte ;
 - personnage utilise ;
 - difficulte ;
 - map.
@@ -684,6 +632,7 @@ Responsabilites :
 - XP ;
 - upgrades ;
 - vagues ;
+- conditions victoire / defaite ;
 - fin de partie.
 
 Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
@@ -694,7 +643,7 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 
 - Docker Compose ;
 - frontend React ;
-- backend Fastify ;
+- backend Node.js ;
 - base de donnees ;
 - authentification ;
 - Socket.IO ;
@@ -720,7 +669,8 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 ### Priorite 3 - Enrichissement gameplay
 
 - ressources simples ;
-- defense de zone ;
+- objectifs de zone ;
+- defense ou construction legere si validee par l'equipe ;
 - automatisation legere ;
 - customisation ;
 - achievements ;
@@ -802,5 +752,6 @@ La colonne vertebrale du projet reste :
 auth -> lobby -> room -> chat -> ready -> partie coop -> score -> historique
 ```
 
-Les idees de survie, exploration, ressources, defense et automatisation doivent
-toutes se raccrocher a cette colonne vertebrale.
+Les idees de survie, exploration, ressources, construction, defense et
+automatisation doivent toutes se raccrocher a cette colonne vertebrale si elles
+sont retenues par l'equipe.
