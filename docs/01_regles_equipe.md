@@ -1,220 +1,149 @@
 # Regles de travail en equipe - ft_transcendence
 
-## 1. Role du document
+## 1. But du document
 
-Ce document definit la maniere de travailler pendant le projet.
+Ce document fixe les regles communes pour travailler proprement en equipe.
 
-Le but est que toute l'equipe avance avec les memes regles :
+Objectifs :
 
-- chacun sait quoi faire ;
-- chacun comprend ce que font les autres ;
-- les taches sont visibles ;
-- les decisions importantes sont notees ;
-- le code est relu ;
-- les features sont testees ;
-- aucune feature importante ne reste connue par une seule personne ;
-- chaque membre peut expliquer le projet pendant l'evaluation.
+- tout le monde sait quoi faire ;
+- le travail est visible ;
+- les commits viennent de tous les membres ;
+- les features importantes sont comprises par toute l'equipe ;
+- le projet reste testable et demonstrable ;
+- personne ne depend d'une seule personne pour comprendre une partie critique.
 
-Le sujet insiste sur deux points importants :
+## 2. Contraintes importantes du sujet
 
-- tous les membres doivent contribuer au projet ;
-- tous les membres doivent pouvoir expliquer leur travail, l'organisation et les
-  grandes parties du code.
+Le projet doit respecter ces points :
 
-## 2. Principes d'equipe
-
-### 2.1 Responsabilite commune
-
-Chaque membre a une zone principale, mais le projet appartient a toute l'equipe.
-
-Une personne peut etre responsable d'une partie, mais toute l'equipe doit en
-connaitre le role, le flux principal, les fichiers importants et la maniere de la
-tester.
-
-Regle :
-
-- une feature importante doit etre presentee a toute l'equipe ;
-- une partie critique doit etre relue, testee ou demontrable devant l'equipe ;
-- les choix techniques importants doivent etre notes ;
-- les blocages doivent etre signales rapidement.
-
-### 2.2 Pas de silo
-
-Un silo existe quand une partie du projet ne peut etre expliquee que par une
-seule personne.
-
-Pour eviter ca :
-
-- chaque zone doit avoir une petite documentation ;
-- les routes, events et schemas doivent etre lisibles ;
-- les decisions doivent etre notees dans une issue, un document ou une PR ;
-- les reviews doivent servir a partager la comprehension, pas seulement a valider ;
-- chaque membre doit pouvoir lancer le projet localement.
-
-### 2.3 Communication courte et reguliere
-
-L'equipe doit garder un rythme simple :
-
-- point rapide regulier ;
-- liste des blocages ;
-- verification des taches en cours ;
-- rappel des priorites ;
-- decisions notees quelque part.
-
-Un blocage ne doit pas rester cache. Si une personne bloque plus d'une demi-journee
-sur un probleme important, elle le signale.
+- chaque membre contribue avec ses propres commits ;
+- les messages de commit sont clairs ;
+- le travail est reparti et documente ;
+- le projet se lance avec Docker, Podman ou equivalent, en une commande ;
+- le README final est en anglais ;
+- `.env` est ignore par Git ;
+- `.env.example` est fourni ;
+- l'application fonctionne sur la derniere version stable de Chrome ;
+- la console navigateur ne contient pas d'erreur ou warning important ;
+- Privacy Policy et Terms of Service sont accessibles et non vides ;
+- chaque module annonce est fonctionnel et demonstrable ;
+- chaque membre peut expliquer son travail, l'organisation et les grandes parties du code.
 
 ## 3. Roles
 
-Les roles doivent etre clairement documentes dans le README final.
+Les roles doivent etre notes dans le README final.
 
 | Role | Responsabilites |
 |---|---|
 | Product Owner | vision produit, priorites, validation des features |
-| Scrum Master / PM | organisation, planning, suivi, blocages, communication |
-| Tech Lead / Architect | architecture, qualite technique, decisions critiques |
+| Scrum Master / PM | planning, issues, blocages, coordination, suivi |
+| Tech Lead / Architect | architecture, choix techniques, qualite code |
 | Developers | implementation, tests, documentation, reviews |
 
 Une personne peut avoir plusieurs roles, mais chaque responsabilite doit etre
 couverte.
 
-## 4. Organisation des taches
+## 4. Issues et taches
 
-### 4.1 Une tache = un objectif clair
+Une issue doit avoir un objectif clair et testable.
 
-Chaque tache doit decrire un resultat concret.
+Une bonne issue contient :
 
-Mauvais exemple :
+- objectif ;
+- contexte court ;
+- travail a faire ;
+- branche conseillee ;
+- test manuel ;
+- definition of done ;
+- dependances si besoin.
 
-```txt
-Faire le backend
-```
-
-Bon exemple :
-
-```txt
-Ajouter la route GET /users/me qui renvoie l'utilisateur connecte
-```
-
-Une bonne tache contient :
-
-- un titre clair ;
-- le domaine concerne ;
-- ce qui doit etre fait ;
-- comment tester ;
-- les fichiers ou modules probablement touches ;
-- les dependances avec d'autres taches si besoin.
-
-### 4.2 Taille des taches
-
-Une tache doit rester assez petite pour etre terminee, testee et relue.
-
-Si une tache contient trop de choses, elle doit etre decoupee.
-
-Exemple :
+Formats utiles :
 
 ```txt
-Tache trop large :
-- Faire le lobby
-
-Taches decoupees :
-- Creer l'ecran Lobby
-- Creer une room cote backend
-- Rejoindre une room via Socket.IO
-- Afficher la liste des joueurs
-- Ajouter le ready system
-- Tester deux navigateurs dans la meme room
+feature : nouvelle fonctionnalite
+bug     : correction
+fix     : correction technique courte
+docs    : documentation
+setup   : installation / Docker / structure
+test    : verification
+chore   : entretien
 ```
 
-### 4.3 Types de taches
-
-Chaque issue peut etre classee par type :
-
-| Type | Utilisation |
-|---|---|
-| feature | nouvelle fonctionnalite |
-| bug | comportement incorrect |
-| refactor | amelioration interne sans changement visible |
-| doc | documentation |
-| test | verification automatique ou manuelle |
-| chore | configuration, nettoyage, organisation |
-
-### 4.4 Priorites
-
-| Priorite | Sens |
-|---|---|
-| P0 | bloque le projet ou la demo |
-| P1 | necessaire pour le socle commun |
-| P2 | important mais pas bloquant immediatement |
-| P3 | enrichissement ou polish |
-
-Les taches P0 et P1 passent avant les enrichissements.
-
-## 5. Format conseille pour les issues
-
-Chaque issue importante doit suivre ce format :
-
-```md
-## Objectif
-Ce que la tache doit permettre.
-
-## Contexte
-Pourquoi on en a besoin.
-
-## Travail a faire
-- [ ] sous-tache 1
-- [ ] sous-tache 2
-- [ ] sous-tache 3
-
-## Definition of done
-- [ ] la feature fonctionne
-- [ ] elle est testee
-- [ ] elle ne casse pas l'existant
-- [ ] l'equipe comprend le but, le flux et le test manuel
-
-## Test manuel
-Etapes pour verifier.
-
-## Notes
-Routes, events, fichiers, decisions ou risques.
-```
-
-## 6. Git et branches
-
-### 6.1 Regle principale
-
-Le sujet demande :
-
-- des commits de tous les membres ;
-- des messages clairs ;
-- une repartition visible du travail ;
-- un historique Git propre.
-
-Chaque membre doit donc contribuer avec ses propres commits.
-
-### 6.2 Branches
-
-Une branche doit correspondre a une tache ou a un petit groupe de taches liees.
-
-Format conseille :
+Priorites :
 
 ```txt
-type/domaine-description-courte
+P0 = bloque le projet ou la demo
+P1 = necessaire pour le socle commun
+P2 = important mais pas bloquant
+P3 = bonus, polish, enrichissement
 ```
 
-Exemples :
+Regle :
 
 ```txt
-feature/lobby-create-room
+P0/P1 avant les extras.
+```
+
+## 5. Branches Git
+
+Les noms de branches doivent etre en anglais.
+
+Branches principales :
+
+```txt
+main
+dev
+```
+
+Branches d'integration par domaine :
+
+```txt
+area/front
+area/backend-api-db
+area/websocket-multiplayer
+area/gameplay-cpp
+area/auth-users-scores
+area/docker-setup
+```
+
+Branches de travail :
+
+```txt
+feature/front-login-page
 feature/socket-ready-system
 feature/game-player-movement
-bug/auth-session-expire
-doc/readme-setup
+fix/auth-session-expire
+docs/readme-setup
+setup/docker-compose
+chore/update-env-example
 ```
 
-### 6.3 Commits
+Branches personnelles temporaires si utiles :
 
-Un commit doit expliquer ce qui change.
+```txt
+misc/nicolsan
+misc/yaoberso
+misc/mm-furi
+misc/ylabussi
+misc/malapoug
+```
+
+Flux conseille :
+
+```txt
+feature/... -> area/... -> dev -> main
+```
+
+Regles :
+
+- `main` reste stable et demonstrable ;
+- `dev` sert a integrer les domaines ensemble ;
+- `area/...` regroupe les features d'un domaine ;
+- `feature/...`, `fix/...`, `docs/...`, `setup/...` correspondent a des taches courtes ;
+- `misc/...` sert aux essais personnels et ne merge pas directement dans `main`.
+
+## 6. Commits
 
 Format conseille :
 
@@ -225,87 +154,61 @@ type(scope): action claire
 Exemples :
 
 ```txt
-feat(lobby): add room creation event
-fix(auth): handle expired session token
-docs(setup): add docker launch steps
-test(game): add manual checklist for local run
+feat(lobby): add room creation
+fix(auth): handle expired session
+docs(readme): add docker launch steps
+setup(docker): add backend service
 refactor(api): split user routes
 ```
 
 Regles :
 
-- ne pas faire un commit geant avec plusieurs sujets differents ;
-- ne pas committer du code non teste volontairement ;
-- ne pas committer de secrets ;
-- ne pas committer `.env` ;
-- ne pas committer des fichiers generes inutiles ;
-- chaque commit doit pouvoir etre explique.
-
-### 6.4 Avant de pousser une branche
+- pas de commit geant avec plusieurs sujets differents ;
+- pas de `.env` ou secret ;
+- pas de fichier genere inutile ;
+- chaque commit doit pouvoir etre explique ;
+- chaque membre doit avoir des commits visibles.
 
 Avant de push :
 
 - relire son diff ;
-- verifier qu'aucun secret n'est present ;
+- verifier les secrets ;
 - lancer les commandes utiles ;
-- tester la feature manuellement ;
-- mettre a jour l'issue ;
-- noter les limites connues.
+- tester manuellement ;
+- mettre l'issue a jour.
 
-## 7. Pull requests et reviews
+## 7. Pull Requests et reviews
 
-### 7.1 Quand ouvrir une PR
-
-Une PR doit etre ouverte quand :
-
-- la tache est terminee ou testable ;
-- la branche demarre ;
-- la feature ne casse pas volontairement l'existant ;
-- l'auteur peut expliquer ce qu'il a fait.
-
-### 7.2 Contenu d'une PR
+Une PR doit etre ouverte quand la feature est terminee ou testable.
 
 Une PR doit contenir :
 
 ```md
 ## Resume
-Ce qui change.
 
 ## Tests
-- [ ] test manuel 1
-- [ ] test manuel 2
 
 ## Points a verifier
-Ce que le reviewer doit regarder.
 
 ## Issue liee
-Closes #...
 ```
 
-### 7.3 Review
-
-Le reviewer doit verifier :
+Le reviewer verifie :
 
 - la feature correspond a l'issue ;
 - le code est comprehensible ;
-- les noms sont clairs ;
 - les erreurs principales sont gerees ;
-- les routes/events sont documentes si necessaire ;
+- les routes, events, schemas ou payloads sont documentes si besoin ;
 - la feature a ete testee ;
-- l'auteur peut expliquer son code.
-
-La review doit aider a comprendre. Les commentaires doivent etre precis,
-calmes et utiles.
-
-### 7.4 Merge
+- l'auteur sait expliquer ce qu'il a fait.
 
 Avant merge :
 
-- une feature importante a ete relue ou montree a l'equipe ;
 - la branche demarre ;
+- le parcours principal n'est pas casse ;
 - les conflits sont resolus proprement ;
 - l'issue est a jour ;
-- les tests manuels importants sont faits.
+- une feature importante est relue ou montree a l'equipe.
 
 ## 8. Definition of done
 
@@ -313,325 +216,168 @@ Une tache est terminee seulement si :
 
 - elle fonctionne ;
 - elle est testee ;
-- elle est relue ou montrable a l'equipe ;
 - elle ne casse pas le parcours principal ;
+- elle est relue ou montrable ;
 - elle est documentee si elle ajoute une route, un event, une table ou une regle ;
-- l'auteur sait expliquer le fonctionnement ;
-- l'equipe connait le flux principal et la maniere de tester.
+- l'equipe comprend le but, le flux et le test manuel.
 
-Pour une feature visible :
+Checks par domaine :
 
-- l'interface affiche un etat normal ;
-- l'interface gere au moins un etat d'erreur ;
-- l'interface ne montre pas d'erreur console evidente ;
-- le comportement a ete teste dans Chrome.
+| Domaine | A verifier |
+|---|---|
+| Front | etats normal/loading/error/empty, responsive minimum, console Chrome propre |
+| Backend | validation inputs, erreurs HTTP propres, pas de donnees sensibles exposees |
+| WebSocket | test multi-navigateurs, payloads stables, deconnexion simple |
+| Gameplay | comportement visible, victoire/defaite claire, score sauvegardable |
+| DB | schema clair, relations comprehensibles, migrations propres |
 
-Pour une feature backend :
+## 9. Partage de connaissance
 
-- les inputs sont valides ;
-- les erreurs principales sont gerees ;
-- les donnees sensibles ne sont pas exposees ;
-- la DB reste coherente ;
-- le format de reponse est documente.
+Une feature importante doit etre presentee a l'equipe.
 
-Pour une feature temps reel :
-
-- deux clients peuvent tester le cas principal ;
-- les deconnexions simples sont considerees ;
-- les events sont nommes clairement ;
-- l'etat est coherent entre les clients.
-
-Pour une feature gameplay :
-
-- le comportement est visible en partie ;
-- il existe une maniere simple de le tester ;
-- les valeurs importantes sont faciles a ajuster ;
-- le lien avec le score, la fin de partie ou l'etat joueur est clair.
-
-## 9. Documentation obligatoire pendant le projet
-
-Le README final devra etre en anglais et contenir beaucoup d'informations. Pour
-eviter de tout reconstruire a la fin, on documente au fur et a mesure.
-
-Informations a garder :
-
-- roles de chaque membre ;
-- responsabilites ;
-- stack technique ;
-- choix techniques importants ;
-- schema DB ;
-- routes API ;
-- events Socket.IO ;
-- modules choisis ;
-- calcul des points ;
-- features implementees ;
-- contribution de chaque membre ;
-- problemes rencontres ;
-- solutions retenues ;
-- usage de l'IA.
-
-## 10. Regles de partage de connaissance
-
-### 10.1 Explication apres chaque feature
-
-Quand une feature importante est terminee, l'auteur doit la presenter a l'equipe.
 L'explication doit couvrir :
 
-- le but ;
-- les fichiers principaux ;
-- les donnees recues ;
-- les donnees renvoyees ;
-- le flux global ;
-- comment tester ;
-- les limites connues ;
-- l'impact sur les autres parties du projet.
-
-### 10.2 Niveau de comprehension attendu
-
-Tout le monde n'a pas besoin de connaitre chaque ligne de code, mais tout le
-monde doit connaitre :
-
-- le role de chaque grande partie ;
-- le flux utilisateur principal ;
-- les routes API importantes ;
-- les events Socket.IO importants ;
-- les tables principales ;
-- le flux d'une partie ;
-- le chemin des scores jusqu'a la DB ;
-- comment lancer et tester le projet.
-
-### 10.3 Pas de code magique
-
-Si un code important est ajoute, il doit etre explicable par son auteur et
-comprehensible par l'equipe au niveau du flux.
+- but ;
+- fichiers principaux ;
+- donnees recues/envoyees ;
+- flux global ;
+- test manuel ;
+- limites connues ;
+- impact sur les autres domaines.
 
 Regle simple :
 
 ```txt
-Si l'equipe ne comprend pas le role d'une feature, la feature n'est pas vraiment terminee.
+Si une seule personne comprend une feature importante, elle n'est pas vraiment terminee.
 ```
 
-## 11. Utilisation de l'IA
+## 10. IA
 
-Le sujet autorise l'IA comme aide, mais insiste sur la responsabilite et la
-comprehension.
-
-Regles d'equipe :
-
-- utiliser l'IA pour gagner du temps sur la recherche, les idees, les exemples,
-  la documentation ou les taches repetitives ;
-- toujours relire et tester ce qui vient de l'IA ;
-- ne pas coller du code incompris ;
-- mentionner dans le README comment l'IA a ete utilisee ;
-- demander une review humaine sur les parties importantes ;
-- etre capable d'expliquer chaque ligne critique.
+L'IA peut etre utilisee, mais le sujet insiste sur la responsabilite.
 
 Bon usage :
 
-- demander des pistes ;
-- demander une checklist ;
-- demander une explication ;
-- demander un exemple puis l'adapter ;
-- demander une review de code.
+- chercher des pistes ;
+- generer une checklist ;
+- expliquer une techno ;
+- aider a relire ;
+- proposer un exemple que l'equipe comprend et adapte.
 
-Mauvais usage :
+Regles :
 
-- copier une feature complete sans comprendre ;
-- accepter une solution non testee ;
-- laisser l'IA decider seule de l'architecture ;
-- utiliser du code que personne ne peut defendre en evaluation.
+- toujours relire ;
+- toujours tester ;
+- ne pas copier du code incompris ;
+- demander une review humaine sur les parties importantes ;
+- noter dans le README comment l'IA a ete utilisee.
 
-## 12. Securite et donnees sensibles
+## 11. Securite
 
 Regles obligatoires :
 
 - ne jamais committer `.env` ;
-- garder les secrets dans `.env` ;
-- fournir un `.env.example` ;
-- ne pas exposer de token ou mot de passe dans les logs ;
+- fournir `.env.example` ;
+- garder les secrets hors Git ;
+- ne pas logger de token ou mot de passe ;
 - hasher et saler les mots de passe si auth email/password ;
 - valider les inputs cote frontend et backend ;
-- eviter les messages d'erreur qui exposent trop d'informations ;
-- garder un schema DB clair ;
-- verifier les droits d'acces sur les routes utilisateur.
+- proteger les routes utilisateur ;
+- verifier son diff avant chaque push.
 
-## 13. Qualite frontend
+## 12. Documentation et README final
 
-Le sujet demande une application claire, responsive et accessible.
+Le README final doit etre en anglais.
 
-Regles :
+Il doit contenir :
 
-- tester dans Chrome ;
-- verifier la console ;
-- ne pas laisser d'erreurs visibles ;
-- garder les pages lisibles ;
-- gerer loading, erreur et etat vide ;
-- rendre Privacy Policy et Terms of Service accessibles ;
-- ne pas laisser de placeholder vide ;
-- verifier que plusieurs utilisateurs peuvent utiliser l'application en meme temps.
+- premiere ligne en italique avec le texte demande par le sujet et les logins ;
+- description claire du projet ;
+- instructions de lancement ;
+- prerequis ;
+- roles de l'equipe ;
+- organisation du travail ;
+- stack technique ;
+- schema DB ;
+- liste des features ;
+- modules choisis et calcul des points ;
+- contributions individuelles ;
+- difficultes et solutions ;
+- usage de l'IA.
 
-## 14. Qualite backend
+Pendant le projet, on note au fur et a mesure :
 
-Regles :
+- decisions techniques ;
+- routes API ;
+- events Socket.IO ;
+- schemas DB ;
+- modules retenus ;
+- bugs connus ;
+- commandes de lancement.
 
-- routes nommees clairement ;
-- validation des body/query/params ;
-- erreurs HTTP coherentes ;
-- pas de stack trace exposee au client ;
-- schema DB documente ;
-- migrations propres ;
-- relations DB comprehensibles ;
-- endpoints importants notes pour le README.
+## 13. Communication et blocages
 
-## 15. Qualite temps reel
-
-Regles :
-
-- events Socket.IO nommes clairement ;
-- payloads documentes ;
-- tests avec plusieurs navigateurs ;
-- etat de room coherent ;
-- ready system fiable ;
-- deconnexion geree simplement ;
-- pas de duplication de joueurs ;
-- pas de data race evidente sur les actions simultanees.
-
-## 16. Qualite gameplay
-
-Regles :
-
-- le gameplay doit etre testable rapidement ;
-- chaque mecanique doit etre visible ;
-- les regles de victoire/defaite doivent etre claires ;
-- les scores doivent etre reproductibles et sauvegardables ;
-- les valeurs de balancing doivent etre faciles a retrouver ;
-- les inputs et l'etat de jeu doivent etre documentes.
-
-## 17. Reunions
-
-### 17.1 Point court
-
-Frequence conseillee : regulierement, selon disponibilites.
-
-Chaque personne repond :
+Point rapide regulier :
 
 - ce que j'ai fait ;
-- ce que je fais maintenant ;
+- ce que je fais ;
 - ce qui me bloque ;
-- ce que quelqu'un doit relire ou tester.
+- ce qui doit etre relu ou teste.
 
-### 17.2 Point hebdomadaire
+Si une personne bloque trop longtemps sur un probleme important, elle le signale.
 
-Une fois par semaine :
+Un blocage cache est un risque pour l'equipe.
 
-- verifier les issues ;
-- fermer les taches terminees ;
-- identifier les blocages ;
-- tester le projet depuis la branche principale ;
-- verifier les modules vises ;
-- ajuster les priorites ;
-- noter les decisions importantes.
+## 14. Evaluation
 
-## 18. Gestion des blocages
-
-Quand quelqu'un bloque :
-
-1. il note le probleme clairement ;
-2. il partage le message d'erreur ou le comportement observe ;
-3. il explique ce qu'il a deja essaye ;
-4. une autre personne regarde avec lui ou le sujet est pose a l'equipe ;
-5. si une decision est prise, elle est notee.
-
-Un blocage technique n'est pas une faute. Un blocage cache devient un risque pour
-l'equipe.
-
-## 19. Preparation evaluation
-
-Pendant l'evaluation, l'equipe peut etre questionnee sur :
-
-- les roles ;
-- l'organisation ;
-- la repartition du travail ;
-- les contributions individuelles ;
-- les modules choisis ;
-- les choix techniques ;
-- le fonctionnement du code ;
-- les difficultes rencontrees ;
-- l'usage de l'IA.
-
-Chaque membre doit pouvoir expliquer :
+Pendant l'evaluation, chaque membre doit pouvoir expliquer :
 
 - son travail ;
+- les roles ;
+- l'organisation ;
+- les modules choisis ;
 - les grandes parties du projet ;
 - le parcours utilisateur principal ;
 - comment lancer le projet ;
 - comment tester une partie ;
 - comment les scores sont sauvegardes ;
-- comment l'equipe a travaille.
+- comment l'IA a ete utilisee.
 
-## 20. Modification pendant evaluation
+Le sujet peut demander une petite modification pendant l'evaluation. Pour s'y
+preparer :
 
-Le sujet indique qu'une petite modification peut etre demandee pendant
-l'evaluation.
-
-Pour s'y preparer :
-
-- garder un code lisible ;
+- garder le code lisible ;
 - eviter les fonctions enormes ;
 - documenter les formats importants ;
-- savoir ou se trouvent les routes, events, composants et schemas ;
-- savoir lancer les tests ou refaire un test manuel ;
-- s'entrainer a modifier une petite partie sans casser le reste.
+- savoir ou sont les routes, events, composants et schemas ;
+- savoir refaire un test manuel rapidement.
 
-## 21. Checklists rapides
+## 15. Checklists rapides
 
-### Avant de commencer une tache
+Avant de commencer :
 
-- [ ] l'issue est claire ;
-- [ ] le resultat attendu est compris ;
-- [ ] les dependances sont connues ;
-- [ ] le test manuel est defini ;
-- [ ] la branche est creee.
+- [ ] issue claire ;
+- [ ] branche creee ;
+- [ ] resultat attendu compris ;
+- [ ] test manuel defini.
 
-### Avant de demander une review
+Avant review :
 
-- [ ] le code demarre ;
-- [ ] le diff est relu ;
-- [ ] aucun secret n'est present ;
-- [ ] la feature est testee ;
-- [ ] l'issue est mise a jour ;
-- [ ] les limites sont notees.
+- [ ] code relu ;
+- [ ] diff relu ;
+- [ ] aucun secret ;
+- [ ] feature testee ;
+- [ ] limites notees.
 
-### Avant de merger
+Avant demo :
 
-- [ ] la feature importante a ete relue ou montree a l'equipe ;
-- [ ] les conflits sont resolus ;
-- [ ] le parcours principal fonctionne ;
-- [ ] les routes/events/docs sont a jour ;
-- [ ] la branche principale ne sera pas cassee volontairement.
+- [ ] lancement depuis zero ;
+- [ ] login ;
+- [ ] lobby / room ;
+- [ ] chat ;
+- [ ] ready ;
+- [ ] partie lancee et terminee ;
+- [ ] score/history/leaderboard visible ;
+- [ ] console Chrome propre ;
+- [ ] Privacy Policy et Terms of Service accessibles ;
+- [ ] chaque membre sait quoi expliquer.
 
-### Avant une demo
-
-- [ ] lancer le projet depuis zero ;
-- [ ] connecter un utilisateur ;
-- [ ] rejoindre une room ;
-- [ ] envoyer un message ;
-- [ ] lancer une partie ;
-- [ ] terminer une partie ;
-- [ ] voir score/history/leaderboard ;
-- [ ] verifier la console Chrome ;
-- [ ] verifier Privacy Policy et Terms of Service ;
-- [ ] verifier que chaque membre sait quoi expliquer.
-
-## 22. Regle finale
-
-Une feature n'est pas vraiment terminee si :
-
-- une seule personne la comprend ;
-- personne ne sait la tester ;
-- elle n'est pas reliee a une issue ;
-- elle casse le parcours principal ;
-- elle n'est pas explicable en evaluation.
-
-Le projet doit avancer comme une equipe : code visible, decisions visibles,
-responsabilites visibles, comprehension partagee.
