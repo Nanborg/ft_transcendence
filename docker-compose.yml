@@ -6,8 +6,6 @@ services:
     container_name: ft_frontend
     ports:
       - "${FRONTEND_PORT:-5173}:80"
-    depends_on:
-      - backend
     networks:
       - app_net
 
@@ -15,15 +13,30 @@ services:
     image: node:20-alpine
     container_name: ft_backend
     working_dir: /app
-    command: ["sh", "-c", "echo 'backend skeleton ready' && sleep infinity"]
+    command:
+      - sh
+      - -c
+      - >-
+        node -e "const http=require('http'); const port=Number(process.env.BACKEND_PORT||3000);
+        http.createServer((req,res)=>{
+          if(req.url==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end('{\"status\":\"ok\",\"service\":\"backend\"}');return;}
+          res.writeHead(200,{'Content-Type':'application/json'});
+          res.end('{\"message\":\"backend skeleton ready\"}');
+        }).listen(port,'0.0.0.0',()=>console.log('backend skeleton listening on',port));"
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
       DATABASE_URL: ${DATABASE_URL:-postgresql://transcendence:transcendence_dev_only@database:5432/transcendence}
+      OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me}
+      OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me}
+      SESSION_SECRET: ${SESSION_SECRET:-replace_me}
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     depends_on:
       database:
         condition: service_healthy
+      gameplay-cpp:
+        condition: service_started
     networks:
       - app_net
 
