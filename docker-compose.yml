@@ -13,16 +13,9 @@ services:
     image: node:20-alpine
     container_name: ft_backend
     working_dir: /app
-    command:
-      - sh
-      - -c
-      - >-
-        node -e "const http=require('http'); const port=Number(process.env.BACKEND_PORT||3000);
-        http.createServer((req,res)=>{
-          if(req.url==='/health'){res.writeHead(200,{'Content-Type':'application/json'});res.end('{\"status\":\"ok\",\"service\":\"backend\"}');return;}
-          res.writeHead(200,{'Content-Type':'application/json'});
-          res.end('{\"message\":\"backend skeleton ready\"}');
-        }).listen(port,'0.0.0.0',()=>console.log('backend skeleton listening on',port));"
+    volumes:
+      - ./backend:/app
+    command: npm run dev
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
