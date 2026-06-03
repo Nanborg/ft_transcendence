@@ -16,4 +16,7 @@ logs:
 fclean: down
 	docker system prune -af
 
+dev:
+	docker compose up backend database --build
+
 .PHONY: all up test-backend down logs fclean

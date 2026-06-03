@@ -3,11 +3,24 @@
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
+// Configuration de Prisma (Spécifique à la Version 7)
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
+// Connexion à la Base de Données
 datasource db {
   provider = "postgresql"
+}
+
+// Modèle de l'Utilisateur
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  username    String   @unique
+  fortyTwoId  Int?     @unique
+  avatar      String?          
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
