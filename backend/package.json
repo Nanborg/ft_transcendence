@@ -1,0 +1,11 @@
+{
+  "name": "ft-transcendence-backend",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "socket.io": "^4.8.1"
+  }
+}

@@ -50,10 +50,22 @@ Never commit `.env`.
 
 ## Run
 
+Create local HTTPS certificates once:
+
+```bash
+sh scripts/generate-dev-cert.sh
+```
+
 Start the project with Docker Compose:
 
 ```bash
-docker compose up
+docker compose up -d --build
+```
+
+Frontend is available at:
+
+```txt
+https://localhost
 ```
 
 Stop services:
@@ -105,4 +117,3 @@ The final roles and contributions will be updated during the project.
 AI may be used to help with planning, documentation, explanations, checklists and review support.
 
 All AI-assisted content must be reviewed, tested and understood by the team before being used in the project.
-

@@ -14,3 +14,11 @@ build/
 # OS/editor
 .DS_Store
 Thumbs.db
+
+# dependencies
+node_modules/
+backend/node_modules/
+
+# local HTTPS certificates
+nginx/certs/*.key
+nginx/certs/*.crt
