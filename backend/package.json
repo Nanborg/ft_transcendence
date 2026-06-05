@@ -1,0 +1,13 @@
+{
+  "name": "ft-transcendence-backend",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
+  }
+}
