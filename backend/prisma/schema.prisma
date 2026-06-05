@@ -5,8 +5,7 @@
 
 // Configuration de Prisma (Spécifique à la Version 7)
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 // Connexion à la Base de Données
