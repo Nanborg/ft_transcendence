@@ -1,35 +1,34 @@
+require("dotenv").config();
+
+const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 
 const port = Number(process.env.BACKEND_PORT || 3000);
 const frontendUrl = process.env.FRONTEND_URL || "https://localhost";
 
-const server = http.createServer((req, res) => {
-    if (req.url === "/health") {
-        res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: "ok", service: "backend"}));
-        return;
-    }
+const app = express();
+app.use(express.json());
 
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ message: "backend socket skeleton ready" }));
-});
+const server = http.createServer(app);
 
-const io = new Server(server, {
-    cors: {
-        origin: frontendUrl,
-        methods: ["GET", "POST"]
-    }
-});
+const io = new Server(server);
 
-io.on("connection", (socket) => {
-    console.log(`socket connected: ${socket.id}`);
-    
-    socket.on("disconnect", (reason) => {
-         console.log(`socket disconnected: ${socket.id} reason=${reason}`);
-    });
-});
+require("./socket/socketHandler")(io);
+
+
+
+const healthRoutes = require("./routes/health");
+const privateRoutes = require("./routes/private");
+const usersRoutes = require("./routes/users")
+
+app.use("/health", healthRoutes);
+
+app.use("/private", privateRoutes);
+
+app.use("/users", usersRoutes);
+
 
 server.listen(port, "0.0.0.0", () => {
-    console.log(`backend listening on ${port}`);
+	console.log(`backend listening on ${port}`);
 });
