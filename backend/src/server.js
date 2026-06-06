@@ -19,14 +19,14 @@ require("./socket/socketHandler")(io);
 
 
 const healthRoutes = require("./routes/health");
-const privateRoutes = require("./routes/private");
 const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
+const signinRoutes = require("./routes/signin")
 
 app.use("/health", healthRoutes);
-app.use("/private", privateRoutes);
+app.use("/login", loginRoutes);
+app.use("/signin", signinRoutes);
 app.use("/users", usersRoutes);
-app.use("/login", usersRoutes);
 
 
 server.listen(port, "0.0.0.0", () => {
