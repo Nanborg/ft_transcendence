@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms } = require("./rooms");
 
 module.exports = (io) => {
 	io.on("connection", (socket) => {
@@ -38,6 +38,13 @@ module.exports = (io) => {
 		});
 
 		socket.on("disconnect", (reason) => {
+			const { updatedRooms, removedRoomIds } = leaveAllRooms(socket.id);
+			updatedRooms.forEach((room) => {
+				io.to(room.id).emit("room:update", room);
+			});
+			removedRoomIds.forEach((roomId) => {
+				console.log(`room removed: ${roomId}`);
+			});
 			console.log(`socket disconnected: ${socket.id} reason=${reason}`);
 		});
 	});

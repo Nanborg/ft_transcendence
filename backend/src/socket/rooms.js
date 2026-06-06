@@ -55,6 +55,32 @@ function leaveRoom(roomId, playerId) {
     return room;
 }
 
+function leaveAllRooms(playerId) {
+    const updatedRooms = [];
+    const removedRoomIds = [];
+
+    for (const [roomId, room] of rooms.entries()) {
+        const wasInRoom = room.players.some((player) => player.id === playerId);
+        if (!wasInRoom) {
+            continue;
+        }
+        room.players = room.players.filter((player) => player.id !== playerId);
+        if (room.players.length === 0) {
+            rooms.delete(roomId);
+            removedRoomIds.push(roomId);
+            continue;
+        }
+        if (room.ownerId === playerId) {
+            room.ownerId = room.players[0].id;
+        }
+        updatedRooms.push(room);
+    }
+    return {
+        updatedRooms,
+        removedRoomIds,
+    };
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -64,4 +90,5 @@ module.exports = {
     joinRoom,
     leaveRoom,
     getRoom,
+    leaveAllRooms,
 };
