@@ -81,6 +81,14 @@ function leaveAllRooms(playerId) {
     };
 }
 
+function getPlayerInRoom(roomId, playerId) {
+    const room = rooms.get(roomId);
+    if (!room) {
+        return null;
+    }
+    return room.players.find((player) => player.id === playerId) || null;
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -91,4 +99,5 @@ module.exports = {
     leaveRoom,
     getRoom,
     leaveAllRooms,
+    getPlayerInRoom,
 };
