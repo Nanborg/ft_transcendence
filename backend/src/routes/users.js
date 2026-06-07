@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const OAuth = require("../middlewares/OAuth");
+const authToken = require("../middlewares/authToken");
+router.use(express.json());
 
 router.use(express.json());
 
-router.get("/me", (req, res) => {
+router.get("/me", authToken, (req, res) => {
 	res.status(200).send("You can see your page here");
 });
 

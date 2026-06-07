@@ -16,9 +16,10 @@ router.post ("/", async (req, res) => {
 		console.log(hashedPassword)
 		const user = { name: req.body.name, password: hashedPassword}
 		users.push(user)
-		res.status(201).send()
+		res.status(201).send('Sign in success')
 	}
-	catch {
+	catch (err){
+		console.error("Auth error: ", err);
 		res.status(500).send()
 	}
 });

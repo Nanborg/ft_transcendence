@@ -1,11 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const OAuth = require("../middlewares/OAuth");
-
+const { OAuth } = require("../middlewares/OAuth");
 // protected route
 router.post("/", OAuth, (req, res) => {
-	res.json({ secret: true }).send();
+
 });
 
 // dev login
