@@ -8,6 +8,7 @@ function createPlayer(playerId, playerName) {
     return {
         id: playerId,
         name: playerName || `Player-${playerId.slice(0, 4)}`,
+        ready: false,
     };
 }
 
@@ -89,6 +90,20 @@ function getPlayerInRoom(roomId, playerId) {
     return room.players.find((player) => player.id === playerId) || null;
 }
 
+function setPlayerReady(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return null;
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return null;
+    }
+    player.ready = !player.ready;
+    return room;
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -100,4 +115,5 @@ module.exports = {
     getRoom,
     leaveAllRooms,
     getPlayerInRoom,
+    setPlayerReady,
 };
