@@ -9,7 +9,6 @@ function createPlayer(playerId, playerName) {
         id: playerId,
         name: playerName || `Player-${playerId.slice(0, 4)}`,
         ready: false,
-        status: "waiting",
     };
 }
 
@@ -21,6 +20,7 @@ function createRoom(ownerId, ownerName) {
         id: roomId,
         ownerId,
         players: [owner],
+        status: "waiting",
         createdAt: Date.now(),
     };
     rooms.set(roomId, room);
