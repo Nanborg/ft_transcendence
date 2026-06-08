@@ -37,7 +37,17 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("player:ready", ({ roomId }) => {
+		socket.on("player:ready", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "player:ready",
+					message: "Invalid payload",
+				});
+				return;
+			}
+
+			const { roomId } = payload;
+
 			const room = setPlayerReady(roomId, socket.id);
 
 			if (!room) {
@@ -47,10 +57,22 @@ module.exports = (io) => {
 				});
 				return;
 			}
+
 			io.to(roomId).emit("room:update", room);
 		});
 
-		socket.on("chat:message", ({ roomId, message }) => {
+		socket.on("chat:message", (payload) => {
+			if (!payload ||
+				typeof payload.roomId !== "string" ||
+				typeof payload.message !== "string"
+			) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId, message } = payload;
 			if (!message || !message.trim()) {
 				socket.emit("room:error", {
 					event: "chat:message",
