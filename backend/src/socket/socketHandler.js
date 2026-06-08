@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame } = require("./rooms");
 
 module.exports = (io) => {
 	io.on("connection", (socket) => {
@@ -24,6 +24,26 @@ module.exports = (io) => {
 			socket.join(room.id);
 			console.log(`socket ${socket.id} joined room ${room.id}`);
 			io.to(room.id).emit("room:update", room);
+		});
+
+		socket.on("game:start", ({ roomId }) => {
+			const { room, error } = startGame(roomId, socket.id);
+
+			if (error) {
+				socket.emit("room:error", {
+					event: "game:start",
+					message: error,
+				});
+				return;
+			}
+			io.to(roomId).emit("room:update", room);
+			io.to(roomId).emit("game:start", {
+				roomId: room.id,
+				status: room.status,
+				players: room.players,
+				timestamp: Date.now(),
+			});
+			console.log(`game starting ins room ${room.id}`);
 		});
 
 		socket.on("room:leave", ({ roomId }) => {
