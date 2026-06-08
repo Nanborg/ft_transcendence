@@ -4,16 +4,16 @@ module.exports = (io) => {
 	io.on("connection", (socket) => {
 		console.log(`socket connected: ${socket.id}`);
 
-		socket.on("room:create", () => {
-			const room = createRoom(socket.id);
+		socket.on("room:create", ({ playerName } = {}) => {
+			const room = createRoom(socket.id, playerName);
 			socket.join(room.id);
 			console.log(`room created: ${room.id} by ${socket.id}`);
 			socket.emit("room:created", room);
 			io.to(room.id).emit("room:update", room);
 		});
 
-		socket.on("room:join", ({ roomId }) => {
-			const room = joinRoom(roomId, socket.id);
+		socket.on("room:join", ({ roomId, playerName }) => {
+			const room = joinRoom(roomId, socket.id, playerName);
 			if (!room) {
 				socket.emit("room:error", {
 					event: "room:join",
