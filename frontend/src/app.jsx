@@ -32,6 +32,13 @@ const pages = [
     description: 'View your friends',
   },
   {
+    id: 'lobby',
+    path: '/lobby',
+    label: 'Lobby',
+    title: 'Lobby',
+    description: 'Enter the lobby',
+  },
+  {
     id: 'room',
     path: '/room',
     label: 'Room',
