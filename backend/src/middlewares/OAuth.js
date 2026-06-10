@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
 	}
 
 	req.user = {
-		id: "dev-123",
+		id: 1,
 		email: `${devUser}@local.dev`,
 		name: devUser,
 		role: "user",
