@@ -19,7 +19,7 @@ model User {
   email       String   @unique
   username    String   @unique
   fortyTwoId  Int?     @unique
-  avatar      String?          
+  avatar      String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
