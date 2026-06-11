@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady } = require("./rooms");
 
 module.exports = (io) => {
 	io.on("connection", (socket) => {
@@ -35,6 +35,30 @@ module.exports = (io) => {
 			} else {
 				console.log(`room removed: ${roomId}`);
 			}
+		});
+
+		socket.on("player:ready", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "player:ready",
+					message: "Invalid payload",
+				});
+				return;
+			}
+
+			const { roomId } = payload;
+
+			const room = setPlayerReady(roomId, socket.id);
+
+			if (!room) {
+				socket.emit("room:error", {
+					event: "player:ready",
+					message: "player is not in room",
+				});
+				return;
+			}
+
+			io.to(roomId).emit("room:update", room);
 		});
 
 		socket.on("chat:message", (payload) => {
