@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom } = require("./rooms");
 
 module.exports = (io) => {
 	io.on("connection", (socket) => {
@@ -37,7 +37,60 @@ module.exports = (io) => {
 			}
 		});
 
+		socket.on("chat:message", (payload) => {
+			if (!payload ||
+				typeof payload.roomId !== "string" ||
+				typeof payload.message !== "string"
+			) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId, message } = payload;
+			if (!message || !message.trim()) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Message cannot be empty",
+				});
+				return;
+			}
+			const room = getRoom(roomId);
+			if (!room) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Room not found",
+				});
+				return;
+			}
+			const player = getPlayerInRoom(roomId, socket.id);
+			if (!player) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Player is not in room",
+				});
+				return;
+			}
+			const chatMessage = {
+				author: {
+					id: player.id,
+					name: player.name,
+				},
+				message: message.trim(),
+				timestamp: Date.now(),
+			};
+			io.to(roomId).emit("chat:message", chatMessage);
+		});
+
 		socket.on("disconnect", (reason) => {
+			const { updatedRooms, removedRoomIds } = leaveAllRooms(socket.id);
+			updatedRooms.forEach((room) => {
+				io.to(room.id).emit("room:update", room);
+			});
+			removedRoomIds.forEach((roomId) => {
+				console.log(`room removed: ${roomId}`);
+			});
 			console.log(`socket disconnected: ${socket.id} reason=${reason}`);
 		});
 	});
