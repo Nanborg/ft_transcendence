@@ -11,7 +11,8 @@ services:
       - app_net
 
   backend:
-    image: node:20-alpine
+    build:
+      context: ./backend
     container_name: ft_backend
     working_dir: /app
     volumes:

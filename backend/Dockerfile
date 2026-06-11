@@ -4,9 +4,10 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN apk add curl && npm install
 
 COPY . .
 COPY .env .env
+RUN npx prisma generate
 
 CMD ["npm", "start"]
