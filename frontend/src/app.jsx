@@ -76,10 +76,37 @@ function getCurrentPath() {
   return hashPath;
 }
 
-function App() 
-{
+const DEV_USER_STORAGE_KEY = 'ft_transcendence_dev_user';
+
+function getStoredDevUser() {
+  try {
+    const storedUser = window.localStorage.getItem(DEV_USER_STORAGE_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    return JSON.parse(storedUser);
+  } catch {
+    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    return null;
+  }
+}
+
+
+function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
+  const [devUserName, setDevUserName] = useState('');
+  const [currentUser, setCurrentUser] = useState(getStoredDevUser);
+  const [authStatus, setAuthStatus] = useState('idle');
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    if (currentUser) {
+      setAuthStatus('authenticated');
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -120,6 +147,35 @@ function App()
     };
   }, []);
 
+  async function handleDevLogin(event) {
+    event.preventDefault();
+    const trimmedName = devUserName.trim();
+    if (!trimmedName) {
+      setAuthError('Enter a username to login');
+      return;
+    }
+    setAuthStatus('loading');
+    setAuthError('');
+    try {
+      const response = await fetch('/api/users/me', {
+        headers: {
+          'x-dev-user': trimmedName,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Login failed.');
+      }
+      const user = await response.json();
+      setCurrentUser(user);
+      window.localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(user));
+      setAuthStatus('authenticated');
+      setDevUserName('');
+    } catch (error) {
+      setCurrentUser(null);
+      setAuthStatus('error');
+      setAuthError(error.message);
+    }
+  }
   return (
     <div className="app-shell">
       <header className="app-header">
