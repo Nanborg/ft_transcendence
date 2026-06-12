@@ -58,7 +58,7 @@ const pages = [
     label: 'Leaderboard',
     title: 'Leaderboard',
     description: 'View the leaderboard',
-  }, 
+  },
   {
     id: 'match-history',
     path: '/match-history',
