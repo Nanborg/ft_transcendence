@@ -219,8 +219,22 @@ function App() {
                   value={devUserName}
                   onChange={(event) => setDevUserName(event.target.value)}
                   placeholder="nico"
+                  
                 />
+                <button type="submit" disabled={authStatus === 'loading'}>
+                  {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
+                </button>
               </form>
+              {authError && (
+                <p className="form-error" role="alert">{authError}</p>
+              )}
+              {currentUser && (
+                <div className="current-user-card">
+                  <p>Connected as {currentUser.name}</p>
+                  <p>{currentUser.email}</p>
+                  <button type="button" onClick={handleLogout}> Logout</button>
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -228,6 +242,7 @@ function App() {
         <aside className="status-panel" aria-label="Connection status">
           <h2>System status</h2>
           <p>Socket.IO: {socketStatus}</p>
+          <p>Session: {currentUser ? currentUser.name : 'not logged in'}</p>
         </aside>
       </main>
     </div>
