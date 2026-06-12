@@ -176,6 +176,14 @@ function App() {
       setAuthError(error.message);
     }
   }
+
+  function handleLogout() {
+    setCurrentUser(null);
+    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    setAuthStatus('idle');
+    setAuthError('');
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -201,6 +209,20 @@ function App() {
           <p className="page-kicker">Frontend page</p>
           <h1 id="page-title">{currentPage.title}</h1>
           <p>{currentPage.description}</p>
+          {currentPage.id === 'login' && (
+            <div className="login-panel">
+              <form className="login-form" onSubmit={handleDevLogin}>
+                <label htmlFor="dev-user-name">Dev user name</label>
+                <input
+                  id="dev-user-name"
+                  type="text"
+                  value={devUserName}
+                  onChange={(event) => setDevUserName(event.target.value)}
+                  placeholder="nico"
+                />
+              </form>
+            </div>
+          )}
         </section>
 
         <aside className="status-panel" aria-label="Connection status">
