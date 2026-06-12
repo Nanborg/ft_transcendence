@@ -219,7 +219,7 @@ function App() {
                   value={devUserName}
                   onChange={(event) => setDevUserName(event.target.value)}
                   placeholder="nico"
-                  
+
                 />
                 <button type="submit" disabled={authStatus === 'loading'}>
                   {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
@@ -236,6 +236,9 @@ function App() {
                 </div>
               )}
             </div>
+          )}
+          {currentPage.id === 'profile' && currentUser && (
+            <p className="profile-hint">Logged in as {currentUser.name}.</p>
           )}
         </section>
 
