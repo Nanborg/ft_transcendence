@@ -20,6 +20,7 @@ function createRoom(ownerId, ownerName) {
         id: roomId,
         ownerId,
         players: [owner],
+        status: "waiting",
         createdAt: Date.now(),
     };
     rooms.set(roomId, room);
@@ -104,6 +105,37 @@ function setPlayerReady(roomId, playerId) {
     return room;
 }
 
+function startGame(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return {
+            room: null,
+            error: "Room not found"
+        };
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return {
+            room: null,
+            error: "Player is not in room",
+        };
+    }
+    const allPlayersReady = room.players.length > 0 &&
+        room.players.every((player) => player.ready === true);
+    if (!allPlayersReady) {
+        return {
+            room,
+            error: "All players must be ready",
+        };
+    }
+    room.status = "starting";
+    return {
+        room,
+        error: null,
+    };
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -116,4 +148,5 @@ module.exports = {
     leaveAllRooms,
     getPlayerInRoom,
     setPlayerReady,
+    startGame,
 };
