@@ -9,6 +9,9 @@ router.get("/", OAuth, async (req, res) => {
             where: { id: req.user.id },
             include: { friends: true }
         });
+        if (!userWithFriends) {
+            return res.status(404).json({ error: "Utilisateur introuvable." });
+        }
         res.status(200).json(userWithFriends.friends);
     } 
     catch (error) {
