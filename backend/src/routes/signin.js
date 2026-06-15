@@ -19,7 +19,6 @@ router.post ("/", async (req, res) => {
 			return res.status(400).json({ error: 'Missing required fields' });
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10)
-		console.log(hashedPassword)
 
 		const user = await prisma.user.create({
 			data: {
