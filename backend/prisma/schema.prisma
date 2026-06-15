@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+// Configuration de Prisma (Spécifique à la Version 7)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connexion à la Base de Données
+datasource db {
+  provider = "postgresql"
+}
+
+// Modèle de l'Utilisateur
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  username    String   @unique
+  password    String
+  fortyTwoId  Int?     @unique
+  avatar      String?
+  refreshTokens RefreshToken[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}

@@ -12,7 +12,15 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		});
 
-		socket.on("room:join", ({ roomId, playerName }) => {
+		socket.on("room:join", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "room:join",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId, playerName } = payload;
 			const room = joinRoom(roomId, socket.id, playerName);
 			if (!room) {
 				socket.emit("room:error", {
@@ -26,9 +34,16 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		});
 
-		socket.on("game:start", ({ roomId }) => {
+		socket.on("game:start", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "game:start",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId } = payload;
 			const { room, error } = startGame(roomId, socket.id);
-
 			if (error) {
 				socket.emit("room:error", {
 					event: "game:start",
@@ -43,10 +58,18 @@ module.exports = (io) => {
 				players: room.players,
 				timestamp: Date.now(),
 			});
-			console.log(`game starting ins room ${room.id}`);
+			console.log(`game starting in room ${room.id}`);
 		});
 
-		socket.on("room:leave", ({ roomId }) => {
+		socket.on("room:leave", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "room:leave",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId } = payload;
 			const room = leaveRoom(roomId, socket.id);
 			socket.leave(roomId);
 			console.log(`socket ${socket.id} left room ${roomId}`);
@@ -57,9 +80,16 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("player:ready", ({ roomId }) => {
+		socket.on("player:ready", (payload) => {
+			if (!payload || typeof payload.roomId !== "string") {
+				socket.emit("room:error", {
+					event: "player:ready",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId } = payload;
 			const room = setPlayerReady(roomId, socket.id);
-
 			if (!room) {
 				socket.emit("room:error", {
 					event: "player:ready",
@@ -70,7 +100,18 @@ module.exports = (io) => {
 			io.to(roomId).emit("room:update", room);
 		});
 
-		socket.on("chat:message", ({ roomId, message }) => {
+		socket.on("chat:message", (payload) => {
+			if (!payload ||
+				typeof payload.roomId !== "string" ||
+				typeof payload.message !== "string"
+			) {
+				socket.emit("room:error", {
+					event: "chat:message",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId, message } = payload;
 			if (!message || !message.trim()) {
 				socket.emit("room:error", {
 					event: "chat:message",
