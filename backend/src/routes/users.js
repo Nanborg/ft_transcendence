@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const authToken = require("../middlewares/authToken");
+router.use(express.json());
 
-const OAuth = require("../middlewares/OAuth");
+router.use(express.json());
 
-const prisma = require('../db');
-
-router.get("/me", OAuth, (req, res) => {
-	res.json(req.user);
+router.get("/me", authToken, (req, res) => {
+	res.status(200).send("You can see your page here");
 });
 
 router.post('/', async (req, res) => {
