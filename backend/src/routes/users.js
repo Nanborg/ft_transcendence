@@ -25,25 +25,35 @@ router.post('/', async (req, res) => {
 router.patch('/me', OAuth, async (req, res) => {
     try {
         const { username, avatar } = req.body;
-        const dataToUpdate = {};
-        if (username !== undefined)
-            dataToUpdate.username = username;
-        if (avatar !== undefined)
-            dataToUpdate.avatar = avatar;
-        if (Object.keys(dataToUpdate).length === 0) {
-            return res.status(400).json({ error: "Aucune donnée valide à mettre à jour" });
+        const updateData = {};
+        if (username !== undefined) {
+            if (typeof username !== 'string' || username.trim() === '') {
+                return res.status(400).json({ error: "Le username doit être une chaîne de caractères non vide." });
+            }
+            updateData.username = username.trim();
         }
-        const UpdateUser = await prisma.user.update({
+        if (avatar !== undefined) {
+            if (typeof avatar !== 'string' || avatar.trim() === '') {
+                return res.status(400).json({ error: "L'avatar doit être une chaîne de caractères non vide." });
+            }
+            updateData.avatar = avatar.trim();
+        }
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ error: "Aucune donnée valide à mettre à jour." });
+        }
+        const updatedUser = await prisma.user.update({
             where: { id: req.user.id },
-            data: dataToUpdate
-        })
-        res.status(200).json({ message: "Joueur modifié avec succès !", user: UpdateUser });
+            data: updateData
+        });
+        res.status(200).json({ message: "Profil mis à jour avec succès !", user: updatedUser });
     }
-    catch(error)
-    {
+    catch (error) {
         console.error(error);
-        res.status(400).json({ error: "Impossible de modifié le joueur" });
+        if (error.code === 'P2002') {
+            return res.status(409).json({ error: "Ce nom d'utilisateur est déjà pris." });
+        }
+        res.status(500).json({ error: "Impossible de mettre à jour le profil." });
     }
-})
+});
 
 module.exports = router;
