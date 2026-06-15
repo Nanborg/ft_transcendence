@@ -1,18 +1,27 @@
-module.exports = (req, res, next) => {
-	const devUser = req.header("x-dev-user");
+const prisma = require('../db');
 
-	if (!devUser) {
-		return res.status(401).json({
-			error: "Unauthorized",
-		});
-	}
-
-	req.user = {
-		id: "dev-123",
-		email: `${devUser}@local.dev`,
-		name: devUser,
-		role: "user",
-	};
-
-	next();
+module.exports = async (req, res, next) => {
+    try {
+        const devUser = req.header("x-dev-user");
+        if (devUser) {
+            const user = await prisma.user.findUnique({
+                where: { username: devUser }
+            });
+            if (user) {
+                req.user = { id: user.id };
+                return next();
+            }
+    	}
+        req.user = {
+            id: 1,
+            email: `${devUser || 'fallback'}@local.dev`,
+            name: devUser || 'fallback',
+            role: "user",
+        };
+        next();
+    }
+    catch (error) {
+        console.error("Erreur dans le mock OAuth:", error);
+        res.status(500).json({ error: "Erreur d'authentification serveur" });
+    }
 };
