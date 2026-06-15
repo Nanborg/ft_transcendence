@@ -8,6 +8,7 @@ function createPlayer(playerId, playerName) {
     return {
         id: playerId,
         name: playerName || `Player-${playerId.slice(0, 4)}`,
+        ready: false,
     };
 }
 
@@ -19,6 +20,7 @@ function createRoom(ownerId, ownerName) {
         id: roomId,
         ownerId,
         players: [owner],
+        status: "waiting",
         createdAt: Date.now(),
     };
     rooms.set(roomId, room);
@@ -55,6 +57,85 @@ function leaveRoom(roomId, playerId) {
     return room;
 }
 
+function leaveAllRooms(playerId) {
+    const updatedRooms = [];
+    const removedRoomIds = [];
+
+    for (const [roomId, room] of rooms.entries()) {
+        const wasInRoom = room.players.some((player) => player.id === playerId);
+        if (!wasInRoom) {
+            continue;
+        }
+        room.players = room.players.filter((player) => player.id !== playerId);
+        if (room.players.length === 0) {
+            rooms.delete(roomId);
+            removedRoomIds.push(roomId);
+            continue;
+        }
+        if (room.ownerId === playerId) {
+            room.ownerId = room.players[0].id;
+        }
+        updatedRooms.push(room);
+    }
+    return {
+        updatedRooms,
+        removedRoomIds,
+    };
+}
+
+function getPlayerInRoom(roomId, playerId) {
+    const room = rooms.get(roomId);
+    if (!room) {
+        return null;
+    }
+    return room.players.find((player) => player.id === playerId) || null;
+}
+
+function setPlayerReady(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return null;
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return null;
+    }
+    player.ready = !player.ready;
+    return room;
+}
+
+function startGame(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return {
+            room: null,
+            error: "Room not found"
+        };
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return {
+            room: null,
+            error: "Player is not in room",
+        };
+    }
+    const allPlayersReady = room.players.length > 0 &&
+        room.players.every((player) => player.ready === true);
+    if (!allPlayersReady) {
+        return {
+            room,
+            error: "All players must be ready",
+        };
+    }
+    room.status = "starting";
+    return {
+        room,
+        error: null,
+    };
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -64,4 +145,8 @@ module.exports = {
     joinRoom,
     leaveRoom,
     getRoom,
+    leaveAllRooms,
+    getPlayerInRoom,
+    setPlayerReady,
+    startGame,
 };

@@ -8,18 +8,13 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const port = Number(process.env.BACKEND_PORT || 3000);
-const frontendUrl = process.env.FRONTEND_URL || "https://localhost";
 
 const app = express();
 app.use(express.json());
 
 const server = http.createServer(app);
-
 const io = new Server(server);
-
 require("./socket/socketHandler")(io);
-
-
 
 const healthRoutes = require("./routes/health");
 const usersRoutes = require("./routes/users")
@@ -35,7 +30,6 @@ app.use("/signin", signinRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 
-
 server.listen(port, "0.0.0.0", () => {
-	console.log(`backend listening on ${port}`);
+    console.log(`backend listening on port ${port}`);
 });
