@@ -313,10 +313,6 @@ function App() {
               )}
             </div>
           )}
-
-          {currentPage.id === 'profile' && currentUser && (
-            <p className="profile-hint">Logged in as {currentUser.name}.</p>
-          )}
         </section>
 
         <aside className="status-panel" aria-label="Connection status">
