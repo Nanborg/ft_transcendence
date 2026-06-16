@@ -249,6 +249,42 @@ function App() {
           <p className="page-kicker">Frontend page</p>
           <h1 id="page-title">{currentPage.title}</h1>
           <p>{currentPage.description}</p>
+          {currentPage.id === 'profile' && (
+            <div className="profile-panel">
+              {profileStatus === 'empty' && (
+                <div className="profile-empty">
+                  <p>Login with a dev user to view your profile.</p>
+                  <a href="#/login">Go to Login</a>
+                </div>
+              )}
+              {profileStatus === 'loading' && (
+                <p className="profile-loading">Loading profile...</p>
+              )}
+              {profileStatus === 'error' && (
+                <p className="profile-error" role="alert">{profileError}</p>
+              )}
+              {profileStatus === 'loaded' && profileUser && (
+                <dl className="profile-details">
+                  <div>
+                    <dt>ID</dt>
+                    <dd>{profileUser.id || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Name</dt>
+                    <dd>{profileUser.name || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Email</dt>
+                    <dd>{profileUser.email || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Role</dt>
+                    <dd>{profileUser.role || 'Not available'}</dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+          )}
           {currentPage.id === 'login' && (
             <div className="login-panel">
               <form className="login-form" onSubmit={handleDevLogin}>
@@ -277,6 +313,7 @@ function App() {
               )}
             </div>
           )}
+
           {currentPage.id === 'profile' && currentUser && (
             <p className="profile-hint">Logged in as {currentUser.name}.</p>
           )}
