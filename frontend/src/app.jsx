@@ -1,16 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
+import { getCurrentPath } from './routing/hashRouter';
 
 
 
-function getCurrentPath() {
-  const hashPath = window.location.hash.replace(/^#/, '');
-  if (!hashPath || hashPath === '/') {
-    return '/';
-  }
-  return hashPath;
-}
 
 const DEV_USER_STORAGE_KEY = 'ft_transcendence_dev_user';
 
