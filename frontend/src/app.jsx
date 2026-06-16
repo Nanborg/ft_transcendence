@@ -2,26 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
-
-
-
-
-const DEV_USER_STORAGE_KEY = 'ft_transcendence_dev_user';
-
-function getStoredDevUser() {
-  try {
-    const storedUser = window.localStorage.getItem(DEV_USER_STORAGE_KEY);
-
-    if (!storedUser) {
-      return null;
-    }
-
-    return JSON.parse(storedUser);
-  } catch {
-    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
-    return null;
-  }
-}
+import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
 
 
 function App() {
@@ -137,7 +118,7 @@ function App() {
       }
       const user = await response.json();
       setCurrentUser(user);
-      window.localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(user));
+      storeDevUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
     } catch (error) {
@@ -149,7 +130,7 @@ function App() {
 
   function handleLogout() {
     setCurrentUser(null);
-    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    clearStoredDevUser();
     setAuthStatus('idle');
     setAuthError('');
   }
