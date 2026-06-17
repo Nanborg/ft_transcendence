@@ -7,6 +7,8 @@ import { fetchCurrentUser } from './api/users';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
+import { AppHeader } from './components/AppHeader';
+import { StatusPanel } from './components/StatusPanel';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -16,7 +18,6 @@ function App() {
   const [currentUser, setCurrentUser] = useState(getStoredDevUser);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
-
 
   useEffect(() => {
     if (currentUser) {
@@ -38,7 +39,6 @@ function App() {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
   const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
-
 
   useEffect(() => {
     const socket = io({
@@ -96,24 +96,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <a className="brand" href="#/">
-          ft_transcendence
-        </a>
-
-        <nav className="main-nav" aria-label="Main navigation">
-          {pages.map((page) => (
-            <a
-              key={page.id}
-              href={`#${page.path}`}
-              aria-current={currentPage.id === page.id ? 'page' : undefined}
-            >
-              {page.label}
-            </a>
-          ))}
-        </nav>
-      </header>
-
+      <AppHeader pages={pages} currentPageId={currentPage.id} />
       <main className="page-content">
         <section className="page-panel" aria-labelledby="page-title">
           <p className="page-kicker">Frontend page</p>
@@ -138,12 +121,7 @@ function App() {
             />
           )}
         </section>
-
-        <aside className="status-panel" aria-label="Connection status">
-          <h2>System status</h2>
-          <p>Socket.IO: {socketStatus}</p>
-          <p>Session: {currentUser ? currentUser.name : 'not logged in'}</p>
-        </aside>
+        <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />
       </main>
     </div>
   );
