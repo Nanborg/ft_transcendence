@@ -1,19 +1,29 @@
 const express = require("express");
 const router = express.Router();
+const authToken = require("../middlewares/authToken");
+router.use(express.json());
+const bcrypt = require("bcrypt");
 
-const OAuth = require("../middlewares/OAuth");
+router.use(express.json());
 
 const prisma = require('../db');
 
-router.get("/me", OAuth, (req, res) => {
+router.get("/me", authToken, (req, res) => {
 	res.json(req.user);
 });
 
 router.post('/', async (req, res) => {
     try {
-        const { email, username } = req.body;
+        const { email, username, password } = req.body;
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
         const newUser = await prisma.user.create({
-            data: { email: email, username: username },
+            data: { 
+                email: email, 
+                username: username, 
+                password: hashedPassword
+            }
         });
         res.status(201).json({ message: "Joueur créé avec succès !", user: newUser });
     } catch (error) {
@@ -22,7 +32,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.patch('/me', OAuth, async (req, res) => {
+router.patch('/me', authToken, async (req, res) => {
     try {
         const { username, avatar } = req.body;
         const updateData = {};

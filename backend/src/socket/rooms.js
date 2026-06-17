@@ -4,27 +4,38 @@ function generateRoomId() {
     return `room-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
 
-function createRoom(ownerId) {
+function createPlayer(playerId, playerName) {
+    return {
+        id: playerId,
+        name: playerName || `Player-${playerId.slice(0, 4)}`,
+        ready: false,
+    };
+}
+
+function createRoom(ownerId, ownerName) {
     const roomId = generateRoomId();
+    const owner = createPlayer(ownerId, ownerName);
 
     const room = {
         id: roomId,
         ownerId,
-        players: [ownerId],
+        players: [owner],
+        status: "waiting",
         createdAt: Date.now(),
     };
     rooms.set(roomId, room);
     return room;
 }
 
-function joinRoom(roomId, playerId) {
+function joinRoom(roomId, playerId, playerName) {
     const room = rooms.get(roomId);
 
     if (!room) {
         return null;
     }
-    if (!room.players.includes(playerId)) {
-        room.players.push(playerId);
+    const alreadyInRoom = room.players.some((player) => player.id === playerId);
+    if (!alreadyInRoom) {
+        room.players.push(createPlayer(playerId, playerName));
     }
     return room;
 }
@@ -35,15 +46,94 @@ function leaveRoom(roomId, playerId) {
     if (!room) {
         return null;
     }
-    room.players = room.players.filter((id) => id !== playerId);
+    room.players = room.players.filter((player) => player.id !== playerId);
     if (room.players.length === 0) {
         rooms.delete(roomId);
         return null;
     }
     if (room.ownerId === playerId) {
-        room.ownerId = room.players[0];
+        room.ownerId = room.players[0].id;
     }
     return room;
+}
+
+function leaveAllRooms(playerId) {
+    const updatedRooms = [];
+    const removedRoomIds = [];
+
+    for (const [roomId, room] of rooms.entries()) {
+        const wasInRoom = room.players.some((player) => player.id === playerId);
+        if (!wasInRoom) {
+            continue;
+        }
+        room.players = room.players.filter((player) => player.id !== playerId);
+        if (room.players.length === 0) {
+            rooms.delete(roomId);
+            removedRoomIds.push(roomId);
+            continue;
+        }
+        if (room.ownerId === playerId) {
+            room.ownerId = room.players[0].id;
+        }
+        updatedRooms.push(room);
+    }
+    return {
+        updatedRooms,
+        removedRoomIds,
+    };
+}
+
+function getPlayerInRoom(roomId, playerId) {
+    const room = rooms.get(roomId);
+    if (!room) {
+        return null;
+    }
+    return room.players.find((player) => player.id === playerId) || null;
+}
+
+function setPlayerReady(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return null;
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return null;
+    }
+    player.ready = !player.ready;
+    return room;
+}
+
+function startGame(roomId, playerId) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return {
+            room: null,
+            error: "Room not found"
+        };
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return {
+            room: null,
+            error: "Player is not in room",
+        };
+    }
+    const allPlayersReady = room.players.length > 0 &&
+        room.players.every((player) => player.ready === true);
+    if (!allPlayersReady) {
+        return {
+            room,
+            error: "All players must be ready",
+        };
+    }
+    room.status = "starting";
+    return {
+        room,
+        error: null,
+    };
 }
 
 function getRoom(roomId) {
@@ -55,4 +145,8 @@ module.exports = {
     joinRoom,
     leaveRoom,
     getRoom,
+    leaveAllRooms,
+    getPlayerInRoom,
+    setPlayerReady,
+    startGame,
 };

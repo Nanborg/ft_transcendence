@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
-const OAuth = require("../middlewares/OAuth");
+const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
-router.get("/", OAuth, async (req, res) => {
+router.get("/", authToken, async (req, res) => {
     try {
         const userWithFriends = await prisma.user.findUnique({
             where: { id: req.user.id },
@@ -20,7 +20,7 @@ router.get("/", OAuth, async (req, res) => {
     }
 });
 
-router.post("/:id", OAuth, async (req, res) => {
+router.post("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
         if (isNaN(friendId)) {
@@ -49,7 +49,7 @@ router.post("/:id", OAuth, async (req, res) => {
     }
 });
 
-router.delete("/:id", OAuth, async (req, res) => {
+router.delete("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
         if (isNaN(friendId)) {
