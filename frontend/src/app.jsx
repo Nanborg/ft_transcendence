@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
-
+import { fetchCurrentUser } from './api/users';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -52,16 +52,7 @@ function App() {
     setProfileError('');
     async function loadProfile() {
       try {
-        //fetch
-        const response = await fetch('/api/users/me', {
-          headers: {
-            'x-dev-user': currentUser.name,
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Unable to load profile.');
-        }
-        const user = await response.json();
+        const user = await fetchCurrentUser(currentUser.name);
         setProfileUser(user);
         setProfileStatus('loaded');
       } catch (error) {
@@ -108,15 +99,7 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'x-dev-user': trimmedName,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Login failed.');
-      }
-      const user = await response.json();
+      const user = await fetchCurrentUser(trimmedName);
       setCurrentUser(user);
       storeDevUser(user);
       setAuthStatus('authenticated');
