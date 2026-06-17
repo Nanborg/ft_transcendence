@@ -4,8 +4,7 @@ import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
 import { fetchCurrentUser } from './api/users';
-import { DevLoginForm } from './features/auth/DevLoginForm';
-import { CurrentUserCard } from './features/auth/CurrentUserCard';
+import { LoginPage } from './pages/LoginPage';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -182,20 +181,15 @@ function App() {
             </div>
           )}
           {currentPage.id === 'login' && (
-            <div className="login-panel">
-              <DevLoginForm
-                devUserName={devUserName}
-                authStatus={authStatus}
-                onDevUserNameChange={setDevUserName}
-                onSubmit={handleDevLogin}
-              />
-              {authError && (
-                <p className="form-error" role="alert">{authError}</p>
-              )}
-              {currentUser && (
-                <CurrentUserCard currentUser={currentUser} onLogout={handleLogout} />
-              )}
-            </div>
+            <LoginPage
+              devUserName={devUserName}
+              authStatus={authStatus}
+              authError={authError}
+              currentUser={currentUser}
+              onDevUserNameChange={setDevUserName}
+              onSubmit={handleDevLogin}
+              onLogout={handleLogout}
+            />
           )}
         </section>
 
