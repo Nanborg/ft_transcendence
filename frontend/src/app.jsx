@@ -5,6 +5,8 @@ import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
 import { fetchCurrentUser } from './api/users';
 import { LoginPage } from './pages/LoginPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { useProfile } from './features/profile/useProfile';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -15,9 +17,6 @@ function App() {
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
 
-  const [profileUser, setProfileUser] = useState(null);
-  const [profileStatus, setProfileStatus] = useState('idle');
-  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -38,32 +37,8 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
+  const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
 
-  useEffect(() => {
-    if (currentPage.id !== 'profile') {
-      return;
-    }
-    if (!currentUser) {
-      setProfileUser(null);
-      setProfileStatus('empty');
-      setProfileError('');
-      return;
-    }
-    setProfileStatus('loading');
-    setProfileError('');
-    async function loadProfile() {
-      try {
-        const user = await fetchCurrentUser(currentUser.name);
-        setProfileUser(user);
-        setProfileStatus('loaded');
-      } catch (error) {
-        setProfileUser(null);
-        setProfileStatus('error');
-        setProfileError(error.message);
-      }
-    }
-    loadProfile();
-  }, [currentPage.id, currentUser]);
 
   useEffect(() => {
     const socket = io({
@@ -145,40 +120,11 @@ function App() {
           <h1 id="page-title">{currentPage.title}</h1>
           <p>{currentPage.description}</p>
           {currentPage.id === 'profile' && (
-            <div className="profile-panel">
-              {profileStatus === 'empty' && (
-                <div className="profile-empty">
-                  <p>Login with a dev user to view your profile.</p>
-                  <a href="#/login">Go to Login</a>
-                </div>
-              )}
-              {profileStatus === 'loading' && (
-                <p className="profile-loading">Loading profile...</p>
-              )}
-              {profileStatus === 'error' && (
-                <p className="profile-error" role="alert">{profileError}</p>
-              )}
-              {profileStatus === 'loaded' && profileUser && (
-                <dl className="profile-details">
-                  <div>
-                    <dt>ID</dt>
-                    <dd>{profileUser.id || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Name</dt>
-                    <dd>{profileUser.name || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Email</dt>
-                    <dd>{profileUser.email || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Role</dt>
-                    <dd>{profileUser.role || 'Not available'}</dd>
-                  </div>
-                </dl>
-              )}
-            </div>
+            <ProfilePage
+              profileStatus={profileStatus}
+              profileError={profileError}
+              profileUser={profileUser}
+            />
           )}
           {currentPage.id === 'login' && (
             <LoginPage
