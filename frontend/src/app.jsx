@@ -9,6 +9,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
 import { AppHeader } from './components/AppHeader';
 import { StatusPanel } from './components/StatusPanel';
+import { HomePage } from './pages/HomePage';
+import { PlaceholderPage } from './pages/PlaceholderPage';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -99,9 +101,12 @@ function App() {
       <AppHeader pages={pages} currentPageId={currentPage.id} />
       <main className="page-content">
         <section className="page-panel" aria-labelledby="page-title">
-          <p className="page-kicker">Frontend page</p>
-          <h1 id="page-title">{currentPage.title}</h1>
-          <p>{currentPage.description}</p>
+          {currentPage.id === 'home' && (
+            <HomePage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && (
+            <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
           {currentPage.id === 'profile' && (
             <ProfilePage
               profileStatus={profileStatus}
