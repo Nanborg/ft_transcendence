@@ -4,6 +4,8 @@ import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
 import { fetchCurrentUser } from './api/users';
+import { DevLoginForm } from './features/auth/DevLoginForm';
+import { CurrentUserCard } from './features/auth/CurrentUserCard';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -181,29 +183,17 @@ function App() {
           )}
           {currentPage.id === 'login' && (
             <div className="login-panel">
-              <form className="login-form" onSubmit={handleDevLogin}>
-                <label htmlFor="dev-user-name">Dev user name</label>
-                <input
-                  id="dev-user-name"
-                  type="text"
-                  value={devUserName}
-                  onChange={(event) => setDevUserName(event.target.value)}
-                  placeholder="nico"
-
-                />
-                <button type="submit" disabled={authStatus === 'loading'}>
-                  {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
-                </button>
-              </form>
+              <DevLoginForm
+                devUserName={devUserName}
+                authStatus={authStatus}
+                onDevUserNameChange={setDevUserName}
+                onSubmit={handleDevLogin}
+              />
               {authError && (
                 <p className="form-error" role="alert">{authError}</p>
               )}
               {currentUser && (
-                <div className="current-user-card">
-                  <p>Connected as {currentUser.name}</p>
-                  <p>{currentUser.email}</p>
-                  <button type="button" onClick={handleLogout}> Logout</button>
-                </div>
+                <CurrentUserCard currentUser={currentUser} onLogout={handleLogout} />
               )}
             </div>
           )}
