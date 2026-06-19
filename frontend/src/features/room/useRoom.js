@@ -1,7 +1,7 @@
-import {useEffect, useState} from 'react'
+import { useEffect, useState } from 'react'
 
 function getPlayerName(currentUser) {
-    return currentUser?.name || currentUser?.email || 'Player' ;
+    return currentUser?.name || currentUser?.email || 'Player';
 }
 
 export function useRoom(socket, currentUser) {
@@ -9,9 +9,11 @@ export function useRoom(socket, currentUser) {
     const [currentRoom, setCurrentRoom] = useState(null);
     const [roomStatus, setRoomStatus] = useState('idle');
     const [roomError, setRoomError] = useState('');
+    const [chatInput, setChatInput] = useState('');
+    const [chatMessages, setChatMessages] = useState([]);
 
     useEffect(() => {
-        if(!socket) {
+        if (!socket) {
             return undefined;
         }
 
@@ -32,14 +34,23 @@ export function useRoom(socket, currentUser) {
             setRoomError(error.message);
         }
 
+        function handleChatMessage(chatMessage) {
+            setChatMessages(previousMessages => [
+                ...previousMessages,
+                chatMessage,
+            ]);
+        }
+
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
+        socket.on('chat:message', handleChatMessage);
 
         return () => {
-        socket.off('room:created', handleRoomCreated);
-        socket.off('room:update', handleRoomUpdate);
-        socket.off('room:error', handleRoomError);
+            socket.off('room:created', handleRoomCreated);
+            socket.off('room:update', handleRoomUpdate);
+            socket.off('room:error', handleRoomError);
+            socket.off('chat:message', handleChatMessage);
         };
     }, [socket]);
 
@@ -61,7 +72,7 @@ export function useRoom(socket, currentUser) {
             return;
         }
         const roomId = roomIdInput.trim();
-        if (!roomId){
+        if (!roomId) {
             setRoomStatus('error');
             setRoomError('Enter the room id');
             return;
@@ -86,10 +97,12 @@ export function useRoom(socket, currentUser) {
         setRoomStatus('idle');
         setRoomError('');
         setRoomIdInput('');
+        setChatMessages([]);
+        setChatInput('');
     }
 
     function toggleReady() {
-        if(!socket || !currentRoom) {
+        if (!socket || !currentRoom) {
             return;
         }
         setRoomStatus('loading');
@@ -97,6 +110,22 @@ export function useRoom(socket, currentUser) {
         socket.emit('player:ready', {
             roomId: currentRoom.id,
         });
+    }
+
+    function sendChatMessage(event) {
+        event.preventDefault();
+        if (!socket || !currentRoom) {
+            return;
+        }
+        const message = chatInput.trim();
+        if (!message) {
+            return;
+        }
+        socket.emit('chat:message', {
+            roomId: currentRoom.id,
+            message,
+        });
+        setChatInput('');
     }
 
     return {
@@ -109,5 +138,9 @@ export function useRoom(socket, currentUser) {
         joinRoom,
         leaveRoom,
         toggleReady,
+        chatInput,
+        setChatInput,
+        chatMessages,
+        sendChatMessage,
     };
 }
