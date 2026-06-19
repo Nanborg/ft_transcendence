@@ -11,7 +11,11 @@ export function RoomPage({ title, description, socket, currentUser
     createRoom,
     joinRoom,
     leaveRoom,
-    toggleReady
+    toggleReady,
+    chatInput,
+    setChatInput,
+    chatMessages,
+    sendChatMessage
   } = useRoom(socket, currentUser);
 
   const players = currentRoom?.players || [];
@@ -62,6 +66,33 @@ export function RoomPage({ title, description, socket, currentUser
               disabled={isDisabled || !currentPlayer}>
               {currentPlayer?.ready ? 'Not ready' : 'Ready'}
             </button>
+            <div className="room-chat">
+              <h3>Chat</h3>
+              <ul className="room-chat-messages">
+                {chatMessages.map(chatMessage => (
+                  <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
+                    <span className="room-chat-author">
+                      {chatMessage.author.name}
+                    </span>
+                    <span>{chatMessage.message}</span>
+                  </li>
+                ))}
+              </ul>
+              <form className="room-chat-form" onSubmit={sendChatMessage}>
+                <label htmlFor="room-chat-message">Message</label>
+                <input
+                  id="room-chat-message"
+                  type="text"
+                  value={chatInput}
+                  onChange={event => setChatInput(event.target.value)}
+                  placeholder="write a message"
+                  disabled={isDisabled}
+                />
+                <button type="submit" disabled={isDisabled || !chatInput.trim()}>
+                  Send
+                </button>
+              </form>
+            </div>
             <button type="button" onClick={leaveRoom}>
               Leave room
             </button>
