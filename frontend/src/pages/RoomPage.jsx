@@ -15,11 +15,15 @@ export function RoomPage({ title, description, socket, currentUser
     chatInput,
     setChatInput,
     chatMessages,
-    sendChatMessage
+    sendChatMessage,
+    startGame,
+    gameStarted,
+    gameStartInfo
   } = useRoom(socket, currentUser);
 
   const players = currentRoom?.players || [];
   const currentPlayer = players.find(player => player.id === socket?.id);
+  const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
 
   return (
@@ -66,6 +70,19 @@ export function RoomPage({ title, description, socket, currentUser
               disabled={isDisabled || !currentPlayer}>
               {currentPlayer?.ready ? 'Not ready' : 'Ready'}
             </button>
+            <button
+              type="button"
+              className="room-start-button"
+              onClick={startGame}
+              disabled={isDisabled || !allPlayersReady || gameStarted}
+            >
+              Start game
+            </button>
+            {gameStarted && gameStartInfo && (
+              <p className="room-started">
+                Game starting: {gameStartInfo.status}
+              </p>
+            )}
             <div className="room-chat">
               <h3>Chat</h3>
               <ul className="room-chat-messages">
