@@ -16,6 +16,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 require("./socket/socketHandler")(io);
 
+const friendsRouter = require('./routes/friends');
+//const privateRoutes = require("./routes/private");
 const healthRoutes = require("./routes/health");
 const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
@@ -23,12 +25,14 @@ const logoutRoutes = require("./routes/logout")
 const signinRoutes = require("./routes/signin")
 const tokenRoutes = require("./routes/token")
 
+//app.use("/private", privateRoutes);
 app.use("/health", healthRoutes);
 app.use("/login", loginRoutes);
 app.use("/logout", logoutRoutes);
 app.use("/signin", signinRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
+app.use('/friends', friendsRouter);
 
 server.listen(port, "0.0.0.0", () => {
     console.log(`backend listening on port ${port}`);
