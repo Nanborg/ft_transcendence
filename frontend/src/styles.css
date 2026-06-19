@@ -175,9 +175,57 @@ p {
   margin: 0;
 }
 
-.profile-hint {
-  margin-top: 20px;
+.profile-panel {
+  margin-top: 24px;
+}
+
+.profile-empty,
+.profile-loading,
+.profile-error {
+  margin: 0;
+}
+
+.profile-error {
+  color: #a71111;
   font-weight: 700;
+}
+
+.profile-empty {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-empty a {
+  width: fit-content;
+  color: #000000;
+  font-weight: 700;
+}
+
+.profile-details {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0;
+}
+
+.profile-details div {
+  display: grid;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.profile-details dt {
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.profile-details dd {
+  margin: 0;
+  color: #000000;
+  font-size: 16px;
 }
 
 @media (max-width: 760px) {
@@ -199,6 +247,7 @@ p {
     min-height: 240px;
     padding: 24px;
   }
+
 
   h1 {
     font-size: 30px;

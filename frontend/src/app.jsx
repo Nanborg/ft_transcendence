@@ -97,10 +97,15 @@ function getStoredDevUser() {
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
+
   const [devUserName, setDevUserName] = useState('');
   const [currentUser, setCurrentUser] = useState(getStoredDevUser);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
+
+  const [profileUser, setProfileUser] = useState(null);
+  const [profileStatus, setProfileStatus] = useState('idle');
+  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -121,6 +126,41 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
+
+  useEffect(() => {
+    if (currentPage.id !== 'profile') {
+      return;
+    }
+    if (!currentUser) {
+      setProfileUser(null);
+      setProfileStatus('empty');
+      setProfileError('');
+      return;
+    }
+    setProfileStatus('loading');
+    setProfileError('');
+    async function loadProfile() {
+      try {
+        //fetch
+        const response = await fetch('/api/users/me', {
+          headers: {
+            'x-dev-user': currentUser.name,
+          },
+        });
+        if (!response.ok) {
+          throw new Error('Unable to load profile.');
+        }
+        const user = await response.json();
+        setProfileUser(user);
+        setProfileStatus('loaded');
+      } catch (error) {
+        setProfileUser(null);
+        setProfileStatus('error');
+        setProfileError(error.message);
+      }
+    }
+    loadProfile();
+  }, [currentPage.id, currentUser]);
 
   useEffect(() => {
     const socket = io({
@@ -209,6 +249,42 @@ function App() {
           <p className="page-kicker">Frontend page</p>
           <h1 id="page-title">{currentPage.title}</h1>
           <p>{currentPage.description}</p>
+          {currentPage.id === 'profile' && (
+            <div className="profile-panel">
+              {profileStatus === 'empty' && (
+                <div className="profile-empty">
+                  <p>Login with a dev user to view your profile.</p>
+                  <a href="#/login">Go to Login</a>
+                </div>
+              )}
+              {profileStatus === 'loading' && (
+                <p className="profile-loading">Loading profile...</p>
+              )}
+              {profileStatus === 'error' && (
+                <p className="profile-error" role="alert">{profileError}</p>
+              )}
+              {profileStatus === 'loaded' && profileUser && (
+                <dl className="profile-details">
+                  <div>
+                    <dt>ID</dt>
+                    <dd>{profileUser.id || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Name</dt>
+                    <dd>{profileUser.name || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Email</dt>
+                    <dd>{profileUser.email || 'Not available'}</dd>
+                  </div>
+                  <div>
+                    <dt>Role</dt>
+                    <dd>{profileUser.role || 'Not available'}</dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+          )}
           {currentPage.id === 'login' && (
             <div className="login-panel">
               <form className="login-form" onSubmit={handleDevLogin}>
@@ -236,9 +312,6 @@ function App() {
                 </div>
               )}
             </div>
-          )}
-          {currentPage.id === 'profile' && currentUser && (
-            <p className="profile-hint">Logged in as {currentUser.name}.</p>
           )}
         </section>
 
