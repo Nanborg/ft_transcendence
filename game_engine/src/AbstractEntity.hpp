@@ -4,25 +4,32 @@
 class AbstractEntity
 {
 public:
-	AbstractEntity( int );
+	AbstractEntity( int id, int size, int posX, int posY );
 	virtual ~AbstractEntity( void ) = 0;
 
-	virtual void tick( void );
+	// write override tick behavior here
+	// return true to send updates to client
+	virtual bool tick( void );
+
+	bool doTick( void );
 
 	// true means collision, false means no collision
 	bool checkCollision( const  AbstractEntity& ) const;
 
+	int getId( void ) const;
+	int getSize( void ) const;
 	int getPosX( void ) const;
 	int getPosY( void ) const;
-	int getSize( void ) const;
-	int getId( void ) const;
 
+	void setSize( int );
 	void setPosX( int );
 	void setPosY( int );
-	void setSize( int );
 
 protected:
-	int _posX, _posY, _size, _id;
+	virtual bool _templateTick( void );
+
+	const int	_id;
+	int			_size, _posX, _posY;
 };
 
 #endif

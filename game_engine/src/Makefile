@@ -5,7 +5,11 @@ LFLAGS =
 NAME = gameEngineRuntime
 
 SRC = \
-      run.cpp \
+	run.cpp \
+	GameEngine.cpp \
+	ControllerIO.cpp \
+	AbstractEntity.cpp \
+	AbstractMovingEntity.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 

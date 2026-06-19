@@ -22,3 +22,7 @@ backend/node_modules/
 # local HTTPS certificates
 nginx/certs/*.key
 nginx/certs/*.crt
+
+# cpp compiled files
+game_engine/src/*.o
+game_engine/src/gameEngineRuntime
