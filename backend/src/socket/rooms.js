@@ -9,6 +9,13 @@ function createPlayer(playerId, playerName) {
         id: playerId,
         name: playerName || `Player-${playerId.slice(0, 4)}`,
         ready: false,
+        input: {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            action: false,
+        },
     };
 }
 
@@ -136,6 +143,41 @@ function startGame(roomId, playerId) {
     };
 }
 
+function setPlayerInput(roomId, playerId, input) {
+    const room = rooms.get(roomId);
+
+    if (!room) {
+        return {
+            room: null,
+            error: "Room not found",
+        };
+    }
+    if (room.status !== "starting" && room.status !== "playing") {
+        return {
+            room,
+            error: "Game is not started",
+        };
+    }
+    const player = room.players.find((player) => player.id === playerId);
+    if (!player) {
+        return {
+            room,
+            error: "Player is not in room",
+        };
+    }
+    player.input = {
+        up: input.up === true,
+        down: input.down === true,
+        left: input.left === true,
+        right: input.right === true,
+        action: input.action === true,
+    };
+    return {
+        room,
+        error: null,
+    };
+}
+
 function getRoom(roomId) {
     return rooms.get(roomId) || null;
 }
@@ -149,4 +191,5 @@ module.exports = {
     getPlayerInRoom,
     setPlayerReady,
     startGame,
+    setPlayerInput,
 };

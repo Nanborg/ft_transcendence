@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput } = require("./rooms");
 
 module.exports = (io) => {
 	io.on("connection", (socket) => {
@@ -59,6 +59,45 @@ module.exports = (io) => {
 				timestamp: Date.now(),
 			});
 			console.log(`game starting in room ${room.id}`);
+		});
+
+		socket.on("player:input", (payload) => {
+			if (
+				!payload ||
+				typeof payload.roomId !== "string" ||
+				typeof payload.input !== "object" ||
+				payload.input === null
+			) {
+				socket.emit("room:error", {
+					event: "player:input",
+					message: "Invalid payload",
+				});
+				return;
+			}
+			const { roomId, input } = payload;
+			const validKeys = ["up", "down", "left", "right", "action"];
+			const hasInvalidKey = Object.keys(input).some((key) => !validKeys.includes(key));
+			if (hasInvalidKey) {
+				socket.emit("room:error", {
+					event: "player:input",
+					message: "Invalid input",
+				});
+				return;
+			}
+			const { room, error } = setPlayerInput(roomId, socket.id, input);
+			if (error) {
+				socket.emit("room:error", {
+					event: "player:input",
+					message: error,
+				});
+				return;
+			}
+			const player = getPlayerInRoom(roomId, socket.id);
+			io.to(roomId).emit("player:input", {
+				playerId: socket.id,
+				input: player.input,
+				timestamp: Date.now(),
+			});
 		});
 
 		socket.on("room:leave", (payload) => {
