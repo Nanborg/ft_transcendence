@@ -88,6 +88,17 @@ export function useRoom(socket, currentUser) {
         setRoomIdInput('');
     }
 
+    function toggleReady() {
+        if(!socket || !currentRoom) {
+            return;
+        }
+        setRoomStatus('loading');
+        setRoomError('');
+        socket.emit('player:ready', {
+            roomId: currentRoom.id,
+        });
+    }
+
     return {
         roomIdInput,
         setRoomIdInput,
@@ -97,5 +108,6 @@ export function useRoom(socket, currentUser) {
         createRoom,
         joinRoom,
         leaveRoom,
+        toggleReady,
     };
 }
