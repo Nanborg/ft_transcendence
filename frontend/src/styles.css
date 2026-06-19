@@ -242,6 +242,51 @@ p {
   font-size: 16px;
 }
 
+/* Room */
+
+.room-panel {
+  display: grid;
+  gap: 16px;
+  max-width: 500px;
+  margin-top: 24px;
+}
+
+.room-form input {
+  width: 90%;
+  padding: 10px 10px;
+  border: 1px solid #fff;
+  border-radius: 8px;
+  font: inherit;
+}
+
+
+.room-panel button {
+  width: fit-content;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #173173;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.room-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.room-loading,
+.room-error {
+  margin: 0;
+}
+
+.room-error {
+  color: #a71111;
+  font-weight: 700;
+}
+
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
