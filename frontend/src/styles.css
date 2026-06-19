@@ -1,3 +1,5 @@
+/* Base */
+
 * {
   box-sizing: border-box;
 }
@@ -13,9 +15,13 @@ a {
   color: inherit;
 }
 
+/* layout of the App */
+
 .app-shell {
   min-height: 100vh;
 }
+
+/* Head and nav */
 
 .app-header {
   display: flex;
@@ -61,6 +67,8 @@ a {
   background: #fff;
 }
 
+/* layout of the Page */
+
 .page-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
@@ -86,6 +94,8 @@ a {
   align-self: start;
   padding: 20px;
 }
+
+/* Typo */
 
 .page-kicker {
   margin: 0 0 8px;
@@ -114,6 +124,8 @@ h2 {
 p {
   line-height: 1.5;
 }
+
+/* Login */
 
 .login-panel {
   max-width: 420px;
@@ -175,6 +187,8 @@ p {
   margin: 0;
 }
 
+/* Profile */
+
 .profile-panel {
   margin-top: 24px;
 }
@@ -228,6 +242,8 @@ p {
   font-size: 16px;
 }
 
+/* Responsive (mobile) */
+
 @media (max-width: 760px) {
   .app-header {
     align-items: flex-start;
@@ -247,7 +263,6 @@ p {
     min-height: 240px;
     padding: 24px;
   }
-
 
   h1 {
     font-size: 30px;

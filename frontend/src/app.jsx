@@ -1,98 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
-
-
-const pages = [
-  {
-    id: 'home',
-    path: '/',
-    label: 'Home',
-    title: 'Home',
-    description: 'Welcome to ft_transcendence',
-  },
-  {
-    id: 'login',
-    path: '/login',
-    label: 'Login',
-    title: 'Login',
-    description: 'Login to your account',
-  },
-  {
-    id: 'profile',
-    path: '/profile',
-    label: 'Profile',
-    title: 'Profile',
-    description: 'View your profile',
-  },
-  {
-    id: 'friends',
-    path: '/friends',
-    label: 'Friends',
-    title: 'Friends',
-    description: 'View your friends',
-  },
-  {
-    id: 'lobby',
-    path: '/lobby',
-    label: 'Lobby',
-    title: 'Lobby',
-    description: 'Enter the lobby',
-  },
-  {
-    id: 'room',
-    path: '/room',
-    label: 'Room',
-    title: 'Room',
-    description: 'Enter a room',
-  },
-  {
-    id: 'game',
-    path: '/game',
-    label: 'Game',
-    title: 'Game',
-    description: 'Play a game',
-  },
-  {
-    id: 'leaderboard',
-    path: '/leaderboard',
-    label: 'Leaderboard',
-    title: 'Leaderboard',
-    description: 'View the leaderboard',
-  },
-  {
-    id: 'match-history',
-    path: '/match-history',
-    label: 'Match History',
-    title: 'Match History',
-    description: 'View your match history',
-  },
-];
-
-function getCurrentPath() {
-  const hashPath = window.location.hash.replace(/^#/, '');
-  if (!hashPath || hashPath === '/') {
-    return '/';
-  }
-  return hashPath;
-}
-
-const DEV_USER_STORAGE_KEY = 'ft_transcendence_dev_user';
-
-function getStoredDevUser() {
-  try {
-    const storedUser = window.localStorage.getItem(DEV_USER_STORAGE_KEY);
-
-    if (!storedUser) {
-      return null;
-    }
-
-    return JSON.parse(storedUser);
-  } catch {
-    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
-    return null;
-  }
-}
-
+import { pages } from './routing/pages';
+import { getCurrentPath } from './routing/hashRouter';
+import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
+import { fetchCurrentUser } from './api/users';
+import { LoginPage } from './pages/LoginPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { useProfile } from './features/profile/useProfile';
+import { AppHeader } from './components/AppHeader';
+import { StatusPanel } from './components/StatusPanel';
+import { HomePage } from './pages/HomePage';
+import { PlaceholderPage } from './pages/PlaceholderPage';
 
 function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
@@ -102,10 +20,6 @@ function App() {
   const [currentUser, setCurrentUser] = useState(getStoredDevUser);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
-
-  const [profileUser, setProfileUser] = useState(null);
-  const [profileStatus, setProfileStatus] = useState('idle');
-  const [profileError, setProfileError] = useState('');
 
   useEffect(() => {
     if (currentUser) {
@@ -126,41 +40,7 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
-
-  useEffect(() => {
-    if (currentPage.id !== 'profile') {
-      return;
-    }
-    if (!currentUser) {
-      setProfileUser(null);
-      setProfileStatus('empty');
-      setProfileError('');
-      return;
-    }
-    setProfileStatus('loading');
-    setProfileError('');
-    async function loadProfile() {
-      try {
-        //fetch
-        const response = await fetch('/api/users/me', {
-          headers: {
-            'x-dev-user': currentUser.name,
-          },
-        });
-        if (!response.ok) {
-          throw new Error('Unable to load profile.');
-        }
-        const user = await response.json();
-        setProfileUser(user);
-        setProfileStatus('loaded');
-      } catch (error) {
-        setProfileUser(null);
-        setProfileStatus('error');
-        setProfileError(error.message);
-      }
-    }
-    loadProfile();
-  }, [currentPage.id, currentUser]);
+  const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
 
   useEffect(() => {
     const socket = io({
@@ -197,17 +77,9 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'x-dev-user': trimmedName,
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Login failed.');
-      }
-      const user = await response.json();
+      const user = await fetchCurrentUser(trimmedName);
       setCurrentUser(user);
-      window.localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(user));
+      storeDevUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
     } catch (error) {
@@ -219,107 +91,42 @@ function App() {
 
   function handleLogout() {
     setCurrentUser(null);
-    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    clearStoredDevUser();
     setAuthStatus('idle');
     setAuthError('');
   }
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <a className="brand" href="#/">
-          ft_transcendence
-        </a>
-
-        <nav className="main-nav" aria-label="Main navigation">
-          {pages.map((page) => (
-            <a
-              key={page.id}
-              href={`#${page.path}`}
-              aria-current={currentPage.id === page.id ? 'page' : undefined}
-            >
-              {page.label}
-            </a>
-          ))}
-        </nav>
-      </header>
-
+      <AppHeader pages={pages} currentPageId={currentPage.id} />
       <main className="page-content">
         <section className="page-panel" aria-labelledby="page-title">
-          <p className="page-kicker">Frontend page</p>
-          <h1 id="page-title">{currentPage.title}</h1>
-          <p>{currentPage.description}</p>
+          {currentPage.id === 'home' && (
+            <HomePage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && (
+            <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
           {currentPage.id === 'profile' && (
-            <div className="profile-panel">
-              {profileStatus === 'empty' && (
-                <div className="profile-empty">
-                  <p>Login with a dev user to view your profile.</p>
-                  <a href="#/login">Go to Login</a>
-                </div>
-              )}
-              {profileStatus === 'loading' && (
-                <p className="profile-loading">Loading profile...</p>
-              )}
-              {profileStatus === 'error' && (
-                <p className="profile-error" role="alert">{profileError}</p>
-              )}
-              {profileStatus === 'loaded' && profileUser && (
-                <dl className="profile-details">
-                  <div>
-                    <dt>ID</dt>
-                    <dd>{profileUser.id || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Name</dt>
-                    <dd>{profileUser.name || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Email</dt>
-                    <dd>{profileUser.email || 'Not available'}</dd>
-                  </div>
-                  <div>
-                    <dt>Role</dt>
-                    <dd>{profileUser.role || 'Not available'}</dd>
-                  </div>
-                </dl>
-              )}
-            </div>
+            <ProfilePage
+              profileStatus={profileStatus}
+              profileError={profileError}
+              profileUser={profileUser}
+            />
           )}
           {currentPage.id === 'login' && (
-            <div className="login-panel">
-              <form className="login-form" onSubmit={handleDevLogin}>
-                <label htmlFor="dev-user-name">Dev user name</label>
-                <input
-                  id="dev-user-name"
-                  type="text"
-                  value={devUserName}
-                  onChange={(event) => setDevUserName(event.target.value)}
-                  placeholder="nico"
-
-                />
-                <button type="submit" disabled={authStatus === 'loading'}>
-                  {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
-                </button>
-              </form>
-              {authError && (
-                <p className="form-error" role="alert">{authError}</p>
-              )}
-              {currentUser && (
-                <div className="current-user-card">
-                  <p>Connected as {currentUser.name}</p>
-                  <p>{currentUser.email}</p>
-                  <button type="button" onClick={handleLogout}> Logout</button>
-                </div>
-              )}
-            </div>
+            <LoginPage
+              devUserName={devUserName}
+              authStatus={authStatus}
+              authError={authError}
+              currentUser={currentUser}
+              onDevUserNameChange={setDevUserName}
+              onSubmit={handleDevLogin}
+              onLogout={handleLogout}
+            />
           )}
         </section>
-
-        <aside className="status-panel" aria-label="Connection status">
-          <h2>System status</h2>
-          <p>Socket.IO: {socketStatus}</p>
-          <p>Session: {currentUser ? currentUser.name : 'not logged in'}</p>
-        </aside>
+        <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />
       </main>
     </div>
   );
