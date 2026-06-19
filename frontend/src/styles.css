@@ -333,6 +333,15 @@ p {
   background: #277277;
 }
 
+.room-start-button {
+  background: #173173;
+}
+
+.room-started {
+  margin: 0;
+  color: #277277;
+  font-weight: 700;
+}
 
 /* Responsive (mobile) */
 
