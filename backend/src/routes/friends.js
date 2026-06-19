@@ -7,13 +7,20 @@ router.get("/", authToken, async (req, res) => {
     try {
         const userWithFriends = await prisma.user.findUnique({
             where: { id: req.user.id },
-            include: { friends: true }
+            select: {
+                friends: {
+                    select: {
+                        id: true,
+                        username: true,
+                    }
+                }
+            }
         });
         if (!userWithFriends) {
             return res.status(404).json({ error: "Utilisateur introuvable." });
         }
         res.status(200).json(userWithFriends.friends);
-    } 
+    }
     catch (error) {
         console.error(error);
         res.status(500).json({ error: "Impossible de récupérer la liste d'amis" });

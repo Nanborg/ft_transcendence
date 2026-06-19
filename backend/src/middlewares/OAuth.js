@@ -6,13 +6,13 @@ const prisma = require('../db');
 // to delete and replace with data base
 
 function generateAccessToken(user) {
-	return jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, {expiresIn: '15m'})
+	return jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '15m' })
 }
 
-async function OAuth(req, res, next){
+async function OAuth(req, res, next) {
 	console.log("OAuth hit");
 	try {
-		 if (!req.body.name || !req.body.password)
+		if (!req.body.name || !req.body.password)
 			return res.status(400).json({ error: "Missing username or password" });
 
 		const user = await prisma.user.findUnique({
@@ -35,7 +35,7 @@ async function OAuth(req, res, next){
 		});
 
 
-		res.json({message: "Connection success", accessToken:accessToken, refreshToken:refreshToken})
+		res.json({ message: "Connection success", accessToken: accessToken, refreshToken: refreshToken })
 	}
 	catch (err) {
 		console.error("Auth error: ", err);
@@ -43,4 +43,4 @@ async function OAuth(req, res, next){
 	}
 }
 
-module.exports = {OAuth, generateAccessToken};
+module.exports = { OAuth, generateAccessToken };
