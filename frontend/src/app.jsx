@@ -76,10 +76,37 @@ function getCurrentPath() {
   return hashPath;
 }
 
-function App() 
-{
+const DEV_USER_STORAGE_KEY = 'ft_transcendence_dev_user';
+
+function getStoredDevUser() {
+  try {
+    const storedUser = window.localStorage.getItem(DEV_USER_STORAGE_KEY);
+
+    if (!storedUser) {
+      return null;
+    }
+
+    return JSON.parse(storedUser);
+  } catch {
+    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    return null;
+  }
+}
+
+
+function App() {
   const [socketStatus, setSocketStatus] = useState('connecting');
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
+  const [devUserName, setDevUserName] = useState('');
+  const [currentUser, setCurrentUser] = useState(getStoredDevUser);
+  const [authStatus, setAuthStatus] = useState('idle');
+  const [authError, setAuthError] = useState('');
+
+  useEffect(() => {
+    if (currentUser) {
+      setAuthStatus('authenticated');
+    }
+  }, [currentUser]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -120,6 +147,43 @@ function App()
     };
   }, []);
 
+  async function handleDevLogin(event) {
+    event.preventDefault();
+    const trimmedName = devUserName.trim();
+    if (!trimmedName) {
+      setAuthError('Enter a username to login');
+      return;
+    }
+    setAuthStatus('loading');
+    setAuthError('');
+    try {
+      const response = await fetch('/api/users/me', {
+        headers: {
+          'x-dev-user': trimmedName,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Login failed.');
+      }
+      const user = await response.json();
+      setCurrentUser(user);
+      window.localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(user));
+      setAuthStatus('authenticated');
+      setDevUserName('');
+    } catch (error) {
+      setCurrentUser(null);
+      setAuthStatus('error');
+      setAuthError(error.message);
+    }
+  }
+
+  function handleLogout() {
+    setCurrentUser(null);
+    window.localStorage.removeItem(DEV_USER_STORAGE_KEY);
+    setAuthStatus('idle');
+    setAuthError('');
+  }
+
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -145,11 +209,43 @@ function App()
           <p className="page-kicker">Frontend page</p>
           <h1 id="page-title">{currentPage.title}</h1>
           <p>{currentPage.description}</p>
+          {currentPage.id === 'login' && (
+            <div className="login-panel">
+              <form className="login-form" onSubmit={handleDevLogin}>
+                <label htmlFor="dev-user-name">Dev user name</label>
+                <input
+                  id="dev-user-name"
+                  type="text"
+                  value={devUserName}
+                  onChange={(event) => setDevUserName(event.target.value)}
+                  placeholder="nico"
+
+                />
+                <button type="submit" disabled={authStatus === 'loading'}>
+                  {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
+                </button>
+              </form>
+              {authError && (
+                <p className="form-error" role="alert">{authError}</p>
+              )}
+              {currentUser && (
+                <div className="current-user-card">
+                  <p>Connected as {currentUser.name}</p>
+                  <p>{currentUser.email}</p>
+                  <button type="button" onClick={handleLogout}> Logout</button>
+                </div>
+              )}
+            </div>
+          )}
+          {currentPage.id === 'profile' && currentUser && (
+            <p className="profile-hint">Logged in as {currentUser.name}.</p>
+          )}
         </section>
 
         <aside className="status-panel" aria-label="Connection status">
           <h2>System status</h2>
           <p>Socket.IO: {socketStatus}</p>
+          <p>Session: {currentUser ? currentUser.name : 'not logged in'}</p>
         </aside>
       </main>
     </div>
