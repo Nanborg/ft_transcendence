@@ -10,10 +10,12 @@ export function RoomPage({ title, description, socket, currentUser
     roomError,
     createRoom,
     joinRoom,
-    leaveRoom
+    leaveRoom,
+    toggleReady
   } = useRoom(socket, currentUser);
 
   const players = currentRoom?.players || [];
+  const currentPlayer = players.find(player => player.id === socket?.id);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
 
   return (
@@ -53,7 +55,13 @@ export function RoomPage({ title, description, socket, currentUser
                 <p>No players yet.</p>
               )}
             </div>
-
+            <button
+              type="button"
+              className="room-ready-button"
+              onClick={toggleReady}
+              disabled={isDisabled || !currentPlayer}>
+              {currentPlayer?.ready ? 'Not ready' : 'Ready'}
+            </button>
             <button type="button" onClick={leaveRoom}>
               Leave room
             </button>
