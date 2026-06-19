@@ -11,6 +11,8 @@ export function useRoom(socket, currentUser) {
     const [roomError, setRoomError] = useState('');
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
+    const [gameStarted, setGameStarted] = useState(false);
+    const [gameStartInfo, setGameStartInfo] = useState(null);
 
     useEffect(() => {
         if (!socket) {
@@ -41,16 +43,25 @@ export function useRoom(socket, currentUser) {
             ]);
         }
 
+        function handleGameStart(gameStartPayload) {
+            setGameStarted(true);
+            setGameStartInfo(gameStartPayload);
+            setRoomStatus('started');
+            setRoomError('');
+        }
+
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
         socket.on('chat:message', handleChatMessage);
+        socket.on('game:start', handleGameStart);
 
         return () => {
             socket.off('room:created', handleRoomCreated);
             socket.off('room:update', handleRoomUpdate);
             socket.off('room:error', handleRoomError);
             socket.off('chat:message', handleChatMessage);
+            socket.off('game:start', handleGameStart);
         };
     }, [socket]);
 
@@ -99,6 +110,8 @@ export function useRoom(socket, currentUser) {
         setRoomIdInput('');
         setChatMessages([]);
         setChatInput('');
+        setGameStarted(false);
+        setGameStartInfo(null);
     }
 
     function toggleReady() {
@@ -128,6 +141,17 @@ export function useRoom(socket, currentUser) {
         setChatInput('');
     }
 
+    function startGame() {
+        if (!socket || !currentRoom) {
+            return;
+        }
+        setRoomStatus('loading');
+        setRoomError('');
+        socket.emit('game:start', {
+            roomId: currentRoom.id,
+        });
+    }
+
     return {
         roomIdInput,
         setRoomIdInput,
@@ -142,5 +166,8 @@ export function useRoom(socket, currentUser) {
         setChatInput,
         chatMessages,
         sendChatMessage,
+        startGame,
+        gameStartInfo,
+        gameStarted,
     };
 }
