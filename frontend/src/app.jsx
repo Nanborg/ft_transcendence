@@ -12,6 +12,7 @@ import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RoomPage } from './pages/RoomPage';
+//import { GamePage } from './pages/GamePage';
 
 function App() {
   const [socket, setSocket] = useState(null);
