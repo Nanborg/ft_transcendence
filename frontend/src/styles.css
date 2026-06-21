@@ -342,6 +342,32 @@ p {
   color: #277277;
   font-weight: 700;
 }
+/* Game */
+
+.game-panel{
+  display: grid;
+  gap: 18px;
+  margin-top: 24px;
+}
+
+.game-hud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.game-hud p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.game-canvas {
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  border: 1px solid darkblue;
+}
+/*remember color can be used like darkred no need #hex_number */
 
 /* Responsive (mobile) */
 
