@@ -282,6 +282,48 @@ p {
   margin: 0;
 }
 
+.room-current {
+  display: grid;
+  gap: 12px;
+}
+
+.room-players {
+  display: grid;
+  gap: 8px;
+}
+
+.room-players h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.room-players ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.room-players li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.room-player-name {
+  font-weight: 700;
+}
+
+.room-player-meta {
+  color: #666666;
+  font-size: 14px;
+}
+
 .room-error {
   color: #a71111;
   font-weight: 700;

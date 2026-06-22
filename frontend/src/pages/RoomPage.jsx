@@ -1,18 +1,19 @@
 import { useRoom } from '../features/room/useRoom';
 
-export function RoomPage({ title, description, socket, currentUser    
+export function RoomPage({ title, description, socket, currentUser
 }) {
-    const {
-        roomIdInput,
-        setRoomIdInput,
-        currentRoom,
-        roomStatus,
-        roomError,
-        createRoom,
-        joinRoom,
-        leaveRoom
-    } = useRoom(socket, currentUser);
+  const {
+    roomIdInput,
+    setRoomIdInput,
+    currentRoom,
+    roomStatus,
+    roomError,
+    createRoom,
+    joinRoom,
+    leaveRoom
+  } = useRoom(socket, currentUser);
 
+  const players = currentRoom?.players || [];
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
 
   return (
@@ -30,10 +31,33 @@ export function RoomPage({ title, description, socket, currentUser
           <div className="room-current">
             <h2>Current room</h2>
             <p>Room id: {currentRoom.id}</p>
+
             <p>Status: {currentRoom.status}</p>
+
+            <div className="room-players">
+              <h3>Players</h3>
+
+              {players.length > 0 ? (
+                <ul>
+                  {players.map(player => (
+                    <li key={player.id}>
+                      <span className="room-player-name">{player.name}</span>
+                      <span className="room-player-meta">
+                        {player.id === currentRoom.ownerId ? 'Owner' : 'Player'} -
+                        {player.ready ? ' Ready' : ' Not ready'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No players yet.</p>
+              )}
+            </div>
+
             <button type="button" onClick={leaveRoom}>
               Leave room
             </button>
+
           </div>
         ) : (
           <div className="room-actions">
