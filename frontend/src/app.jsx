@@ -11,8 +11,10 @@ import { AppHeader } from './components/AppHeader';
 import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { RoomPage } from './pages/RoomPage';
 
 function App() {
+  const [socket, setSocket] = useState(null);
   const [socketStatus, setSocketStatus] = useState('connecting');
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
 
@@ -43,27 +45,29 @@ function App() {
   const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
 
   useEffect(() => {
-    const socket = io({
+    const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
     });
+    setSocket(nextSocket);
 
-    socket.on('connect', () => {
-      setSocketStatus(`connected: ${socket.id}`);
-      console.log('socket connected:', socket.id);
+    nextSocket.on('connect', () => {
+      setSocketStatus(`connected: ${nextSocket.id}`);
+      console.log('socket connected:', nextSocket.id);
     });
 
-    socket.on('disconnect', () => {
+    nextSocket.on('disconnect', () => {
       setSocketStatus('disconnected');
       console.log('socket disconnected');
     });
 
-    socket.on('connect_error', (error) => {
+    nextSocket.on('connect_error', (error) => {
       setSocketStatus(`connection error: ${error.message}`);
     });
 
     return () => {
-      socket.disconnect();
+      nextSocket.disconnect();
+      setSocket(null);
     };
   }, []);
 
@@ -104,7 +108,7 @@ function App() {
           {currentPage.id === 'home' && (
             <HomePage title={currentPage.title} description={currentPage.description} />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'profile' && (
@@ -112,6 +116,14 @@ function App() {
               profileStatus={profileStatus}
               profileError={profileError}
               profileUser={profileUser}
+            />
+          )}
+          {currentPage.id === 'room' && (
+            <RoomPage
+              title={currentPage.title}
+              description={currentPage.description}
+              socket={socket}
+              currentUser={currentUser}
             />
           )}
           {currentPage.id === 'login' && (
