@@ -329,6 +329,11 @@ p {
   font-weight: 700;
 }
 
+.room-ready-button {
+  background: #277277;
+}
+
+
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
