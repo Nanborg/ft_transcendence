@@ -68,7 +68,7 @@ module.exports = (io) => {
 			console.log(`game starting in room ${room.id}`);
 		});
 
-		socket.on("player:input", (payload) => {
+		socket.on("player:input", async (payload) => {
 			if (
 				!payload ||
 				typeof payload.roomId !== "string" ||
@@ -99,7 +99,7 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const player = getPlayerInRoom(roomId, socket.id);
+			const player = await getPlayerInRoom(roomId, socket.user.id);
 			io.to(roomId).emit("player:input", {
 				playerId: socket.id,
 				input: player.input,
@@ -146,7 +146,7 @@ module.exports = (io) => {
 			io.to(roomId).emit("room:update", room);
 		});
 
-		socket.on("chat:message", (payload) => {
+		socket.on("chat:message", async (payload) => {
 			if (!payload ||
 				typeof payload.roomId !== "string" ||
 				typeof payload.message !== "string"
@@ -165,7 +165,7 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const room = getRoom(roomId);
+			const room = await getRoom(roomId);
 			if (!room) {
 				socket.emit("room:error", {
 					event: "chat:message",
@@ -173,7 +173,7 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const player = getPlayerInRoom(roomId, socket.id);
+			const player = await getPlayerInRoom(roomId, socket.user.id);
 			if (!player) {
 				socket.emit("room:error", {
 					event: "chat:message",

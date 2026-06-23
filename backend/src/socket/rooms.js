@@ -156,12 +156,23 @@ function leaveAllRooms(playerId) {
     };
 }
 
-function getPlayerInRoom(roomId, playerId) {
-    const room = rooms.get(roomId);
-    if (!room) {
+async function getPlayerInRoom(roomId, userId) {
+    const player = await prisma.roomPlayer.findUnique({
+        where: {
+            roomId_userId: {
+                roomId,
+                userId,
+            },
+        },
+        include: { user: true },
+    });
+    if (!player)
         return null;
-    }
-    return room.players.find((player) => player.id === playerId) || null;
+    return {
+        id: player.user.id,
+        name: player.user.username,
+        ready: player.ready,
+    };
 }
 
 async function setPlayerReady(roomId, userId) {
