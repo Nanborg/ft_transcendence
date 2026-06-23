@@ -1,5 +1,5 @@
 const prisma = require("../db");
-const rooms = new Map();
+const playerInputs = new Map();
 
 function generateRoomId() {
     return `room-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -256,8 +256,8 @@ async function startGame(roomId, userId) {
     };
 }
 
-function setPlayerInput(roomId, playerId, input) {
-    const room = rooms.get(roomId);
+async function setPlayerInput(roomId, userId, input) {
+    const room = await getRoom(roomId);
 
     if (!room) {
         return {
@@ -271,20 +271,27 @@ function setPlayerInput(roomId, playerId, input) {
             error: "Game is not started",
         };
     }
-    const player = room.players.find((player) => player.id === playerId);
+    const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
             room,
             error: "Player is not in room",
         };
     }
-    player.input = {
+    
+    const inputKey = `${roomId}:${userId}`;
+
+    playerInputs.set(inputKey, {
+        roomId,
+        userId,
         up: input.up === true,
         down: input.down === true,
         left: input.left === true,
         right: input.right === true,
         action: input.action === true,
-    };
+        updatedAt: Date.now(),
+    });
+
     return {
         room,
         error: null,

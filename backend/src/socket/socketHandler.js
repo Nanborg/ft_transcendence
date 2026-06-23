@@ -91,7 +91,7 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const { room, error } = setPlayerInput(roomId, socket.id, input);
+			const { room, error } = await setPlayerInput(roomId, socket.user.id, input);
 			if (error) {
 				socket.emit("room:error", {
 					event: "player:input",
@@ -99,10 +99,15 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const player = await getPlayerInRoom(roomId, socket.user.id);
 			io.to(roomId).emit("player:input", {
-				playerId: socket.id,
-				input: player.input,
+				playerId: socket.user.id,
+				input: {
+					up: input.up === true,
+					down: input.down === true,
+					left: input.left === true,
+					right: input.right === true,
+					action: input.action === true,
+				},
 				timestamp: Date.now(),
 			});
 		});
