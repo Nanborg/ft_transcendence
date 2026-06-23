@@ -130,25 +130,47 @@ async function leaveRoom(roomId, userId) {
     return getRoom(roomId);
 }
 
-function leaveAllRooms(playerId) {
+async function leaveAllRooms(userId) {
+    const memberships = await prisma.roomPlayer.findMany({
+        where: { userId },
+        include: { room: true },
+    });
+
     const updatedRooms = [];
     const removedRoomIds = [];
 
-    for (const [roomId, room] of rooms.entries()) {
-        const wasInRoom = room.players.some((player) => player.id === playerId);
-        if (!wasInRoom) {
-            continue;
-        }
-        room.players = room.players.filter((player) => player.id !== playerId);
-        if (room.players.length === 0) {
-            rooms.delete(roomId);
+    for (const membership of memberships) {
+        const roomId = membership.roomId;
+        const room = membership.room;
+
+        await prisma.roomPlayer.deleteMany({
+            where: { roomId, userId }
+        });
+
+        const remainingPlayers = await prisma.roomPlayer.findMany({
+            where: { roomId },
+            orderBy: { joinedAt: "asc" }
+        });
+
+        if (remainingPlayers.length === 0) {
+            await prisma.room.delete({
+                where: { id: roomId }
+            });
             removedRoomIds.push(roomId);
             continue;
         }
-        if (room.ownerId === playerId) {
-            room.ownerId = room.players[0].id;
+
+        if (room.ownerId === userId) {
+            await prisma.room.update({
+                where: { id: roomId },
+                data: { ownerId: remainingPlayers[0].userId },
+            });
         }
-        updatedRooms.push(room);
+
+        const updatedRoom = await getRoom(roomId);
+        if (updatedRoom) {
+            updatedRooms.push(updatedRoom);
+        }
     }
     return {
         updatedRooms,

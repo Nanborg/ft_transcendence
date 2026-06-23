@@ -192,15 +192,16 @@ module.exports = (io) => {
 			io.to(roomId).emit("chat:message", chatMessage);
 		});
 
-		socket.on("disconnect", (reason) => {
-			const { updatedRooms, removedRoomIds } = leaveAllRooms(socket.id);
-			updatedRooms.forEach((room) => {
+		socket.on("disconnect", async () => {
+			const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
+			
+			for (const room of updatedRooms) {
 				io.to(room.id).emit("room:update", room);
-			});
-			removedRoomIds.forEach((roomId) => {
-				console.log(`room removed: ${roomId}`);
-			});
-			console.log(`socket disconnected: ${socket.id} reason=${reason}`);
+			}
+			for (const roomId of removedRoomIds) {
+				io.to(roomId).emit("room:removed", { roomId });
+			}
+			console.log(`socket disconnected: ${socket.id}`);
 		});
 	});
 };
