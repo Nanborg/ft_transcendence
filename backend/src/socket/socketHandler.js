@@ -4,15 +4,22 @@ module.exports = (io) => {
 	io.on("connection", (socket) => {
 		console.log(`socket connected: ${socket.id}`);
 
-		socket.on("room:create", ({ playerName } = {}) => {
-			const room = createRoom(socket.id, playerName);
-			socket.join(room.id);
-			console.log(`room created: ${room.id} by ${socket.id}`);
-			socket.emit("room:created", room);
-			io.to(room.id).emit("room:update", room);
+		socket.on("room:create", async ({ roomName } = {}) => {
+			try {
+				const room = await createRoom(socket.user.id, roomName);
+				socket.join(room.id);
+				console.log(`room created: ${room.id} by user ${socket.user.id}`);
+				socket.emit("room:created", room);
+				io.to(room.id).emit("room:update", room);
+			} catch (error) {
+				socket.emit("room:error", {
+					event: "room:create",
+					message: error.message,
+				});
+			}
 		});
 
-		socket.on("room:join", (payload) => {
+		socket.on("room:join", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "room:join",
@@ -20,8 +27,8 @@ module.exports = (io) => {
 				});
 				return;
 			}
-			const { roomId, playerName } = payload;
-			const room = joinRoom(roomId, socket.id, playerName);
+			const { roomId } = payload;
+			const room = await joinRoom(roomId, socket.user.id);
 			if (!room) {
 				socket.emit("room:error", {
 					event: "room:join",
@@ -30,7 +37,7 @@ module.exports = (io) => {
 				return;
 			}
 			socket.join(room.id);
-			console.log(`socket ${socket.id} joined room ${room.id}`);
+			console.log(`socket ${socket.user.id} joined room ${room.id}`);
 			io.to(room.id).emit("room:update", room);
 		});
 
@@ -100,7 +107,7 @@ module.exports = (io) => {
 			});
 		});
 
-		socket.on("room:leave", (payload) => {
+		socket.on("room:leave", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "room:leave",
@@ -109,9 +116,9 @@ module.exports = (io) => {
 				return;
 			}
 			const { roomId } = payload;
-			const room = leaveRoom(roomId, socket.id);
+			const room = await leaveRoom(roomId, socket.user.id);
 			socket.leave(roomId);
-			console.log(`socket ${socket.id} left room ${roomId}`);
+			console.log(`socket ${socket.user.id} left room ${roomId}`);
 			if (room) {
 				io.to(roomId).emit("room:update", room);
 			} else {
@@ -119,7 +126,7 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("player:ready", (payload) => {
+		socket.on("player:ready", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "player:ready",
@@ -128,7 +135,7 @@ module.exports = (io) => {
 				return;
 			}
 			const { roomId } = payload;
-			const room = setPlayerReady(roomId, socket.id);
+			const room = await setPlayerReady(roomId, socket.user.id);
 			if (!room) {
 				socket.emit("room:error", {
 					event: "player:ready",
