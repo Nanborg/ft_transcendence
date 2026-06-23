@@ -222,8 +222,8 @@ async function setPlayerReady(roomId, userId) {
     return getRoom(roomId);
 }
 
-function startGame(roomId, playerId) {
-    const room = rooms.get(roomId);
+async function startGame(roomId, userId) {
+    const room = await getRoom(roomId);
 
     if (!room) {
         return {
@@ -231,7 +231,7 @@ function startGame(roomId, playerId) {
             error: "Room not found"
         };
     }
-    const player = room.players.find((player) => player.id === playerId);
+    const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
             room: null,
@@ -246,9 +246,12 @@ function startGame(roomId, playerId) {
             error: "All players must be ready",
         };
     }
-    room.status = "starting";
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "starting" },
+    });
     return {
-        room,
+        room: await getRoom(roomId),
         error: null,
     };
 }

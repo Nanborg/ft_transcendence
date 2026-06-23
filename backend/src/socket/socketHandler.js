@@ -41,7 +41,7 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		});
 
-		socket.on("game:start", (payload) => {
+		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "game:start",
@@ -50,7 +50,7 @@ module.exports = (io) => {
 				return;
 			}
 			const { roomId } = payload;
-			const { room, error } = startGame(roomId, socket.id);
+			const { room, error } = await startGame(roomId, socket.user.id);
 			if (error) {
 				socket.emit("room:error", {
 					event: "game:start",
