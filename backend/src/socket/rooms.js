@@ -1,5 +1,5 @@
 const prisma = require("../db");
-const rooms = new Map();
+const playerInputs = new Map();
 
 function generateRoomId() {
     return `room-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -130,25 +130,47 @@ async function leaveRoom(roomId, userId) {
     return getRoom(roomId);
 }
 
-function leaveAllRooms(playerId) {
+async function leaveAllRooms(userId) {
+    const memberships = await prisma.roomPlayer.findMany({
+        where: { userId },
+        include: { room: true },
+    });
+
     const updatedRooms = [];
     const removedRoomIds = [];
 
-    for (const [roomId, room] of rooms.entries()) {
-        const wasInRoom = room.players.some((player) => player.id === playerId);
-        if (!wasInRoom) {
-            continue;
-        }
-        room.players = room.players.filter((player) => player.id !== playerId);
-        if (room.players.length === 0) {
-            rooms.delete(roomId);
+    for (const membership of memberships) {
+        const roomId = membership.roomId;
+        const room = membership.room;
+
+        await prisma.roomPlayer.deleteMany({
+            where: { roomId, userId }
+        });
+
+        const remainingPlayers = await prisma.roomPlayer.findMany({
+            where: { roomId },
+            orderBy: { joinedAt: "asc" }
+        });
+
+        if (remainingPlayers.length === 0) {
+            await prisma.room.delete({
+                where: { id: roomId }
+            });
             removedRoomIds.push(roomId);
             continue;
         }
-        if (room.ownerId === playerId) {
-            room.ownerId = room.players[0].id;
+
+        if (room.ownerId === userId) {
+            await prisma.room.update({
+                where: { id: roomId },
+                data: { ownerId: remainingPlayers[0].userId },
+            });
         }
-        updatedRooms.push(room);
+
+        const updatedRoom = await getRoom(roomId);
+        if (updatedRoom) {
+            updatedRooms.push(updatedRoom);
+        }
     }
     return {
         updatedRooms,
@@ -156,12 +178,23 @@ function leaveAllRooms(playerId) {
     };
 }
 
-function getPlayerInRoom(roomId, playerId) {
-    const room = rooms.get(roomId);
-    if (!room) {
+async function getPlayerInRoom(roomId, userId) {
+    const player = await prisma.roomPlayer.findUnique({
+        where: {
+            roomId_userId: {
+                roomId,
+                userId,
+            },
+        },
+        include: { user: true },
+    });
+    if (!player)
         return null;
-    }
-    return room.players.find((player) => player.id === playerId) || null;
+    return {
+        id: player.user.id,
+        name: player.user.username,
+        ready: player.ready,
+    };
 }
 
 async function setPlayerReady(roomId, userId) {
@@ -189,8 +222,8 @@ async function setPlayerReady(roomId, userId) {
     return getRoom(roomId);
 }
 
-function startGame(roomId, playerId) {
-    const room = rooms.get(roomId);
+async function startGame(roomId, userId) {
+    const room = await getRoom(roomId);
 
     if (!room) {
         return {
@@ -198,7 +231,7 @@ function startGame(roomId, playerId) {
             error: "Room not found"
         };
     }
-    const player = room.players.find((player) => player.id === playerId);
+    const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
             room: null,
@@ -213,15 +246,18 @@ function startGame(roomId, playerId) {
             error: "All players must be ready",
         };
     }
-    room.status = "starting";
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "starting" },
+    });
     return {
-        room,
+        room: await getRoom(roomId),
         error: null,
     };
 }
 
-function setPlayerInput(roomId, playerId, input) {
-    const room = rooms.get(roomId);
+async function setPlayerInput(roomId, userId, input) {
+    const room = await getRoom(roomId);
 
     if (!room) {
         return {
@@ -235,20 +271,27 @@ function setPlayerInput(roomId, playerId, input) {
             error: "Game is not started",
         };
     }
-    const player = room.players.find((player) => player.id === playerId);
+    const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
             room,
             error: "Player is not in room",
         };
     }
-    player.input = {
+    
+    const inputKey = `${roomId}:${userId}`;
+
+    playerInputs.set(inputKey, {
+        roomId,
+        userId,
         up: input.up === true,
         down: input.down === true,
         left: input.left === true,
         right: input.right === true,
         action: input.action === true,
-    };
+        updatedAt: Date.now(),
+    });
+
     return {
         room,
         error: null,
