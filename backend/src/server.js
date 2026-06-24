@@ -18,8 +18,8 @@ const io = new Server(server);
 io.use(socketAuth);
 require("./socket/socketHandler")(io);
 
+//every routes locations
 const friendsRouter = require('./routes/friends');
-//const privateRoutes = require("./routes/private");
 const healthRoutes = require("./routes/health");
 const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
@@ -27,7 +27,8 @@ const logoutRoutes = require("./routes/logout")
 const signinRoutes = require("./routes/signin")
 const tokenRoutes = require("./routes/token");
 
-//app.use("/private", privateRoutes);
+
+//every routes
 app.use("/health", healthRoutes);
 app.use("/login", loginRoutes);
 app.use("/logout", logoutRoutes);

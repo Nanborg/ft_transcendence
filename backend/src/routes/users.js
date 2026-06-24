@@ -11,6 +11,10 @@ router.get("/me", authToken, (req, res) => {
     res.json(req.user);
 });
 
+
+
+// need to delete prisma.user.create it's not suposed to be here
+
 router.post('/', async (req, res) => {
     try {
         const { email, username, password } = req.body;
@@ -35,6 +39,27 @@ router.post('/', async (req, res) => {
         res.status(400).json({ error: "Impossible de créer le joueur" });
     }
 });
+
+
+
+// route to get your informations (profile page maybe ?)
+
+//		└──>curl -i -X GET http://localhost:3000/users/me \
+//		 -H "Authorization: Bearer xxxxxxxxxxxxxxxxxx"           # accessToken
+//
+//
+//		HTTP/1.1 200 OK
+//		X-Powered-By: Express
+//		Content-Type: application/json; charset=utf-8
+//		Content-Length: 42
+//		ETag: W/"2a-I6hmxzNvY+sYGkXsiDeZm9HbL5k"
+//		Date: Tue, 23 Jun 2026 15:07:39 GMT
+//		Connection: keep-alive
+//		Keep-Alive: timeout=5
+//		
+//		{"id":9,"iat":1782227176,"exp":1782228076}
+
+
 
 router.patch('/me', authToken, async (req, res) => {
     try {
