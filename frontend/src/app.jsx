@@ -12,6 +12,7 @@ import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RoomPage } from './pages/RoomPage';
+import { GamePage } from './pages/GamePage';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -108,7 +109,7 @@ function App() {
           {currentPage.id === 'home' && (
             <HomePage title={currentPage.title} description={currentPage.description} />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'profile' && (
@@ -125,6 +126,12 @@ function App() {
               socket={socket}
               currentUser={currentUser}
             />
+          )}
+          {currentPage.id === 'game' && (
+            <GamePage
+              title={currentPage.title}
+              description={currentPage.description}
+              />
           )}
           {currentPage.id === 'login' && (
             <LoginPage
