@@ -9,6 +9,8 @@ export function LoginPage({
   onDevUserNameChange,
   onSubmit,
   onLogout,
+  password,
+  onPasswordChange,
 }) {
   return (
     <div className="login-panel">
@@ -16,6 +18,8 @@ export function LoginPage({
         devUserName={devUserName}
         authStatus={authStatus}
         onDevUserNameChange={onDevUserNameChange}
+        password={password}
+        onPasswordChange={onPasswordChange}
         onSubmit={onSubmit}
       />
       {authError && (
