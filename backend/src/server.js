@@ -12,8 +12,10 @@ const port = Number(process.env.BACKEND_PORT || 3000);
 const app = express();
 app.use(express.json());
 
+const socketAuth = require("./middlewares/socketAuth");
 const server = http.createServer(app);
 const io = new Server(server);
+io.use(socketAuth);
 require("./socket/socketHandler")(io);
 
 const friendsRouter = require('./routes/friends');
@@ -23,7 +25,7 @@ const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
 const logoutRoutes = require("./routes/logout")
 const signinRoutes = require("./routes/signin")
-const tokenRoutes = require("./routes/token")
+const tokenRoutes = require("./routes/token");
 
 //app.use("/private", privateRoutes);
 app.use("/health", healthRoutes);
