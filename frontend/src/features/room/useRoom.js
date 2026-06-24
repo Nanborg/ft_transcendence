@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 
+/*
 function getPlayerName(currentUser) {
     return currentUser?.name || currentUser?.email || 'Player';
-}
+}*/
+
 
 export function useRoom(socket, currentUser) {
     const [roomIdInput, setRoomIdInput] = useState('');
@@ -13,6 +15,7 @@ export function useRoom(socket, currentUser) {
     const [chatMessages, setChatMessages] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
+    const [roomNameInput, setRoomNameInput] = useState('');
 
     useEffect(() => {
         if (!socket) {
@@ -65,14 +68,16 @@ export function useRoom(socket, currentUser) {
         };
     }, [socket]);
 
-    function createRoom() {
+    function createRoom(event) {
+        event.preventDefault();
         if (!socket || !currentUser) {
             return;
         }
         setRoomStatus('loading');
         setRoomError('');
         socket.emit('room:create', {
-            playerName: getPlayerName(currentUser),
+            /*playerName: getPlayerName(currentUser),*/
+            roomName: roomNameInput.trim() || undefined,
         });
     }
 
@@ -92,7 +97,7 @@ export function useRoom(socket, currentUser) {
         setRoomError('');
         socket.emit('room:join', {
             roomId,
-            playerName: getPlayerName(currentUser),
+            /*playerName: getPlayerName(currentUser),*/
         });
     }
 
@@ -112,6 +117,7 @@ export function useRoom(socket, currentUser) {
         setChatInput('');
         setGameStarted(false);
         setGameStartInfo(null);
+        setRoomNameInput('');
     }
 
     function toggleReady() {
@@ -169,5 +175,7 @@ export function useRoom(socket, currentUser) {
         startGame,
         gameStartInfo,
         gameStarted,
+        roomNameInput,
+        setRoomNameInput,
     };
 }
