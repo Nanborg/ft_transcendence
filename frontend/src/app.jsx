@@ -56,9 +56,17 @@ function App() {
   const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
 
   useEffect(() => {
+    if (!authSession?.accessToken) {
+      setSocket(null);
+      setSocketStatus('disconnected');
+      return undefined;
+    }
     const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
+      auth: {
+        token: authSession.accessToken,
+      },
     });
     setSocket(nextSocket);
 
@@ -80,7 +88,7 @@ function App() {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, []);
+  }, [authSession?.accessToken]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
