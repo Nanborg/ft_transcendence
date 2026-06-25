@@ -51,6 +51,13 @@ export function useRoom(socket, currentUser) {
             setGameStartInfo(gameStartPayload);
             setRoomStatus('started');
             setRoomError('');
+            window.location.hash = '#/game';
+        }
+
+        function handleRoomRemoved() {
+            resetRoom();
+            setRoomError('Room no longer exists.');
+            window.location.hash = '#/room';
         }
 
         socket.on('room:created', handleRoomCreated);
@@ -58,6 +65,7 @@ export function useRoom(socket, currentUser) {
         socket.on('room:error', handleRoomError);
         socket.on('chat:message', handleChatMessage);
         socket.on('game:start', handleGameStart);
+        socket.on('room:removed', handleRoomRemoved);
 
         return () => {
             socket.off('room:created', handleRoomCreated);
@@ -65,6 +73,7 @@ export function useRoom(socket, currentUser) {
             socket.off('room:error', handleRoomError);
             socket.off('chat:message', handleChatMessage);
             socket.off('game:start', handleGameStart);
+            socket.off('room:removed', handleRoomRemoved);
         };
     }, [socket]);
 
@@ -167,7 +176,6 @@ export function useRoom(socket, currentUser) {
             roomId: currentRoom.id,
         });
     }
-
 
     return {
         roomIdInput,
