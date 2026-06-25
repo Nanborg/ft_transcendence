@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchCurrentUser } from '../../api/users';
 
-/*export function useProfile(currentPageId, currentUser) {
-*/
-export function useProfile(currentPageId, currentUser, accessToken) {
+export function useProfile(currentPageId, currentUser, accessToken, onSessionExpired,) {
   const [profileUser, setProfileUser] = useState(null);
   const [profileStatus, setProfileStatus] = useState('idle');
   const [profileError, setProfileError] = useState('');
@@ -27,13 +25,17 @@ export function useProfile(currentPageId, currentUser, accessToken) {
         setProfileUser(user);
         setProfileStatus('loaded');
       } catch (error) {
+        if (error.status === 401 || error.status === 403) {
+          onSessionExpired(error.message);
+          return;
+        }
         setProfileUser(null);
         setProfileStatus('error');
         setProfileError(error.message);
       }
     }
     loadProfile();
-  }, [currentPageId, currentUser, accessToken]);
+  }, [currentPageId, currentUser, accessToken, onSessionExpired]);
 
   return {
     profileUser,
