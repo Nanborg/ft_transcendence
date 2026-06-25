@@ -13,8 +13,8 @@ public:
 	~ControllerIO( void );
 
 	int pollApi( void );
-	int getMsg( char buffer[16] );
-	int sendMsg( char *buffer, int len );
+	int getMsg( uint8_t buffer[16] );
+	int sendMsg( uint8_t buffer[24] );
 
 private:
 	void		_setApiAddr( sockaddr& );

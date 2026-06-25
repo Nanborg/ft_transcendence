@@ -10,6 +10,7 @@ SRC = \
 	ControllerIO.cpp \
 	AbstractEntity.cpp \
 	AbstractMovingEntity.cpp \
+	PlayerEntity.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
