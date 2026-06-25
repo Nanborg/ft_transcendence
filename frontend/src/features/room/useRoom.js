@@ -68,6 +68,12 @@ export function useRoom(socket, currentUser) {
         };
     }, [socket]);
 
+    useEffect(() => {
+        if (!currentUser) {
+            resetRoom();
+        }
+    }, [currentUser]);
+
     function createRoom(event) {
         event.preventDefault();
         if (!socket || !currentUser) {
@@ -101,6 +107,18 @@ export function useRoom(socket, currentUser) {
         });
     }
 
+    function resetRoom() {
+        setCurrentRoom(null);
+        setRoomStatus('idle');
+        setRoomError('');
+        setRoomIdInput('');
+        setRoomNameInput('');
+        setChatMessages([]);
+        setChatInput('');
+        setGameStarted(false);
+        setGameStartInfo(null);
+    }
+
     function leaveRoom() {
         if (!socket || !currentRoom) {
             return;
@@ -109,15 +127,7 @@ export function useRoom(socket, currentUser) {
         socket.emit('room:leave', {
             roomId: currentRoom.id,
         });
-        setCurrentRoom(null);
-        setRoomStatus('idle');
-        setRoomError('');
-        setRoomIdInput('');
-        setChatMessages([]);
-        setChatInput('');
-        setGameStarted(false);
-        setGameStartInfo(null);
-        setRoomNameInput('');
+        resetRoom();
     }
 
     function toggleReady() {
@@ -157,6 +167,7 @@ export function useRoom(socket, currentUser) {
             roomId: currentRoom.id,
         });
     }
+
 
     return {
         roomIdInput,
