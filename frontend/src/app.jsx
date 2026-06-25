@@ -8,7 +8,7 @@ import { fetchCurrentUser } from './api/users';
 */
 import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser } from './api/users';
-
+import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
@@ -33,6 +33,7 @@ function App() {
   const [authError, setAuthError] = useState('');
 
   const [password, setPassword] = useState('');
+  const room = useRoom(socket, currentUser);
 
   useEffect(() => {
     if (currentUser) {
@@ -162,6 +163,7 @@ function App() {
               description={currentPage.description}
               socket={socket}
               currentUser={currentUser}
+              room={room}
             />
           )}
           {currentPage.id === 'game' && (

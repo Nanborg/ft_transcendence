@@ -1,7 +1,9 @@
-import { useRoom } from '../features/room/useRoom';
+//import { useRoom } from '../features/room/useRoom';
 
-export function RoomPage({ title, description, socket, currentUser
+/*export function RoomPage({ title, description, socket, currentUser
 }) {
+*/
+export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
     roomIdInput,
     setRoomIdInput,
@@ -21,7 +23,8 @@ export function RoomPage({ title, description, socket, currentUser
     gameStartInfo,
     roomNameInput,
     setRoomNameInput
-  } = useRoom(socket, currentUser);
+  } = room;
+  /*= useRoom(socket, currentUser);*/
 
   const players = currentRoom?.players || [];
   const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
