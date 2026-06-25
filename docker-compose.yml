@@ -19,7 +19,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "npm install && npm run prisma"
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
@@ -27,6 +27,8 @@ services:
       OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me}
       OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me}
       SESSION_SECRET: ${SESSION_SECRET:-replace_me}
+      ACCESS_SECRET_TOKEN: ${ACCESS_SECRET_TOKEN}
+      REFRESH_SECRET_TOKEN: ${REFRESH_SECRET_TOKEN}
     expose:
       - "3000"
     depends_on:
