@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { fetchCurrentUser } from '../../api/users';
 
-export function useProfile(currentPageId, currentUser) {
+/*export function useProfile(currentPageId, currentUser) {
+*/
+export function useProfile(currentPageId, currentUser, accessToken) {
   const [profileUser, setProfileUser] = useState(null);
   const [profileStatus, setProfileStatus] = useState('idle');
   const [profileError, setProfileError] = useState('');
@@ -10,7 +12,7 @@ export function useProfile(currentPageId, currentUser) {
     if (currentPageId !== 'profile') {
       return;
     }
-    if (!currentUser) {
+    if (!currentUser || !accessToken) {
       setProfileUser(null);
       setProfileStatus('empty');
       setProfileError('');
@@ -20,7 +22,8 @@ export function useProfile(currentPageId, currentUser) {
     setProfileError('');
     async function loadProfile() {
       try {
-        const user = await fetchCurrentUser(currentUser.name);
+        /*const user = await fetchCurrentUser(currentUser.name);*/
+        const user = await fetchCurrentUser(accessToken);
         setProfileUser(user);
         setProfileStatus('loaded');
       } catch (error) {
@@ -30,7 +33,7 @@ export function useProfile(currentPageId, currentUser) {
       }
     }
     loadProfile();
-  }, [currentPageId, currentUser]);
+  }, [currentPageId, currentUser, accessToken]);
 
   return {
     profileUser,

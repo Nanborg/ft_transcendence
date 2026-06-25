@@ -54,7 +54,12 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
-  const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
+  /*const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);*/
+  const { profileUser, profileStatus, profileError } = useProfile(
+    currentPage.id,
+    currentUser,
+    authSession?.accessToken,
+  );
 
   useEffect(() => {
     if (!authSession?.accessToken) {
