@@ -3,22 +3,20 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 router.use(express.json());
 
-router.use(express.json());
-
-router.get("/me", authToken, (req, res) => {
-	res.status(200).send("You can see your page here");
-});
-
-router.post('/', async (req, res) => {
-    try {
-        const { email, username } = req.body;
-        const newUser = await prisma.user.create({
-            data: { email: email, username: username },
-        });
-        res.status(201).json({ message: "Joueur créé avec succès !", user: newUser });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ error: "Impossible de créer le joueur" });
+router.get("/me", authToken, async (req, res) => {
+	try{
+        const UserId = req.user.id
+        const userProfile = await prisma.user.findUnique({
+            where: { id: UserId },
+            select: { id: true, username: true, email: true, avatar: true}
+        })
+        if (!userProfile) {
+            return res.status(404).json({ error: "Utilisateur introuvable" });
+        }
+        res.json(userProfile);
+    }
+    catch (error) {
+        res.status(500).json({ error: "Erreur serveur" });
     }
 });
 

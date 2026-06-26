@@ -17,16 +17,16 @@ const io = new Server(server);
 require("./socket/socketHandler")(io);
 
 const healthRoutes = require("./routes/health");
-const usersRoutes = require("./routes/users")
-const loginRoutes = require("./routes/login")
-const logoutRoutes = require("./routes/logout")
-const signinRoutes = require("./routes/signin")
-const tokenRoutes = require("./routes/token")
+const usersRoutes = require("./routes/users");
+const loginRoutes = require("./routes/login");
+const logoutRoutes = require("./routes/logout");
+const signupRoutes = require("./routes/signup");
+const tokenRoutes = require("./routes/token");
 
 app.use("/health", healthRoutes);
 app.use("/login", loginRoutes);
 app.use("/logout", logoutRoutes);
-app.use("/signin", signinRoutes);
+app.use("/signup", signupRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 

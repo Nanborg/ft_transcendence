@@ -18,7 +18,7 @@ router.post("/dev", (req, res, next) => {
 	req.user = {
 		id: "dev-123",
 		email: `${devUser}@local.dev`,
-		name: devUser,
+		username: devUser,
 		role: "user",
 	};
 
