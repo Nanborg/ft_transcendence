@@ -1,5 +1,6 @@
 import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
-
+//Nanborg
+// TODO -> remove mockGameState from this import once GamePage receives the real game state.
 export function GamePage({ title, description }) {
     return (
         <>
