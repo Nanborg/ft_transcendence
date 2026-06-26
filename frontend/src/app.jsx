@@ -187,6 +187,7 @@ function App() {
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
+              gameState={room.latestGameState}
             />
           )}
           {currentPage.id === 'login' && (
