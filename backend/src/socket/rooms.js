@@ -19,7 +19,9 @@ function createPlayer(playerId, playerName) {
         },
     };
 }
-
+//Princiamf2
+// TODO -> return structured create-room errors instead of throwing raw Error messages.
+// The Socket.IO client should receive stable error codes for duplicate room names and invalid room names.
 async function createRoom(ownerId, roomName) {
     const roomId = generateRoomId();
     const cleanRoomName = typeof roomName === "string" && roomName.trim()
