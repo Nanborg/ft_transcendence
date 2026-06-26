@@ -29,6 +29,9 @@ module.exports = (io) => {
 			}
 			const { roomId } = payload;
 			const room = await joinRoom(roomId, socket.user.id);
+			//Princiamf2
+			// TODO -> return explicit join errors from joinRoom instead of only null.
+			// The client should distinguish room not found, room already started, room full, and invalid payload.
 			if (!room) {
 				socket.emit("room:error", {
 					event: "room:join",
