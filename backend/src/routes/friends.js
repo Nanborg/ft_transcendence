@@ -3,6 +3,9 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
+//Yaoberso / Loufoko
+// TODO -> keep the friends list response stable for the frontend.
+// The Friends page needs predictable fields for loading, empty state, errors, add, and remove flows.
 router.get("/", authToken, async (req, res) => {
     try {
         const userWithFriends = await prisma.user.findUnique({
