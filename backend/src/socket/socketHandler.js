@@ -68,6 +68,9 @@ module.exports = (io) => {
 				players: room.players,
 				timestamp: Date.now(),
 			});
+			//Princiamf2
+			// TODO -> emit game:end only after the C++ engine reports a validated final result.
+			// The frontend must not be able to declare scores or decide when a game is finished.
 			console.log(`game starting in room ${room.id}`);
 		});
 
