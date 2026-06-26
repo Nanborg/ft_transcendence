@@ -49,6 +49,9 @@ export function GameCanvas({ gameState }) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#000000';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        //Nanborg
+        // TODO -> validate or normalize gameState before drawing.
+        // The real game:state may arrive late or miss players/objects during reconnects.
         gameState.players.forEach(player => {
             context.fillStyle = player.color;
             context.fillRect(player.x, player.y, player.size, player.size);
