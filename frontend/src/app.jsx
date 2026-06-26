@@ -2,8 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
+/*
 import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
 import { fetchCurrentUser } from './api/users';
+*/
+import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
+import { fetchCurrentUser, loginUser } from './api/users';
+import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
@@ -20,9 +25,15 @@ function App() {
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
 
   const [devUserName, setDevUserName] = useState('');
-  const [currentUser, setCurrentUser] = useState(getStoredDevUser);
+  /*const [currentUser, setCurrentUser] = useState(getStoredDevUser);*/
+  const storedSession = getStoredAuthSession();
+  const [authSession, setAuthSession] = useState(storedSession);
+  const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
+
+  const [password, setPassword] = useState('');
+  const room = useRoom(socket, currentUser);
 
   useEffect(() => {
     if (currentUser) {
@@ -46,9 +57,17 @@ function App() {
   const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
 
   useEffect(() => {
+    if (!authSession?.accessToken) {
+      setSocket(null);
+      setSocketStatus('disconnected');
+      return undefined;
+    }
     const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
+      auth: {
+        token: authSession.accessToken,
+      },
     });
     setSocket(nextSocket);
 
@@ -70,7 +89,7 @@ function App() {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, []);
+  }, [authSession?.accessToken]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
@@ -82,11 +101,28 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
+      /*
       const user = await fetchCurrentUser(trimmedName);
       setCurrentUser(user);
       storeDevUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
+      */
+      const tokens = await loginUser(trimmedName, password);
+      const user = await fetchCurrentUser(tokens.accessToken);
+
+      const session = {
+        user,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+
+      setAuthSession(session);
+      storeAuthSession(session);
+      setCurrentUser(user);
+      setAuthStatus('authenticated');
+      setDevUserName('');
+      setPassword('');
     } catch (error) {
       setCurrentUser(null);
       setAuthStatus('error');
@@ -96,7 +132,9 @@ function App() {
 
   function handleLogout() {
     setCurrentUser(null);
-    clearStoredDevUser();
+    /*clearStoredDevUser();*/
+    setAuthSession(null);
+    clearStoredAuthSession();
     setAuthStatus('idle');
     setAuthError('');
   }
@@ -125,13 +163,14 @@ function App() {
               description={currentPage.description}
               socket={socket}
               currentUser={currentUser}
+              room={room}
             />
           )}
           {currentPage.id === 'game' && (
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
-              />
+            />
           )}
           {currentPage.id === 'login' && (
             <LoginPage
@@ -142,6 +181,8 @@ function App() {
               onDevUserNameChange={setDevUserName}
               onSubmit={handleDevLogin}
               onLogout={handleLogout}
+              password={password}
+              onPasswordChange={setPassword}
             />
           )}
         </section>
