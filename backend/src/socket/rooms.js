@@ -206,7 +206,9 @@ async function getPlayerInRoom(roomId, userId) {
         ready: player.ready,
     };
 }
-
+//Princiamf2
+// TODO -> reject ready toggles once the room is starting, playing, or finished.
+// Ready state should only control the lobby phase before the C++ engine session starts.
 async function setPlayerReady(roomId, userId) {
    const player = await prisma.roomPlayer.findUnique({
         where: {
