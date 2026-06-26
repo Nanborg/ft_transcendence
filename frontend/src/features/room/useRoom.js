@@ -138,7 +138,9 @@ export function useRoom(socket, currentUser) {
         });
         resetRoom();
     }
-
+    //Nanborg
+    // TODO -> add a dedicated game input hook that emits player:input from keyboard state.
+    // Inputs should be sent as JSON booleans and the Socket.IO backend will translate them for the C++ engine.
     function toggleReady() {
         if (!socket || !currentRoom) {
             return;
