@@ -15,7 +15,9 @@ router.get("/me", authToken, (req, res) => {
 
 
 
-// need to delete prisma.user.create it's not suposed to be here
+//Yaoberso
+// TODO -> remove or protect this user creation route because signin already owns registration.
+// Keeping two registration paths can create inconsistent validation and duplicate auth behavior.
 
 router.post('/', async (req, res) => {
     try {
