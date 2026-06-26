@@ -6,7 +6,9 @@ const bcrypt = require("bcrypt");
 router.use(express.json());
 
 const prisma = require('../db');
-
+//Yaoberso
+// TODO -> load the full user profile from Prisma using req.user.id.
+// The frontend profile page needs stable id, username, email, and avatar fields, not only the JWT payload.
 router.get("/me", authToken, (req, res) => {
     res.json(req.user);
 });
