@@ -37,11 +37,11 @@ function generateAccessToken(user) {
 async function OAuth(req, res, next) {
 	console.log("OAuth hit");
 	try {
-		if (!req.body.name || !req.body.password)
+		if (!req.body.username || !req.body.password)
 			return res.status(400).json({ error: "Missing username or password" });
 
 		const user = await prisma.user.findUnique({
-			where: { username: req.body.name }
+			where: { username: req.body.username }
 		});
 		if (user == null)
 			return res.status(401).send('Invalid credentials');
@@ -51,12 +51,12 @@ async function OAuth(req, res, next) {
 
 		const u = {
 			id: user.id,
-			name: user.name
+			name: user.username
 		}
 		const accessToken = generateAccessToken(u)
-		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
+		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '3d' })
 		await prisma.refreshToken.create({
-			data: { token: refreshToken, userId: user.id }
+			data: { token: refreshToken, userId: user.id}
 		});
 
 

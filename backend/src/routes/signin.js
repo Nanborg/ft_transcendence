@@ -51,7 +51,7 @@ router.post ("/", async (req, res) => {
 		res.status(201).json({
 			message: 'Sign up success',
 			userId: user.id,
-			username: user.name
+			username: user.username
 		});
 
 	}

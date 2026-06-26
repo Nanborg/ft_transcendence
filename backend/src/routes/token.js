@@ -46,7 +46,7 @@ router.post("/", async (req, res) => {
 		jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, user) => {
 			if (err)
 				return (res.sendStatus(403))
-			const accessToken = generateAccessToken({name: tokenExist.user.name});
+			const accessToken = generateAccessToken({name: tokenExist.user.username});
 			res.json({accessToken: accessToken})
 		})
 	}
