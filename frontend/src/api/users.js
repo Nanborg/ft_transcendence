@@ -41,7 +41,11 @@ export async function fetchCurrentUser(accessToken) {
   });
 
   if (!response.ok) {
-    throw new Error('Unable to load profile.');
+    const error = new Error(
+      response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to load profile.',
+  );
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();

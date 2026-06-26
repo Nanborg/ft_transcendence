@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
@@ -54,7 +54,21 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
-  const { profileUser, profileStatus, profileError } = useProfile(currentPage.id, currentUser);
+  const handleSessionExpired = useCallback((message) => {
+    setCurrentUser(null);
+    setAuthSession(null);
+    clearStoredAuthSession();
+    setAuthStatus('error');
+    setAuthError(message || 'Session expired. Login again.');
+    window.location.hash = '#/login';
+  }, []);
+
+  const { profileUser, profileStatus, profileError } = useProfile(
+    currentPage.id,
+    currentUser,
+    authSession?.accessToken,
+    handleSessionExpired,
+  );
 
   useEffect(() => {
     if (!authSession?.accessToken) {
@@ -83,13 +97,16 @@ function App() {
 
     nextSocket.on('connect_error', (error) => {
       setSocketStatus(`connection error: ${error.message}`);
+      if ( error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
+        handleSessionExpired(error.message);
+      }
     });
 
     return () => {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, [authSession?.accessToken]);
+  }, [authSession?.accessToken, handleSessionExpired]);
 
   async function handleDevLogin(event) {
     event.preventDefault();

@@ -5,7 +5,7 @@ function socketAuth(socket, next)
     const token = socket.handshake.auth?.token;
 
     if (!token)
-        return next(new Error("Authentication token missing"));
+        return next(new Error("Auth token missing"));
 
     try
     {
@@ -17,7 +17,7 @@ function socketAuth(socket, next)
         next();
     } catch (error)
     {
-        next(new Error("Invalid authentication token"));
+        next(new Error("Invalid auth token"));
     }
 }
 

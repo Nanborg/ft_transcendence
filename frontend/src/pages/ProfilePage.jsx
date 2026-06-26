@@ -5,7 +5,7 @@ export function ProfilePage({ profileStatus, profileError, profileUser }) {
     <div className="profile-panel">
       {profileStatus === 'empty' && (
         <div className="profile-empty">
-          <p>Login with a dev user to view your profile.</p>
+          <p>Login to view your profile.</p>
           <a href="#/login">Go to Login</a>
         </div>
       )}

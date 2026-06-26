@@ -8,13 +8,13 @@ export function DevLoginForm({
 }) {
   return (
     <form className="login-form" onSubmit={onSubmit}>
-      <label htmlFor="dev-user-name">Dev user name</label>
+      <label htmlFor="dev-user-name">Username</label>
       <input
         id="dev-user-name"
         type="text"
         value={devUserName}
         onChange={(event) => onDevUserNameChange(event.target.value)}
-        placeholder="nico"
+        placeholder="Username"
       />
       <label htmlFor="password">Password</label>
       <input
@@ -24,7 +24,7 @@ export function DevLoginForm({
         onChange={event => onPasswordChange(event.target.value)}
       />
       <button type="submit" disabled={authStatus === 'loading'}>
-        {authStatus === 'loading' ? 'Logging in...' : 'Login as dev user'}
+        {authStatus === 'loading' ? 'Logging in...' : 'Login'}
       </button>
     </form>
   );

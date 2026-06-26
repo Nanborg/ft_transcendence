@@ -97,9 +97,11 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 {chatMessages.map(chatMessage => (
                   <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
                     <span className="room-chat-author">
-                      {chatMessage.author.name}
+                      {chatMessage.author.name}:
                     </span>
-                    <span>{chatMessage.message}</span>
+                    <span className="room-chat-message">
+                      {chatMessage.message}
+                    </span>
                   </li>
                 ))}
               </ul>
