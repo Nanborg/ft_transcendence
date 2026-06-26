@@ -45,7 +45,9 @@ export function useRoom(socket, currentUser) {
                 chatMessage,
             ]);
         }
-
+        //Nanborg
+        // TODO -> listen to game:state after game:start and store the latest server-authoritative state.
+        // The game page should render this state instead of mockGameState.
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
