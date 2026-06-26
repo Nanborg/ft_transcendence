@@ -1,5 +1,8 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput } = require("./rooms");
 
+//Princiamf2
+// TODO -> add Socket.IO tests for room lifecycle, invalid payloads, disconnects, and multi-room isolation.
+// These tests should cover create, join, ready, start, input, leave, reconnect, and room deletion.
 module.exports = (io) => {
 	io.on("connection", (socket) => {
 		console.log(`socket connected: ${socket.id}`);
