@@ -51,7 +51,9 @@ async function createRoom(ownerId, roomName) {
     });
     return getRoom(roomId);
 }
-
+//Princiamf2
+// TODO -> decide if one user can be in multiple rooms and enforce it consistently.
+// If the engine supports only one active game per user, joining a new room should leave or reject the previous one.
 async function joinRoom(roomIdentifier, userId) {
     const cleanIdentifier = typeof roomIdentifier === "string"
         ? roomIdentifier.trim()
