@@ -204,6 +204,9 @@ module.exports = (io) => {
 		});
 
 		socket.on("disconnect", async () => {
+			//Princiamf2
+			// TODO -> keep the user in rooms if another socket for the same user is still connected.
+			// Closing one tab should not remove an active player from the room or the engine session.
 			const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
 			
 			for (const room of updatedRooms) {
