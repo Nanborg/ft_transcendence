@@ -27,6 +27,9 @@ router.get("/", authToken, async (req, res) => {
     }
 });
 
+//Yaoberso / Loufoko
+// TODO -> decide whether friendships are reciprocal or directional before stabilizing this route.
+// The Prisma relation and frontend Friends page must agree on what adding a friend means.
 router.post("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
