@@ -58,7 +58,9 @@ router.post("/:id", authToken, async (req, res) => {
         res.status(400).json({ error: "Impossible d'ajouter cet ami" });
     }
 });
-
+//Yaoberso / Loufoko
+// TODO -> keep friend removal consistent with the chosen friendship direction.
+// If friendships are reciprocal, deleting a friend must update both users' relations.
 router.delete("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
