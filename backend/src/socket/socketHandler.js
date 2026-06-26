@@ -99,6 +99,9 @@ module.exports = (io) => {
 				});
 				return;
 			}
+			//Princiamf2
+			// TODO -> forward this validated input to the C++ engine through the Socket.IO backend.
+			// The engine should apply inputs in a fixed tick loop, then the frontend should render game:state updates.
 			io.to(roomId).emit("player:input", {
 				playerId: socket.user.id,
 				input: {
