@@ -331,7 +331,9 @@ function formatRoom(room)
         })),
     };
 }
-
+//Princiamf2
+// TODO -> return players in a stable order for enginePlayerId assignment.
+// The Socket.IO backend needs a deterministic user.id to enginePlayerId mapping when starting the C++ engine session.
 async function getRoom(roomId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
