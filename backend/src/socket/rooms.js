@@ -71,7 +71,9 @@ async function joinRoom(roomIdentifier, userId) {
     if (!room) {
         return null;
     }
-    
+    //Princiamf2
+    // TODO -> reject joins when the room is starting, playing, or finished.
+    // Late joins would desync the room state from the C++ engine player mapping.
     const existingPlayer = await prisma.roomPlayer.findUnique({
         where: {
             roomId_userId: {
