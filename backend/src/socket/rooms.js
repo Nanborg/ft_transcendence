@@ -231,6 +231,9 @@ async function startGame(roomId, userId) {
             error: "Room not found"
         };
     }
+    //Princiamf2
+// TODO -> only allow the room owner to start the game and validate the expected player count.
+// The engine should not start unless the room is still waiting and all required players are ready.
     const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
