@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-
+//Nanborg
+// TODO -> remove this mock state after GamePage is wired to Socket.IO game:state.
 export const mockGameState = {
     status: 'mock',
     score: 0,
