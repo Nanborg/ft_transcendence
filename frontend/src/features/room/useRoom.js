@@ -15,6 +15,7 @@ export function useRoom(socket, currentUser) {
     const [chatMessages, setChatMessages] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
+    const [latestGameState, setLatestGameState] = useState(null);
     const [roomNameInput, setRoomNameInput] = useState('');
 
     useEffect(() => {
@@ -54,6 +55,10 @@ export function useRoom(socket, currentUser) {
             window.location.hash = '#/game';
         }
 
+        function handleGameState(gameStatePayload) {
+            setLatestGameState(gameStatePayload);
+        }
+
         function handleRoomRemoved() {
             resetRoom();
             setRoomError('Room no longer exists.');
@@ -65,6 +70,7 @@ export function useRoom(socket, currentUser) {
         socket.on('room:error', handleRoomError);
         socket.on('chat:message', handleChatMessage);
         socket.on('game:start', handleGameStart);
+        socket.on('game:state', handleGameState);
         socket.on('room:removed', handleRoomRemoved);
 
         return () => {
@@ -73,6 +79,7 @@ export function useRoom(socket, currentUser) {
             socket.off('room:error', handleRoomError);
             socket.off('chat:message', handleChatMessage);
             socket.off('game:start', handleGameStart);
+            socket.off('game:state', handleGameState);
             socket.off('room:removed', handleRoomRemoved);
         };
     }, [socket]);
@@ -126,6 +133,7 @@ export function useRoom(socket, currentUser) {
         setChatInput('');
         setGameStarted(false);
         setGameStartInfo(null);
+        setLatestGameState(null);
     }
 
     function leaveRoom() {
@@ -193,6 +201,7 @@ export function useRoom(socket, currentUser) {
         sendChatMessage,
         startGame,
         gameStartInfo,
+        latestGameState,
         gameStarted,
         roomNameInput,
         setRoomNameInput,
