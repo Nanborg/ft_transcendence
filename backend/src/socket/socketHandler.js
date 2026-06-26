@@ -130,6 +130,9 @@ module.exports = (io) => {
 			if (room) {
 				io.to(roomId).emit("room:update", room);
 			} else {
+				//Princiamf2
+				// TODO -> notify the leaving socket when the room is deleted.
+				// Otherwise the client may keep stale room state after room:leave.
 				console.log(`room removed: ${roomId}`);
 			}
 		});
