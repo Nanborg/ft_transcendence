@@ -93,7 +93,9 @@ async function joinRoom(roomIdentifier, userId) {
     }
     return getRoom(room.id);
 }
-
+//Princiamf2
+// TODO -> clear this player's stored input when they leave a room.
+// Stale input state should not be reused if the same user rejoins or if the engine keeps a player mapping.
 async function leaveRoom(roomId, userId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
