@@ -133,7 +133,9 @@ async function leaveRoom(roomId, userId) {
     }
     return getRoom(roomId);
 }
-
+//Princiamf2
+// TODO -> clear all stored inputs for this user when disconnect cleanup really removes them from rooms.
+// This must stay aligned with the multi-tab rule so one tab closing does not clear inputs for an active socket.
 async function leaveAllRooms(userId) {
     const memberships = await prisma.roomPlayer.findMany({
         where: { userId },
