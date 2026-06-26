@@ -1,3 +1,6 @@
+//Yaoberso
+// TODO -> verify the full migration history on an empty database before merging more schema changes.
+// The existing migrations include friendship restoration and room additions that must replay cleanly.
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
