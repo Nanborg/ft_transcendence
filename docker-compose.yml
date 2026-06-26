@@ -72,10 +72,10 @@ services:
   gameplay-cpp:
     image: gcc:14
     container_name: ft_gameplay_cpp
-    working_dir: /app
+    working_dir: /game_engine
     command: ["bash", "-lc", "echo 'gameplay-cpp skeleton ready' && sleep infinity"]
     ports:
-      - "${GAMEPLAY_PORT:-7000}:7000"
+      - "${GAMEPLAY_PORT:-7297/udp}:7297"
     networks:
       - app_net
 

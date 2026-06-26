@@ -1,15 +1,17 @@
 #include "GameEngine.hpp"
 
-GameEngine::typeList GameEngine::_knownTypes = GameEngine::typeList();
-
 #define REGISTER_TYPE(T, i) (registerEntityType(typeid(T).hash_code(), i))
+GameEngine::typeList GameEngine::_knownTypes = GameEngine::typeList();
 
 GameEngine::GameEngine( int port ):
 	_io(port),
 	_running(false),
 	_nextEntityId(0) {}
-
 GameEngine::~GameEngine( void ) {}
+
+void	GameEngine::registerAllTypes( void ) {
+	REGISTER_TYPE(PlayerEntity, 1);
+}
 
 uint8_t GameEngine::registerEntityType( size_t hash_code, int id ) {
 	if (id == 0)
@@ -25,10 +27,6 @@ int		GameEngine::getTypeId( size_t hash_code ) {
 	if (ret == 0)
 		throw std::runtime_error("Unknown type id");
 	return ret;
-}
-
-void	GameEngine::registerAllTypes( void ) {
-	REGISTER_TYPE(PlayerEntity, 1);
 }
 
 void GameEngine::manageInput( uint8_t buffer[16] ) {
@@ -58,9 +56,10 @@ void GameEngine::manageInput( uint8_t buffer[16] ) {
 		break;
 	}
 }
+
 int		GameEngine::newId( void ) { return _nextEntityId++; }
 
-void	GameEngine::stop( void ) { _running = false; }
+void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
 void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
 void	GameEngine::start( void ) {
 	uint8_t buffer[17] = {0}; // extra byte at the end to make this a valid c str TODO: remove before submitting
@@ -98,27 +97,32 @@ void	GameEngine::_input_ping( input in ) {
 }
 
 void	GameEngine::_input_join( input in ) {
-	PlayerEntity *player = new PlayerEntity(in.playerId, 10, in.X, in.Y, 0, 0);
-	_playerIds[in.playerId] = player->getId();
-	_entities.push_front(entityPtr(player));
+	if (_playerIds.count(in.playerId) == 0) {
+		PlayerEntity *player = new PlayerEntity(in.playerId, 10, in.X, in.Y, 0, 0);
+		_playerIds[in.playerId] = player->getId();
+		_entities.push_front(entityPtr(player));
+	}
 }
 
 void	GameEngine::_input_leave( input in ) {
-	int entityId = _playerIds[in.playerId];
-	entityList::iterator it = _entities.before_begin();
-	entityList::iterator it2 = _entities.begin();
-	while (it2 != _entities.end() && (*it2)->getId() != entityId) {
-		it++;
-		it2++;
+	if (_playerIds.count(in.playerId) > 0) {
+		int entityId = _playerIds[in.playerId];
+		entityList::iterator it = _entities.before_begin();
+		entityList::iterator it2 = _entities.begin();
+		while (it2 != _entities.end() && (*it2)->getId() != entityId) {
+			it++;
+			it2++;
+		}
+		_playerIds.erase(in.playerId);
+		_entities.erase_after(it);
 	}
-	_playerIds.erase(in.playerId);
-	_entities.erase_after(it);
 }
 
 void	GameEngine::_input_move( input in ) {
-
-	int entityId = _playerIds[in.playerId];
-	entityList::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-	AbstractEntity *e = &**it;
-	((PlayerEntity *) e)->movementInput(in.X, in.Y);
+	if (_playerIds.count(in.playerId) > 0) {
+		int entityId = _playerIds[in.playerId];
+		entityList::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+		AbstractEntity *e = it->get();
+		((PlayerEntity *) e)->movementInput(in.X, in.Y);
+	}
 }

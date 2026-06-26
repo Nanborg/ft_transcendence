@@ -21,9 +21,9 @@ public:
 	GameEngine( int port );
 	~GameEngine( void );
 
-	static uint8_t	registerEntityType( size_t hash_code, int id );
 	// list all used entity classes along with their type id for referral in other parts of the server
 	static void		registerAllTypes( void );
+	static uint8_t	registerEntityType( size_t hash_code, int id );
 
 	static void		manageInput( uint8_t buffer[16] );
 	static int		getTypeId( size_t hash_code );

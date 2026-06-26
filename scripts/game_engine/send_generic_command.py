@@ -1,7 +1,7 @@
 import socket
 
 UDP_IP = "127.0.0.1"
-UDP_PORT = 8888
+UDP_PORT = 7297
 HEX = "00000000000000000000000000000000"
 
 def move(x:int, y:int) -> str:
@@ -19,7 +19,7 @@ def move(x:int, y:int) -> str:
 
 # format defined in server_io.md (on discord), written in hexadecimal
 #HEX = "010F0000000000000000000000000000" # join
-#HEX = "030F" + move(0, 0) + "000000000000" # move
+#HEX = "030F" + move(8, 8) + "000000000000" # move
 #HEX = "020F0000000000000000000000000000" # leave
 
 

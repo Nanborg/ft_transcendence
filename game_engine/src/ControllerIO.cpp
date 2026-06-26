@@ -15,7 +15,7 @@ ControllerIO::ControllerIO( int port ) {
 		throw std::exception();
 }
 
-ControllerIO::~ControllerIO( void ) {}
+ControllerIO::~ControllerIO( void ) { close(_sockfd); }
 
 int ControllerIO::pollApi() {
 	int k = poll(&_pollFd, 1, 0);

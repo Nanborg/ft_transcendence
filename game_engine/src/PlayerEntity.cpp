@@ -3,7 +3,8 @@
 
 PlayerEntity::PlayerEntity( int playerId, int size, int posX, int posY, int velX, int velY ):
 	AbstractMovingEntity(GET_TYPE(PlayerEntity), size, posX, posY, velX, velY),
-	_playerId(playerId) {
+	_playerId(playerId),
+	_receivedInput(false) {
 		std::cout << "new player (id " << _playerId << ")\n";
 	}
 
