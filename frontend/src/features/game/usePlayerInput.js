@@ -32,3 +32,13 @@ function mapKeyToInput(key) {
             return null;
     }
 }
+
+function areInputEqual(left, right) {
+    return (
+        left.up === right.up &&
+        left.down === right.down &&
+        left.left === right.left &&
+        left.right === right.right &&
+        left.action === right.action
+    );
+}
