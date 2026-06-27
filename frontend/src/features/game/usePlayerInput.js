@@ -8,6 +8,27 @@ const INITIAL_INPUT = {
     action: false,
 };
 
-export function usePlayerInput({ socket, toomId, enabled}) {
+export function usePlayerInput({ socket, toomId, enabled }) {
     const inputRef = useRef(INITIAL_INPUT);
+}
+
+function mapKeyToInput(key) {
+    switch (key) {
+        case 'ArrowUp':
+        case 'KeyW':
+            return 'up';
+        case 'ArrowDown':
+        case 'KeyS':
+            return 'down';
+        case 'ArrowLeft':
+        case 'KeyA':
+            return 'left';
+        case 'ArrowRight':
+        case 'KeyD':
+            return 'right';
+        case 'Space':
+            return 'action';
+        default:
+            return null;
+    }
 }
