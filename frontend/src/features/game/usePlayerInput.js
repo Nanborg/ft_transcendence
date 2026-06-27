@@ -10,6 +10,21 @@ const INITIAL_INPUT = {
 
 export function usePlayerInput({ socket, toomId, enabled }) {
     const inputRef = useRef(INITIAL_INPUT);
+
+    UseEffect(() => {
+        if(!socket || !roomId || !enabled) {
+            inputRef.current = INITIAL_INPUT;
+            return undefined;
+        }
+        function emitInput(nextInput) {
+            if (areInputEqual(inputRef.current, nextInput)) {
+                return;
+            }
+            inputRef.current = nextInput;
+            socket.emit('player:input', { roomId, input: nextInput, });
+        }
+        return undefined;
+    }, [socket, roomId, enabled]);
 }
 
 function mapKeyToInput(key) {
