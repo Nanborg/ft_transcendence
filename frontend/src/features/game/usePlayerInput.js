@@ -1,4 +1,4 @@
-import { UseEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 const INITIAL_INPUT = {
     up: false,
@@ -39,20 +39,23 @@ function areInputEqual(left, right) {
     );
 }
 
-export function usePlayerInput({ socket, toomId, enabled }) {
+export function usePlayerInput({ socket, roomId, enabled }) {
     const inputRef = useRef(INITIAL_INPUT);
 
-    UseEffect(() => {
+    useEffect(() => {
         if(!socket || !roomId || !enabled) {
             inputRef.current = INITIAL_INPUT;
             return undefined;
         }
+
         function emitInput(nextInput) {
             if (areInputEqual(inputRef.current, nextInput)) {
                 return;
             }
             inputRef.current = nextInput;
-            socket.emit('player:input', { roomId, input: nextInput, });
+            console.log('player:input', {roomId, input: nextInput});
+
+            socket.emit('player:input', { roomId, input: nextInput});
         }
         function updateInput(event, pressed) {
             const inputKey = mapKeyToInput(event.code);
@@ -74,8 +77,8 @@ export function usePlayerInput({ socket, toomId, enabled }) {
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         return () => {
-            window.addEventListener('keydown', handleKeyDown);
-            window.addEventListener('keyup', handleKeyUp);
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
             inputRef.current = INITIAL_INPUT;
         };
     }, [socket, roomId, enabled]);

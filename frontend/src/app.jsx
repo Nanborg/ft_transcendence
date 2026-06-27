@@ -188,6 +188,9 @@ function App() {
               title={currentPage.title}
               description={currentPage.description}
               gameState={room.latestGameState}
+              socket={socket}
+              currentRoom={room.currentRoom}
+              gameStarted={room.gameStarted}
             />
           )}
           {currentPage.id === 'login' && (
