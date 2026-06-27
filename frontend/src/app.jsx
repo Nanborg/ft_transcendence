@@ -83,6 +83,9 @@ function App() {
         token: authSession.accessToken,
       },
     });
+    // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
+    window.socket = nextSocket;
+    // DEV DEBUG END app.jsx socket console exposure.
     setSocket(nextSocket);
 
     nextSocket.on('connect', () => {
@@ -97,11 +100,16 @@ function App() {
 
     nextSocket.on('connect_error', (error) => {
       setSocketStatus(`connection error: ${error.message}`);
-      if ( error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
+      if (error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
         handleSessionExpired(error.message);
       }
     });
-
+    // DEV DEBUG START app.jsx socket event console logs - remove lines until DEV DEBUG END.
+    nextSocket.on('room:update', (...args) => console.log('room:update', ...args));
+    nextSocket.on('room:error', (...args) => console.log('room:error', ...args));
+    nextSocket.on('game:start', (...args) => console.log('game:start', ...args));
+    nextSocket.on('player:input', (...args) => console.log('player:input', ...args));
+    // DEV DEBUG END app.jsx socket event console logs.
     return () => {
       nextSocket.disconnect();
       setSocket(null);
