@@ -8,25 +8,6 @@ const INITIAL_INPUT = {
     action: false,
 };
 
-export function usePlayerInput({ socket, toomId, enabled }) {
-    const inputRef = useRef(INITIAL_INPUT);
-
-    UseEffect(() => {
-        if(!socket || !roomId || !enabled) {
-            inputRef.current = INITIAL_INPUT;
-            return undefined;
-        }
-        function emitInput(nextInput) {
-            if (areInputEqual(inputRef.current, nextInput)) {
-                return;
-            }
-            inputRef.current = nextInput;
-            socket.emit('player:input', { roomId, input: nextInput, });
-        }
-        return undefined;
-    }, [socket, roomId, enabled]);
-}
-
 function mapKeyToInput(key) {
     switch (key) {
         case 'ArrowUp':
@@ -56,4 +37,46 @@ function areInputEqual(left, right) {
         left.right === right.right &&
         left.action === right.action
     );
+}
+
+export function usePlayerInput({ socket, toomId, enabled }) {
+    const inputRef = useRef(INITIAL_INPUT);
+
+    UseEffect(() => {
+        if(!socket || !roomId || !enabled) {
+            inputRef.current = INITIAL_INPUT;
+            return undefined;
+        }
+        function emitInput(nextInput) {
+            if (areInputEqual(inputRef.current, nextInput)) {
+                return;
+            }
+            inputRef.current = nextInput;
+            socket.emit('player:input', { roomId, input: nextInput, });
+        }
+        function updateInput(event, pressed) {
+            const inputKey = mapKeyToInput(event.code);
+            if (!inputKey) {
+                return;
+            }
+            event.preventDefault();
+            emitInput({
+                ...inputRef.current, [inputKey]: pressed,
+            });
+        }
+        function handleKeyDown(event) {
+            updateInput(event, true);
+        }
+        function handleKeyUp(event) {
+            updateInput(event, false);
+        }
+
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        return () => {
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+            inputRef.current = INITIAL_INPUT;
+        };
+    }, [socket, roomId, enabled]);
 }
