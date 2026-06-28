@@ -5,11 +5,14 @@ export function DevLoginForm({
   onSubmit,
   password,
   onPasswordChange,
-  // TODO register: accept authMode, onAuthModeChange, email, onEmailChange and onRegister props here.
+  authMode,
+  onAuthModeChange,
+  email,
+  onEmailChange,
+  onRegister,
 }) {
   return (
-    /* TODO register: switch form onSubmit between onSubmit and onRegister here. */
-    <form className="login-form" onSubmit={onSubmit}>
+    <form className="login-form" onSubmit={authMode === 'register' ? onRegister : onSubmit}>
       <label htmlFor="dev-user-name">Username</label>
       <input
         id="dev-user-name"
@@ -17,8 +20,19 @@ export function DevLoginForm({
         value={devUserName}
         onChange={(event) => onDevUserNameChange(event.target.value)}
         placeholder="Username"
-        /* TODO register: render the email input here only when authMode is register. */
       />
+      {authMode === 'register' && (
+        <>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={event => onEmailChange(event.target.value)}
+            placeholder="Email"
+          />
+        </>
+      )}
       <label htmlFor="password">Password</label>
       <input
         id="password"
@@ -26,9 +40,15 @@ export function DevLoginForm({
         value={password}
         onChange={event => onPasswordChange(event.target.value)}
       />
-      /* TODO register: add the Login/Register mode switch button here. */
+      <button
+        type="button"
+        onClick={() => onAuthModeChange(authMode === 'login' ? 'register' : 'login')}
+      >
+        {authMode === 'login' ? 'Create account' : 'Back to login'}
+      </button>
+
       <button type="submit" disabled={authStatus === 'loading'}>
-        {authStatus === 'loading' ? 'Logging in...' : 'Login'}
+        {authStatus === 'loading' ? 'Loading...' : authMode === 'register' ? 'Create account' : 'Login'}
       </button>
     </form>
   );
