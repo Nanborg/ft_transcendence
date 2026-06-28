@@ -11,6 +11,7 @@ export function LoginPage({
   onLogout,
   password,
   onPasswordChange,
+  // TODO register: accept authMode, onAuthModeChange, email, onEmailChange and onRegister props here.
 }) {
   return (
     <div className="login-panel">
@@ -21,6 +22,7 @@ export function LoginPage({
         password={password}
         onPasswordChange={onPasswordChange}
         onSubmit={onSubmit}
+        // TODO register: accept authMode, onAuthModeChange, email, onEmailChange and onRegister props here.
       />
       {authError && (
         <p className="form-error" role="alert">{authError}</p>
