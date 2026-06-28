@@ -1,5 +1,7 @@
 const prisma = require("../db");
 const playerInputs = new Map();
+const MIN_PLAYERS = 1;
+const MAX_PLAYERS = 4;
 
 function generateRoomId() {
     return `room-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
@@ -56,8 +58,12 @@ async function joinRoom(roomIdentifier, userId) {
     const cleanIdentifier = typeof roomIdentifier === "string"
         ? roomIdentifier.trim()
         : "";
-    if (!cleanIdentifier)
-        return null;
+    if (!cleanIdentifier) {
+        return {
+            room: null,
+            error: "Invalid payload",
+        };
+    }
 
     const room = await prisma.room.findFirst({
         where: {
@@ -69,7 +75,22 @@ async function joinRoom(roomIdentifier, userId) {
     });
 
     if (!room) {
-        return null;
+        return {
+            room: null,
+            error: "Room not found",
+        };
+    }
+
+    const fullRoom = await prisma.room.findUnique({
+        where: { id: room.id },
+        include: { players: true },
+    });
+
+    if (fullRoom.status !== "waiting") {
+        return {
+            room: null,
+            error: "Game already started",
+        };
     }
     
     const existingPlayer = await prisma.roomPlayer.findUnique({
@@ -80,6 +101,12 @@ async function joinRoom(roomIdentifier, userId) {
             },
         },
     });
+    if (fullRoom.players.length >= MAX_PLAYERS) {
+        return {
+            room: null,
+            error: "Room is full",
+        };
+    }
     if (!existingPlayer) {
         await prisma.roomPlayer.create({
             data: {
@@ -89,7 +116,10 @@ async function joinRoom(roomIdentifier, userId) {
             },
         });
     }
-    return getRoom(room.id);
+    return {
+        room: await getRoom(room.id),
+        error: null,
+    };
 }
 
 async function leaveRoom(roomId, userId) {
@@ -108,6 +138,8 @@ async function leaveRoom(roomId, userId) {
             userId,
         },
     });
+
+    playerInputs.delete(`${roomId}:${userId}`);
 
     const remainingPlayers = await prisma.roomPlayer.findMany({
         where: { roomId },
@@ -146,6 +178,8 @@ async function leaveAllRooms(userId) {
         await prisma.roomPlayer.deleteMany({
             where: { roomId, userId }
         });
+
+        playerInputs.delete(`${roomId}:${userId}`);
 
         const remainingPlayers = await prisma.roomPlayer.findMany({
             where: { roomId },
@@ -238,8 +272,25 @@ async function startGame(roomId, userId) {
             error: "Player is not in room",
         };
     }
-    const allPlayersReady = room.players.length > 0 &&
-        room.players.every((player) => player.ready === true);
+    if (room.ownerId !== userId) {
+        return {
+            room,
+            error: "Only the owner can start the game",
+        };
+    }
+    if (room.status !== "waiting") {
+        return {
+            room,
+            error: "Game already started",
+        };
+    }
+    if (room.players.length < MIN_PLAYERS) {
+        return {
+            room,
+            error: `At least ${MIN_PLAYERS} player(s) required`,
+        };
+    }
+    const allPlayersReady = room.players.every((player) => player.ready === true);
     if (!allPlayersReady) {
         return {
             room,
