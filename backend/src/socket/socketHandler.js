@@ -1,8 +1,17 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId } = require("./rooms");
+const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 
 module.exports = (io) => {
-	io.on("connection", (socket) => {
+	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
+		addConnection(socket.user.id, socket);
+		const existingRoom = await getRoomsByUserId(socket.user.id);
+
+		for (const room of existingRoom) {
+			socket.join(room.id);
+			socket.emit("room:update", room);
+			io.to(room.id).emit("room:update", room);
+		}
 
 		socket.on("room:create", async ({ roomName } = {}) => {
 			try {
@@ -150,7 +159,6 @@ module.exports = (io) => {
 					io.to(roomId).emit("room:update", room);
 				} else {
 					io.to(roomId).emit("room:removed", {roomId});
-					socket.leave(roomId);
 					console.log(`room removed: ${roomId}`);
 				}
 			} catch (error) {
@@ -241,17 +249,27 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("disconnect", async () => {
+		socket.on("disconnect", () => {
 			try {
-				const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
-				
-				for (const room of updatedRooms) {
-					io.to(room.id).emit("room:update", room);
-				}
-				for (const roomId of removedRoomIds) {
-					io.to(roomId).emit("room:removed", { roomId });
-				}
-				console.log(`socket disconnected: ${socket.id}`);
+				scheduleDisconnect(
+					socket.user.id,
+					socket.id,
+					async () => {
+						const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
+						for (const room of updatedRooms) {
+							io.to(room.id).emit("room:update", room);
+						}
+						for (const roomId of removedRoomIds) {
+							io.to(roomId).emit("room:removed", {
+								roomId,
+							});
+						}
+						removeConnection(socket.user.id, socket.id);
+						console.log(
+							`user ${socket.user.id} removed after reconnect timeout`
+						);
+					}
+				);
 			} catch (error) {
 				socket.emit("room:error", {
 					event: "disconnect",

@@ -382,6 +382,24 @@ async function getRoom(roomId) {
     return formatRoom(room);
 }
 
+async function getRoomsByUserId(userId) {
+    const players = await prisma.roomPlayer.findMany({
+        where: { userId },
+        include: {
+            room: {
+                include: {
+                    players: {
+                        include: {
+                            user: true,
+                        },
+                    },
+                },
+            },
+        },
+    });
+    return players.map((player) => formatRoom(player.room));
+}
+
 module.exports = {
     createRoom,
     joinRoom,
@@ -392,4 +410,5 @@ module.exports = {
     setPlayerReady,
     startGame,
     setPlayerInput,
+    getRoomsByUserId,
 };
