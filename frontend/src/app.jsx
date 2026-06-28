@@ -160,7 +160,31 @@ function App() {
     }
   }
 
-  // TODO register: place handleRegister() here, before handleLogout().
+  async function handleRegister(event) {
+    event.preventDefault();
+
+    const trimmedName = devUserName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !trimmedEmail || !password) {
+      setAuthError('Enter username, email and password');
+      return;
+    }
+    setAuthStatus('loading');
+    setAuthError('');
+    try {
+      await registerUser(trimmedName, trimmedEmail, password);
+      setAuthMode('login');
+      setAuthStatus('idle');
+      setAuthError('Accoumt created. you can login now');
+      setPassword('');
+      setEmail('');
+    } catch (error) {
+      setAuthStatus('error');
+      setAuthError(error.message);
+    }
+  }
+
   function handleLogout() {
     setCurrentUser(null);
     /*clearStoredDevUser();*/
