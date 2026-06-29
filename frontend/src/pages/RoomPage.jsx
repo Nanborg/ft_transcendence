@@ -1,7 +1,9 @@
-import { useRoom } from '../features/room/useRoom';
+//import { useRoom } from '../features/room/useRoom';
 
-export function RoomPage({ title, description, socket, currentUser
+/*export function RoomPage({ title, description, socket, currentUser
 }) {
+*/
+export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
     roomIdInput,
     setRoomIdInput,
@@ -18,11 +20,15 @@ export function RoomPage({ title, description, socket, currentUser
     sendChatMessage,
     startGame,
     gameStarted,
-    gameStartInfo
-  } = useRoom(socket, currentUser);
+    gameStartInfo,
+    roomNameInput,
+    setRoomNameInput
+  } = room;
+  /*= useRoom(socket, currentUser);*/
 
   const players = currentRoom?.players || [];
-  const currentPlayer = players.find(player => player.id === socket?.id);
+  const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
+  /*const currentPlayer = players.find(player => player.id === socket?.id);*/
   const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
 
@@ -41,7 +47,9 @@ export function RoomPage({ title, description, socket, currentUser
           <div className="room-current">
             <h2>Current room</h2>
             <p>Room id: {currentRoom.id}</p>
-
+            {currentRoom.name && (
+              <p>Room name: {currentRoom.name}</p>
+            )}
             <p>Status: {currentRoom.status}</p>
 
             <div className="room-players">
@@ -53,7 +61,7 @@ export function RoomPage({ title, description, socket, currentUser
                     <li key={player.id}>
                       <span className="room-player-name">{player.name}</span>
                       <span className="room-player-meta">
-                        {player.id === currentRoom.ownerId ? 'Owner' : 'Player'} -
+                        {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'} -
                         {player.ready ? ' Ready' : ' Not ready'}
                       </span>
                     </li>
@@ -89,9 +97,11 @@ export function RoomPage({ title, description, socket, currentUser
                 {chatMessages.map(chatMessage => (
                   <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
                     <span className="room-chat-author">
-                      {chatMessage.author.name}
+                      {chatMessage.author.name}:
                     </span>
-                    <span>{chatMessage.message}</span>
+                    <span className="room-chat-message">
+                      {chatMessage.message}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -117,18 +127,28 @@ export function RoomPage({ title, description, socket, currentUser
           </div>
         ) : (
           <div className="room-actions">
-            <button type="button" onClick={createRoom} disabled={isDisabled}>
-              Create room
-            </button>
-
+            <form className="room-form" onSubmit={createRoom}>
+              <label htmlFor="room-name">Room name</label>
+              <input
+                id="room-name"
+                type="text"
+                value={roomNameInput}
+                onChange={event => setRoomNameInput(event.target.value)}
+                placeholder="Enter a room name"
+                disabled={isDisabled}
+              />
+              <button type="submit" disabled={isDisabled}>
+                Create room
+              </button>
+            </form>
             <form className="room-form" onSubmit={joinRoom}>
-              <label htmlFor="room-id">Room id</label>
+              <label htmlFor="room-id">Room id or name</label>
               <input
                 id="room-id"
                 type="text"
                 value={roomIdInput}
                 onChange={event => setRoomIdInput(event.target.value)}
-                placeholder="Enter room id"
+                placeholder="Enter room id or name"
                 disabled={isDisabled}
               />
               <button type="submit" disabled={isDisabled}>
