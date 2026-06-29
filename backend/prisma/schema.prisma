@@ -15,15 +15,42 @@ datasource db {
 
 // Modèle de l'Utilisateur
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
-  username    String   @unique
-  password    String
-  fortyTwoId  Int?     @unique
-  avatar      String?
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  username      String         @unique
+  password      String?
+  fortyTwoId    Int?           @unique
+  avatar        String?
+  roomsOwned    Room[]
+  rooms         RoomPlayer[]
   refreshTokens RefreshToken[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  friends       User[]         @relation("UserFriends")
+  friendOf      User[]         @relation("UserFriends")
+}
+
+model Room {
+  id        String       @id
+  name      String?      @unique
+  ownerId   Int
+  status    String       @default("waiting")
+  owner     User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  players   RoomPlayer[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model RoomPlayer {
+  id       Int      @id @default(autoincrement())
+  roomId   String
+  userId   Int
+  ready    Boolean  @default(false)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([roomId, userId])
 }
 
 model RefreshToken {
