@@ -18,6 +18,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
   const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
   const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
+  const canStartGame = !isDisabled && allPlayersReady && !gameStarted;
 
   return (
     <>
@@ -49,8 +50,10 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                     <li key={player.id}>
                       <span className="room-player-name">{player.name}</span>
                       <span className="room-player-meta">
-                        {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'} -
-                        {player.ready ? ' Ready' : ' Not ready'}
+                        {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'}
+                      </span>
+                      <span className="room-player-meta">
+                        {player.ready ? 'Ready' : 'Not ready'}
                       </span>
                     </li>
                   ))}
@@ -70,7 +73,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
               type="button"
               className="room-start-button"
               onClick={startGame}
-              disabled={isDisabled || !allPlayersReady || gameStarted}
+              disabled={!canStartGame}
             >
               Start game
             </button>
