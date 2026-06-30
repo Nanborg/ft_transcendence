@@ -1,5 +1,6 @@
-export function LobbyPage({ title, description }) {
-  return (
+export function LobbyPage({ title, description, currentUser, socket, room }) {
+  const isDisabled = !socket || !currentUser || room.roomStatus === 'loading';
+    return (
     <>
       <p className="page-kicker">Frontend page</p>
       <h1 id="page-title">{title}</h1>

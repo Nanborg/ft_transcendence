@@ -226,6 +226,9 @@ function App() {
             <LobbyPage
               title={currentPage.title}
               description={currentPage.description}
+              currentUser={currentUser}
+              socket={socket}
+              room={room}
             />
           )}
         </section>
