@@ -13,12 +13,12 @@ export function FriendsPage({ title, description, currentUser, friends}) {
 
     return (
         <div>
-            <p>FrontendPage</p>
-            <h1>Friends</h1>
-            <p>View your Friends</p>
-            <div>
+            <p className="page-kicker">Frontend page</p>
+            <h1 id="page-title">{title}</h1>
+            <p>{description}</p>
+            <div className="friends-panel">
                 <p>Login first to view your friends.</p>
-                <form>
+                <form className="friends-form">
                     <label htmlFor="friend-id">User id</label>
                     <input
                         id="friend-id"
@@ -28,13 +28,13 @@ export function FriendsPage({ title, description, currentUser, friends}) {
                     />
                     <button type="submit"> AddFriend </button>
                 </form>
-                <p>Loading friends...</p>
-                <p>Error message</p>
-                <p>No friends yet.</p>
-                <ul>
-                    <li>
+                <p className="friends-muted">Loading friends...</p>
+                <p className="form-error">Error message</p>
+                <p className="friends-muted">No friends yet.</p>
+                <ul className="friends-list">
+                    <li className="friends-item">
                         <span>Friend username</span>
-                        <span>#1</span>
+                        <span className="friends-meta">#1</span>
                         <button type="button"> Remove </button>
                     </li>
                 </ul>
