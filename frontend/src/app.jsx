@@ -16,6 +16,7 @@ import { RoomPage } from './pages/RoomPage';
 import { GamePage } from './pages/GamePage';
 import { FriendsPage } from './pages/FriendsPage';
 import { useFriends } from './features/friends/useFriends';
+import { LobbyPage } from './pages/LobbyPage';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -219,6 +220,12 @@ function App() {
               description={currentPage.description}
               currentUser={currentUser}
               friends={friends}
+            />
+          )}
+          {currentPage.id === 'lobby' && (
+            <LobbyPage
+              title={currentPage.title}
+              description={currentPage.description}
             />
           )}
         </section>
