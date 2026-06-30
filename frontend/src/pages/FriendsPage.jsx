@@ -19,9 +19,14 @@ export function FriendsPage({ title, description, currentUser, friends}) {
             <div>
                 <p>Login first to view your friends.</p>
                 <form>
-                    <label>User id</label>
-                    <input></input>
-                    <button>AddFriend</button>
+                    <label htmlFor="friend-id">User id</label>
+                    <input
+                        id="friend-id"
+                        type="number"
+                        min="1"
+                        placeholder="Enter user id"
+                    />
+                    <button type="submit"> AddFriend </button>
                 </form>
                 <p>Loading friends...</p>
                 <p>Error message</p>
@@ -30,7 +35,7 @@ export function FriendsPage({ title, description, currentUser, friends}) {
                     <li>
                         <span>Friend username</span>
                         <span>#1</span>
-                        <button>Remove</button>
+                        <button type="button"> Remove </button>
                     </li>
                 </ul>
             </div>
