@@ -1,38 +1,48 @@
 
-export async function fetchFriends(accesToken) {
+export async function fetchFriends(accessToken) {
     const response = await fetch('/api/friends', {
         headers: {
             Authorization: `Bearer ${accessToken}`,
         },
     });
+
     if (!response.ok) {
-        throw new Error(`Unable to load friends.`);
+        const error = new Error(
+            response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to load friends.',);
+        error.status = response.status;
+        throw error;
     }
-    return response.json(); 
+
+    return response.json();
 }
 
-export async function addFriends(accessToken, friendId) {
-    const response = await fetcj('/api/friends/$(friendsId', {
-        methods: 'POST',
+export async function addFriend(accessToken, friendId) {
+    const response = await fetch(`/api/friends/${friendId}`, {
+        method: 'POST',
         headers: {
-            Authorization: 'Bearer ${accessToken}',
+            Authorization: `Bearer ${accessToken}`,
         },
-    })
+    });
     if (!response.ok) {
-        throw new Error('Unable to add friend.');
+        const error = new Error('Unable to add friend.');
+        error.status = response.status;
+        throw error;
     }
     return response.json();
 }
 
 export async function removeFriend(accessToken, friendId) {
-    const response = await fetch(`/api/friends/${friendsId}`, {
-        methode: 'DELETE',
+    const response = await fetch(`/api/friends/${friendId}`, {
+        method: 'DELETE',
         headers: {
             Authorization: `Bearer ${accessToken}`,
-        }
+        },
     });
     if (!response.ok) {
-        throw new Error('Unable to remove friend.');
+        const error = new Error('Unable to remove friend.');
+        error.status = response.status;
+        throw error;
     }
+
     return response.json();
 }
