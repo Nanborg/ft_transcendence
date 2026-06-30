@@ -1,5 +1,12 @@
+import { useEffect } from 'react';
+
 export function LobbyPage({ title, description, currentUser, socket, room }) {
     const isDisabled = !socket || !currentUser || room.roomStatus === 'loading';
+    useEffect(() => {
+        if (room.currentRoom) {
+            window.location.hash = '#/room';
+        }
+    }, [room.currentRoom]);
     return (
         <>
             <p className="page-kicker">Frontend page</p>
