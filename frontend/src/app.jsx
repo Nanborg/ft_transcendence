@@ -33,7 +33,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
-  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
+  
 
   useEffect(() => {
     if (currentUser) {
@@ -63,6 +63,7 @@ function App() {
     window.location.hash = '#/login';
   }, []);
 
+  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
     currentUser,
@@ -172,7 +173,7 @@ function App() {
           {currentPage.id === 'home' && (
             <HomePage title={currentPage.title} description={currentPage.description} />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'profile' && (
