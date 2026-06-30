@@ -21,6 +21,31 @@ router.get("/me", authToken, async (req, res) => {
     }
 });
 
+router.get("/search", authToken, async (req, res) => {
+	try{
+        const srcuser = req.query.search
+        if (!srcuser || typeof srcuser !== 'string' || srcuser.trim() === '') {
+            return res.status(400).json({ error: "Veuillez fournir un terme de recherche valide." });
+        }
+        const userProfile = await prisma.user.findMany({
+            where: {
+                username: {
+                    contains: srcuser.trim(),
+                    mode: 'insensitive'
+                }
+            },
+            select: { id: true, username: true, email: true, avatar: true}
+        });
+        if (userProfile.length === 0) {
+            return res.status(404).json({ error: "Aucun utilisateur trouvé." });
+        }
+        res.json(userProfile);
+    }
+    catch (error) {
+        res.status(500).json({ error: "Erreur serveur" });
+    }
+});
+
 
 
 // route to get your informations (profile page maybe ?)
