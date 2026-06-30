@@ -62,21 +62,27 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 <p>No players yet.</p>
               )}
             </div>
-            <button
-              type="button"
-              className="room-ready-button"
-              onClick={toggleReady}
-              disabled={isDisabled || !currentPlayer}>
-              {currentPlayer?.ready ? 'Not ready' : 'Ready'}
-            </button>
-            <button
-              type="button"
-              className="room-start-button"
-              onClick={startGame}
-              disabled={!canStartGame}
-            >
-              Start game
-            </button>
+            <div className="room-actions">
+              <button
+                type="button"
+                className="room-ready-button"
+                onClick={toggleReady}
+                disabled={isDisabled || !currentPlayer}
+              >
+                {currentPlayer?.ready ? 'Not ready' : 'Ready'}
+              </button>
+              <button
+                type="button"
+                className="room-start-button"
+                onClick={startGame}
+                disabled={!canStartGame}
+              >
+                Start game
+              </button>
+              <button type="button" onClick={leaveRoom}>
+                Leave room
+              </button>
+            </div>
             {gameStarted && gameStartInfo && (
               <p className="room-started">
                 Game starting: {gameStartInfo.status}
@@ -84,6 +90,9 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
             )}
             <div className="room-chat">
               <h3>Chat</h3>
+              {chatMessages.length === 0 && (
+                <p className="room-muted">No messages yet.</p>
+              )}
               <ul className="room-chat-messages">
                 {chatMessages.map(chatMessage => (
                   <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
@@ -111,10 +120,6 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 </button>
               </form>
             </div>
-            <button type="button" onClick={leaveRoom}>
-              Leave room
-            </button>
-
           </div>
         ) : (
           <div className="room-empty">
