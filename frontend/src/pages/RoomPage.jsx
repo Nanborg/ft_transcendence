@@ -27,7 +27,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
       <div className="room-panel">
         {!currentUser && (
-          <p className="room-error">Login first view your room.</p>
+          <p className="room-error">Login first to view your room.</p>
         )}
 
         {currentRoom ? (
@@ -114,7 +114,8 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
           </div>
         ) : (
           <div className="room-empty">
-            <p>No active room.</p>
+            <h2>No active room</h2>
+            <p>Create or join a room from the lobby first.</p>
             <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
               Go to lobby
             </button>
