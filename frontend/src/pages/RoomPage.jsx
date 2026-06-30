@@ -1,11 +1,5 @@
-//import { useRoom } from '../features/room/useRoom';
-
-/*export function RoomPage({ title, description, socket, currentUser
-}) {
-*/
 export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
-
     currentRoom,
     roomStatus,
     roomError,
@@ -18,13 +12,10 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
     startGame,
     gameStarted,
     gameStartInfo,
-
   } = room;
-  /*= useRoom(socket, currentUser);*/
 
   const players = currentRoom?.players || [];
   const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
-  /*const currentPlayer = players.find(player => player.id === socket?.id);*/
   const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
 
