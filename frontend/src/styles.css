@@ -423,6 +423,41 @@ p {
 }
 /*remember color can be used like darkred no need #hex_number */
 
+/*friends page*/
+
+.friends-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.friends-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 360px;
+}
+
+.friends-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.friends-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid rgba(100, 100, 100, 0.35);
+  border-radius: 8px;
+}
+
+.friend-meta,
+.friend-muted {
+  color: #6b6666;
+}
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
