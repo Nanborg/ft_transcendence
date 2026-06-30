@@ -32,12 +32,13 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
         {currentRoom ? (
           <div className="room-current">
-            <h2>Current room</h2>
-            <p>Room id: {currentRoom.id}</p>
-            {currentRoom.name && (
-              <p>Room name: {currentRoom.name}</p>
-            )}
-            <p>Status: {currentRoom.status}</p>
+            <header className="room-summary">
+              <div>
+                <h2>{currentRoom.name || 'Current room'}</h2>
+                <p className="room-muted">Room id: {currentRoom.id}</p>
+              </div>
+              <p className="room-status">Status: {currentRoom.status}</p>
+            </header>
 
             <div className="room-players">
               <h3>Players</h3>
