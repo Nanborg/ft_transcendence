@@ -37,6 +37,10 @@ app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 app.use('/friends', friendsRouter);
 
-server.listen(port, "0.0.0.0", () => {
-    console.log(`backend listening on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(port, "0.0.0.0", () => {
+        console.log(`backend listening on port ${port}`);
+    });
+}
+
+module.exports = app;
