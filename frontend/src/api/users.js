@@ -1,18 +1,3 @@
-/*
-export async function fetchCurrentUser(devUserName) {
-  const response = await fetch('/api/users/me', {
-    headers: {
-      'x-dev-user': devUserName,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Unable to load profile.');
-  }
-
-  return response.json();
-}
-*/
 
 export async function loginUser(name, password) {
   const response = await fetch('/api/login', {
@@ -43,10 +28,28 @@ export async function fetchCurrentUser(accessToken) {
   if (!response.ok) {
     const error = new Error(
       response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to load profile.',
-  );
+    );
     error.status = response.status;
     throw error;
   }
 
+  return response.json();
+}
+
+export async function updateCurrentUser(accessToken, profileData) {
+  const response = await fetch('/api/users/me', {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-type': 'application/json',
+    },
+    body: JSON.stringify(profileData),
+  });
+  if (!response.ok) {
+    const error = new Error(
+      response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to update profile.',);
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
