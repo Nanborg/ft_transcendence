@@ -3,6 +3,10 @@ import { usePlayerInput } from '../features/game/usePlayerInput';
 
 export function GamePage({ title, description, gameState, socket, currentRoom, gameStarted }) {
     const renderedGameState = gameState || mockGameState;
+    const hasRoom = Boolean(currentRoom);
+    const hasLiveGameState = Boolean(gameState);
+    const isGameReady = hasRoom && gameStarted;
+
     usePlayerInput({
         socket, roomId: currentRoom?.id, enabled: gameStarted === true,
     });
