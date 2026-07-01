@@ -26,6 +26,22 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
             </>
         );
     }
+    if (!isGameReady) {
+        return (
+            <>
+                <p className="page-kicker">Frontend page</p>
+                <h1 id="page-title">{title}</h1>
+                <p>{description}</p>
+                <div className="game-panel">
+                    <h2>Game not started</h2>
+                    <p className="game-muted">Ready up and start the game from the room page.</p>
+                    <button type="button" onClick={() => { window.location.hash = '#/room'; }}>
+                        Back to room
+                    </button>
+                </div>
+            </>
+        );
+    }
     return (
         <>
             <p className="page-kicker">Frontend page</p>
