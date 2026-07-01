@@ -10,6 +10,22 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     usePlayerInput({
         socket, roomId: currentRoom?.id, enabled: gameStarted === true,
     });
+    if (!hasRoom) {
+        return (
+            <>
+                <p className="page-kicker">Frontend page</p>
+                <h1 id="page-title">{title}</h1>
+                <p>{description}</p>
+                <div className="game-panel">
+                    <h2>No active room</h2>
+                    <p className="game-muted">Join or create a room before opening the game.</p>
+                    <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
+                        Go to lobby
+                    </button>
+                </div>
+            </>
+        );
+    }
     return (
         <>
             <p className="page-kicker">Frontend page</p>
