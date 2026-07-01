@@ -48,6 +48,10 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
             <h1 id="page-title">{title}</h1>
             <p>{description}</p>
             <div className="game-panel">
+                <div className="game-hud">
+                    <p>{hasLiveGameState ? 'Live game state' : 'Preview game state'}</p>
+                    <p>Room: {currentRoom.name || currentRoom.id}</p>
+                </div>
                 <GameCanvas gameState={renderedGameState} />
             </div>
         </>
