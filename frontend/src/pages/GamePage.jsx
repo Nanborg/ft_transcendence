@@ -8,7 +8,9 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     const isGameReady = hasRoom && gameStarted;
 
     usePlayerInput({
-        socket, roomId: currentRoom?.id, enabled: gameStarted === true,
+        socket,
+        roomId: currentRoom?.id,
+        enabled: isGameReady,
     });
     if (!hasRoom) {
         return (
