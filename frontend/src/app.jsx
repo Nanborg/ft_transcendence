@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser } from './api/users';
+import { fetchCurrentUser, loginUser, updateCurrentUser } from './api/users';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -33,7 +33,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
-  
+
 
   useEffect(() => {
     if (currentUser) {
@@ -181,6 +181,20 @@ function App() {
               profileStatus={profileStatus}
               profileError={profileError}
               profileUser={profileUser}
+              accessToken={authSession?.accessToken}
+              onSessionExpired={handleSessionExpired}
+              onProfileUpdated={(user) => {
+                setCurrentUser(user);
+                setAuthSession(session => {
+                  if (!session) {
+                    return session;
+                  }
+                  const nextSession = { ...session, user };
+                  storeAuthSession(nextSession);
+                  return nextSession;
+                });
+              }}
+              onUpdateProfile={updateCurrentUser}
             />
           )}
           {currentPage.id === 'room' && (
