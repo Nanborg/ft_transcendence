@@ -1,9 +1,9 @@
+import { PageHeading } from '../components/PageHeading';
+
 export function PlaceholderPage({ title, description }) {
   return (
     <>
-      <p className="page-kicker">Frontend page</p>
-      <h1 id="page-title">{title}</h1>
-      <p>{description}</p>
+      <PageHeading title={title} description={description} />
     </>
   );
 }
