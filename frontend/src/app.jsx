@@ -17,6 +17,7 @@ import { GamePage } from './pages/GamePage';
 import { FriendsPage } from './pages/FriendsPage';
 import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -173,7 +174,7 @@ function App() {
           {currentPage.id === 'home' && (
             <HomePage title={currentPage.title} description={currentPage.description} />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'profile' && (
@@ -244,6 +245,12 @@ function App() {
               currentUser={currentUser}
               socket={socket}
               room={room}
+            />
+          )}
+          {currentPage.id === 'leaderboard' && (
+            <LeaderboardPage
+              title={currentPage.title}
+              description={currentPage.description}
             />
           )}
         </section>
