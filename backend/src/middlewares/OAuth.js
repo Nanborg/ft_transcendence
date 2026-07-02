@@ -49,7 +49,10 @@ async function OAuth(req, res, next) {
 		if (!await bcrypt.compare(req.body.password, user.password))
 			return res.status(401).json({ error: "Invalid credentials" });
 
-		const u = {username: user.username, id: user.id}
+		const u = {
+			id: user.id,
+			name: user.name
+		}
 		const accessToken = generateAccessToken(u)
 		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
 		await prisma.refreshToken.create({
