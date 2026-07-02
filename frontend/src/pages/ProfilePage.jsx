@@ -43,37 +43,43 @@ export function ProfilePage({
         return;
       }
       setSaveStatus('error');
-      setSaveError(error.message)
+      setSaveError(error.message);
     }
-    return (
-      <div className="profile-panel">
-        {profileStatus === 'empty' && (
-          <div className="profile-empty">
-            <p>Login to view your profile.</p>
-            <a href="#/login">Go to Login</a>
-          </div>
-        )}
-        {profileStatus === 'loading' && (
-          <p className="profile-loading">Loading profile...</p>
-        )}
-        {profileStatus === 'error' && (
-          <p className="profile-error" role="alert">{profileError}</p>
-        )}
-        {profileStatus === 'loaded' && profileUser && (
-          <>
-            <ProfileDetails profileUser={profileUser} />
-            <form>
-              <label>
-                <input></input>
-              </label>
-              <label>
-                <input></input>
-              </label>
-              <button></button>
-            </form>
-          </>
-        )}
-      </div>
-    );
   }
+  return (
+    <div className="profile-panel">
+      {profileStatus === 'empty' && (
+        <div className="profile-empty">
+          <p>Login to view your profile.</p>
+          <a href="#/login">Go to Login</a>
+        </div>
+      )}
+      {profileStatus === 'loading' && (
+        <p className="profile-loading">Loading profile...</p>
+      )}
+      {profileStatus === 'error' && (
+        <p className="profile-error" role="alert">{profileError}</p>
+      )}
+      {profileStatus === 'loaded' && profileUser && (
+        <>
+          <ProfileDetails profileUser={profileUser} />
+          <form className="profile-edit-form" onSubmit={handleSubmit}>
+            <label>
+              Username
+              <input value={username} onChange={event => setUsername(event.target.value)}></input>
+            </label>
+            <label>
+              Avatar URL
+              <input value={avatar} onChange={event => setAvatar(event.target.value)}></input>
+            </label>
+            <button type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
+              {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}
+            </button>
+            {saveStatus === 'saved' && <p>Profile saved.</p>}
+            {saveStatus === 'error' && <p role="alert">{saveError}</p>}
+          </form>
+        </>
+      )}
+    </div>
+  );
 }
