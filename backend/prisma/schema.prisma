@@ -28,6 +28,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   friends       User[]         @relation("UserFriends")
   friendOf      User[]         @relation("UserFriends")
+  playerStats   PlayerRunStats[]
 }
 
 model Room {
@@ -59,4 +60,23 @@ model RefreshToken {
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model GameRun {
+  id              Int              @id @default(autoincrement())
+  roomId          String
+  won             Boolean
+  durationSeconds Int
+  stats           PlayerRunStats[]
+  createdAt       DateTime         @default(now())
+}
+
+model PlayerRunStats {
+  id        Int     @id @default(autoincrement())
+  gameRunId Int
+  gameRun   GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  score     Int
+  xp        Int
 }
