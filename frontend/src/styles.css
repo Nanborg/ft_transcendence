@@ -439,7 +439,7 @@ p {
   width: fit-content;
 }
 
-.game-panel{
+.game-panel {
   display: grid;
   gap: 18px;
   margin-top: 24px;
@@ -462,6 +462,7 @@ p {
   aspect-ratio: 16 / 9;
   border: 1px solid darkblue;
 }
+
 /*remember color can be used like darkred no need #hex_number */
 
 /*friends page*/
@@ -499,6 +500,7 @@ p {
 .friend-muted {
   color: #6b6666;
 }
+
 /* lobby */
 
 .lobby-panel {
@@ -548,6 +550,44 @@ p {
   width: 72px;
 }
 
+/* Match history */
+
+.match-history-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.match-history-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.match-history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 8px;
+}
+
+.match-history-result {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.match-history-result--win {
+  color: #266266;
+}
+
+.match-history-result--loss {
+  color: #a71111;
+}
+
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
@@ -570,13 +610,17 @@ p {
     padding: 24px;
   }
 
-    .leaderboard-table {
+  .leaderboard-table {
     font-size: 0.9rem;
   }
 
   .leaderboard-table th,
   .leaderboard-table td {
     padding: 0.5rem;
+  }
+
+  .match-history-item {
+    grid-template-columns: 1fr;
   }
 
   h1 {
