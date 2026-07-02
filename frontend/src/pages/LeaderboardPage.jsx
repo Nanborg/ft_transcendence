@@ -30,16 +30,20 @@ export function LeaderboardPage({ title, description }) {
               <th>Wins</th>
               <th>Losses</th>
               <th>Win rate</th>
+              <th>Total score</th>
+              <th>Best score</th>
             </tr>
           </thead>
           <tbody>
             {leaderboard.map(player => (
-              <tr key={player.username}>
+              <tr key={player.userId}>
                 <td>#{player.rank}</td>
                 <td>{player.username}</td>
                 <td>{player.wins}</td>
                 <td>{player.losses}</td>
                 <td>{getWinRate(player)}</td>
+                <td>{player.totalScore}</td>
+                <td>{player.bestScore}</td>
               </tr>
             ))}
           </tbody>
