@@ -22,23 +22,58 @@ export function ProfilePage({
     }
   }, [profileUser]);
 
-  return (
-    <div className="profile-panel">
-      {profileStatus === 'empty' && (
-        <div className="profile-empty">
-          <p>Login to view your profile.</p>
-          <a href="#/login">Go to Login</a>
-        </div>
-      )}
-      {profileStatus === 'loading' && (
-        <p className="profile-loading">Loading profile...</p>
-      )}
-      {profileStatus === 'error' && (
-        <p className="profile-error" role="alert">{profileError}</p>
-      )}
-      {profileStatus === 'loaded' && profileUser && (
-        <ProfileDetails profileUser={profileUser} />
-      )}
-    </div>
-  );
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!accessToken || !onUpdateProfile) {
+      return;
+    }
+    setSaveStatus('loading');
+    setSaveError('');
+    try {
+      const result = await onUpdateProfile(accessToken, {
+        username: username.trim(),
+        avatar: avatar.trim(),
+      });
+      const updateUser = result.user || result;
+      onProfileUpdated(updateUser);
+      setSaveStatus('saved');
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        onSessionExpired(error.message);
+        return;
+      }
+      setSaveStatus('error');
+      setSaveError(error.message)
+    }
+    return (
+      <div className="profile-panel">
+        {profileStatus === 'empty' && (
+          <div className="profile-empty">
+            <p>Login to view your profile.</p>
+            <a href="#/login">Go to Login</a>
+          </div>
+        )}
+        {profileStatus === 'loading' && (
+          <p className="profile-loading">Loading profile...</p>
+        )}
+        {profileStatus === 'error' && (
+          <p className="profile-error" role="alert">{profileError}</p>
+        )}
+        {profileStatus === 'loaded' && profileUser && (
+          <>
+            <ProfileDetails profileUser={profileUser} />
+            <form>
+              <label>
+                <input></input>
+              </label>
+              <label>
+                <input></input>
+              </label>
+              <button></button>
+            </form>
+          </>
+        )}
+      </div>
+    );
+  }
 }
