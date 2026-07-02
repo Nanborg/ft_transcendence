@@ -1,6 +1,27 @@
 import { ProfileDetails } from '../features/profile/ProfileDetails';
+import { useEffect, useState } from 'react';
 
-export function ProfilePage({ profileStatus, profileError, profileUser }) {
+export function ProfilePage({
+  profileStatus,
+  profileError,
+  profileUser,
+  accessToken,
+  onSessionExpired,
+  onProfileUpdated,
+  onUpdateProfile,
+}) {
+  const [username, setUsername] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    if (profileUser) {
+      setUsername(profileUser.username || profileUser.name || '');
+      setAvatar(profileUser.avatar || '');
+    }
+  }, [profileUser]);
+
   return (
     <div className="profile-panel">
       {profileStatus === 'empty' && (
