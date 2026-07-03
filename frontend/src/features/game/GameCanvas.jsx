@@ -1,3 +1,4 @@
+//import { array } from 'node:stream/iter';
 import { useEffect, useRef } from 'react';
 //Nanborg
 // TODO -> remove this mock state after GamePage is wired to Socket.IO game:state.
@@ -39,6 +40,10 @@ export const mockGameState = {
 
 export function GameCanvas({ gameState }) {
     const canvasRef = useRef(null);
+    const width = gameState?.width || 800;
+    const height = gameState?.height || 450;
+    const players = Array.isArray(gameState?.players) ? gameState.players : [];
+    const objects = Array.isArray(gameState?.objects) ? gameState.objects : [];
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -50,24 +55,21 @@ export function GameCanvas({ gameState }) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#000000';
         context.fillRect(0, 0, canvas.width, canvas.height);
-        //Nanborg
-        // TODO -> validate or normalize gameState before drawing.
-        // The real game:state may arrive late or miss players/objects during reconnects.
-        gameState.players.forEach(player => {
+        players.forEach(player => {
             context.fillStyle = player.color;
             context.fillRect(player.x, player.y, player.size, player.size);
         });
-        gameState.objects.forEach(object => {
+        objects.forEach(object => {
             context.fillStyle = object.color;
             context.fillRect(object.x, object.y, object.size, object.size);
         });
-    }, [gameState]);
+    }, [gameState, players, objects]);
     return (
         <canvas
             ref={canvasRef}
             className="game-canvas"
-            width={gameState.width}
-            height={gameState.height}
+            width={width}
+            height={height}
             aria-label="Game preview" />
     );
 }
