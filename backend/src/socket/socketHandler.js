@@ -60,6 +60,8 @@ module.exports = (io) => {
 			}
 		});
 
+		// TODO(princiamf2): Wire real game:start/player:input command sending to
+		//gameplay-cpp and relay JSON responses from the engine.
 		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
@@ -79,6 +81,8 @@ module.exports = (io) => {
 					return;
 				}
 				io.to(roomId).emit("room:update", room);
+				// TODO(princiamf2): Define and emit the game:end contract (winner,
+				//reason, finalState, timestamp) after engine feedback.
 				io.to(roomId).emit("game:start", {
 					roomId: room.id,
 					status: room.status,

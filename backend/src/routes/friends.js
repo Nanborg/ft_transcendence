@@ -58,6 +58,8 @@ router.post("/:id", authToken, async (req, res) => {
         });
         res.status(200).json({ message: "Ami ajouté avec succès !" });
     }
+    // TODO(yaoberso): Standardize add-friend error mapping and JSON format
+    //(invalid id, not found, conflict, internal error).
     catch (error) {
         console.error(error);
         res.status(400).json({ error: "Impossible d'ajouter cet ami" });
@@ -88,6 +90,8 @@ router.delete("/:id", authToken, async (req, res) => {
         });
         res.status(200).json({ message: "Ami retiré avec succès !" });
     }
+    // TODO(yaoberso): Standardize remove-friend error mapping and JSON format
+    //to match POST /friends/:id.
     catch (error) {
         console.error(error);
         res.status(400).json({ error: "Impossible de supprimer cet ami" });
