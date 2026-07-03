@@ -1,27 +1,27 @@
 #ifndef ABSTRACTMOVINGENTITY_HPP
 #define ABSTRACTMOVINGENTITY_HPP
 
-#include "GameEngine.hpp"
+#include <iostream>
 #include "AbstractEntity.hpp"
 
-class AbstractMovingEntity: private AbstractEntity
+class AbstractMovingEntity: public AbstractEntity
 {
 public:
-	AbstractMovingEntity( int id, int size, int posX, int posY, int velX, int velY );
+	AbstractMovingEntity( unsigned int type, int size, int posX, int posY, int velX, int velY );
 	virtual ~AbstractMovingEntity( void ) = 0;
 
-	virtual bool tick( void ) override;
+	int		getVelX( void ) const;
+	int		getVelY( void ) const;
 
-	int getVelX( void ) const;
-	int getVelY( void ) const;
+	void	setVelX( int velX );
+	void	setVelY( int velY );
 
-	void setVelX( int velX );
-	void setVelY( int velY );
+	virtual bool	tick( void ) override;
 
 protected:
-	virtual bool _templateTick( void );
-	int _velX, _velY;
-};
+	virtual bool	_templateTick( void );
 
+	int	_velX, _velY;
+};
 
 #endif

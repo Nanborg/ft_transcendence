@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <unistd.h>
 #include <exception>
 
 class ControllerIO
@@ -13,8 +14,8 @@ public:
 	~ControllerIO( void );
 
 	int pollApi( void );
-	int getMsg( char buffer[16] );
-	int sendMsg( char *buffer, int len );
+	int getMsg( uint8_t buffer[16] );
+	int sendMsg( uint8_t buffer[32] );
 
 private:
 	void		_setApiAddr( sockaddr& );

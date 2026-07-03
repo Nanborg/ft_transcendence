@@ -6,6 +6,4 @@ COPY src /
 
 RUN make all clean
 
-EXPOSE 8888/udp
-
 CMD ["/gameEngineRuntime"]

@@ -15,7 +15,7 @@ ControllerIO::ControllerIO( int port ) {
 		throw std::exception();
 }
 
-ControllerIO::~ControllerIO( void ) {}
+ControllerIO::~ControllerIO( void ) { close(_sockfd); }
 
 int ControllerIO::pollApi() {
 	int k = poll(&_pollFd, 1, 0);
@@ -24,10 +24,14 @@ int ControllerIO::pollApi() {
 	return k;
 }
 
-int ControllerIO::getMsg( char buffer[16] ) {
+int ControllerIO::getMsg( uint8_t buffer[16] ) {
 	sockaddr_in sender;
 	int bytes = recvfrom(_sockfd, buffer, 16, 0, (struct sockaddr*) &sender, &_apiSize);
 	if (_apiAddr.sin_addr.s_addr == 0)
 		_apiAddr = sender;
 	return bytes;
+}
+
+int ControllerIO::sendMsg( uint8_t buffer[32] ) {
+	return sendto(_sockfd, buffer, 32, 0, (struct sockaddr*) &_apiAddr, _apiSize);
 }

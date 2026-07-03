@@ -1,11 +1,18 @@
 #include "GameEngine.hpp"
+#include <signal.h>
 
 GameEngine *g_game;
 
-int main(int argc, char const *argv[]) {
-	std::cout << "start\n";
-	int port = 8888;
-	
+static void sig_stop( int ) { g_game->stop(); }
+
+int main( int argc, char const *argv[] ) {
+	int port = 7297;
+	if (argc > 1)
+		port = atoi(argv[1]);
+	std::cout << "Start engine on port " << port << "\n";
+
+	signal(SIGINT, sig_stop);
+	GameEngine::registerAllTypes();
 	GameEngine game (port);
 	g_game = &game;
 	game.init();
