@@ -5,9 +5,14 @@ export function DevLoginForm({
   onSubmit,
   password,
   onPasswordChange,
+  authMode,
+  onAuthModeChange,
+  email,
+  onEmailChange,
+  onRegister,
 }) {
   return (
-    <form className="login-form" onSubmit={onSubmit}>
+    <form className="login-form" onSubmit={authMode === 'register' ? onRegister : onSubmit}>
       <label htmlFor="dev-user-name">Username</label>
       <input
         id="dev-user-name"
@@ -16,6 +21,18 @@ export function DevLoginForm({
         onChange={(event) => onDevUserNameChange(event.target.value)}
         placeholder="Username"
       />
+      {authMode === 'register' && (
+        <>
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={event => onEmailChange(event.target.value)}
+            placeholder="Email"
+          />
+        </>
+      )}
       <label htmlFor="password">Password</label>
       <input
         id="password"
@@ -23,8 +40,15 @@ export function DevLoginForm({
         value={password}
         onChange={event => onPasswordChange(event.target.value)}
       />
+      <button
+        type="button"
+        onClick={() => onAuthModeChange(authMode === 'login' ? 'register' : 'login')}
+      >
+        {authMode === 'login' ? 'Create account' : 'Back to login'}
+      </button>
+
       <button type="submit" disabled={authStatus === 'loading'}>
-        {authStatus === 'loading' ? 'Logging in...' : 'Login'}
+        {authStatus === 'loading' ? 'Loading...' : authMode === 'register' ? 'Create account' : 'Login'}
       </button>
     </form>
   );

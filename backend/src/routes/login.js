@@ -18,7 +18,7 @@ const { OAuth } = require("../middlewares/OAuth");
 //		ate: Tue, 23 Jun 2026 14:46:07 GMT
 //		onnection: keep-alive
 //		eep-Alive: timeout=5
-//		
+//
 //		"message":"Connection success","accessToken":"xxxxxxxxxxxxxxxxx","refreshToken":"yyyyyyyyyyyyyyyyy"}
 //
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
@@ -46,7 +46,7 @@ router.post("/", OAuth, (req, res) => {
 //		onnection: keep-alive
 //		eep-Alive: timeout=5
 
-//		{"id":"dev-123","email":"maxime@local.dev","name":"maxime","role":"user"}%    
+//		{"id":"dev-123","email":"maxime@local.dev","name":"maxime","role":"user"}%
 
 
 router.post("/dev", (req, res, next) => {
@@ -55,7 +55,9 @@ router.post("/dev", (req, res, next) => {
 	if (!devUser) {
 		return res.status(401).json({ error: "Unauthorized" });
 	}
-
+	//Loufoko
+	// TODO -> align dev login user shape with authenticated users by using username instead of name.
+	// Frontend and JWT payloads should not need separate handling for dev and real users.
 	req.user = {
 		id: "dev-123",
 		email: `${devUser}@local.dev`,

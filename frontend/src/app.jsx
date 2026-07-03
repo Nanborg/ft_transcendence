@@ -35,6 +35,10 @@ function App() {
   const room = useRoom(socket, currentUser);
 
 
+  const [authMode, setAuthMode] = useState('login');
+  const [email, setEmail] = useState('');
+
+
   useEffect(() => {
     if (currentUser) {
       setAuthStatus('authenticated');
@@ -156,6 +160,31 @@ function App() {
     }
   }
 
+  async function handleRegister(event) {
+    event.preventDefault();
+
+    const trimmedName = devUserName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !trimmedEmail || !password) {
+      setAuthError('Enter username, email and password');
+      return;
+    }
+    setAuthStatus('loading');
+    setAuthError('');
+    try {
+      await registerUser(trimmedName, trimmedEmail, password);
+      setAuthMode('login');
+      setAuthStatus('idle');
+      setAuthError('Accoumt created. you can login now');
+      setPassword('');
+      setEmail('');
+    } catch (error) {
+      setAuthStatus('error');
+      setAuthError(error.message);
+    }
+  }
+
   function handleLogout() {
     setCurrentUser(null);
     /*clearStoredDevUser();*/
@@ -216,6 +245,7 @@ function App() {
               gameStarted={room.gameStarted}
             />
           )}
+          {/* TODO register: pass authMode, setAuthMode, email, setEmail and handleRegister here. */}
           {currentPage.id === 'login' && (
             <LoginPage
               devUserName={devUserName}

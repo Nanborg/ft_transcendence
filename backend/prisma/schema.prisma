@@ -1,3 +1,6 @@
+//Yaoberso
+// TODO -> verify the full migration history on an empty database before merging more schema changes.
+// The existing migrations include friendship restoration and room additions that must replay cleanly.
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
@@ -28,6 +31,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   friends       User[]         @relation("UserFriends")
   friendOf      User[]         @relation("UserFriends")
+  playerStats   PlayerRunStats[]
 }
 
 model Room {
@@ -53,10 +57,35 @@ model RoomPlayer {
   @@unique([roomId, userId])
 }
 
+//Yaoberso
+// TODO -> add GameRun and PlayerRunStats models once the game:end contract is finalized.
+// Scores must be saved from a server-validated result, not from frontend-submitted data.
 model RefreshToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  //Yaoberso
+  // TODO -> add expiresAt and rotation metadata for refresh tokens.
+  // Auth refresh and logout rules should be enforceable from the database.
   createdAt DateTime @default(now())
+}
+
+model GameRun {
+  id              Int              @id @default(autoincrement())
+  roomId          String
+  won             Boolean
+  durationSeconds Int
+  stats           PlayerRunStats[]
+  createdAt       DateTime         @default(now())
+}
+
+model PlayerRunStats {
+  id        Int     @id @default(autoincrement())
+  gameRunId Int
+  gameRun   GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  score     Int
+  xp        Int
 }
