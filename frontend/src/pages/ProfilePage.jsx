@@ -1,6 +1,51 @@
 import { ProfileDetails } from '../features/profile/ProfileDetails';
+import { useEffect, useState } from 'react';
 
-export function ProfilePage({ profileStatus, profileError, profileUser }) {
+export function ProfilePage({
+  profileStatus,
+  profileError,
+  profileUser,
+  accessToken,
+  onSessionExpired,
+  onProfileUpdated,
+  onUpdateProfile,
+}) {
+  const [username, setUsername] = useState('');
+  const [avatar, setAvatar] = useState('');
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [saveError, setSaveError] = useState('');
+
+  useEffect(() => {
+    if (profileUser) {
+      setUsername(profileUser.username || profileUser.name || '');
+      setAvatar(profileUser.avatar || '');
+    }
+  }, [profileUser]);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!accessToken || !onUpdateProfile) {
+      return;
+    }
+    setSaveStatus('loading');
+    setSaveError('');
+    try {
+      const result = await onUpdateProfile(accessToken, {
+        username: username.trim(),
+        avatar: avatar.trim(),
+      });
+      const updateUser = result.user || result;
+      onProfileUpdated(updateUser);
+      setSaveStatus('saved');
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        onSessionExpired(error.message);
+        return;
+      }
+      setSaveStatus('error');
+      setSaveError(error.message);
+    }
+  }
   return (
     <div className="profile-panel">
       {profileStatus === 'empty' && (
@@ -16,7 +61,24 @@ export function ProfilePage({ profileStatus, profileError, profileUser }) {
         <p className="profile-error" role="alert">{profileError}</p>
       )}
       {profileStatus === 'loaded' && profileUser && (
-        <ProfileDetails profileUser={profileUser} />
+        <>
+          <ProfileDetails profileUser={profileUser} />
+          <form className="profile-edit-form" onSubmit={handleSubmit}>
+            <label>
+              Username
+              <input value={username} onChange={event => setUsername(event.target.value)}></input>
+            </label>
+            <label>
+              Avatar URL
+              <input value={avatar} onChange={event => setAvatar(event.target.value)}></input>
+            </label>
+            <button type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
+              {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}
+            </button>
+            {saveStatus === 'saved' && <p>Profile saved.</p>}
+            {saveStatus === 'error' && <p role="alert">{saveError}</p>}
+          </form>
+        </>
       )}
     </div>
   );
