@@ -520,6 +520,34 @@ p {
   color: #666666;
 }
 
+/*Leaderboard*/
+
+.leaderboard-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.25);
+  text-align: left;
+}
+
+.leaderboard-table th {
+  font-weight: 700;
+}
+
+.leaderboard-table td:first-child,
+.leaderboard-table th:first-child {
+  width: 72px;
+}
+
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
@@ -540,6 +568,15 @@ p {
   .page-panel {
     min-height: 240px;
     padding: 24px;
+  }
+
+    .leaderboard-table {
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 0.5rem;
   }
 
   h1 {
