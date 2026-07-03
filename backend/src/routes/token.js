@@ -23,7 +23,7 @@ router.use(express.json());
 //		Date: Tue, 23 Jun 2026 14:50:23 GMT
 //		Connection: keep-alive
 //		Keep-Alive: timeout=5
-//		
+//
 //		{"accessToken":"XXXXXXXXXXXXXXXXXXXXX"}
 
 
@@ -33,7 +33,7 @@ router.post("/", async (req, res) => {
 		const refreshToken = req.body && req.body.token
 		if (refreshToken == null)
 			return res.sendStatus(401)
-	
+
 			//Loufoko
 			// TODO -> await this refresh token lookup and handle the missing-token case before jwt.verify.
 			// Without await, tokenExist is a Promise and tokenExist.user will not contain the Prisma user.
@@ -41,10 +41,12 @@ router.post("/", async (req, res) => {
 				where: { token: refreshToken },
 				include: { user: true } //get associated user
 			});
-	
+
 			if (tokenExist == null)
 				return res.status(403) // invalid or expired
-	
+	//Loufoko
+	// TODO -> regenerate the access token with the stable auth payload: id and username.
+	// Do not use tokenExist.user.name because the Prisma user model exposes username.
 		jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, user) => {
 			if (err)
 				return (res.sendStatus(403))
