@@ -27,10 +27,10 @@ export function LoginPage({
         onPasswordChange={onPasswordChange}
         onSubmit={onSubmit}
         authMode={authMode}
-        onAuthModeChange={setAuthMode}
+        onAuthModeChange={onAuthModeChange}
         email={email}
-        onEmailChange={setEmail}
-        onRegister={handleRegister}
+        onEmailChange={onEmailChange}
+        onRegister={onRegister}
       />
       {authError && (
         <p className="form-error" role="alert">{authError}</p>

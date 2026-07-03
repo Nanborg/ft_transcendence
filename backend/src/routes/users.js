@@ -66,9 +66,6 @@ router.get("/search", authToken, async (req, res) => {
 //		{"id":9,"iat":1782227176,"exp":1782228076}
 
 
-//Yaoberso
-// TODO -> keep this response contract aligned with GET /users/me.
-// Profile reads and updates should return the same stable user fields for the frontend.
 router.patch('/me', authToken, async (req, res) => {
     try {
         const { username, avatar } = req.body;

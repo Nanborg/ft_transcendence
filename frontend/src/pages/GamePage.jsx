@@ -3,6 +3,9 @@ import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 
 export function GamePage({ title, description, gameState, socket, currentRoom, gameStarted }) {
+    //Nanborg
+    // TODO -> remove the mockGameState fallback once live game:state is required for rendering.
+    // The game page should not show preview state after the backend emits authoritative game states.
     const renderedGameState = gameState || mockGameState;
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Boolean(gameState);
