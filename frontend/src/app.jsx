@@ -178,7 +178,7 @@ function App() {
       await registerUser(trimmedName, trimmedEmail, password);
       setAuthMode('login');
       setAuthStatus('idle');
-      setAuthError('Accoumt created. you can login now');
+      setAuthError('Account created. you can login now');
       setPassword('');
       setEmail('');
     } catch (error) {

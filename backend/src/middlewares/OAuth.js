@@ -51,7 +51,7 @@ async function OAuth(req, res, next) {
 
 		const u = {
 			id: user.id,
-			name: user.name
+			username: user.username
 		}
 		const accessToken = generateAccessToken(u)
 		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
