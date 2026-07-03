@@ -80,6 +80,8 @@ services:
       context: ./game_engine
     container_name: ft_gameplay_cpp
     ports:
+# TODO(nanborg): Add a gameplay-cpp healthcheck and switch backend depends_on
+#to service_healthy.
       - "${GAMEPLAY_PORT:-7297}:7297/udp"
     networks:
       - app_net

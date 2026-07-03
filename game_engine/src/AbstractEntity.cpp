@@ -2,7 +2,15 @@
 #include "GameEngine.hpp"
 #include <iostream>
 
-AbstractEntity::AbstractEntity( unsigned int type, int size, int posX, int posY ): _typeId(type), _id(g_game->newId()), _size(size), _posX(posX), _posY(posY) {};
+AbstractEntity::AbstractEntity( unsigned int type, int size, int posX, int posY ):
+	_typeId(type),
+	_id(g_game->newId()),
+	_size(size),
+	_posX(posX),
+	_posY(posY),
+	_velX(0),
+	_velY(0) {}
+
 AbstractEntity::~AbstractEntity( void ) {}
 
 bool AbstractEntity::tick( void ) { std::cout << "AbstractEntity::tick\n"; return false; }
@@ -25,9 +33,12 @@ bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
 
 unsigned int AbstractEntity::getId( void ) const { return _id; }
 unsigned int AbstractEntity::getType( void ) const { return _typeId; }
+
 int AbstractEntity::getSize( void ) const { return _size; }
 int AbstractEntity::getPosX( void ) const { return _posX; }
 int AbstractEntity::getPosY( void ) const { return _posY; }
+int AbstractEntity::getVelX( void ) const { return _velX; }
+int AbstractEntity::getVelY( void ) const { return _velY; }
 
 void AbstractEntity::setSize( int size ) { _size = size; }
 void AbstractEntity::setPosX( int posX ) { _posX = posX; }

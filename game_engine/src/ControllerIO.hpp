@@ -6,6 +6,9 @@
 #include <poll.h>
 #include <unistd.h>
 #include <exception>
+#include "json.hpp"
+
+using namespace nlohmann;
 
 class ControllerIO
 {
@@ -14,8 +17,8 @@ public:
 	~ControllerIO( void );
 
 	int pollApi( void );
-	int getMsg( uint8_t buffer[16] );
-	int sendMsg( uint8_t buffer[32] );
+	json getMsg( void );
+	void sendMsg( std::string object );
 
 private:
 	void		_setApiAddr( sockaddr& );

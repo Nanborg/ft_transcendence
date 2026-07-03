@@ -1,6 +1,6 @@
 CC = g++
 CFLAGS = -c
-LFLAGS = 
+LFLAGS =
 
 NAME = gameEngineRuntime
 
@@ -29,5 +29,6 @@ fclean: clean
 	rm -rf $(NAME)
 
 re: fclean all
-
+# TODO(neon-05): Add a 'lint-style' target (whitespace + style) to prevent
+#regressions detected by git diff --check.
 .PHONY: all clean fclean re
