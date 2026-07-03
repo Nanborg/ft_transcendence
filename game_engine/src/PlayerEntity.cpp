@@ -11,6 +11,8 @@ PlayerEntity::PlayerEntity( int playerId, int size, int posX, int posY, int velX
 PlayerEntity::~PlayerEntity( void ) {}
 
 bool	PlayerEntity::tick( void ) {
+	// TODO(neon-05): Finalize player logic in tick() (cooldowns, arena bounds,
+	//input validation, state transitions).
 	std::cout << "Player ticked (x, y) = (" << _posX << ", " << _posY << ")\n";
 	if (_receivedInput) {
 		_receivedInput = false;

@@ -34,6 +34,8 @@ json ControllerIO::getMsg( void ) {
 	int bytes = BUFFER_SIZE;
 	while (bytes == BUFFER_SIZE) {
 		bytes = recvfrom(_sockfd, buf, BUFFER_SIZE, 0, (struct sockaddr*) &sender, &_apiSize);
+		// TODO(neon-05): Log errno + socket context for recvfrom/sendto and handle
+		//bytes == 0 and bytes < 0 explicitly.
 		if (bytes < 0)
 			throw std::system_error();
 		str.append(buf, bytes);

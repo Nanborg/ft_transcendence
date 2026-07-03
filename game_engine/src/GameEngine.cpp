@@ -10,6 +10,8 @@ GameEngine::GameEngine( int port ):
 GameEngine::~GameEngine( void ) {}
 
 void	GameEngine::registerAllTypes( void ) {
+	// TODO(neon-05): Register new entity types here (ball, walls, bonuses, etc.)
+	//when implemented.
 	REGISTER_TYPE(PlayerEntity, 1);
 }
 
@@ -29,6 +31,8 @@ int		GameEngine::getTypeId( size_t hash_code ) {
 	return ret;
 }
 
+// TODO(neon-05): Strictly validate the MOVE payload
+//(type, playerId, X, Y) and cleanly ignore missing/invalid fields
 void GameEngine::manageInput( const json& in ) {
 	if (!in["type"].is_number())
 		return;
@@ -53,7 +57,8 @@ void GameEngine::manageInput( const json& in ) {
 
 void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	json entityJ, out;
-
+	// TODO(neon-05): Send a full serialized state batch for each meaningful tick,
+	//not only a single updated entity.
 	entityJ["entityId"] = entity->getId();
 	entityJ["entityTypeId"] = entity->getType();
 	entityJ["posX"] = entity->getPosX();
@@ -74,15 +79,19 @@ void	GameEngine::start( void ) {
 	_running = true;
 	while (_running)
 	{
+		// TODO(neon-05): Introduce a fixed-step update(dt) loop with an accumulator
+		//and catch-up limit.
 		// TODO: separate this into multiple functions
 		while (_io.pollApi() > 0)
 			_playerInputs.push(_io.getMsg());
-
+		// TODO(neon-05): Associate each input with a target tick and apply the input
+		//queue before simulating that tick.
 		while (!_playerInputs.empty()) {
 			manageInput(_playerInputs.front());
 			_playerInputs.pop();
 		}
-
+		// TODO(neon-05): Add a collision pass + deferred destruction + cleanup of
+		//out-of-play entities per tick.
 		for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++)
 		{
 			if ((*it)->doTick())
@@ -94,6 +103,8 @@ void	GameEngine::start( void ) {
 		std::cout << "ticked " << std::distance(_entities.begin(), _entities.end()) << " entities" << std::endl;
 
 		std::cout << "sleep" << std::endl;
+		// TODO(neon-05): Replace sleep(1) with a fixed-tick loop (30/60 Hz)
+		//using a time accumulator.
 		sleep(1);
 	}
 }
