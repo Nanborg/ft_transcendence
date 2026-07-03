@@ -34,7 +34,9 @@ router.post("/", async (req, res) => {
 		if (refreshToken == null)
 			return res.sendStatus(401)
 	
-	
+			//Loufoko
+			// TODO -> await this refresh token lookup and handle the missing-token case before jwt.verify.
+			// Without await, tokenExist is a Promise and tokenExist.user will not contain the Prisma user.
 			const tokenExist = prisma.refreshToken.findUnique({
 				where: { token: refreshToken },
 				include: { user: true } //get associated user
