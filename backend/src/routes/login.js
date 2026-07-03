@@ -55,7 +55,9 @@ router.post("/dev", (req, res, next) => {
 	if (!devUser) {
 		return res.status(401).json({ error: "Unauthorized" });
 	}
-
+	//Loufoko
+	// TODO -> align dev login user shape with authenticated users by using username instead of name.
+	// Frontend and JWT payloads should not need separate handling for dev and real users.
 	req.user = {
 		id: "dev-123",
 		email: `${devUser}@local.dev`,

@@ -3,6 +3,9 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
+//Yaoberso / Loufoko
+// TODO -> keep the friends list response stable for the frontend.
+// The Friends page needs predictable fields for loading, empty state, errors, add, and remove flows.
 router.get("/", authToken, async (req, res) => {
     try {
         const userWithFriends = await prisma.user.findUnique({
@@ -27,6 +30,9 @@ router.get("/", authToken, async (req, res) => {
     }
 });
 
+//Yaoberso / Loufoko
+// TODO -> decide whether friendships are reciprocal or directional before stabilizing this route.
+// The Prisma relation and frontend Friends page must agree on what adding a friend means.
 router.post("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
@@ -63,7 +69,9 @@ router.post("/:id", authToken, async (req, res) => {
         res.status(400).json({ error: "Impossible d'ajouter cet ami" });
     }
 });
-
+//Yaoberso / Loufoko
+// TODO -> keep friend removal consistent with the chosen friendship direction.
+// If friendships are reciprocal, deleting a friend must update both users' relations.
 router.delete("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
