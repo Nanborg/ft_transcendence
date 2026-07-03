@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser, updateCurrentUser } from './api/users';
+import { fetchCurrentUser, loginUser, registerUser, updateCurrentUser } from './api/users';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -247,7 +247,6 @@ function App() {
               gameStarted={room.gameStarted}
             />
           )}
-          {/* TODO register: pass authMode, setAuthMode, email, setEmail and handleRegister here. */}
           {currentPage.id === 'login' && (
             <LoginPage
               devUserName={devUserName}
@@ -259,6 +258,11 @@ function App() {
               onLogout={handleLogout}
               password={password}
               onPasswordChange={setPassword}
+              authMode={authMode}
+              onAuthModeChange={setAuthMode}
+              email={email}
+              onEmailChange={setEmail}
+              onRegister={handleRegister}
             />
           )}
           {currentPage.id === 'friends' && (
