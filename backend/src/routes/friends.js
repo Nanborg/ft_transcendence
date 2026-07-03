@@ -54,6 +54,14 @@ router.post("/:id", authToken, async (req, res) => {
                 }
             }
         });
+        const updatedUser2 = await prisma.user.update({
+            where: { id: friendId },
+            data: {
+                friends: {
+                    connect: { id: req.user.id }
+                }
+            }
+        });
         res.status(200).json({ message: "Ami ajouté avec succès !" });
     }
     catch (error) {
@@ -75,6 +83,14 @@ router.delete("/:id", authToken, async (req, res) => {
             data: {
                 friends: {
                     disconnect: { id: friendId }
+                }
+            }
+        });
+        const updatedUser2 = await prisma.user.update({
+            where: { id: friendId },
+            data: {
+                friends: {
+                    disconnect: { id: req.user.id }
                 }
             }
         });

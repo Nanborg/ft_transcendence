@@ -2,45 +2,47 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const bcrypt = require("bcrypt");
-
-router.use(express.json());
-
 const prisma = require('../db');
-//Yaoberso
-// TODO -> load the full user profile from Prisma using req.user.id.
-// The frontend profile page needs stable id, username, email, and avatar fields, not only the JWT payload.
-router.get("/me", authToken, (req, res) => {
-    res.json(req.user);
+
+router.get("/me", authToken, async (req, res) => {
+	try{
+        const UserId = req.user.id
+        const userProfile = await prisma.user.findUnique({
+            where: { id: UserId },
+            select: { id: true, username: true, email: true, avatar: true}
+        })
+        if (!userProfile) {
+            return res.status(404).json({ error: "Utilisateur introuvable" });
+        }
+        res.json(userProfile);
+    }
+    catch (error) {
+        res.status(500).json({ error: "Erreur serveur" });
+    }
 });
 
-
-
-//Yaoberso
-// TODO -> remove or protect this user creation route because signin already owns registration.
-// Keeping two registration paths can create inconsistent validation and duplicate auth behavior.
-
-router.post('/', async (req, res) => {
-    try {
-        const { email, username, password } = req.body;
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        const newUser = await prisma.user.create({
-            data: {
-                email: email,
-                username: username,
-                password: hashedPassword
+router.get("/search", authToken, async (req, res) => {
+	try{
+        const srcuser = req.query.search
+        if (!srcuser || typeof srcuser !== 'string' || srcuser.trim() === '') {
+            return res.status(400).json({ error: "Veuillez fournir un terme de recherche valide." });
+        }
+        const userProfile = await prisma.user.findMany({
+            where: {
+                username: {
+                    contains: srcuser.trim(),
+                    mode: 'insensitive'
+                }
             },
-            select: {
-                id: true,
-                username: true,
-                email: true
-            }
+            select: { id: true, username: true, email: true, avatar: true}
         });
-        res.status(201).json({ message: "Joueur créé avec succès !", user: newUser });
-    } catch (error) {
-        console.error(error);
-        res.status(400).json({ error: "Impossible de créer le joueur" });
+        if (userProfile.length === 0) {
+            return res.status(404).json({ error: "Aucun utilisateur trouvé." });
+        }
+        res.json(userProfile);
+    }
+    catch (error) {
+        res.status(500).json({ error: "Erreur serveur" });
     }
 });
 
@@ -60,7 +62,7 @@ router.post('/', async (req, res) => {
 //		Date: Tue, 23 Jun 2026 15:07:39 GMT
 //		Connection: keep-alive
 //		Keep-Alive: timeout=5
-//		
+//
 //		{"id":9,"iat":1782227176,"exp":1782228076}
 
 
@@ -96,7 +98,7 @@ router.patch('/me', authToken, async (req, res) => {
                 email: true,
             }
         });
-        res.status(200).json({ message: "Profil mis à jour avec succès !", user: updatedUser });
+        res.status(200).json(updatedUser);
     }
     catch (error) {
         console.error(error);
