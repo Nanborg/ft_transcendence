@@ -5,7 +5,7 @@ const prisma = require('../db');
 
 
 //		Generates a short-lived JWT access token for an authenticated user.
-//		
+//
 //		parammeters: user object (name and id).
 //		returns: signed JWT access token valid for 15 minutes.
 
@@ -17,7 +17,7 @@ function generateAccessToken(user) {
 
 
 //		Authenticates a user using username and password.
-//	
+//
 //	Process:
 //	1. Validates that credentials are provided.
 //	2. Retrieves the user from the database.
@@ -25,11 +25,11 @@ function generateAccessToken(user) {
 //	4. Generates an access token (15 min) and a refresh token.
 //	5. Stores the refresh token in the database.
 //	6. Returns both tokens to the client.
-//	
+//
 //	param {Request} req - Express request containing `name` and `password` in the body.
 //	param {Response} res - Express response object.
 //	param {NextFunction} next - Express next middleware function.
-//	
+//
 //	throws {400} If username or password is missing.
 //	throws {401} If credentials are invalid.
 //	throws {500} If an unexpected server error occurs.

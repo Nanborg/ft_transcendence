@@ -34,6 +34,9 @@ services:
     depends_on:
       database:
         condition: service_healthy
+        #Neon-05
+      # TODO -> build and run the real C++ engine service instead of the gcc placeholder.
+      # Docker Compose should start the engine process so the Socket.IO backend can send validated inputs to it.
       gameplay-cpp:
         condition: service_started
     networks:
