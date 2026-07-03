@@ -30,8 +30,7 @@ async function createRoom(ownerId, roomName) {
         ? roomName.trim()
         : null;
 
-    if (cleanRoomName)
-    {
+    if (cleanRoomName) {
         const existingRoom = await prisma.room.findUnique({
             where: {
                 name: cleanRoomName,
@@ -72,8 +71,8 @@ async function joinRoom(roomIdentifier, userId) {
     const room = await prisma.room.findFirst({
         where: {
             OR: [
-                {id: cleanIdentifier},
-                {name: cleanIdentifier},
+                { id: cleanIdentifier },
+                { name: cleanIdentifier },
             ],
         },
     });
@@ -96,9 +95,7 @@ async function joinRoom(roomIdentifier, userId) {
             error: "Game already started",
         };
     }
-    //Princiamf2
-    // TODO -> reject joins when the room is starting, playing, or finished.
-    // Late joins would desync the room state from the C++ engine player mapping.
+
     const existingPlayer = await prisma.roomPlayer.findUnique({
         where: {
             roomId_userId: {
@@ -127,9 +124,7 @@ async function joinRoom(roomIdentifier, userId) {
         error: null,
     };
 }
-//Princiamf2
-// TODO -> clear this player's stored input when they leave a room.
-// Stale input state should not be reused if the same user rejoins or if the engine keeps a player mapping.
+
 async function leaveRoom(roomId, userId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
@@ -139,7 +134,7 @@ async function leaveRoom(roomId, userId) {
     if (!room) {
         return null;
     }
-    
+
     await prisma.roomPlayer.deleteMany({
         where: {
             roomId,
@@ -153,15 +148,13 @@ async function leaveRoom(roomId, userId) {
         where: { roomId },
     });
 
-    if (remainingPlayers.length === 0)
-    {
+    if (remainingPlayers.length === 0) {
         await prisma.room.delete({
             where: { id: roomId },
         });
         return null;
     }
-    if (room.ownerId === userId)
-    {
+    if (room.ownerId === userId) {
         await prisma.room.update({
             where: { id: roomId },
             data: { ownerId: remainingPlayers[0].userId },
@@ -169,9 +162,7 @@ async function leaveRoom(roomId, userId) {
     }
     return getRoom(roomId);
 }
-//Princiamf2
-// TODO -> clear all stored inputs for this user when disconnect cleanup really removes them from rooms.
-// This must stay aligned with the multi-tab rule so one tab closing does not clear inputs for an active socket.
+
 async function leaveAllRooms(userId) {
     const memberships = await prisma.roomPlayer.findMany({
         where: { userId },
@@ -244,7 +235,7 @@ async function getPlayerInRoom(roomId, userId) {
 // TODO -> reject ready toggles once the room is starting, playing, or finished.
 // Ready state should only control the lobby phase before the C++ engine session starts.
 async function setPlayerReady(roomId, userId) {
-   const player = await prisma.roomPlayer.findUnique({
+    const player = await prisma.roomPlayer.findUnique({
         where: {
             roomId_userId: {
                 roomId,
@@ -277,9 +268,7 @@ async function startGame(roomId, userId) {
             error: "Room not found"
         };
     }
-    //Princiamf2
-// TODO -> only allow the room owner to start the game and validate the expected player count.
-// The engine should not start unless the room is still waiting and all required players are ready.
+
     const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
@@ -344,7 +333,7 @@ async function setPlayerInput(roomId, userId, input) {
             error: "Player is not in room",
         };
     }
-    
+
     const inputKey = `${roomId}:${userId}`;
 
     playerInputs.set(inputKey, {
@@ -364,8 +353,7 @@ async function setPlayerInput(roomId, userId, input) {
     };
 }
 
-function formatRoom(room)
-{
+function formatRoom(room) {
     if (!room)
         return null;
 

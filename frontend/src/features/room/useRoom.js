@@ -67,9 +67,6 @@ export function useRoom(socket, currentUser) {
             window.location.hash = '#/room';
         }
 
-        //Nanborg
-        // TODO -> register and unregister the future game:state listener in this effect.
-        // Keeping Socket.IO listeners paired prevents duplicated game updates after remounts.
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
