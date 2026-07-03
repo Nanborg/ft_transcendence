@@ -35,8 +35,6 @@ services:
       database:
         condition: service_healthy
         #Neon-05
-      # TODO -> build and run the real C++ engine service instead of the gcc placeholder.
-      # Docker Compose should start the engine process so the Socket.IO backend can send validated inputs to it.
       gameplay-cpp:
         condition: service_started
     networks:
@@ -78,12 +76,11 @@ services:
       - app_net
 
   gameplay-cpp:
-    image: gcc:14
+    build:
+      context: ./game_engine
     container_name: ft_gameplay_cpp
-    working_dir: /game_engine
-    command: ["bash", "-lc", "echo 'gameplay-cpp skeleton ready' && sleep infinity"]
     ports:
-      - "${GAMEPLAY_PORT:-7297/udp}:7297"
+      - "${GAMEPLAY_PORT:-7297}:7297/udp"
     networks:
       - app_net
 
