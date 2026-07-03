@@ -18,6 +18,7 @@ import { FriendsPage } from './pages/FriendsPage';
 import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
+import { MatchHistoryPage } from './pages/MatchHistoryPage';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -203,7 +204,7 @@ function App() {
           {currentPage.id === 'home' && (
             <HomePage title={currentPage.title} description={currentPage.description} />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'profile' && (
@@ -279,6 +280,12 @@ function App() {
           )}
           {currentPage.id === 'leaderboard' && (
             <LeaderboardPage
+              title={currentPage.title}
+              description={currentPage.description}
+            />
+          )}
+          {currentPage.id === 'match-history' && (
+            <MatchHistoryPage
               title={currentPage.title}
               description={currentPage.description}
             />
