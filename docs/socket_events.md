@@ -18,7 +18,10 @@ Le système permet actuellement :
 L'objectif de cette documentation est de servir de référence entre le frontend et le backend afin de garantir que les événements, les payloads et les réponses restent cohérents tout au long du projet.
 
 ---
-
+<!-- Princiamf2
+TODO -> update this document to use authenticated user ids instead of socket ids.
+The current backend stores room owners and players with user.id, so the contract should not mention socket-id as the stable player identity.
+-->
 # Structure d'une room
 
 Une room possède la structure suivante :

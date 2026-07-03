@@ -46,7 +46,9 @@ export function useRoom(socket, currentUser) {
                 chatMessage,
             ]);
         }
-
+        //Nanborg
+        // TODO -> listen to game:state after game:start and store the latest server-authoritative state.
+        // The game page should render this state instead of mockGameState.
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
@@ -65,6 +67,9 @@ export function useRoom(socket, currentUser) {
             window.location.hash = '#/room';
         }
 
+        //Nanborg
+        // TODO -> register and unregister the future game:state listener in this effect.
+        // Keeping Socket.IO listeners paired prevents duplicated game updates after remounts.
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
@@ -146,7 +151,9 @@ export function useRoom(socket, currentUser) {
         });
         resetRoom();
     }
-
+    //Nanborg
+    // TODO -> add a dedicated game input hook that emits player:input from keyboard state.
+    // Inputs should be sent as JSON booleans and the Socket.IO backend will translate them for the C++ engine.
     function toggleReady() {
         if (!socket || !currentRoom) {
             return;
