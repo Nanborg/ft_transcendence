@@ -2,10 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
-/*
-import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/auth/devUserStorage';
-import { fetchCurrentUser } from './api/users';
-*/
 import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
 //
 import { useRoom } from './features/room/useRoom';
@@ -18,7 +14,8 @@ import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RoomPage } from './pages/RoomPage';
 import { GamePage } from './pages/GamePage';
-import { fetchCurrentUser, loginUser, registerUser } from './api/users';
+import { FriendsPage } from './pages/FriendsPage';
+import { useFriends } from './features/friends/useFriends';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -35,6 +32,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
 
   const [authMode, setAuthMode] = useState('login');
   const [email, setEmail] = useState('');
@@ -243,6 +241,14 @@ function App() {
               onLogout={handleLogout}
               password={password}
               onPasswordChange={setPassword}
+            />
+          )}
+          {currentPage.id === 'friends' && (
+            <FriendsPage
+              title={currentPage.title}
+              description={currentPage.description}
+              currentUser={currentUser}
+              friends={friends}
             />
           )}
         </section>
