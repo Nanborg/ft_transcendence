@@ -420,6 +420,14 @@ p {
 
 /* Game */
 
+.game-muted {
+  color: #64748b;
+}
+
+.game-panel button {
+  width: fit-content;
+}
+
 .game-panel{
   display: grid;
   gap: 18px;
