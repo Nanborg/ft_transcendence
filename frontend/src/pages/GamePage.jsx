@@ -1,5 +1,6 @@
 import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
+import { PageHeading } from '../components/PageHeading';
 
 export function GamePage({ title, description, gameState, socket, currentRoom, gameStarted }) {
     const renderedGameState = gameState || mockGameState;
@@ -15,9 +16,7 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     if (!hasRoom) {
         return (
             <>
-                <p className="page-kicker">Frontend page</p>
-                <h1 id="page-title">{title}</h1>
-                <p>{description}</p>
+                <PageHeading title={title} description={description} />
                 <div className="game-panel">
                     <h2>No active room</h2>
                     <p className="game-muted">Join or create a room before opening the game.</p>
@@ -31,9 +30,7 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     if (!isGameReady) {
         return (
             <>
-                <p className="page-kicker">Frontend page</p>
-                <h1 id="page-title">{title}</h1>
-                <p>{description}</p>
+                <PageHeading title={title} description={description} />
                 <div className="game-panel">
                     <h2>Game not started</h2>
                     <p className="game-muted">Ready up and start the game from the room page.</p>
@@ -46,9 +43,7 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     }
     return (
         <>
-            <p className="page-kicker">Frontend page</p>
-            <h1 id="page-title">{title}</h1>
-            <p>{description}</p>
+            <PageHeading title={title} description={description} />
             <div className="game-panel">
                 <div className="game-hud">
                     <p>{hasLiveGameState ? 'Live game state' : 'Preview game state'}</p>

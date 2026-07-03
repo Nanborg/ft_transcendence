@@ -1,3 +1,5 @@
+import { PageHeading } from '../components/PageHeading';
+
 export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
     currentRoom,
@@ -22,9 +24,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
   return (
     <>
-      <p className="page-kicker">Frontend page</p>
-      <h1 id="page-title">{title}</h1>
-      <p>{description}</p>
+      <PageHeading title={title} description={description} />
 
       <div className="room-panel">
         {!currentUser && (

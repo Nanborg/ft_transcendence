@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { PageHeading } from '../components/PageHeading';
 
 export function LobbyPage({ title, description, currentUser, socket, room }) {
     const isDisabled = !socket || !currentUser || room.roomStatus === 'loading';
@@ -9,9 +10,7 @@ export function LobbyPage({ title, description, currentUser, socket, room }) {
     }, [room.currentRoom]);
     return (
         <>
-            <p className="page-kicker">Frontend page</p>
-            <h1 id="page-title">{title}</h1>
-            <p>{description}</p>
+            <PageHeading title={title} description={description} />
 
             <div className="lobby-panel">
                 <h2>Enter a room</h2>
