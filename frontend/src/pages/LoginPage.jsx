@@ -11,6 +11,11 @@ export function LoginPage({
   onLogout,
   password,
   onPasswordChange,
+  authMode,
+  onAuthModeChange,
+  email,
+  onEmailChange,
+  onRegister,
 }) {
   return (
     <div className="login-panel">
@@ -21,6 +26,11 @@ export function LoginPage({
         password={password}
         onPasswordChange={onPasswordChange}
         onSubmit={onSubmit}
+        authMode={authMode}
+        onAuthModeChange={setAuthMode}
+        email={email}
+        onEmailChange={setEmail}
+        onRegister={handleRegister}
       />
       {authError && (
         <p className="form-error" role="alert">{authError}</p>

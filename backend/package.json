@@ -6,6 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon src/server.js",
+    "test": "ACCESS_SECRET_TOKEN=monsecret123 REFRESH_SECRET_TOKEN=monsecret456 jest --forceExit",
     "start": "node src/server.js",
     "prisma": "npx prisma migrate deploy && npx prisma generate && nodemon src/server.js"
   },
@@ -20,9 +21,11 @@
   "devDependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "pg": "^8.21.0",
-    "socket.io": "^4.8.3",
+    "jest": "^30.4.2",
     "nodemon": "^3.1.14",
-    "prisma": "^7.8.0"
+    "pg": "^8.21.0",
+    "prisma": "^7.8.0",
+    "socket.io": "^4.8.3",
+    "supertest": "^7.2.2"
   }
 }

@@ -27,31 +27,33 @@ const prisma = require('../db');
 
 router.post ("/", async (req, res) => {
 	try {
-		{
-			const user = await prisma.user.findUnique({
-				where: { username: req.body.name }
+			if (!req.body || !req.body.name || !req.body.password || !req.body.email)
+				return res.status(400).json({ error: 'Missing required fields' });
+			const cleanName = req.body.name.trim()
+			if (cleanName === '')
+				return res.status(400).json({ error: 'userName is empty' });
+			const existingUser = await prisma.user.findUnique({
+				where: { username: cleanName }
 			});
-			if (user)
+			if (existingUser)
 				return res.status(400).send('Username is already taken')//check real codes
-		}
-
-		if (!req.body || !req.body.name || !req.body.password || !req.body.email)
-			return res.status(400).json({ error: 'Missing required fields' });
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
 		const user = await prisma.user.create({
 			data: {
-				username: req.body.name,
+				username: cleanName,
 				email: req.body.email,
 				password: hashedPassword
 			}
 		});
-
+		//Loufoko
+		// TODO -> return user.username instead of user.name and keep the signup response contract stable.
+		// The Prisma User model exposes username, so user.name will be undefined.
 		res.status(201).json({
 			message: 'Sign up success',
 			userId: user.id,
-			username: user.name
+			username: user.username
 		});
 
 	}
