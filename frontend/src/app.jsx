@@ -7,7 +7,7 @@ import { clearStoredDevUser, getStoredDevUser, storeDevUser } from './features/a
 import { fetchCurrentUser } from './api/users';
 */
 import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser } from './api/users';
+//
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -18,6 +18,7 @@ import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RoomPage } from './pages/RoomPage';
 import { GamePage } from './pages/GamePage';
+import { fetchCurrentUser, loginUser, registerUser } from './api/users';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -34,6 +35,10 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+
+  const [authMode, setAuthMode] = useState('login');
+  const [email, setEmail] = useState('');
+
 
   useEffect(() => {
     if (currentUser) {
@@ -155,6 +160,31 @@ function App() {
     }
   }
 
+  async function handleRegister(event) {
+    event.preventDefault();
+
+    const trimmedName = devUserName.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName || !trimmedEmail || !password) {
+      setAuthError('Enter username, email and password');
+      return;
+    }
+    setAuthStatus('loading');
+    setAuthError('');
+    try {
+      await registerUser(trimmedName, trimmedEmail, password);
+      setAuthMode('login');
+      setAuthStatus('idle');
+      setAuthError('Accoumt created. you can login now');
+      setPassword('');
+      setEmail('');
+    } catch (error) {
+      setAuthStatus('error');
+      setAuthError(error.message);
+    }
+  }
+
   function handleLogout() {
     setCurrentUser(null);
     /*clearStoredDevUser();*/
@@ -201,6 +231,7 @@ function App() {
               gameStarted={room.gameStarted}
             />
           )}
+          {/* TODO register: pass authMode, setAuthMode, email, setEmail and handleRegister here. */}
           {currentPage.id === 'login' && (
             <LoginPage
               devUserName={devUserName}
