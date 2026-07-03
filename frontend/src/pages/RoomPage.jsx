@@ -5,13 +5,10 @@
 */
 export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
-    roomIdInput,
-    setRoomIdInput,
+
     currentRoom,
     roomStatus,
     roomError,
-    createRoom,
-    joinRoom,
     leaveRoom,
     toggleReady,
     chatInput,
@@ -21,8 +18,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
     startGame,
     gameStarted,
     gameStartInfo,
-    roomNameInput,
-    setRoomNameInput
+
   } = room;
   /*= useRoom(socket, currentUser);*/
 
@@ -40,7 +36,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
       <div className="room-panel">
         {!currentUser && (
-          <p className="room-error">Login first to create or join a room.</p>
+          <p className="room-error">Login first view your room.</p>
         )}
 
         {currentRoom ? (
@@ -126,35 +122,11 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
           </div>
         ) : (
-          <div className="room-actions">
-            <form className="room-form" onSubmit={createRoom}>
-              <label htmlFor="room-name">Room name</label>
-              <input
-                id="room-name"
-                type="text"
-                value={roomNameInput}
-                onChange={event => setRoomNameInput(event.target.value)}
-                placeholder="Enter a room name"
-                disabled={isDisabled}
-              />
-              <button type="submit" disabled={isDisabled}>
-                Create room
-              </button>
-            </form>
-            <form className="room-form" onSubmit={joinRoom}>
-              <label htmlFor="room-id">Room id or name</label>
-              <input
-                id="room-id"
-                type="text"
-                value={roomIdInput}
-                onChange={event => setRoomIdInput(event.target.value)}
-                placeholder="Enter room id or name"
-                disabled={isDisabled}
-              />
-              <button type="submit" disabled={isDisabled}>
-                Join room
-              </button>
-            </form>
+          <div className="room-empty">
+            <p>No active room.</p>
+            <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
+              Go to lobby
+            </button>
           </div>
         )}
 

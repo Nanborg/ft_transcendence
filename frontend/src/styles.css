@@ -458,6 +458,27 @@ p {
 .friend-muted {
   color: #6b6666;
 }
+/* lobby */
+
+.lobby-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.lobby-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 420px;
+}
+
+.lobby-error {
+  color: #e90909;
+}
+
+.lobby-muted {
+  color: #666666;
+}
+
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
