@@ -47,7 +47,9 @@ router.post ("/", async (req, res) => {
 				password: hashedPassword
 			}
 		});
-
+		//Loufoko
+		// TODO -> return user.username instead of user.name and keep the signup response contract stable.
+		// The Prisma User model exposes username, so user.name will be undefined.
 		res.status(201).json({
 			message: 'Sign up success',
 			userId: user.id,

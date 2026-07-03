@@ -6,14 +6,18 @@ const bcrypt = require("bcrypt");
 router.use(express.json());
 
 const prisma = require('../db');
-
+//Yaoberso
+// TODO -> load the full user profile from Prisma using req.user.id.
+// The frontend profile page needs stable id, username, email, and avatar fields, not only the JWT payload.
 router.get("/me", authToken, (req, res) => {
     res.json(req.user);
 });
 
 
 
-// need to delete prisma.user.create it's not suposed to be here
+//Yaoberso
+// TODO -> remove or protect this user creation route because signin already owns registration.
+// Keeping two registration paths can create inconsistent validation and duplicate auth behavior.
 
 router.post('/', async (req, res) => {
     try {
@@ -60,7 +64,9 @@ router.post('/', async (req, res) => {
 //		{"id":9,"iat":1782227176,"exp":1782228076}
 
 
-
+//Yaoberso
+// TODO -> keep this response contract aligned with GET /users/me.
+// Profile reads and updates should return the same stable user fields for the frontend.
 router.patch('/me', authToken, async (req, res) => {
     try {
         const { username, avatar } = req.body;

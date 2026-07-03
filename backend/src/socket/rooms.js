@@ -21,7 +21,9 @@ function createPlayer(playerId, playerName) {
         },
     };
 }
-
+//Princiamf2
+// TODO -> return structured create-room errors instead of throwing raw Error messages.
+// The Socket.IO client should receive stable error codes for duplicate room names and invalid room names.
 async function createRoom(ownerId, roomName) {
     const roomId = generateRoomId();
     const cleanRoomName = typeof roomName === "string" && roomName.trim()
@@ -53,7 +55,9 @@ async function createRoom(ownerId, roomName) {
     });
     return getRoom(roomId);
 }
-
+//Princiamf2
+// TODO -> decide if one user can be in multiple rooms and enforce it consistently.
+// If the engine supports only one active game per user, joining a new room should leave or reject the previous one.
 async function joinRoom(roomIdentifier, userId) {
     const cleanIdentifier = typeof roomIdentifier === "string"
         ? roomIdentifier.trim()
@@ -92,7 +96,9 @@ async function joinRoom(roomIdentifier, userId) {
             error: "Game already started",
         };
     }
-    
+    //Princiamf2
+    // TODO -> reject joins when the room is starting, playing, or finished.
+    // Late joins would desync the room state from the C++ engine player mapping.
     const existingPlayer = await prisma.roomPlayer.findUnique({
         where: {
             roomId_userId: {
@@ -121,7 +127,9 @@ async function joinRoom(roomIdentifier, userId) {
         error: null,
     };
 }
-
+//Princiamf2
+// TODO -> clear this player's stored input when they leave a room.
+// Stale input state should not be reused if the same user rejoins or if the engine keeps a player mapping.
 async function leaveRoom(roomId, userId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
@@ -161,7 +169,9 @@ async function leaveRoom(roomId, userId) {
     }
     return getRoom(roomId);
 }
-
+//Princiamf2
+// TODO -> clear all stored inputs for this user when disconnect cleanup really removes them from rooms.
+// This must stay aligned with the multi-tab rule so one tab closing does not clear inputs for an active socket.
 async function leaveAllRooms(userId) {
     const memberships = await prisma.roomPlayer.findMany({
         where: { userId },
@@ -230,7 +240,9 @@ async function getPlayerInRoom(roomId, userId) {
         ready: player.ready,
     };
 }
-
+//Princiamf2
+// TODO -> reject ready toggles once the room is starting, playing, or finished.
+// Ready state should only control the lobby phase before the C++ engine session starts.
 async function setPlayerReady(roomId, userId) {
    const player = await prisma.roomPlayer.findUnique({
         where: {
@@ -265,6 +277,9 @@ async function startGame(roomId, userId) {
             error: "Room not found"
         };
     }
+    //Princiamf2
+// TODO -> only allow the room owner to start the game and validate the expected player count.
+// The engine should not start unless the room is still waiting and all required players are ready.
     const player = room.players.find((player) => player.id === userId);
     if (!player) {
         return {
@@ -367,7 +382,9 @@ function formatRoom(room)
         })),
     };
 }
-
+//Princiamf2
+// TODO -> return players in a stable order for enginePlayerId assignment.
+// The Socket.IO backend needs a deterministic user.id to enginePlayerId mapping when starting the C++ engine session.
 async function getRoom(roomId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
