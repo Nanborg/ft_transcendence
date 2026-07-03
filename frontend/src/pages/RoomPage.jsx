@@ -1,11 +1,5 @@
-//import { useRoom } from '../features/room/useRoom';
-
-/*export function RoomPage({ title, description, socket, currentUser
-}) {
-*/
 export function RoomPage({ title, description, socket, currentUser, room, }) {
   const {
-
     currentRoom,
     roomStatus,
     roomError,
@@ -18,15 +12,13 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
     startGame,
     gameStarted,
     gameStartInfo,
-
   } = room;
-  /*= useRoom(socket, currentUser);*/
 
   const players = currentRoom?.players || [];
   const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
-  /*const currentPlayer = players.find(player => player.id === socket?.id);*/
   const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
+  const canStartGame = !isDisabled && allPlayersReady && !gameStarted;
 
   return (
     <>
@@ -36,17 +28,18 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
       <div className="room-panel">
         {!currentUser && (
-          <p className="room-error">Login first view your room.</p>
+          <p className="room-error">Login first to view your room.</p>
         )}
 
         {currentRoom ? (
           <div className="room-current">
-            <h2>Current room</h2>
-            <p>Room id: {currentRoom.id}</p>
-            {currentRoom.name && (
-              <p>Room name: {currentRoom.name}</p>
-            )}
-            <p>Status: {currentRoom.status}</p>
+            <header className="room-summary">
+              <div>
+                <h2>{currentRoom.name || 'Current room'}</h2>
+                <p className="room-muted">Room id: {currentRoom.id}</p>
+              </div>
+              <p className="room-status">Status: {currentRoom.status}</p>
+            </header>
 
             <div className="room-players">
               <h3>Players</h3>
@@ -57,8 +50,10 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                     <li key={player.id}>
                       <span className="room-player-name">{player.name}</span>
                       <span className="room-player-meta">
-                        {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'} -
-                        {player.ready ? ' Ready' : ' Not ready'}
+                        {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'}
+                      </span>
+                      <span className="room-player-meta">
+                        {player.ready ? 'Ready' : 'Not ready'}
                       </span>
                     </li>
                   ))}
@@ -67,21 +62,27 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 <p>No players yet.</p>
               )}
             </div>
-            <button
-              type="button"
-              className="room-ready-button"
-              onClick={toggleReady}
-              disabled={isDisabled || !currentPlayer}>
-              {currentPlayer?.ready ? 'Not ready' : 'Ready'}
-            </button>
-            <button
-              type="button"
-              className="room-start-button"
-              onClick={startGame}
-              disabled={isDisabled || !allPlayersReady || gameStarted}
-            >
-              Start game
-            </button>
+            <div className="room-actions">
+              <button
+                type="button"
+                className="room-ready-button"
+                onClick={toggleReady}
+                disabled={isDisabled || !currentPlayer}
+              >
+                {currentPlayer?.ready ? 'Not ready' : 'Ready'}
+              </button>
+              <button
+                type="button"
+                className="room-start-button"
+                onClick={startGame}
+                disabled={!canStartGame}
+              >
+                Start game
+              </button>
+              <button type="button" onClick={leaveRoom}>
+                Leave room
+              </button>
+            </div>
             {gameStarted && gameStartInfo && (
               <p className="room-started">
                 Game starting: {gameStartInfo.status}
@@ -89,6 +90,9 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
             )}
             <div className="room-chat">
               <h3>Chat</h3>
+              {chatMessages.length === 0 && (
+                <p className="room-muted">No messages yet.</p>
+              )}
               <ul className="room-chat-messages">
                 {chatMessages.map(chatMessage => (
                   <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
@@ -116,14 +120,11 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 </button>
               </form>
             </div>
-            <button type="button" onClick={leaveRoom}>
-              Leave room
-            </button>
-
           </div>
         ) : (
           <div className="room-empty">
-            <p>No active room.</p>
+            <h2>No active room</h2>
+            <p>Create or join a room from the lobby first.</p>
             <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
               Go to lobby
             </button>
