@@ -31,6 +31,7 @@ model User {
   updatedAt     DateTime       @updatedAt
   friends       User[]         @relation("UserFriends")
   friendOf      User[]         @relation("UserFriends")
+  playerStats   PlayerRunStats[]
 }
 
 model Room {
@@ -68,4 +69,23 @@ model RefreshToken {
   // TODO -> add expiresAt and rotation metadata for refresh tokens.
   // Auth refresh and logout rules should be enforceable from the database.
   createdAt DateTime @default(now())
+}
+
+model GameRun {
+  id              Int              @id @default(autoincrement())
+  roomId          String
+  won             Boolean
+  durationSeconds Int
+  stats           PlayerRunStats[]
+  createdAt       DateTime         @default(now())
+}
+
+model PlayerRunStats {
+  id        Int     @id @default(autoincrement())
+  gameRunId Int
+  gameRun   GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  score     Int
+  xp        Int
 }
