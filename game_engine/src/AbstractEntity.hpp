@@ -14,7 +14,7 @@ public:
 
 	bool doTick( void );
 
-	// true means collision, false means no collision
+	// true means collision, false means no collision2
 	bool checkCollision( const  AbstractEntity& ) const;
 
 	unsigned int getId( void ) const;
@@ -22,17 +22,19 @@ public:
 	int getSize( void ) const;
 	int getPosX( void ) const;
 	int getPosY( void ) const;
+	int	getVelX( void ) const;
+	int	getVelY( void ) const;
 
-	void setSize( int );
-	void setPosX( int );
-	void setPosY( int );
-	static uint8_t	_entityType;
 
-protected:
+	void	setSize( int size );
+	void	setPosX( int posX );
+	void	setPosY( int posY );
+
+	protected:
 	virtual bool _templateTick( void );
 
 	const unsigned int	_id, _typeId;
-	int					_size, _posX, _posY;
+	int					_size, _posX, _posY, _velX, _velY;
 };
 
 #endif

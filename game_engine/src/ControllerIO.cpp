@@ -24,14 +24,31 @@ int ControllerIO::pollApi() {
 	return k;
 }
 
-int ControllerIO::getMsg( uint8_t buffer[16] ) {
+#define BUFFER_SIZE 4096
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+
+json ControllerIO::getMsg( void ) {
 	sockaddr_in sender;
-	int bytes = recvfrom(_sockfd, buffer, 16, 0, (struct sockaddr*) &sender, &_apiSize);
+	std::string str;
+	char buf[BUFFER_SIZE];
+	int bytes = BUFFER_SIZE;
+	while (bytes == BUFFER_SIZE) {
+		bytes = recvfrom(_sockfd, buf, BUFFER_SIZE, 0, (struct sockaddr*) &sender, &_apiSize);
+		if (bytes < 0)
+			throw std::system_error();
+		str.append(buf, bytes);
+	}
 	if (_apiAddr.sin_addr.s_addr == 0)
 		_apiAddr = sender;
-	return bytes;
+	return json::parse(str);
 }
 
-int ControllerIO::sendMsg( uint8_t buffer[32] ) {
-	return sendto(_sockfd, buffer, 32, 0, (struct sockaddr*) &_apiAddr, _apiSize);
+void ControllerIO::sendMsg( std::string str ) {
+	int bytes = 0;
+	while (!str.empty()) {
+		bytes = sendto(_sockfd, str.c_str(), MIN(str.length(), BUFFER_SIZE), 0, (struct sockaddr*) &_apiAddr, _apiSize);
+		if (bytes < 0)
+			throw std::system_error();
+		str.erase(0, bytes);
+	}
 }
