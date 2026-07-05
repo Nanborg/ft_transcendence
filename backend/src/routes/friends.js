@@ -17,13 +17,13 @@ router.get("/", authToken, async (req, res) => {
             }
         });
         if (!userWithFriends) {
-            return res.status(404).json({ error: "Utilisateur introuvable." });
+            return res.status(404).json({ error: "not found" });
         }
         res.status(200).json(userWithFriends.friends);
     }
     catch (error) {
         console.error(error);
-        res.status(500).json({ error: "Impossible de récupérer la liste d'amis" });
+        res.status(500).json({ error: "internal error" });
     }
 });
 
@@ -31,14 +31,14 @@ router.post("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
         if (isNaN(friendId)) {
-            return res.status(400).json({ error: "ID d'ami invalide" });
+            return res.status(400).json({ error: "invalid id" });
         }
         if (friendId === req.user.id) {
-            return res.status(400).json({ error: "Vous ne pouvez pas vous ajouter vous-même en ami" });
+            return res.status(409).json({ error: "conflict" });
         }
         const targetUser = await prisma.user.findUnique({ where: { id: friendId } });
         if (!targetUser) {
-            return res.status(404).json({ error: "Utilisateur introuvable" });
+            return res.status(404).json({ error: "not found" });
         }
         const updatedUser = await prisma.user.update({
             where: { id: req.user.id },
@@ -56,13 +56,11 @@ router.post("/:id", authToken, async (req, res) => {
                 }
             }
         });
-        res.status(200).json({ message: "Ami ajouté avec succès !" });
+        res.status(200).json({ message: "POST friends succes" });
     }
-    // TODO(yaoberso): Standardize add-friend error mapping and JSON format
-    //(invalid id, not found, conflict, internal error).
     catch (error) {
         console.error(error);
-        res.status(400).json({ error: "Impossible d'ajouter cet ami" });
+        res.status(500).json({ error: "internal error" });
     }
 });
 
@@ -70,7 +68,11 @@ router.delete("/:id", authToken, async (req, res) => {
     try {
         const friendId = parseInt(req.params.id, 10);
         if (isNaN(friendId)) {
-            return res.status(400).json({ error: "ID d'ami invalide" });
+            return res.status(400).json({ error: "invalid id" });
+        }
+        const targetUser = await prisma.user.findUnique({ where: { id: friendId } });
+        if (!targetUser) {
+            return res.status(404).json({ error: "not found" });
         }
         await prisma.user.update({
             where: { id: req.user.id },
@@ -88,13 +90,11 @@ router.delete("/:id", authToken, async (req, res) => {
                 }
             }
         });
-        res.status(200).json({ message: "Ami retiré avec succès !" });
+        res.status(200).json({ message: "DELETE friends succes" });
     }
-    // TODO(yaoberso): Standardize remove-friend error mapping and JSON format
-    //to match POST /friends/:id.
     catch (error) {
         console.error(error);
-        res.status(400).json({ error: "Impossible de supprimer cet ami" });
+        res.status(500).json({ error: "internal error" });
     }
 });
 
