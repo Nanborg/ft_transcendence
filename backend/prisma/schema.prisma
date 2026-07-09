@@ -65,10 +65,9 @@ model RefreshToken {
   token     String   @unique
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  //Yaoberso
-  // TODO -> add expiresAt and rotation metadata for refresh tokens.
-  // Auth refresh and logout rules should be enforceable from the database.
   createdAt DateTime @default(now())
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
 }
 
 model GameRun {
