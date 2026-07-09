@@ -25,6 +25,7 @@ const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
 const logoutRoutes = require("./routes/logout")
 const signinRoutes = require("./routes/signin")
+const scoresRoutes = require("./routes/scores")
 
 //Loufoko
 // TODO -> add scores routes after GameRun and PlayerRunStats are implemented.
@@ -40,6 +41,7 @@ app.use("/signin", signinRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 app.use('/friends', friendsRouter);
+app.use('/scores', scoresRoutes);
 
 if (process.env.NODE_ENV !== 'test') {
     server.listen(port, "0.0.0.0", () => {
