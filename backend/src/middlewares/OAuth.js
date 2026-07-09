@@ -55,8 +55,10 @@ async function OAuth(req, res, next) {
 		}
 		const accessToken = generateAccessToken(u)
 		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
+		const expiresAt = new Date()
+		expiresAt.setDate(expiresAt.getDate() + 7)
 		await prisma.refreshToken.create({
-			data: { token: refreshToken, userId: user.id }
+			data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
 		});
 
 

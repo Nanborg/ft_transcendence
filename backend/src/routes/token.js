@@ -37,21 +37,43 @@ router.post("/", async (req, res) => {
 			//Loufoko
 			// TODO -> await this refresh token lookup and handle the missing-token case before jwt.verify.
 			// Without await, tokenExist is a Promise and tokenExist.user will not contain the Prisma user.
-			const tokenExist = prisma.refreshToken.findUnique({
+			const tokenExist = await prisma.refreshToken.findUnique({
 				where: { token: refreshToken },
 				include: { user: true } //get associated user
 			});
 
 			if (tokenExist == null)
 				return res.status(403) // invalid or expired
+			const curDate = new Date()
+			if (curDate > tokenExist.expiresAt)
+				return res.status(403).json({ error: "Token expired" })
+			if (tokenExist.isRevoked === true)
+				return res.status(403).json({ error: "Token revoked" })
 	//Loufoko
 	// TODO -> regenerate the access token with the stable auth payload: id and username.
 	// Do not use tokenExist.user.name because the Prisma user model exposes username.
-		jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, user) => {
+			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, async (err, user) => {
 			if (err)
 				return (res.sendStatus(403))
-			const accessToken = generateAccessToken({name: tokenExist.user.name});
-			res.json({accessToken: accessToken})
+			await prisma.refreshToken.update({
+				where: { id: tokenExist.id },
+				data: { isRevoked: true }
+			})
+			const userPayload = {
+    			id: user.id,
+    			username: user.username
+			};
+			const newAccessToken = generateAccessToken(userPayload)
+			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN)
+			const expiresAt = new Date()
+			expiresAt.setDate(expiresAt.getDate() + 7)
+			await prisma.refreshToken.create({
+				data: { token: newRefreshToken, userId: userPayload.id, expiresAt: expiresAt }
+			});
+			res.json({
+				accessToken: newAccessToken,
+				refreshToken: newRefreshToken
+			})
 		})
 	}
 	catch (err) {
