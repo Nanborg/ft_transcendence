@@ -12,7 +12,7 @@ int main( int argc, char const *argv[] ) {
 	std::cout << "Start engine on port " << port << "\n";
 
 	signal(SIGINT, sig_stop);
-	GameEngine::registerAllTypes();
+	signal(SIGTERM, sig_stop);
 	GameEngine game (port);
 	g_game = &game;
 	game.init();

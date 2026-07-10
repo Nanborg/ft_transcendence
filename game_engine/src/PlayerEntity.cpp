@@ -1,8 +1,8 @@
 #include "PlayerEntity.hpp"
 #include "GameEngine.hpp"
 
-PlayerEntity::PlayerEntity( int playerId, int size, int posX, int posY, int velX, int velY ):
-	AbstractMovingEntity(GET_TYPE(PlayerEntity), size, posX, posY, velX, velY),
+PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
+	AbstractMovingEntity(EntityTypes::PLAYERENTITY, 10, posX, posY, velX, velY, 10, false),
 	_playerId(playerId),
 	_receivedInput(true) {
 		std::cout << "new player (id " << _playerId << ")\n";
@@ -11,7 +11,6 @@ PlayerEntity::PlayerEntity( int playerId, int size, int posX, int posY, int velX
 PlayerEntity::~PlayerEntity( void ) {}
 
 bool	PlayerEntity::tick( void ) {
-	std::cout << "Player ticked (x, y) = (" << _posX << ", " << _posY << ")\n";
 	if (_receivedInput) {
 		_receivedInput = false;
 		return true;
