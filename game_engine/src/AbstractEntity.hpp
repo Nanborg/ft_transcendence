@@ -19,20 +19,20 @@ public:
 
 	unsigned int getId( void ) const;
 	unsigned int getType( void ) const;
-	int getSize( void ) const;
-	int getPosX( void ) const;
-	int getPosY( void ) const;
-	int	getVelX( void ) const;
-	int	getVelY( void ) const;
-	int	getHealth( void ) const;
-	int	getPassableHitBox( void ) const;
+	int 	getSize( void ) const;
+	int 	getPosX( void ) const;
+	int 	getPosY( void ) const;
+	int		getVelX( void ) const;
+	int		getVelY( void ) const;
+	int		getHealth( void ) const;
+	bool	getPassableHitBox( void ) const;
 
 
 	void	setSize( int size );
 	void	setPosX( int posX );
 	void	setPosY( int posY );
 	void	setHealth( int posY );
-	void	setPassableHitBox( int passableHitBox );
+	void	setPassableHitBox( bool passableHitBox );
 
 	protected:
 	virtual bool _templateTick( void );
@@ -42,6 +42,7 @@ public:
 	bool				_passableHitBox;
 };
 
+// add entries here for all new entity types
 enum EntityTypes {
 	NOENTITY = 0,
 	PLAYERENTITY = 1,

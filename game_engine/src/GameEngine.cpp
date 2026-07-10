@@ -8,7 +8,7 @@ GameEngine::GameEngine( int port ):
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
-void GameEngine::manageInput( const json& in ) {
+void	GameEngine::manageInput( const json& in ) {
 	if (!in["type"].is_number())
 		return;
 	int type = in["type"];

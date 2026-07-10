@@ -35,16 +35,16 @@ bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
 unsigned int AbstractEntity::getId( void ) const { return _id; }
 unsigned int AbstractEntity::getType( void ) const { return _typeId; }
 
-int AbstractEntity::getSize( void ) const { return _size; }
-int AbstractEntity::getPosX( void ) const { return _posX; }
-int AbstractEntity::getPosY( void ) const { return _posY; }
-int AbstractEntity::getVelX( void ) const { return _velX; }
-int AbstractEntity::getVelY( void ) const { return _velY; }
-int AbstractEntity::getHealth( void ) const { return _health; }
-int AbstractEntity::getPassableHitBox( void ) const { return _passableHitBox; }
+int		AbstractEntity::getSize( void ) const { return _size; }
+int		AbstractEntity::getPosX( void ) const { return _posX; }
+int		AbstractEntity::getPosY( void ) const { return _posY; }
+int		AbstractEntity::getVelX( void ) const { return _velX; }
+int		AbstractEntity::getVelY( void ) const { return _velY; }
+int		AbstractEntity::getHealth( void ) const { return _health; }
+bool	AbstractEntity::getPassableHitBox( void ) const { return _passableHitBox; }
 
-void AbstractEntity::setSize( int size ) { _size = size; }
-void AbstractEntity::setPosX( int posX ) { _posX = posX; }
-void AbstractEntity::setPosY( int posY ) { _posY = posY; }
-void AbstractEntity::setHealth( int health ) { _health = health; }
-void AbstractEntity::setPassableHitBox( int passableHitBox ) { _passableHitBox = passableHitBox; }
+void	AbstractEntity::setSize( int size ) { _size = size; }
+void	AbstractEntity::setPosX( int posX ) { _posX = posX; }
+void	AbstractEntity::setPosY( int posY ) { _posY = posY; }
+void	AbstractEntity::setHealth( int health ) { _health = health; }
+void	AbstractEntity::setPassableHitBox( bool passableHitBox ) { _passableHitBox = passableHitBox; }

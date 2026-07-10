@@ -26,12 +26,14 @@ public:
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
+
 	AbstractEntity*	spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
 	void			deleteEntity( int entityId );
 
-	void	manageInput( const json& in );
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
+
+	void	manageInput( const json& in );
 
 	static int	getTypeId( size_t hash_code );
 
@@ -55,16 +57,16 @@ public:
 		DELETE = 5,
 	};
 
-	void			_loop_receiveMessages( void );
-	void			_loop_processInputs( void );
-	void			_loop_tickEntities( void );
+	void	_loop_receiveMessages( void );
+	void	_loop_processInputs( void );
+	void	_loop_tickEntities( void );
 
-	void			_input_ping( const json& in );
-	void			_input_join( const json& in );
-	void			_input_leave( const json& in );
-	void			_input_move( const json& in );
-	void			_input_build( const json& in );
-	void			_input_delete( const json& in );
+	void	_input_ping( const json& in );
+	void	_input_join( const json& in );
+	void	_input_leave( const json& in );
+	void	_input_move( const json& in );
+	void	_input_build( const json& in );
+	void	_input_delete( const json& in );
 
 	ControllerIO				_io;
 	bool						_running;
