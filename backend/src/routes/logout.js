@@ -31,17 +31,18 @@ router.delete("/", async(req, res) => {
 		//Loufoko
 		// TODO -> make logout idempotent or clearly document the expected response for already-revoked tokens.
 		// Clients should be able to logout safely even if the refresh token was already deleted.
-		await prisma.refreshToken.delete({
-			where: { token: req.body.token }
+		await prisma.refreshToken.updateMany({
+			where: {
+				token: req.body.token
+			},
+			data: {
+				isRevoked: true
+			}
 		});
 
 		return res.sendStatus(204)
 	}
 	catch (err) {
-		if (err.code === 'P2025') {
-			return res.status(404).json({ error: 'Token not found' });
-		}
-
 		console.error("Auth error: ", err);
 		res.status(500).send()
 	}

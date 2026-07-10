@@ -40,12 +40,34 @@ router.post("/", async (req, res) => {
 			});
 
 			if (tokenExist == null)
-				return res.sendStatus(403); // invalid or expired
-		jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, user) => {
+				return res.sendStatus(403) // invalid or expired
+			const curDate = new Date()
+			if (curDate > tokenExist.expiresAt)
+				return res.status(403).json({ error: "Token expired" })
+			if (tokenExist.isRevoked === true)
+				return res.status(403).json({ error: "Token revoked" })
+			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, async (err, user) => {
 			if (err)
 				return (res.sendStatus(403))
-			const accessToken = generateAccessToken({id: tokenExist.user.id, username: tokenExist.user.username});
-			res.json({accessToken: accessToken})
+			await prisma.refreshToken.update({
+				where: { id: tokenExist.id },
+				data: { isRevoked: true }
+			})
+			const userPayload = {
+    			id: user.id,
+    			username: user.username
+			};
+			const newAccessToken = generateAccessToken(userPayload)
+			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN)
+			const expiresAt = new Date()
+			expiresAt.setDate(expiresAt.getDate() + 7)
+			await prisma.refreshToken.create({
+				data: { token: newRefreshToken, userId: userPayload.id, expiresAt: expiresAt }
+			});
+			res.json({
+				accessToken: newAccessToken,
+				refreshToken: newRefreshToken
+			})
 		})
 	}
 	catch (err) {

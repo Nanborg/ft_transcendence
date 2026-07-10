@@ -57,18 +57,14 @@ model RoomPlayer {
   @@unique([roomId, userId])
 }
 
-//Yaoberso
-// TODO -> add GameRun and PlayerRunStats models once the game:end contract is finalized.
-// Scores must be saved from a server-validated result, not from frontend-submitted data.
 model RefreshToken {
   id        Int      @id @default(autoincrement())
   token     String   @unique
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  //Yaoberso
-  // TODO -> add expiresAt and rotation metadata for refresh tokens.
-  // Auth refresh and logout rules should be enforceable from the database.
   createdAt DateTime @default(now())
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
 }
 
 model GameRun {
