@@ -15,6 +15,9 @@ router.get('/history', authToken, async (req, res) => {
 					}
 				}
 			},
+            orderBy: {
+                createdAt: 'desc'
+            },
             select: { won: true, durationSeconds: true, createdAt: true, stats: true}
         })
         res.json(gamesStats);
