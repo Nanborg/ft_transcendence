@@ -21,29 +21,54 @@ function createPlayer(playerId, playerName) {
         },
     };
 }
-//Princiamf2
-// TODO -> return structured create-room errors instead of throwing raw Error messages.
-// The Socket.IO client should receive stable error codes for duplicate room names and invalid room names.
-async function createRoom(ownerId, roomName) {
-    const roomId = generateRoomId();
-    const cleanRoomName = typeof roomName === "string" && roomName.trim()
-        ? roomName.trim()
-        : null;
 
-    if (cleanRoomName) {
-        const existingRoom = await prisma.room.findUnique({
-            where: {
-                name: cleanRoomName,
+async function createRoom(ownerId, roomName) {
+    if (typeof roomName !== "string" || !roomName.trim()) {
+        return {
+            room: null,
+            error: {
+                code: "INVALID_ROOM_NAME",
+                message: "Room name must be a non-empty string",
             },
-        });
-        if (existingRoom)
-            throw new Error("Room name already exists");
+        };
+    }
+    const existingMembership = await prisma.roomPlayer.findFirst({
+        where: {
+            userId: ownerId,
+        },
+    });
+    if (existingMembership) {
+        return {
+            room: null,
+            error: {
+                code: "USER_ALREADY_IN_ROOM",
+                message: "User is already in a room",
+            },
+        };
+    }
+    const roomId = generateRoomId();
+    const cleanRoomName = roomName.trim();
+
+    const existingRoom = await prisma.room.findUnique({
+        where: {
+            name: cleanRoomName,
+        },
+    });
+
+    if (existingRoom) {
+        return {
+            room: null,
+            error: {
+                code: "ROOM_NAME_ALREADY_EXISTS",
+                message: "Room name already exists"
+            },
+        };
     }
     await prisma.room.create({
         data: {
             id: roomId,
             name: cleanRoomName,
-            ownerId: ownerId,
+            ownerId,
             players: {
                 create: {
                     userId: ownerId,
@@ -52,11 +77,12 @@ async function createRoom(ownerId, roomName) {
             },
         },
     });
-    return getRoom(roomId);
+    return {
+        room: await getRoom(roomId),
+        error: null,
+    };
 }
-//Princiamf2
-// TODO -> decide if one user can be in multiple rooms and enforce it consistently.
-// If the engine supports only one active game per user, joining a new room should leave or reject the previous one.
+
 async function joinRoom(roomIdentifier, userId) {
     const cleanIdentifier = typeof roomIdentifier === "string"
         ? roomIdentifier.trim()
@@ -64,7 +90,10 @@ async function joinRoom(roomIdentifier, userId) {
     if (!cleanIdentifier) {
         return {
             room: null,
-            error: "Invalid payload",
+            error: {
+                code: "INVALID_PAYLOAD",
+                message: "Invalid payload",
+            },
         };
     }
 
@@ -80,7 +109,45 @@ async function joinRoom(roomIdentifier, userId) {
     if (!room) {
         return {
             room: null,
-            error: "Room not found",
+            error: {
+                code: "ROOM_NOT_FOUND",
+                message: "Room not found",
+            },
+        };
+    }
+
+    const membershipInAnotherRoom = await prisma.roomPlayer.findFirst({
+        where: {
+            userId,
+            roomId: {
+                not: room.id,
+            },
+        },
+    });
+
+    if (membershipInAnotherRoom) {
+        return {
+            room: null,
+            error: {
+                code: "USER_ALREADY_IN_ANOTHER_ROOM",
+                message: "User is already in another room",
+            },
+        };
+    }
+
+    const existingPlayer = await prisma.roomPlayer.findUnique({
+        where: {
+            roomId_userId: {
+                roomId: room.id,
+                userId,
+            },
+        },
+    });
+
+    if (existingPlayer) {
+        return {
+            room: await getRoom(room.id),
+            error: null,
         };
     }
 
@@ -92,33 +159,30 @@ async function joinRoom(roomIdentifier, userId) {
     if (fullRoom.status !== "waiting") {
         return {
             room: null,
-            error: "Game already started",
+            error: {
+                code: "GAME_ALREADY_STARTED",
+                message: "Game already started",
+            },
         };
     }
 
-    const existingPlayer = await prisma.roomPlayer.findUnique({
-        where: {
-            roomId_userId: {
-                roomId: room.id,
-                userId: userId,
-            },
-        },
-    });
     if (fullRoom.players.length >= MAX_PLAYERS) {
         return {
             room: null,
-            error: "Room is full",
+            error: {
+                code: "ROOM_FULL",
+                message: "Room is full",
+            },
         };
     }
-    if (!existingPlayer) {
-        await prisma.roomPlayer.create({
-            data: {
-                roomId: room.id,
-                userId: userId,
-                ready: false,
-            },
-        });
-    }
+
+    await prisma.roomPlayer.create({
+        data: {
+            roomId: room.id,
+            userId,
+            ready: false,
+        },
+    });
     return {
         room: await getRoom(room.id),
         error: null,
@@ -231,9 +295,7 @@ async function getPlayerInRoom(roomId, userId) {
         ready: player.ready,
     };
 }
-//Princiamf2
-// TODO -> reject ready toggles once the room is starting, playing, or finished.
-// Ready state should only control the lobby phase before the C++ engine session starts.
+
 async function setPlayerReady(roomId, userId) {
     const player = await prisma.roomPlayer.findUnique({
         where: {
@@ -247,6 +309,22 @@ async function setPlayerReady(roomId, userId) {
     if (!player)
         return null;
 
+    const room = await prisma.room.findUnique({
+        where: { id: roomId },
+    });
+    if (!room)
+        return null;
+
+    if (room.status !== "waiting") {
+        return {
+            room: await getRoom(roomId),
+            error: {
+                code: "READY_LOCKED",
+                message: "Ready state can only be changed while waiting",
+            },
+        };
+    }
+
     await prisma.roomPlayer.update({
         where: {
             roomId_userId: {
@@ -256,7 +334,10 @@ async function setPlayerReady(roomId, userId) {
         },
         data: { ready: !player.ready },
     });
-    return getRoom(roomId);
+    return {
+        room: await getRoom(roomId),
+        error: null,
+    };
 }
 
 async function startGame(roomId, userId) {
@@ -370,14 +451,16 @@ function formatRoom(room) {
         })),
     };
 }
-//Princiamf2
-// TODO -> return players in a stable order for enginePlayerId assignment.
-// The Socket.IO backend needs a deterministic user.id to enginePlayerId mapping when starting the C++ engine session.
+
 async function getRoom(roomId) {
     const room = await prisma.room.findUnique({
         where: { id: roomId },
         include: {
             players: {
+                orderBy: [
+                    { joinedAt: "asc" },
+                    { id: "asc" },
+                ],
                 include: {
                     user: true,
                 },
@@ -394,6 +477,10 @@ async function getRoomsByUserId(userId) {
             room: {
                 include: {
                     players: {
+                        orderBy: [
+                            { joinedAt: "asc" },
+                            { id: "asc" },
+                        ],
                         include: {
                             user: true,
                         },

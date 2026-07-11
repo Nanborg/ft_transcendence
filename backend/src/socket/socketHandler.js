@@ -18,7 +18,15 @@ module.exports = (io) => {
 
 		socket.on("room:create", async ({ roomName } = {}) => {
 			try {
-				const room = await createRoom(socket.user.id, roomName);
+				const { room, error } = await createRoom(socket.user.id, roomName);
+				if (error) {
+					socket.emit("room:error", {
+						event: "room:create",
+						code: error.code,
+						message: error.message,
+					});
+					return;
+				}
 				socket.join(room.id);
 				console.log(`room created: ${room.id} by user ${socket.user.id}`);
 				socket.emit("room:created", room);
@@ -35,6 +43,7 @@ module.exports = (io) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "room:join",
+					code: "INVALID_PAYLOAD",
 					message: "Invalid payload",
 				});
 				return;
@@ -45,7 +54,8 @@ module.exports = (io) => {
 				if (error) {
 					socket.emit("room:error", {
 						event: "room:join",
-						message: error,
+						code: error.code,
+						message: error.message,
 					});
 					return;
 				}
@@ -180,17 +190,28 @@ module.exports = (io) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
 					event: "player:ready",
+					code: "INVALID_PAYLOAD",
 					message: "Invalid payload",
 				});
 				return;
 			}
 			try {
 				const { roomId } = payload;
-				const room = await setPlayerReady(roomId, socket.user.id);
-				if (!room) {
+				const result = await setPlayerReady(roomId, socket.user.id);
+				if (!result) {
 					socket.emit("room:error", {
 						event: "player:ready",
-						message: "player is not in room",
+						code: "PLAYER_NOT_IN_ROOM",
+						message: "Player is not in room",
+					});
+					return;
+				}
+				const { room, error } = result;
+				if (error) {
+					socket.emit("room:error", {
+						event: "player:ready",
+						code: error.code,
+						message: error.message,
 					});
 					return;
 				}
