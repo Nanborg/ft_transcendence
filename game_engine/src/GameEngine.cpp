@@ -108,7 +108,9 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 }
 
 void	GameEngine::deleteEntity( int entityId ) {
-		entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-		sendEntityDelete(it->get());
-		_entities.erase(it);
+	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+	if (it == _entities.end())
+		return;
+	sendEntityDelete(it->get());
+	_entities.erase(it);
 }
