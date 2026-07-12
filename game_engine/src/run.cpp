@@ -13,7 +13,7 @@ int main( int argc, char const *argv[] ) {
 	// TODO(neon-05): Handle SIGTERM/SIGINT consistently and guarantee clean
 	//shutdown in Docker environments.
 	signal(SIGINT, sig_stop);
-	GameEngine::registerAllTypes();
+	signal(SIGTERM, sig_stop);
 	GameEngine game (port);
 	g_game = &game;
 	game.init();
