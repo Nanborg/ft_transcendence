@@ -17,8 +17,6 @@ public:
 
 	protected:
 	virtual bool	_templateTick( void );
-
-	int	_velX, _velY;
 };
 
 #endif

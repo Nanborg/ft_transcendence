@@ -3,7 +3,7 @@
 void	GameEngine::_input_ping( const json& in ) {
 	json out;
 	out["type"] = "ping";
-	out["mspt"] = _mspt;
+	out["uspt"] = _uspt;
 	out["entities"] = _entities.size();
 	_io.sendMsg(out.dump());
 }

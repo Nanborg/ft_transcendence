@@ -1,6 +1,6 @@
 #include "GameEngine.hpp"
 
-const unsigned int GameEngine::_target_mspt = 100;
+const unsigned int GameEngine::_target_uspt = 100000;
 
 GameEngine::GameEngine( int port ):
 	_io(port),
@@ -61,7 +61,7 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	json out;
 
 	out["type"] = "entityDelete";
-	out["entity"] = {"entityId", entity->getId()};
+	out["entity"]["entityId"] = entity->getId();
 	_io.sendMsg(out.dump());
 }
 
@@ -78,8 +78,8 @@ void	GameEngine::start( void ) {
 		_loop_tickEntities();
 		auto end = std::chrono::steady_clock::now();
 
-		_mspt = std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count();
-		int sleep_time = _target_mspt - _mspt;
+		_uspt = std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+		int sleep_time = _target_uspt - _uspt;
 		if (sleep_time > 0)
 			usleep(sleep_time);
 	}

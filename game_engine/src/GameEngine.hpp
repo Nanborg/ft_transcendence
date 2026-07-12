@@ -35,8 +35,6 @@ public:
 
 	void	manageInput( const json& in );
 
-	static int	getTypeId( size_t hash_code );
-
 	int		newId( void );
 	void	init( void );
 	void	start( void );
@@ -74,8 +72,8 @@ public:
 	entityList_t				_entities;
 	playerIds_t					_playerIds;
 	playerInput_t				_playerInputs;
-	unsigned int				_mspt;
-	static const unsigned int	_target_mspt;
+	unsigned int				_uspt;
+	static const unsigned int	_target_uspt;
 };
 
 extern GameEngine *g_game;
