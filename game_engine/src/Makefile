@@ -7,10 +7,13 @@ NAME = gameEngineRuntime
 SRC = \
 	run.cpp \
 	GameEngine.cpp \
+	GameEngineLoop.cpp \
+	GameEngineInput.cpp \
 	ControllerIO.cpp \
 	AbstractEntity.cpp \
 	AbstractMovingEntity.cpp \
 	PlayerEntity.cpp \
+	WallEntity.cpp \
 
 OBJ = $(SRC:.cpp=.o)
 
