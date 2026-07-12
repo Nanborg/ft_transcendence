@@ -9,6 +9,9 @@ GameEngine::GameEngine( int port ):
 GameEngine::~GameEngine( void ) {}
 
 void	GameEngine::manageInput( const json& in ) {
+	// TODO(neon-05): Strictly validate all incoming commands
+	// (player_input, player_join, player_leave/build/delete) and ignore
+	// invalid payloads without crashing the engine.
 	if (!in["type"].is_number())
 		return;
 	int type = in["type"];
@@ -44,6 +47,9 @@ void	GameEngine::manageInput( const json& in ) {
 
 void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	json entityJ, out;
+	// TODO(neon-05): Replace or complement entityUpdate/entityDelete with a
+	// full game_state payload compatible with docs/formats_communication_reference.md.
+	// Include players, enemies, projectiles, resources, objective, score, and tick.
 
 	entityJ["entityId"] = entity->getId();
 	entityJ["entityTypeId"] = entity->getType();
@@ -59,6 +65,8 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	json out;
+	// TODO(neon-05): Keep entityDelete compatible with the backend state mapper
+	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
 	out["entity"]["entityId"] = entity->getId();
@@ -72,6 +80,8 @@ void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
 void	GameEngine::start( void ) {
 	_running = true;
 	while (_running) {
+		// TODO(neon-05): Add a stable engine tick counter and include it in
+		// game_state/game_end messages.
 		auto begin = std::chrono::steady_clock::now();
 		_loop_receiveMessages();
 		_loop_processInputs();
@@ -86,11 +96,15 @@ void	GameEngine::start( void ) {
 }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
+	// TODO(neon-05): Implement collision checks for solid entities and damage
+	// interactions before enabling Enemy/Projectile gameplay.
 	return false;
 }
 
 AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
 	AbstractEntity* entity;
+	// TODO(neon-05): Support spawning the minimum coop 2D entities:
+	// Enemy, Projectile, and Resource.
 	switch (typeId) {
 	case EntityTypes::PLAYERENTITY:
 		return NULL; // PlayerEntity not spawnable in this context

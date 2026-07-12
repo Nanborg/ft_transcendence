@@ -13,6 +13,10 @@ void	GameEngine::_loop_processInputs( void ) {
 }
 
 void	GameEngine::_loop_tickEntities( void ) {
+	// TODO(neon-05): Add a collision pass + deferred destruction + cleanup of
+	// out-of-play entities per tick.
+	// TODO(neon-05): Produce game_end when the basic end condition is reached
+	// (objective complete, all players dead, timeout, or score limit).
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); )
 	{
 		if (it->get()->doTick()) {

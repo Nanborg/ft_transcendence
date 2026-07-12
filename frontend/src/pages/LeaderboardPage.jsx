@@ -1,7 +1,7 @@
 import { PageHeading } from '../components/PageHeading';
 import { mockLeaderboard } from '../features/leaderboard/mockLeaderboard';
 
-// TODO: replace mockLeaderboard with the scores API when leaderboard endpoint is ready.
+// TODO(nanborg): Replace mockLeaderboard with the scores API when leaderboard endpoint is ready.
 function getWinRate(player) {
     const totalGames = player.wins + player.losses;
     if (totalGames === 0) {
@@ -10,7 +10,7 @@ function getWinRate(player) {
     return `${Math.round((player.wins / totalGames) * 100)}%`;
 }
 
-// TODO: replace these temporary fields with the final stats returned by the scores/leaderboard API.
+// TODO(nanborg): Replace these temporary fields with the final stats returned by the scores/leaderboard API.
 export function LeaderboardPage({ title, description }) {
   const status = 'loaded';
   const error = '';

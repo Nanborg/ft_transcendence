@@ -49,7 +49,7 @@ export const pages = [
     description: 'Play a game',
   },
   //Nanborg
-  // TODO -> replace leaderboard and match history placeholders with data from the scores API.
+  // TODO(nanborg): Replace leaderboard and match history placeholders with data from the scores API.
   // These pages should read server-validated game results saved after game:end.
   {
     id: 'leaderboard',

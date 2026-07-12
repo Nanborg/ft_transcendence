@@ -47,8 +47,10 @@ export function useRoom(socket, currentUser) {
             ]);
         }
         //Nanborg
-        // TODO -> listen to game:state after game:start and store the latest server-authoritative state.
-        // The game page should render this state instead of mockGameState.
+        // TODO(nanborg): Keep game:state as the server-authoritative state
+        // after game:start; GamePage should render it instead of mockGameState.
+        // TODO(nanborg): Listen to game:end and store the final result for the
+        // post-game screen.
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);

@@ -2,8 +2,10 @@ const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 
 //Princiamf2
-// TODO -> add Socket.IO tests for room lifecycle, invalid payloads, disconnects, and multi-room isolation.
-// These tests should cover create, join, ready, start, input, leave, reconnect, and room deletion.
+// TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
+// invalid payloads, disconnects, and multi-room isolation.
+// These tests should cover create, join, ready, start, input, state, end,
+// leave, reconnect, and room deletion.
 module.exports = (io) => {
 	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
@@ -71,7 +73,9 @@ module.exports = (io) => {
 		});
 
 		// TODO(princiamf2): Wire real game:start/player:input command sending to
-		//gameplay-cpp and relay JSON responses from the engine.
+		// gameplay-cpp and relay JSON responses from the engine.
+		// TODO(princiamf2): Decide with Neon whether backend receives full
+		// game_state messages or rebuilds state from entityUpdate/entityDelete.
 		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
@@ -91,8 +95,11 @@ module.exports = (io) => {
 					return;
 				}
 				io.to(roomId).emit("room:update", room);
-				// TODO(princiamf2): Define and emit the game:end contract (winner,
-				//reason, finalState, timestamp) after engine feedback.
+				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
+				// and add timestamp at relay time while preserving engine tick.
+				// TODO(princiamf2): Map engine game_end to Socket.IO game:end.
+				// TODO(yaoberso): Persist trusted game:end results into GameRun
+				// and PlayerRunStats after server-side validation.
 				io.to(roomId).emit("game:start", {
 					roomId: room.id,
 					status: room.status,
@@ -140,6 +147,8 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				// TODO(princiamf2): Send normalized player:input to gameplay-cpp
+				// instead of only rebroadcasting it to the room.
 				io.to(roomId).emit("player:input", {
 					playerId: socket.user.id,
 					input: {
@@ -279,6 +288,8 @@ module.exports = (io) => {
 
 		socket.on("disconnect", () => {
 			try {
+				// TODO(princiamf2): Define in-game disconnect behavior
+				// (forfeit, end game, or keep room alive during reconnect window).
 				scheduleDisconnect(
 					socket.user.id,
 					socket.id,
