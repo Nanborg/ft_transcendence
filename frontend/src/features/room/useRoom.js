@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 /*
 function getPlayerName(currentUser) {
-    return currentUser?.name || currentUser?.email || 'Player';
+    return currentUser?.username || currentUser?.email || 'Player';
 }*/
 
 

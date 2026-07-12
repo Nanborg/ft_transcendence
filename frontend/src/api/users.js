@@ -1,12 +1,12 @@
 
-export async function loginUser(name, password) {
+export async function loginUser(username, password) {
   const response = await fetch('/api/login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name,
+      username,
       password,
     }),
   });
@@ -18,14 +18,14 @@ export async function loginUser(name, password) {
   return response.json();
 }
 
-export async function registerUser(name, email, password) {
+export async function registerUser(username, email, password) {
   const response = await fetch('/api/signin', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      name,
+      username,
       email,
       password,
     }),

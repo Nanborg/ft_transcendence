@@ -27,9 +27,9 @@ const prisma = require('../db');
 
 router.post ("/", async (req, res) => {
 	try {
-			if (!req.body || !req.body.name || !req.body.password || !req.body.email)
+			if (!req.body || !req.body.username || !req.body.password || !req.body.email)
 				return res.status(400).json({ error: 'Missing required fields' });
-			const cleanName = req.body.name.trim()
+			const cleanName = req.body.username.trim()
 			if (cleanName === '')
 				return res.status(400).json({ error: 'userName is empty' });
 			const existingUser = await prisma.user.findUnique({

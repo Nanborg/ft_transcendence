@@ -48,7 +48,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 <ul>
                   {players.map(player => (
                     <li key={player.id}>
-                      <span className="room-player-name">{player.name}</span>
+                      <span className="room-player-name">{player.username}</span>
                       <span className="room-player-meta">
                         {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'}
                       </span>
@@ -97,7 +97,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 {chatMessages.map(chatMessage => (
                   <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
                     <span className="room-chat-author">
-                      {chatMessage.author.name}:
+                      {chatMessage.author.username}:
                     </span>
                     <span className="room-chat-message">
                       {chatMessage.message}
