@@ -8,6 +8,6 @@ AbstractMovingEntity::AbstractMovingEntity( unsigned int type, int size, int pos
 AbstractMovingEntity::~AbstractMovingEntity( void ) {}
 
 bool AbstractMovingEntity::tick( void ) { std::cout << "AbstractMovingEntity::tick\n"; return false; }
-// TODO(neon-05): Normalize movement integration (fixed dt, velocity bounds,
-//deterministic order) to ensure reproducible ticks.
+// TODO(neon-05): Keep movement deterministic and compatible with the engine tick
+// used in game_state/game_end messages.
 bool AbstractMovingEntity::_templateTick( void ) { _posX += _velX; _posY += _velY; return false; }

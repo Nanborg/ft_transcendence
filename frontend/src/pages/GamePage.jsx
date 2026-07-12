@@ -4,8 +4,10 @@ import { PageHeading } from '../components/PageHeading';
 
 export function GamePage({ title, description, gameState, socket, currentRoom, gameStarted }) {
     //Nanborg
-    // TODO -> remove the mockGameState fallback once live game:state is required for rendering.
+    // TODO(nanborg): Remove the mockGameState fallback once live game:state is required for rendering.
     // The game page should not show preview state after the backend emits authoritative game states.
+    // TODO(nanborg): Show a clear waiting state while no live game:state has been received.
+    // TODO(nanborg): Render game:end with victory/defeat, final score, player stats, and navigation.
     const renderedGameState = gameState || mockGameState;
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Boolean(gameState);

@@ -1,7 +1,9 @@
 //import { array } from 'node:stream/iter';
 import { useEffect, useRef } from 'react';
 //Nanborg
-// TODO -> remove this mock state after GamePage is wired to Socket.IO game:state.
+// TODO(nanborg): Remove this mock state after GamePage is wired to Socket.IO game:state.
+// TODO(nanborg): Render the coop 2D game:state contract: players, enemies,
+// projectiles, resources, objective, and score.
 export const mockGameState = {
     status: 'mock',
     score: 0,
