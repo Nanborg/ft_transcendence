@@ -7,7 +7,7 @@
 class AbstractMovingEntity: public AbstractEntity
 {
 public:
-	AbstractMovingEntity( unsigned int type, int size, int posX, int posY, int velX, int velY );
+	AbstractMovingEntity( unsigned int type, int size, int posX, int posY, int velX, int velY, int health, int passableHitBox );
 	virtual ~AbstractMovingEntity( void ) = 0;
 
 	virtual bool	tick( void ) override;
@@ -17,8 +17,6 @@ public:
 
 	protected:
 	virtual bool	_templateTick( void );
-
-	int	_velX, _velY;
 };
 
 #endif

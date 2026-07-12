@@ -6,7 +6,7 @@
 class PlayerEntity: public AbstractMovingEntity
 {
 public:
-	PlayerEntity( int playerId, int size, int posX, int posY, int velX, int velY );
+	PlayerEntity( int playerId, int posX, int posY, int velX, int velY );
 	~PlayerEntity( void );
 
 	bool	tick( void );

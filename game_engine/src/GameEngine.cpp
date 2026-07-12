@@ -1,7 +1,6 @@
 #include "GameEngine.hpp"
 
-#define REGISTER_TYPE(T, i) (registerEntityType(typeid(T).hash_code(), i))
-GameEngine::typeList_t GameEngine::_knownTypes = GameEngine::typeList_t();
+const unsigned int GameEngine::_target_uspt = 100000;
 
 GameEngine::GameEngine( int port ):
 	_io(port),
@@ -9,31 +8,7 @@ GameEngine::GameEngine( int port ):
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
-void	GameEngine::registerAllTypes( void ) {
-	// TODO(neon-05): Register new entity types here (ball, walls, bonuses, etc.)
-	//when implemented.
-	REGISTER_TYPE(PlayerEntity, 1);
-}
-
-uint8_t GameEngine::registerEntityType( size_t hash_code, int id ) {
-	if (id == 0)
-		throw (std::runtime_error("Type id 0 forbidden"));
-	if (_knownTypes[hash_code] != 0)
-		throw (std::runtime_error("Type already registered"));
-	_knownTypes[hash_code] = id;
-	return id;
-}
-
-int		GameEngine::getTypeId( size_t hash_code ) {
-	int ret = _knownTypes[hash_code];
-	if (ret == 0)
-		throw std::runtime_error("Unknown type id");
-	return ret;
-}
-
-// TODO(neon-05): Strictly validate the MOVE payload
-//(type, playerId, X, Y) and cleanly ignore missing/invalid fields
-void GameEngine::manageInput( const json& in ) {
+void	GameEngine::manageInput( const json& in ) {
 	if (!in["type"].is_number())
 		return;
 	int type = in["type"];
@@ -41,18 +16,53 @@ void GameEngine::manageInput( const json& in ) {
 		case inputTypes_e::PING:
 			_input_ping(in);
 			break;
+
 		case inputTypes_e::JOIN:
 			_input_join(in);
 			break;
+
 		case inputTypes_e::LEAVE:
 			_input_leave(in);
 			break;
+
 		case inputTypes_e::MOVE:
 			_input_move(in);
 			break;
+
+		case inputTypes_e::BUILD:
+			_input_build(in);
+			break;
+
+		case inputTypes_e::DELETE:
+			_input_delete(in);
+			break;
+
 		default:
 			break;
 	}
+}
+
+void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
+	json entityJ, out;
+
+	entityJ["entityId"] = entity->getId();
+	entityJ["entityTypeId"] = entity->getType();
+	entityJ["posX"] = entity->getPosX();
+	entityJ["posY"] = entity->getPosY();
+	entityJ["velX"] = entity->getVelX();
+	entityJ["velY"] = entity->getVelY();
+
+	out["type"] = "entityUpdate";
+	out["entity"] = entityJ;
+	_io.sendMsg(out.dump());
+}
+
+void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
+	json out;
+
+	out["type"] = "entityDelete";
+	out["entity"]["entityId"] = entity->getId();
+	_io.sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
@@ -77,76 +87,46 @@ void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = f
 void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
 void	GameEngine::start( void ) {
 	_running = true;
-	while (_running)
-	{
-		// TODO(neon-05): Introduce a fixed-step update(dt) loop with an accumulator
-		//and catch-up limit.
-		// TODO: separate this into multiple functions
-		while (_io.pollApi() > 0)
-			_playerInputs.push(_io.getMsg());
-		// TODO(neon-05): Associate each input with a target tick and apply the input
-		//queue before simulating that tick.
-		while (!_playerInputs.empty()) {
-			manageInput(_playerInputs.front());
-			_playerInputs.pop();
-		}
-		// TODO(neon-05): Add a collision pass + deferred destruction + cleanup of
-		//out-of-play entities per tick.
-		for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++)
-		{
-			if ((*it)->doTick())
-			{
-				std::cout << "entity " << (*it)->getId() << " updated\n";
-				sendEntityUpdate(it->get());
-			}
-		}
-		std::cout << "ticked " << std::distance(_entities.begin(), _entities.end()) << " entities" << std::endl;
+	while (_running) {
+		auto begin = std::chrono::steady_clock::now();
+		_loop_receiveMessages();
+		_loop_processInputs();
+		_loop_tickEntities();
+		auto end = std::chrono::steady_clock::now();
 
-		std::cout << "sleep" << std::endl;
-		// TODO(neon-05): Replace sleep(1) with a fixed-tick loop (30/60 Hz)
-		//using a time accumulator.
-		sleep(1);
+		_uspt = std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+		int sleep_time = _target_uspt - _uspt;
+		if (sleep_time > 0)
+			usleep(sleep_time);
 	}
 }
 
-void	GameEngine::_input_ping( const json& in ) {
-	std::cout << "ping\n";
-	_io.sendMsg(json::parse("{\"type\":\"ping\"}").dump());
+bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
+	return false;
 }
 
-void	GameEngine::_input_join( const json& in ) {
-	if (!in["playerId"].is_number())
+AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
+	AbstractEntity* entity;
+	switch (typeId) {
+	case EntityTypes::PLAYERENTITY:
+		return NULL; // PlayerEntity not spawnable in this context
+
+	case EntityTypes::WALLENTITY:
+		entity = new WallEntity(posX, posY);
+		break;
+
+	default:
+		return NULL;
+	}
+	_entities.push_front(entityPtr_t(entity));
+	sendEntityUpdate(entity);
+	return entity;
+}
+
+void	GameEngine::deleteEntity( int entityId ) {
+	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+	if (it == _entities.end())
 		return;
-	if (_playerIds.count(in["playerId"]) == 0) {
-		PlayerEntity *player = new PlayerEntity(in["playerId"], 10, 0, 0, 0, 0);
-		_playerIds[in["playerId"]] = player->getId();
-		_entities.push_front(entityPtr_t(player));
-	}
-}
-
-void	GameEngine::_input_leave( const json& in ) {
-	if (!in["playerId"].is_number())
-		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		int entityId = _playerIds[in["playerId"]];
-		entityList_t::iterator it = _entities.before_begin();
-		entityList_t::iterator it2 = _entities.begin();
-		while (it2 != _entities.end() && (*it2)->getId() != entityId) {
-			it++;
-			it2++;
-		}
-		_playerIds.erase(in["playerId"]);
-		_entities.erase_after(it);
-	}
-}
-
-void	GameEngine::_input_move( const json& in ) {
-	if (!in["playerId"].is_number())
-		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		int entityId = _playerIds[in["playerId"]];
-		entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-		AbstractEntity *e = it->get();
-		((PlayerEntity *) e)->movementInput(in["X"], in["Y"]);
-	}
+	sendEntityDelete(it->get());
+	_entities.erase(it);
 }
