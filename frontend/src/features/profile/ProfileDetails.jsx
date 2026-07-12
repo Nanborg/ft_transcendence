@@ -7,7 +7,7 @@ export function ProfileDetails({ profileUser }) {
       </div>
       <div>
         <dt>Name</dt>
-        <dd>{profileUser.name || 'Not available'}</dd>
+        <dd>{profileUser.username || 'Not available'}</dd>
       </div>
       <div>
         <dt>Email</dt>

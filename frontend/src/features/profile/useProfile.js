@@ -20,7 +20,7 @@ export function useProfile(currentPageId, currentUser, accessToken, onSessionExp
     setProfileError('');
     async function loadProfile() {
       try {
-        /*const user = await fetchCurrentUser(currentUser.name);*/
+        /*const user = await fetchCurrentUser(currentUser.username);*/
         const user = await fetchCurrentUser(accessToken);
         setProfileUser(user);
         setProfileStatus('loaded');
