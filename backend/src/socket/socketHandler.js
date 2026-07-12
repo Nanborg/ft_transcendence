@@ -263,7 +263,7 @@ module.exports = (io) => {
 				const chatMessage = {
 					author: {
 						id: player.id,
-						name: player.username,
+						name: player.name,
 					},
 					message: message.trim(),
 					timestamp: Date.now(),
