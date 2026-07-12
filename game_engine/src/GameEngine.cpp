@@ -65,22 +65,6 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	_io.sendMsg(out.dump());
 }
 
-void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
-	json entityJ, out;
-	// TODO(neon-05): Send a full serialized state batch for each meaningful tick,
-	//not only a single updated entity.
-	entityJ["entityId"] = entity->getId();
-	entityJ["entityTypeId"] = entity->getType();
-	entityJ["posX"] = entity->getPosX();
-	entityJ["posY"] = entity->getPosY();
-	entityJ["velX"] = entity->getVelX();
-	entityJ["velY"] = entity->getVelY();
-
-	out["type"] = "entity";
-	out["entity"] = entityJ;
-	_io.sendMsg(out.dump());
-}
-
 int		GameEngine::newId( void ) { return _nextEntityId++; }
 
 void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
