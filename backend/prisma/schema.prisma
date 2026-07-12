@@ -1,0 +1,87 @@
+//Yaoberso
+// TODO -> verify the full migration history on an empty database before merging more schema changes.
+// The existing migrations include friendship restoration and room additions that must replay cleanly.
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+// Configuration de Prisma (Spécifique à la Version 7)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Connexion à la Base de Données
+datasource db {
+  provider = "postgresql"
+}
+
+// Modèle de l'Utilisateur
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  username      String         @unique
+  password      String?
+  fortyTwoId    Int?           @unique
+  avatar        String?
+  roomsOwned    Room[]
+  rooms         RoomPlayer[]
+  refreshTokens RefreshToken[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  friends       User[]         @relation("UserFriends")
+  friendOf      User[]         @relation("UserFriends")
+  playerStats   PlayerRunStats[]
+}
+
+model Room {
+  id        String       @id
+  name      String?      @unique
+  ownerId   Int
+  status    String       @default("waiting")
+  owner     User         @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  players   RoomPlayer[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model RoomPlayer {
+  id       Int      @id @default(autoincrement())
+  roomId   String
+  userId   Int
+  ready    Boolean  @default(false)
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([roomId, userId])
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+}
+
+model GameRun {
+  id              Int              @id @default(autoincrement())
+  roomId          String
+  won             Boolean
+  durationSeconds Int
+  stats           PlayerRunStats[]
+  createdAt       DateTime         @default(now())
+}
+
+model PlayerRunStats {
+  id        Int     @id @default(autoincrement())
+  gameRunId Int
+  gameRun   GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+  score     Int
+  xp        Int
+}

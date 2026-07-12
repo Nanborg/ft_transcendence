@@ -11,12 +11,15 @@ services:
       - app_net
 
   backend:
-    image: node:20-alpine
+    build:
+      context: ./backend
+    ports:
+      - "3000:3000"
     container_name: ft_backend
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: sh -c "npm install && npm start"
+    command: sh -c "npm install && npm run prisma"
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
@@ -24,11 +27,14 @@ services:
       OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me}
       OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me}
       SESSION_SECRET: ${SESSION_SECRET:-replace_me}
+      ACCESS_SECRET_TOKEN: ${ACCESS_SECRET_TOKEN}
+      REFRESH_SECRET_TOKEN: ${REFRESH_SECRET_TOKEN}
     expose:
       - "3000"
     depends_on:
       database:
         condition: service_healthy
+        #Neon-05
       gameplay-cpp:
         condition: service_started
     networks:
@@ -70,12 +76,13 @@ services:
       - app_net
 
   gameplay-cpp:
-    image: gcc:14
+    build:
+      context: ./game_engine
     container_name: ft_gameplay_cpp
-    working_dir: /game_engine
-    command: ["bash", "-lc", "echo 'gameplay-cpp skeleton ready' && sleep infinity"]
     ports:
-      - "${GAMEPLAY_PORT:-7297/udp}:7297"
+# TODO(nanborg): Add a gameplay-cpp healthcheck and switch backend depends_on
+#to service_healthy.
+      - "${GAMEPLAY_PORT:-7297}:7297/udp"
     networks:
       - app_net
 

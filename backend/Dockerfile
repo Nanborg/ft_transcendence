@@ -4,8 +4,11 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN apk add curl && npm install
 
 COPY . .
 
-CMD ["npm", "start"]
+
+RUN npx prisma generate
+EXPOSE 3000
+CMD ["npm", "run", "prisma"]

@@ -10,7 +10,8 @@ int main( int argc, char const *argv[] ) {
 	if (argc > 1)
 		port = atoi(argv[1]);
 	std::cout << "Start engine on port " << port << "\n";
-
+	// TODO(neon-05): Handle SIGTERM/SIGINT consistently and guarantee clean
+	//shutdown in Docker environments.
 	signal(SIGINT, sig_stop);
 	signal(SIGTERM, sig_stop);
 	GameEngine game (port);
