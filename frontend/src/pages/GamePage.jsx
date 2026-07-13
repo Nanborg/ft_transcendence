@@ -51,15 +51,16 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
             <>
             <PageHeading title={title} description={description} />
             <div>
-                <h2>Victory / Defeat</h2>
-                <p>Reason</p>
-                <p>Team score</p>
+                <h2>{gameEndInfo.victory ? 'Victory' : 'Defeat'}</h2>
+                <p>Reason: {gameEndInfo.reason || 'finished'}</p>
+                <p>Team score: {gameEndInfo.score?.team ?? 0}</p>
                 <ul>
-                    <li>Player 1</li>
-                    <li>Player 2</li>
+                    {(gameEndInfo.players || []).map(player => (
+                        <li key={player.id}> {player.username || 'Player ${player.id}'} - {player.score ?? 0} pts - #{player.rank ?? '-'}  </li>
+                    ))}
                 </ul>
             </div>
-            </>
+        </>
         );
     }
     return (
