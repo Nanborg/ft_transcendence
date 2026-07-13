@@ -27,7 +27,7 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
     const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
     const [error, setError] = useState('');
     useEffect(() => {
-        if(!accessToken) {
+        if (!accessToken) {
             setStatus('idle');
             setMatches([]);
             return undefined;
@@ -38,7 +38,7 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
             setError('');
             try {
                 const data = await fetchMatchHistory(accessToken);
-                if(!cancelled) {
+                if (!cancelled) {
                     setMatches(data);
                     setStatus('loaded');
                 }
@@ -65,19 +65,13 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
             {status === 'loaded' && matches.length > 0 && (
                 <ul className="match-history-list">
                     {matches.map(match => {
-                        const currentPlayer = getCurrentPlayer(match, currentUserId);
-                        const otherPlayers = getOtherPlayers(match, currentUserId);
-                        const otherPlayersSummary = formatOtherPlayers(otherPlayers);
+                        <li className="match-history-item" key={match.gameRunId}>
+                            <span>{match.result}</span>
+                            <span>{match.score} pts</span>
+                            <span>{match.rank}</span>
+                            <span>{new Date(match.endedAt).toLocaleString()}</span>
+                        </li>
 
-                        return (
-                            <li className="match-history-item" key={match.gameRunId}>
-                                <span>{currentPlayer ? currentPlayer.result : 'unknown'}</span>
-                                <span>{currentPlayer ? `${currentPlayer.score} pts` : '-'}</span>
-                                <span>{currentPlayer ? `#${currentPlayer.rank}` : '-'}</span>
-                                <span>{otherPlayersSummary}</span>
-                                <span>{match.endedAt}</span>
-                            </li>
-                        );
                     })}
                 </ul>
             )}
