@@ -1,6 +1,7 @@
 import { PageHeading } from '../components/PageHeading';
-import { mockLeaderboard } from '../features/leaderboard/mockLeaderboard';
-
+//import { mockLeaderboard } from '../features/leaderboard/mockLeaderboard';
+import { useEffect, useState } from 'react';
+import { fetchLeaderBoard } from '../api/scores';
 // TODO(nanborg): Replace mockLeaderboard with the scores API when leaderboard endpoint is ready.
 function getWinRate(player) {
     const totalGames = player.wins + player.losses;
@@ -12,9 +13,9 @@ function getWinRate(player) {
 
 // TODO(nanborg): Replace these temporary fields with the final stats returned by the scores/leaderboard API.
 export function LeaderboardPage({ title, description }) {
-  const status = 'loaded';
-  const error = '';
-  const leaderboard = mockLeaderboard;
+  const [status, setStatus] = useState('loaded');
+  const [error, setError] = useState('');
+  const [leaderboard, setLeaderboard] = useState([]);
   return (
     <div className="leaderboard-panel">
       <PageHeading title={title} description={description} />
