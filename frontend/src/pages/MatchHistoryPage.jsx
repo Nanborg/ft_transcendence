@@ -26,6 +26,34 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
     const [matches, setMatches] = useState([]);
     const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
     const [error, setError] = useState('');
+    useEffect(() => {
+        if(!accessToken) {
+            setStatus('idle');
+            setMatches([]);
+            return undefined;
+        }
+        let cancelled = false;
+        async function loadHistory() {
+            setStatus('loading');
+            setError('');
+            try {
+                const data = await fetchMatchHistory(accessToken);
+                if(!cancelled) {
+                    setMatches(data);
+                    setStatus('loaded');
+                }
+            } catch (loadError) {
+                if (!cancelled) {
+                    setError(loadError.message);
+                    setStatus('error');
+                }
+            }
+        }
+        loadHistory();
+        return () => {
+            cancelled = true;
+        };
+    }, [accessToken]);
     return (
         <div className="match-history-panel">
             <PageHeading title={title} description={description} />
