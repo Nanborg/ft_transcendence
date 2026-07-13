@@ -39,6 +39,19 @@ export const mockGameState = {
     ],
 };
 
+function drawSquare(context, entity, color, fallbackSize = 20) {
+    const size = entity.size || fallbackSize;
+    context.fillStyle = color;
+    context.fillRect(entity.x || 0, entity.y || 0, size, size);
+}
+
+function drawCircle(context, entity, color, fallbackSize = 8) {
+    const size = entity.size || fallbackSize;
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(entity.x || 0, entity.y || 0, size, 0, Math.PI * 2);
+    context.fill();
+}
 
 export function GameCanvas({ gameState }) {
     const canvasRef = useRef(null);
