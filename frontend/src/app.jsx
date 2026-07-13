@@ -245,6 +245,7 @@ function App() {
               socket={socket}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
+              gameEndInfo={room.gameEndInfo}
             />
           )}
           {currentPage.id === 'login' && (
