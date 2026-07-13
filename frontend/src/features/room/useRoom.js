@@ -66,6 +66,15 @@ export function useRoom(socket, currentUser) {
             setLatestGameState(gameStatePayload);
         }
 
+        // using local game:end payload
+        // (nanborg):replace local game:end with backend (princiamf2, Neon-05)
+        function handleGameEnd(gameEndPayload) {
+            setGameEndInfo(gameEndPayload);
+            setGameStarted(false);
+            setRoomStatus('ended');
+            window.location.hash = '#/game';
+        }
+
         function handleRoomRemoved() {
             resetRoom();
             setRoomError('Room no longer exists.');
@@ -78,6 +87,9 @@ export function useRoom(socket, currentUser) {
         socket.on('chat:message', handleChatMessage);
         socket.on('game:start', handleGameStart);
         socket.on('game:state', handleGameState);
+        //using local game:end source
+        //todo (nanborg): replace local game:end source with backend socket source (Princiamf2, Neon-05)
+        socket.on('game:end', handleGameEnd);
         socket.on('room:removed', handleRoomRemoved);
 
         return () => {
@@ -87,6 +99,8 @@ export function useRoom(socket, currentUser) {
             socket.off('chat:message', handleChatMessage);
             socket.off('game:start', handleGameStart);
             socket.off('game:state', handleGameState);
+            //todo (nanborg): same than game:end source
+            socket.off('game:end', handleGameEnd);
             socket.off('room:removed', handleRoomRemoved);
         };
     }, [socket]);
@@ -141,6 +155,9 @@ export function useRoom(socket, currentUser) {
         setGameStarted(false);
         setGameStartInfo(null);
         setLatestGameState(null);
+        // using local end-state reset flow
+        // TODO (nanborg): replace local end-state reset with live lifecycle reset (Princiamf2)
+        setGameEndInfo(null);
     }
 
     function leaveRoom() {
@@ -212,5 +229,6 @@ export function useRoom(socket, currentUser) {
         gameStarted,
         roomNameInput,
         setRoomNameInput,
+        gameEndInfo,
     };
 }
