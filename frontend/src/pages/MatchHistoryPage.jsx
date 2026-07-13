@@ -1,5 +1,7 @@
 import { PageHeading } from "../components/PageHeading";
-import { mockMatchHistory } from "../features/matchHistory/mockMatchHistory";
+//import { mockMatchHistory } from "../features/matchHistory/mockMatchHistory";
+import { useEffect, useState } from 'react';
+import { fetchMatchHistory } from "../api/scores";
 
 function getCurrentPlayer(match, currentUserId) {
     return match.players.find(player => player.userId === currentUserId);
@@ -19,11 +21,11 @@ function formatOtherPlayers(players) {
         .join(', ');
 }
 
-export function MatchHistoryPage({ title, description }) {
-    const currentUserId = 'user-1';
-    const matches = mockMatchHistory;
-    const status = 'loaded';
-    const error = '';
+export function MatchHistoryPage({ title, description, accessToken, currentUser }) {
+    const currentUserId = currentUser?.id;
+    const [matches, setMatches] = useState([]);
+    const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
+    const [error, setError] = useState('');
     return (
         <div className="match-history-panel">
             <PageHeading title={title} description={description} />
