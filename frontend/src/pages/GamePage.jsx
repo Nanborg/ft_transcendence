@@ -50,15 +50,16 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
         return (
             <>
             <PageHeading title={title} description={description} />
-            <div>
+            <div className="game-panel">
                 <h2>{gameEndInfo.victory ? 'Victory' : 'Defeat'}</h2>
-                <p>Reason: {gameEndInfo.reason || 'finished'}</p>
+                <p className="fame-muted">Reason: {gameEndInfo.reason || 'finished'}</p>
                 <p>Team score: {gameEndInfo.score?.team ?? 0}</p>
                 <ul>
                     {(gameEndInfo.players || []).map(player => (
                         <li key={player.id}> {player.username || 'Player ${player.id}'} - {player.score ?? 0} pts - #{player.rank ?? '-'}  </li>
                     ))}
                 </ul>
+                <button type="button" onClick={() => { window.location.hash = '#/room'; }}> Back to room </button>
             </div>
         </>
         );
