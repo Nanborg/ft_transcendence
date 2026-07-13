@@ -3,24 +3,6 @@ import { PageHeading } from "../components/PageHeading";
 import { useEffect, useState } from 'react';
 import { fetchMatchHistory } from "../api/scores";
 
-function getCurrentPlayer(match, currentUserId) {
-    return match.players.find(player => player.userId === currentUserId);
-}
-
-function getOtherPlayers(match, currentUserId) {
-    return match.players.filter(player => player.userId !== currentUserId);
-}
-
-function formatOtherPlayers(players) {
-    if (players.length === 0) {
-        return 'No other players';
-    }
-
-    return players
-        .map(player => `${player.username}: ${player.score} pts`)
-        .join(', ');
-}
-
 export function MatchHistoryPage({ title, description, accessToken, currentUser }) {
     const currentUserId = currentUser?.id;
     const [matches, setMatches] = useState([]);
@@ -64,15 +46,15 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
             )}
             {status === 'loaded' && matches.length > 0 && (
                 <ul className="match-history-list">
-                    {matches.map(match => {
+                    {matches.map(match => (
                         <li className="match-history-item" key={match.gameRunId}>
                             <span>{match.result}</span>
                             <span>{match.score} pts</span>
-                            <span>{match.rank}</span>
+                            <span>#{match.rank}</span>
                             <span>{new Date(match.endedAt).toLocaleString()}</span>
                         </li>
 
-                    })}
+                    ))}
                 </ul>
             )}
         </div>
