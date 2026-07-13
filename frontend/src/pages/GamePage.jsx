@@ -48,9 +48,18 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     }
     if (gameEndInfo) {
         return (
+            <>
+            <PageHeading title={title} description={description} />
             <div>
                 <h2>Victory / Defeat</h2>
+                <p>Reason</p>
+                <p>Team score</p>
+                <ul>
+                    <li>Player 1</li>
+                    <li>Player 2</li>
+                </ul>
             </div>
+            </>
         );
     }
     return (
