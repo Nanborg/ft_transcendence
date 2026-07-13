@@ -72,15 +72,19 @@ export function GameCanvas({ gameState }) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#000000';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        resources.forEach(resource => {
+            drawCircle(context, resource, '#facc11', 6);
+        });
+        enemies.forEach(enemy => {
+            drawSquare(context, enemy, '#ef4444', 22);
+        });
+        projectiles.forEach(projectile => {
+            drawCircle(context, projectile, '#7611fa', 6);
+        });
         players.forEach(player => {
-            context.fillStyle = player.color;
-            context.fillRect(player.x, player.y, player.size, player.size);
+            drawSquare(context, player, player.color || '#22c55e', 24);
         });
-        objects.forEach(object => {
-            context.fillStyle = object.color;
-            context.fillRect(object.x, object.y, object.size, object.size);
-        });
-    }, [gameState, players, objects]);
+    }, [gameState, players, enemies, projectiles, resources]);
     return (
         <canvas
             ref={canvasRef}
