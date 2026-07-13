@@ -42,10 +42,12 @@ export const mockGameState = {
 
 export function GameCanvas({ gameState }) {
     const canvasRef = useRef(null);
-    const width = gameState?.width || 800;
-    const height = gameState?.height || 450;
+    const width = gameState?.map?.width || gameState?.width || 800;
+    const height = gameState?.map?.height || gameState?.height || 450;
     const players = Array.isArray(gameState?.players) ? gameState.players : [];
-    const objects = Array.isArray(gameState?.objects) ? gameState.objects : [];
+    const enemies = Array.isArray(gameState?.enemies) ? gameState.enemies : [];
+    const projectiles = Array.isArray(gameState?.projectiles) ? gameState.projectiles : [];
+    const resources = Array.isArray(gameState?.resources) ? gameState.resources : [];
 
     useEffect(() => {
         const canvas = canvasRef.current;
