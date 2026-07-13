@@ -16,6 +16,7 @@ export function useRoom(socket, currentUser) {
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
     const [latestGameState, setLatestGameState] = useState(null);
+    const [gameEndInfo, setGameEndInfo] = useState(null);
     const [roomNameInput, setRoomNameInput] = useState('');
 
     useEffect(() => {
@@ -54,6 +55,8 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
+            setGameEndInfo(null);
+            setLatestGameState(null);
             setRoomStatus('started');
             setRoomError('');
             window.location.hash = '#/game';
