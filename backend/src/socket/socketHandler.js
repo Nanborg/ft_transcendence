@@ -1,5 +1,6 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
+const { gameEngineService } = require("../services/gameEngineService");
 
 //Princiamf2
 // TODO -> add Socket.IO tests for room lifecycle, invalid payloads, disconnects, and multi-room isolation.
@@ -70,8 +71,8 @@ module.exports = (io) => {
 			}
 		});
 
-		// TODO(princiamf2): Wire real game:start/player:input command sending to
-		//gameplay-cpp and relay JSON responses from the engine.
+		// TODO: Relay engine entityUpdate, entityDelete, and gameEnd messages
+		// to the correct Socket.IO room.
 		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
@@ -90,6 +91,7 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				const engineSession = await gameEngineService.startGame(room);
 				io.to(roomId).emit("room:update", room);
 				// TODO(princiamf2): Define and emit the game:end contract (winner,
 				//reason, finalState, timestamp) after engine feedback.
@@ -97,6 +99,7 @@ module.exports = (io) => {
 					roomId: room.id,
 					status: room.status,
 					players: room.players,
+					enginePlayers: engineSession.players,
 					timestamp: Date.now(),
 				});
 				console.log(`game starting in room ${room.id}`);
@@ -137,6 +140,20 @@ module.exports = (io) => {
 					socket.emit("room:error", {
 						event: "player:input",
 						message: error,
+					});
+					return;
+				}
+				try {
+					await gameEngineService.sendPlayerInput(
+						roomId,
+						socket.user.id,
+						input
+					);
+				} catch (error) {
+					console.error("unabled to send player input to game engine:", error);
+					socket.emit("room:error", {
+						event: "player:input",
+						message: "Game engine unavailable",
 					});
 					return;
 				}

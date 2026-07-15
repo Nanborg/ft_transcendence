@@ -1,4 +1,5 @@
 const prisma = require("../db");
+const { gameEngineService } = require("../services/gameEngineService");
 const playerInputs = new Map();
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 4;
@@ -224,6 +225,7 @@ async function leaveRoom(roomId, userId) {
             data: { ownerId: remainingPlayers[0].userId },
         });
     }
+    gameEngineService.removeSession(roomId);
     return getRoom(roomId);
 }
 
@@ -270,6 +272,7 @@ async function leaveAllRooms(userId) {
         if (updatedRoom) {
             updatedRooms.push(updatedRoom);
         }
+        gameEngineService.removeSession(roomId);
     }
     return {
         updatedRooms,
