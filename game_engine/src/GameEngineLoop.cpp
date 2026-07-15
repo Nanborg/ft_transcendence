@@ -13,7 +13,11 @@ void	GameEngine::_loop_processInputs( void ) {
 }
 
 void	GameEngine::_loop_tickEntities( void ) {
-	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++)
+	// TODO(neon-05): Add a collision pass + deferred destruction + cleanup of
+	// out-of-play entities per tick.
+	// TODO(neon-05): Produce game_end when the basic end condition is reached
+	// (objective complete, all players dead, timeout, or score limit).
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); )
 	{
 		if (it->get()->doTick()) {
 			std::cout << "entity " << (*it)->getId() << " updated\n";
@@ -21,7 +25,9 @@ void	GameEngine::_loop_tickEntities( void ) {
 		}
 		if (it->get()->getHealth() <= 0) {
 			sendEntityDelete(it->get());
-			_entities.erase(it);
+			it = _entities.erase(it);
+		} else {
+			++it;
 		}
 	}
 }

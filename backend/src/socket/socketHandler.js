@@ -3,8 +3,10 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService } = require("../services/gameEngineService");
 
 //Princiamf2
-// TODO -> add Socket.IO tests for room lifecycle, invalid payloads, disconnects, and multi-room isolation.
-// These tests should cover create, join, ready, start, input, leave, reconnect, and room deletion.
+// TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
+// invalid payloads, disconnects, and multi-room isolation.
+// These tests should cover create, join, ready, start, input, state, end,
+// leave, reconnect, and room deletion.
 module.exports = (io) => {
 	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
@@ -93,8 +95,11 @@ module.exports = (io) => {
 				}
 				const engineSession = await gameEngineService.startGame(room);
 				io.to(roomId).emit("room:update", room);
-				// TODO(princiamf2): Define and emit the game:end contract (winner,
-				//reason, finalState, timestamp) after engine feedback.
+				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
+				// and add timestamp at relay time while preserving engine tick.
+				// TODO(princiamf2): Map engine game_end to Socket.IO game:end.
+				// TODO(yaoberso): Persist trusted game:end results into GameRun
+				// and PlayerRunStats after server-side validation.
 				io.to(roomId).emit("game:start", {
 					roomId: room.id,
 					status: room.status,
@@ -296,6 +301,8 @@ module.exports = (io) => {
 
 		socket.on("disconnect", () => {
 			try {
+				// TODO(princiamf2): Define in-game disconnect behavior
+				// (forfeit, end game, or keep room alive during reconnect window).
 				scheduleDisconnect(
 					socket.user.id,
 					socket.id,

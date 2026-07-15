@@ -1,5 +1,5 @@
 
-// TODO: align this mock with the final match history API when scores are implemented
+// TODO(nanborg): Align this mock with the final match history API when scores are implemented.
 export const mockMatchHistory = [
   {
     roomId: 'room-101',
