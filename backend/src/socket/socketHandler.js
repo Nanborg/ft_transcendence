@@ -1,5 +1,6 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
+const { gameEngineService } = require("../services/gameEngineService");
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
@@ -72,10 +73,8 @@ module.exports = (io) => {
 			}
 		});
 
-		// TODO(princiamf2): Wire real game:start/player:input command sending to
-		// gameplay-cpp and relay JSON responses from the engine.
-		// TODO(princiamf2): Decide with Neon whether backend receives full
-		// game_state messages or rebuilds state from entityUpdate/entityDelete.
+		// TODO: Relay engine entityUpdate, entityDelete, and gameEnd messages
+		// to the correct Socket.IO room.
 		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
@@ -94,6 +93,22 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				let engineSession;
+
+				try {
+					engineSession = await gameEngineService.startGame(room);
+				} catch (error) {
+					console.error("Unable to start game engine session:", error);
+					const restoredRoom = await resetGameStart(roomId);
+					io.to(roomId).emit("room:update", restoredRoom);
+					socket.emit("room:error", {
+						event: "game:start",
+						code: "GAME_ENGINE_START_FAILED",
+						message: "Unable to start the game engine",
+					});
+					return;
+				}
+
 				io.to(roomId).emit("room:update", room);
 				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
 				// and add timestamp at relay time while preserving engine tick.
@@ -104,6 +119,7 @@ module.exports = (io) => {
 					roomId: room.id,
 					status: room.status,
 					players: room.players,
+					enginePlayers: engineSession.players,
 					timestamp: Date.now(),
 				});
 				console.log(`game starting in room ${room.id}`);
@@ -147,8 +163,20 @@ module.exports = (io) => {
 					});
 					return;
 				}
-				// TODO(princiamf2): Send normalized player:input to gameplay-cpp
-				// instead of only rebroadcasting it to the room.
+				try {
+					await gameEngineService.sendPlayerInput(
+						roomId,
+						socket.user.id,
+						input
+					);
+				} catch (error) {
+					console.error("Unable to send player input to game engine:", error);
+					socket.emit("room:error", {
+						event: "player:input",
+						message: "Game engine unavailable",
+					});
+					return;
+				}
 				io.to(roomId).emit("player:input", {
 					playerId: socket.user.id,
 					input: {
@@ -178,6 +206,11 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId } = payload;
+				try {
+					await gameEngineService.removePlayer(roomId, socket.user.id);
+				} catch (error) {
+					console.error("Unable to remove player from game engine", error);
+				}
 				const room = await leaveRoom(roomId, socket.user.id);
 				socket.leave(roomId);
 				console.log(`socket ${socket.user.id} left room ${roomId}`);
@@ -294,6 +327,17 @@ module.exports = (io) => {
 					socket.user.id,
 					socket.id,
 					async () => {
+						const userRooms = await getRoomsByUserId(socket.user.id);
+						for (const room of userRooms) {
+							try {
+								await gameEngineService.removePlayer(room.id, socket.user.id);
+							} catch (error) {
+								console.error(
+									`Unable to remove user ${socket.user.id} from engine room ${room.id}:`,
+									error
+								);
+							}
+						}
 						const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
 						for (const room of updatedRooms) {
 							io.to(room.id).emit("room:update", room);

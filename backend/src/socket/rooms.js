@@ -1,4 +1,5 @@
 const prisma = require("../db");
+const { gameEngineService } = require("../services/gameEngineService");
 const playerInputs = new Map();
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 4;
@@ -216,6 +217,7 @@ async function leaveRoom(roomId, userId) {
         await prisma.room.delete({
             where: { id: roomId },
         });
+        gameEngineService.removeSession(roomId);
         return null;
     }
     if (room.ownerId === userId) {
@@ -255,6 +257,7 @@ async function leaveAllRooms(userId) {
             await prisma.room.delete({
                 where: { id: roomId }
             });
+            gameEngineService.removeSession(roomId);
             removedRoomIds.push(roomId);
             continue;
         }
@@ -492,6 +495,14 @@ async function getRoomsByUserId(userId) {
     return players.map((player) => formatRoom(player.room));
 }
 
+async function resetGameStart(roomId) {
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "waiting" },
+    });
+    return getRoom(roomId);
+}
+
 module.exports = {
     createRoom,
     joinRoom,
@@ -503,4 +514,5 @@ module.exports = {
     startGame,
     setPlayerInput,
     getRoomsByUserId,
+    resetGameStart,
 };
