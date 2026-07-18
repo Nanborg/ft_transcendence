@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService } = require("../services/gameEngineService");
 
@@ -93,7 +93,22 @@ module.exports = (io) => {
 					});
 					return;
 				}
-				const engineSession = await gameEngineService.startGame(room);
+				let engineSession;
+
+				try {
+					engineSession = await gameEngineService.startGame(room);
+				} catch (error) {
+					console.error("Unable to start game engine session:", error);
+					const restoredRoom = await resetGameStart(roomId);
+					io.to(roomId).emit("room:update", restoredRoom);
+					socket.emit("room:error", {
+						event: "game:start",
+						code: "GAME_ENGINE_START_FAILED",
+						message: "Unable to start the game engine",
+					});
+					return;
+				}
+
 				io.to(roomId).emit("room:update", room);
 				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
 				// and add timestamp at relay time while preserving engine tick.
@@ -155,7 +170,7 @@ module.exports = (io) => {
 						input
 					);
 				} catch (error) {
-					console.error("unabled to send player input to game engine:", error);
+					console.error("Unable to send player input to game engine:", error);
 					socket.emit("room:error", {
 						event: "player:input",
 						message: "Game engine unavailable",
@@ -191,6 +206,11 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId } = payload;
+				try {
+					await gameEngineService.removePlayer(roomId, socket.user.id);
+				} catch (error) {
+					console.error("Unable to remove player from game engine", error);
+				}
 				const room = await leaveRoom(roomId, socket.user.id);
 				socket.leave(roomId);
 				console.log(`socket ${socket.user.id} left room ${roomId}`);
@@ -307,6 +327,17 @@ module.exports = (io) => {
 					socket.user.id,
 					socket.id,
 					async () => {
+						const userRooms = await getRoomsByUserId(socket.user.id);
+						for (const room of userRooms) {
+							try {
+								await gameEngineService.removePlayer(room.id, socket.user.id);
+							} catch (error) {
+								console.error(
+									`Unable to remove user ${socket.user.id} from engine room ${room.id}:`,
+									error
+								);
+							}
+						}
 						const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
 						for (const room of updatedRooms) {
 							io.to(room.id).emit("room:update", room);

@@ -31,7 +31,7 @@ class GameEngineService extends EventEmitter{
 
         this.socket.on("error", (error) => {
             console.error("Game engine Udp error:", error);
-            this.emit("error", error);
+            this.emit("engine-error", error);
         });
 
         this.socket.on("listening", () => {
@@ -129,15 +129,50 @@ class GameEngineService extends EventEmitter{
 
     async startGame(room) {
         const session = this.createSession(room);
-        for (const player of session.players) {
-            const command = {
-                type: ENGINE_INPUT_TYPE.JOIN,
-                playerId: player.enginePlayerId,
-            };
-            console.log("Sending game engine JOIN:", command);
-            await this.send(command);
+        const joinedPlayerIds = [];
+
+        try {
+            for (const player of session.players) {
+                await this.send({
+                    type: ENGINE_INPUT_TYPE.JOIN,
+                    playerId: player.enginePlayerId,
+                });
+                joinedPlayerIds.push(player.enginePlayerId);
+            }
+            return session;
+        } catch (error) {
+            for (const playerId of joinedPlayerIds) {
+                try {
+                    await this.send({
+                        type: ENGINE_INPUT_TYPE.LEAVE,
+                        playerId,
+                    });
+                } catch (cleanupError) {
+                    console.error(
+                        "Unable to rollback engine player:",
+                        playerId,
+                        cleanupError
+                    );
+                }
+            }
+            this.removeSession(room.id);
+            throw error;
         }
-        return session;
+    }
+
+    async removePlayer(roomId, userId) {
+        const session = this.getSession(roomId);
+        if (!session)
+            return;
+        const playerIndex = session.players.findIndex((player) => player.userId === userId);
+        if (playerIndex === -1)
+            return;
+        const player = session.players[playerIndex];
+        await this.send({
+            type: ENGINE_INPUT_TYPE.LEAVE,
+            playerId: player.enginePlayerId,
+        });
+        session.players.splice(playerIndex, 1);
     }
 
     removeSession(roomId) {

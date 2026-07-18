@@ -217,6 +217,7 @@ async function leaveRoom(roomId, userId) {
         await prisma.room.delete({
             where: { id: roomId },
         });
+        gameEngineService.removeSession(roomId);
         return null;
     }
     if (room.ownerId === userId) {
@@ -225,7 +226,6 @@ async function leaveRoom(roomId, userId) {
             data: { ownerId: remainingPlayers[0].userId },
         });
     }
-    gameEngineService.removeSession(roomId);
     return getRoom(roomId);
 }
 
@@ -257,6 +257,7 @@ async function leaveAllRooms(userId) {
             await prisma.room.delete({
                 where: { id: roomId }
             });
+            gameEngineService.removeSession(roomId);
             removedRoomIds.push(roomId);
             continue;
         }
@@ -272,7 +273,6 @@ async function leaveAllRooms(userId) {
         if (updatedRoom) {
             updatedRooms.push(updatedRoom);
         }
-        gameEngineService.removeSession(roomId);
     }
     return {
         updatedRooms,
@@ -495,6 +495,14 @@ async function getRoomsByUserId(userId) {
     return players.map((player) => formatRoom(player.room));
 }
 
+async function resetGameStart(roomId) {
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "waiting" },
+    });
+    return getRoom(roomId);
+}
+
 module.exports = {
     createRoom,
     joinRoom,
@@ -506,4 +514,5 @@ module.exports = {
     startGame,
     setPlayerInput,
     getRoomsByUserId,
+    resetGameStart,
 };
