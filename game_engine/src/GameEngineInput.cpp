@@ -125,10 +125,22 @@ void	GameEngine::_input_build(const json& in) {
 	);
 }
 
-void	GameEngine::_input_delete( const json& in ) {
-	if (!in["playerId"].is_number() || !in["entityId"].is_number())
+void	GameEngine::_input_delete(const json& in) {
+	std::string	gameId;
+	int			playerId;
+
+	if (!_getGameId(in, gameId))
 		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		deleteEntity(in["entityId"]);
-	}
+	if (!in.contains("playerId") || !in["playerId"].is_number() || !in.contains("entityId")
+		|| !in["entityId"].is_number()
+	)
+		return;
+	playerId = in["playerId"];
+	GameSession* game = _getGameSession(gameId);
+	if (game == nullptr)
+		return;
+	PlayerEntity* player = _findPlayer(*game, playerId);
+	if (player == nullptr)
+		return;
+	deleteEntity(*game, in["entityId"]);
 }

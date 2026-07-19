@@ -176,7 +176,7 @@ void	GameEngine::deleteEntity(GameEngine::GameSession& game, int entityId ) {
 	if (entity == nullptr)
 		return;
 	sendEntityDelete(entity);
-	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+	entityList_t::iterator it = std::find_if(game.entities.begin(), game.entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
 	if (it != _entities.end())
 		game.entities.erase(it);
 }

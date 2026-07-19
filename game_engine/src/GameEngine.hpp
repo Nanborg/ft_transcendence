@@ -42,7 +42,7 @@ class GameEngine
 
 	bool	checkCollision( AbstractEntity* entity ) const;
 
-	void	deleteEntity( GameSession& game, int entityId );
+	void	deleteEntity( GameSession &game, int entityId );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
