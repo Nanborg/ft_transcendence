@@ -1,4 +1,7 @@
 #include "GameEngine.hpp"
+#include "AbstractEntity.hpp"
+#include "PlayerEntity.hpp"
+#include <algorithm>
 
 const unsigned int GameEngine::_target_uspt = 100000;
 
@@ -29,6 +32,31 @@ bool	GameEngine::_getGameId(const json& in, std::string& gameId ) const
 	if (gameId.empty())
 		return false;
 	return true;
+}
+
+AbstractEntity *GameEngine::_findEntity(GameSession& game, int entityId)
+{
+	entityList_t::iterator it = std::find_if(
+		game.entities.begin(),
+		game.entities.end(),
+		[entityId](const auto& entity) {
+			return entity->getId() == entityId;
+		}
+	);
+	if (it == game.entities.end())
+		return nullptr;
+	return it->get();
+}
+
+PlayerEntity* GameEngine::_findPlayer (GameSession& game, int playerId)
+{
+	playerIds_t::iterator playerIt = game.playerIds.find(playerId);
+	if (playerIt == game.playerIds.end())
+		return nullptr;
+	AbstractEntity* entity = _findEntity(game, playerIt->second);
+	if (entity == nullptr)
+		return nullptr;
+	return static_cast<PlayerEntity*>(entity);
 }
 
 void	GameEngine::manageInput( const json& in ) {
@@ -124,30 +152,31 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	return false;
 }
 
-AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
+void	GameEngine::spawnNewEntity( GameEngine::GameSession& game, int typeId, float posX, float posY, float velX, float velY ) {
 	AbstractEntity* entity;
 	// TODO(neon-05): Support spawning the minimum coop 2D entities:
 	// Enemy, Projectile, and Resource.
 	switch (typeId) {
-	case EntityTypes::PLAYERENTITY:
-		return NULL; // PlayerEntity not spawnable in this context
+		case EntityTypes::PLAYERENTITY:
+			return; // PlayerEntity not spawnable in this context
 
-	case EntityTypes::WALLENTITY:
-		entity = new WallEntity(posX, posY);
-		break;
+		case EntityTypes::WALLENTITY:
+			entity = new WallEntity(posX, posY);
+			break;
 
-	default:
-		return NULL;
+		default:
+			return;
 	}
-	_entities.push_front(entityPtr_t(entity));
 	sendEntityUpdate(entity);
-	return entity;
+	game.entities.push_front(entityPtr_t(entity));
 }
 
-void	GameEngine::deleteEntity( int entityId ) {
-	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-	if (it == _entities.end())
+void	GameEngine::deleteEntity(GameEngine::GameSession& game, int entityId ) {
+	AbstractEntity* entity = _findEntity(game, entityId);
+	if (entity == nullptr)
 		return;
-	sendEntityDelete(it->get());
-	_entities.erase(it);
+	sendEntityDelete(entity);
+	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+	if (it != _entities.end())
+		game.entities.erase(it);
 }

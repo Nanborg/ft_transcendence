@@ -58,27 +58,71 @@ void	GameEngine::_input_leave( const json& in ) {
 		_games.erase(gameId);
 }
 
-void	GameEngine::_input_move( const json& in ) {
-	// TODO(neon-05): Map this MOVE input to the final player_input contract
-	// and keep movement deterministic for the engine tick.
-	if (!in["playerId"].is_number() || !in["X"].is_number() || !in["Y"].is_number())
+void	GameEngine::_input_move(const json& in) {
+	std::string	gameId;
+	int			playerId;
+
+	if (!_getGameId(in, gameId))
 		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		int entityId = _playerIds[in["playerId"]];
-		entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-		AbstractEntity *e = it->get();
-		((PlayerEntity *) e)->movementInput(in["X"], in["Y"]);
-	}
+	if (
+		!in.contains("playerId")
+		|| !in["playerId"].is_number()
+		|| !in.contains("X")
+		|| !in["X"].is_number()
+		|| !in.contains("Y")
+		|| !in["Y"].is_number()
+	)
+		return;
+	playerId = in["playerId"];
+	GameSession* game = _getGameSession(gameId);
+	if (game == nullptr)
+		return;
+	PlayerEntity* player = _findPlayer(*game, playerId);
+	if (player == nullptr)
+		return;
+	player->movementInput(
+		in["X"],
+		in["Y"]
+	);
 }
 
-void	GameEngine::_input_build( const json& in ) {
-	// TODO(neon-05): Decide whether build/delete stay in the minimum playable
-	// scope or move to a later gameplay layer.
-	if (!in["playerId"].is_number() || !in["typeId"].is_number() || !in["X"].is_number() || !in["Y"].is_number())
+void	GameEngine::_input_build(const json& in) {
+	std::string	gameId;
+	int			playerId;
+
+	if (!_getGameId(in, gameId))
 		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		spawnNewEntity(in["typeId"], in["X"], in["Y"], 0, 0);
-	}
+
+	if (
+		!in.contains("playerId")
+		|| !in["playerId"].is_number()
+		|| !in.contains("typeId")
+		|| !in["typeId"].is_number()
+		|| !in.contains("X")
+		|| !in["X"].is_number()
+		|| !in.contains("Y")
+		|| !in["Y"].is_number()
+	)
+		return;
+
+	playerId = in["playerId"];
+
+	GameSession* game = _getGameSession(gameId);
+
+	if (game == nullptr)
+		return;
+
+	PlayerEntity* player = _findPlayer(*game, playerId);
+
+	if (player == nullptr)
+		return;
+
+	spawnNewEntity(*game, in["typeId"],
+		in["X"],
+		in["Y"],
+		0,
+		0
+	);
 }
 
 void	GameEngine::_input_delete( const json& in ) {

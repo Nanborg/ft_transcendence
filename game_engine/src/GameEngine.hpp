@@ -22,25 +22,6 @@
 
 class GameEngine
 {
-public:
-	GameEngine( int port );
-	~GameEngine( void );
-
-	bool	checkCollision( AbstractEntity* entity ) const;
-
-	AbstractEntity*	spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
-	void			deleteEntity( int entityId );
-
-	void	sendEntityUpdate( const AbstractEntity* entity );
-	void	sendEntityDelete( const AbstractEntity* entity );
-
-	void	manageInput( const json& in );
-
-	int		newId( void );
-	void	init( void );
-	void	start( void );
-	void	stop( void );
-
 	private:
 	typedef std::unique_ptr<AbstractEntity>	entityPtr_t;
 	typedef std::list<entityPtr_t>			entityList_t;
@@ -54,7 +35,26 @@ public:
 	};
 
 	typedef std::map<std::string, GameSession> gameSessions_t ;
+	void	spawnNewEntity( GameSession& game, int typeId, float posX, float posY, float velX, float velY );
+	public:
+	GameEngine( int port );
+	~GameEngine( void );
 
+	bool	checkCollision( AbstractEntity* entity ) const;
+
+	void	deleteEntity( GameSession& game, int entityId );
+
+	void	sendEntityUpdate( const AbstractEntity* entity );
+	void	sendEntityDelete( const AbstractEntity* entity );
+
+	void	manageInput( const json& in );
+
+	int		newId( void );
+	void	init( void );
+	void	start( void );
+	void	stop( void );
+
+	private:
 	enum inputTypes_e {
 		PING = 0,
 		JOIN = 1,
@@ -67,6 +67,8 @@ public:
 	GameSession*	_getGameSession( const std::string& gameId );
 	GameSession&	_getOrCreateGameSession( const std::string& gameId );
 	bool			_getGameId( const json& in, std::string& gameId ) const;
+	AbstractEntity*	_findEntity( GameSession& game, int entityId );
+	PlayerEntity*	_findPlayer( GameSession& game, int playerId );
 
 	void	_loop_receiveMessages( void );
 	void	_loop_processInputs( void );
