@@ -1,6 +1,7 @@
 #ifndef GAMEENGINE_HPP
 #define GAMEENGINE_HPP
 
+#include <string>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
@@ -46,6 +47,14 @@ public:
 	typedef std::map<int, int>				playerIds_t;
 	typedef std::queue<json>				playerInput_t;
 
+	struct GameSession
+	{
+		entityList_t	entities;
+		playerIds_t		playerIds;
+	};
+
+	typedef std::map<std::string, GameSession> gameSessions_t ;
+
 	enum inputTypes_e {
 		PING = 0,
 		JOIN = 1,
@@ -54,6 +63,10 @@ public:
 		BUILD = 4,
 		DELETE = 5,
 	};
+
+	GameSession*	_getGameSession( const std::string& gameId );
+	GameSession&	_getOrCreateGameSession( const std::string& gameId );
+	bool			_getGameId( const json& in, std::string& gameId ) const;
 
 	void	_loop_receiveMessages( void );
 	void	_loop_processInputs( void );
@@ -71,6 +84,7 @@ public:
 	int							_nextEntityId;
 	entityList_t				_entities;
 	playerIds_t					_playerIds;
+	gameSessions_t				_games;
 	playerInput_t				_playerInputs;
 	unsigned int				_uspt;
 	static const unsigned int	_target_uspt;

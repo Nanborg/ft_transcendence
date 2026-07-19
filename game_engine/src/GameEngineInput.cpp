@@ -1,4 +1,6 @@
 #include "GameEngine.hpp"
+#include "PlayerEntity.hpp"
+#include <algorithm>
 
 void	GameEngine::_input_ping( const json& in ) {
 	json out;
@@ -9,26 +11,51 @@ void	GameEngine::_input_ping( const json& in ) {
 }
 
 void	GameEngine::_input_join( const json& in ) {
-	// TODO(neon-05): Align player_join payload with the backend player mapping
-	// and the final enginePlayerId contract.
+	std::string gameId;
+	int			playerId;
+
+	if (!_getGameId(in, gameId))
+		return;
 	if (!in["playerId"].is_number())
 		return;
-	if (_playerIds.count(in["playerId"]) == 0) {
-		PlayerEntity *player = new PlayerEntity(in["playerId"], 0, 0, 0, 0);
-		_playerIds[in["playerId"]] = player->getId();
-		_entities.push_front(entityPtr_t(player));
+	playerId = in["playerId"];
+	GameSession& game = _getOrCreateGameSession(gameId);
+	if (game.playerIds.count(playerId) == 0) {
+		PlayerEntity *player = new PlayerEntity(playerId, 0, 0, 0, 0);
+		game.playerIds[playerId] = player->getId();
+		game.entities.push_front(entityPtr_t(player));
 	}
 }
 
 void	GameEngine::_input_leave( const json& in ) {
-	// TODO(neon-05): Keep leave/disconnect behavior aligned with backend
-	// in-game disconnect handling.
+	std::string	gameId;
+	int			playerId;
+
+	if (!_getGameId(in, gameId))
+		return;
 	if (!in["playerId"].is_number())
 		return;
-	if (_playerIds.count(in["playerId"]) > 0) {
-		deleteEntity(_playerIds[in["playerId"]]);
-		_playerIds.erase(in["playerId"]);
+	playerId = in["playerId"];
+	GameSession* game = _getGameSession(gameId);
+	if (game == NULL)
+		return;
+	if (game->playerIds.count(playerId) == 0)
+		return;
+	int entityId = game->playerIds[playerId];
+	entityList_t::iterator it = std::find_if(
+		game->entities.begin(),
+		game->entities.end(),
+		[entityId](const auto& entity) {
+			return entity->getId() == entityId;
+		}
+	);
+	if (it != game->entities.end()) {
+		sendEntityDelete(it->get());
+		game->entities.erase(it);
 	}
+	game->playerIds.erase(playerId);
+	if (game->playerIds.empty())
+		_games.erase(gameId);
 }
 
 void	GameEngine::_input_move( const json& in ) {

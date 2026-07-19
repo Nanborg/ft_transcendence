@@ -8,6 +8,29 @@ GameEngine::GameEngine( int port ):
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
+GameEngine::GameSession*	GameEngine::_getGameSession(const std::string& gameId) {
+	gameSessions_t::iterator it = _games.find(gameId);
+	if (it == _games.end())
+		return NULL;
+	return &it->second;
+}
+
+GameEngine::GameSession&	GameEngine::_getOrCreateGameSession( const std::string& gameId ) {
+	return _games[gameId];
+}
+
+bool	GameEngine::_getGameId(const json& in, std::string& gameId ) const
+{
+	if (!in.contains("gameId"))
+		return false;
+	if (!in["gameId"].is_string())
+		return false;
+	gameId = in["gameId"].get<std::string>();
+	if (gameId.empty())
+		return false;
+	return true;
+}
+
 void	GameEngine::manageInput( const json& in ) {
 	// TODO(neon-05): Strictly validate all incoming commands
 	// (player_input, player_join, player_leave/build/delete) and ignore
