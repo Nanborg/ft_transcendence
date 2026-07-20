@@ -6,7 +6,7 @@ const prisma = require('../db');
 
 
 
-// sign in route, here to create and register users
+// signin route, here to create and signin users
 
 //	└──>curl -i -X POST http://localhost:3000/signin \
 //		  -H "Content-Type: application/json" \
@@ -21,7 +21,7 @@ const prisma = require('../db');
 //		onnection: keep-alive
 //		eep-Alive: timeout=5
 //
-//		{"message":"Sign up success","userId":9}
+//		{"message":"Register success","userId":9}
 
 
 
@@ -48,7 +48,7 @@ router.post ("/", async (req, res) => {
 			}
 		});
 		res.status(201).json({
-			message: 'Sign up success',
+			message: 'Register success',
 			userId: user.id,
 			username: user.username
 		});
