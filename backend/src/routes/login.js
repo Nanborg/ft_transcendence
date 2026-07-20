@@ -132,7 +132,7 @@ router.get("/42/callback", async (req, res) => {
 
 
 
-	// Générer tes JWT
+	// Generate JWTs
 });
 
 
