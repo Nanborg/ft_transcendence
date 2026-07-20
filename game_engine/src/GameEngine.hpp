@@ -35,17 +35,17 @@ class GameEngine
 	};
 
 	typedef std::map<std::string, GameSession> gameSessions_t ;
-	void	spawnNewEntity( GameSession& game, int typeId, float posX, float posY, float velX, float velY );
+	void	spawnNewEntity( const std::string& gameId, GameSession& game, int typeId, float posX, float posY, float velX, float velY );
 	public:
 	GameEngine( int port );
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
 
-	void	deleteEntity( GameSession &game, int entityId );
+	void	deleteEntity( const std::string& gameId, GameSession &game, int entityId );
 
-	void	sendEntityUpdate( const AbstractEntity* entity );
-	void	sendEntityDelete( const AbstractEntity* entity );
+	void	sendEntityUpdate( const std::string& gameId, const AbstractEntity* entity );
+	void	sendEntityDelete( const std::string& gameId, const AbstractEntity* entity );
 
 	void	manageInput( const json& in );
 
@@ -84,8 +84,6 @@ class GameEngine
 	ControllerIO				_io;
 	bool						_running;
 	int							_nextEntityId;
-	entityList_t				_entities;
-	playerIds_t					_playerIds;
 	gameSessions_t				_games;
 	playerInput_t				_playerInputs;
 	unsigned int				_uspt;

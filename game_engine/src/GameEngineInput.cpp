@@ -1,12 +1,23 @@
 #include "GameEngine.hpp"
 #include "PlayerEntity.hpp"
 #include <algorithm>
+#include <cstddef>
 
 void	GameEngine::_input_ping( const json& in ) {
 	json out;
+	(void)in;
+	std::size_t totalEntities = 0;
+	for (
+		gameSessions_t::const_iterator gameIt = _games.begin();
+		gameIt != _games.end();
+		++gameIt
+	) {
+		totalEntities += gameIt->second.entities.size();
+	}
 	out["type"] = "ping";
 	out["uspt"] = _uspt;
-	out["entities"] = _entities.size();
+	out["entities"] = totalEntities;
+	out["games"] = _games.size();
 	_io.sendMsg(out.dump());
 }
 
@@ -50,7 +61,7 @@ void	GameEngine::_input_leave( const json& in ) {
 		}
 	);
 	if (it != game->entities.end()) {
-		sendEntityDelete(it->get());
+		sendEntityDelete(gameId, it->get());
 		game->entities.erase(it);
 	}
 	game->playerIds.erase(playerId);
@@ -117,7 +128,7 @@ void	GameEngine::_input_build(const json& in) {
 	if (player == nullptr)
 		return;
 
-	spawnNewEntity(*game, in["typeId"],
+	spawnNewEntity(gameId, *game, in["typeId"],
 		in["X"],
 		in["Y"],
 		0,
@@ -142,5 +153,5 @@ void	GameEngine::_input_delete(const json& in) {
 	PlayerEntity* player = _findPlayer(*game, playerId);
 	if (player == nullptr)
 		return;
-	deleteEntity(*game, in["entityId"]);
+	deleteEntity(gameId, *game, in["entityId"]);
 }

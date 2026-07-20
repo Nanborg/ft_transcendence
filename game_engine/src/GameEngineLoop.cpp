@@ -17,17 +17,25 @@ void	GameEngine::_loop_tickEntities( void ) {
 	// out-of-play entities per tick.
 	// TODO(neon-05): Produce game_end when the basic end condition is reached
 	// (objective complete, all players dead, timeout, or score limit).
-	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); )
-	{
-		if (it->get()->doTick()) {
-			std::cout << "entity " << (*it)->getId() << " updated\n";
-			sendEntityUpdate(it->get());
-		}
-		if (it->get()->getHealth() <= 0) {
-			sendEntityDelete(it->get());
-			it = _entities.erase(it);
-		} else {
-			++it;
+	for (
+		gameSessions_t::iterator gameIt = _games.begin();
+		gameIt != _games.end();
+		++gameIt
+	) {
+		GameSession& game = gameIt->second;
+		for (entityList_t::iterator entityIt = game.entities.begin(); entityIt != game.entities.end();)
+		{
+			if (entityIt->get()->doTick()) {
+				std::cout << "entity " << entityIt->get()->getId() << " updated\n";
+				sendEntityUpdate(gameIt->first, entityIt->get());
+			}
+			if (entityIt->get()->getHealth() <= 0) {
+				sendEntityDelete(gameIt->first, entityIt->get());
+				entityIt = game.entities.erase(entityIt);
+			}
+			else {
+				++entityIt;
+			}
 		}
 	}
 }

@@ -96,7 +96,7 @@ void	GameEngine::manageInput( const json& in ) {
 	}
 }
 
-void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
+void	GameEngine::sendEntityUpdate( const std::string& gameId, const AbstractEntity* entity ) {
 	json entityJ, out;
 	// TODO(neon-05): Replace or complement entityUpdate/entityDelete with a
 	// full game_state payload compatible with docs/formats_communication_reference.md.
@@ -110,16 +110,18 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	entityJ["velY"] = entity->getVelY();
 
 	out["type"] = "entityUpdate";
+	out["gameId"] = gameId;
 	out["entity"] = entityJ;
 	_io.sendMsg(out.dump());
 }
 
-void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
+void	GameEngine::sendEntityDelete( const std::string& gameId, const AbstractEntity* entity ) {
 	json out;
 	// TODO(neon-05): Keep entityDelete compatible with the backend state mapper
 	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
+	out["gameId"] = gameId;
 	out["entity"]["entityId"] = entity->getId();
 	_io.sendMsg(out.dump());
 }
@@ -152,7 +154,7 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	return false;
 }
 
-void	GameEngine::spawnNewEntity( GameEngine::GameSession& game, int typeId, float posX, float posY, float velX, float velY ) {
+void	GameEngine::spawnNewEntity( const std::string& gameId, GameEngine::GameSession& game, int typeId, float posX, float posY, float velX, float velY ) {
 	AbstractEntity* entity;
 	// TODO(neon-05): Support spawning the minimum coop 2D entities:
 	// Enemy, Projectile, and Resource.
@@ -167,16 +169,16 @@ void	GameEngine::spawnNewEntity( GameEngine::GameSession& game, int typeId, floa
 		default:
 			return;
 	}
-	sendEntityUpdate(entity);
+	sendEntityUpdate(gameId, entity);
 	game.entities.push_front(entityPtr_t(entity));
 }
 
-void	GameEngine::deleteEntity(GameEngine::GameSession& game, int entityId ) {
+void	GameEngine::deleteEntity(const std::string& gameId, GameEngine::GameSession& game, int entityId ) {
 	AbstractEntity* entity = _findEntity(game, entityId);
 	if (entity == nullptr)
 		return;
-	sendEntityDelete(entity);
+	sendEntityDelete(gameId, entity);
 	entityList_t::iterator it = std::find_if(game.entities.begin(), game.entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
-	if (it != _entities.end())
+	if (it != game.entities.end())
 		game.entities.erase(it);
 }
