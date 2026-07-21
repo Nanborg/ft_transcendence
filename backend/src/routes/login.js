@@ -63,7 +63,13 @@ async function loginUser(user, res, mess, code) {
 		data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
 	});
 
-		res.status(code).json({ message: mess, username: user.username, accessToken: accessToken, refreshToken: refreshToken });
+	const params = new URLSearchParams({
+		oauth: "42",
+		accessToken,
+		refreshToken,
+	});
+
+	return res.redirect(`/#/login?${params.toString()}`);
 }
 
 
@@ -71,11 +77,11 @@ async function loginUser(user, res, mess, code) {
 router.get("/42/callback", async (req, res) => {
 	try{
 		const code = req.query.code;
-	
+
 		if (!code || typeof req.query.code !== "string") {
 			return res.status(400).send("Missing code");
 		}
-	
+
 		// exchange code for a token
 		const response = await fetch("https://api.intra.42.fr/oauth/token", {
 			method: "POST",
@@ -94,12 +100,12 @@ router.get("/42/callback", async (req, res) => {
 			console.error(await response.text());
 			return res.sendStatus(500);
 		}
-	
+
 		const data = await response.json();
 		if (!data.access_token) {
 			return res.status(401).json(data);
 		}
-	
+
 		// call /v2/me to get user data
 		const infos_response = await fetch("https://api.intra.42.fr/v2/me", {
 			method: "GET",
@@ -111,16 +117,16 @@ router.get("/42/callback", async (req, res) => {
 			console.error(await infos_response.text());
 			return res.sendStatus(500);
 		}
-	
+
 		const userData = await infos_response.json();
 		if (!userData.id || !userData.email)
 			return res.sendStatus(500);
-	
+
 		// search/create user
 		let user = await prisma.user.findUnique({
 		where: { fortyTwoId: userData.id }
 		});
-	
+
 		if (user)
 			return loginUser(user, res, "Connection success", 200);
 
@@ -148,7 +154,7 @@ router.get("/42/callback", async (req, res) => {
 			{
 				username = `${userData.login}_${userData.id}`;
 				let i = 1;
-			
+
 				while (await prisma.user.findUnique({ where: { username } })) {
 					username = `${userData.login}_${userData.id}_${i}`;
 					i++;
@@ -170,7 +176,7 @@ router.get("/42/callback", async (req, res) => {
 				if (err.code === 'P2002') {
 					return res.status(400).json({ error: 'Email or username already exists' });
 			}
-	
+
 			console.error("Error: ", err);
 			return res.sendStatus(500);
 		}
@@ -181,7 +187,7 @@ router.get("/42/callback", async (req, res) => {
 		console.error(err.cause);
 		return res.sendStatus(500);
 	}
-		
+
 });
 
 
