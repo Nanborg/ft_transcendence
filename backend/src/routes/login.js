@@ -47,11 +47,32 @@ router.get("/42", (req, res) => {
 	return res.redirect(url);
 });
 
+
+async function loginUser(user, res, mess, code) {
+	const payload = {
+		id: user.id,
+		username: user.username
+	};
+
+	const accessToken = generateAccessToken(payload);
+	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN);
+
+	const expiresAt = new Date()
+	expiresAt.setDate(expiresAt.getDate() + 7)
+	await prisma.refreshToken.create({
+		data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
+	});
+
+		res.status(code).json({ message: mess, username: user.username, accessToken: accessToken, refreshToken: refreshToken });
+}
+
+
+
 router.get("/42/callback", async (req, res) => {
 	try{
 		const code = req.query.code;
 	
-		if (!code) {
+		if (!code || typeof req.query.code !== "string") {
 			return res.status(400).send("Missing code");
 		}
 	
@@ -69,9 +90,12 @@ router.get("/42/callback", async (req, res) => {
 				redirect_uri: "https://localhost/login/42/callback",
 			}),
 		});
+		if (!response.ok) {
+			console.error(await response.text());
+			return res.sendStatus(500);
+		}
 	
 		const data = await response.json();
-		console.log(data);
 		if (!data.access_token) {
 			return res.status(401).json(data);
 		}
@@ -80,88 +104,82 @@ router.get("/42/callback", async (req, res) => {
 		const infos_response = await fetch("https://api.intra.42.fr/v2/me", {
 			method: "GET",
 			headers: {
-				"Content-Type": "application/json",
 				"Authorization": "Bearer " + data.access_token
 			}
 		});
+		if (!infos_response.ok) {
+			console.error(await infos_response.text());
+			return res.sendStatus(500);
+		}
 	
-		const user_data = await infos_response.json();
-		console.log(user_data);
+		const userData = await infos_response.json();
+		if (!userData.id || !userData.email)
+			return res.sendStatus(500);
 	
-	
-		// Chercher/créer l'utilisateur
-	
-		user = await prisma.user.findUnique({
-		where: { fortyTwoId: user_data.id }
+		// search/create user
+		let user = await prisma.user.findUnique({
+		where: { fortyTwoId: userData.id }
 		});
 	
-		if (!user)
+		if (user)
+			return loginUser(user, res, "Connection success", 200);
+
+		user = await prisma.user.findUnique({
+			where: { email: userData.email }
+		});
+
+		if (user)
 		{
-			user = await prisma.user.findUnique({
-			where: { email: user_data.email }
-			});
-		}
-		if (!user)
-		{
-			try {
-				const hashedPassword = await bcrypt.hash("placeholder", 10) //???????????????????????????????????????
-	
-				const created = await prisma.user.create({
+			if (!user.fortyTwoId)
+			{
+				user = await prisma.user.update({
+					where: { id: user.id },
 					data: {
-						username: user_data.login,
-						email: user_data.email,
-						password: hashedPassword
+						fortyTwoId: userData.id
 					}
 				});
-	
-	
-				const u = {
-					id: created.id,
-					username: created.username
-				}
-				const accessToken = generateAccessToken(u)
-				const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
-				const expiresAt = new Date()
-				expiresAt.setDate(expiresAt.getDate() + 7)
-				await prisma.refreshToken.create({
-					data: { token: refreshToken, userId: created.id, expiresAt: expiresAt }
-				});
-		
-		
-				res.status(201).json({ message: "Register and Connection success", username: created.username, accessToken: accessToken, refreshToken: refreshToken })
 			}
-			catch (err){
-					if (err.code === 'P2002') {
-						return res.status(400).json({ error: 'Email or username already exists' });
-				}
-		
-				console.error("Auth error: ", err);
-				res.status(500).send()
-			}
+			return loginUser(user, res, "Connection success", 200);
 		}
-		else
-		{
-			const u = {
-				id: user.id,
-				username: user.username
+		try {
+
+			let username = userData.login;
+			if (await prisma.user.findUnique({ where: { username } }))
+			{
+				username = `${userData.login}_${userData.id}`;
+				let i = 1;
+			
+				while (await prisma.user.findUnique({ where: { username } })) {
+					username = `${userData.login}_${userData.id}_${i}`;
+					i++;
+				}
 			}
-			const accessToken = generateAccessToken(u)
-			const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN)
-			const expiresAt = new Date()
-			expiresAt.setDate(expiresAt.getDate() + 7)
-			await prisma.refreshToken.create({
-				data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
+
+
+			const created = await prisma.user.create({
+				data: {
+					username: username,
+					email: userData.email,
+					fortyTwoId: userData.id
+				}
 			});
+
+			return loginUser(created, res, "Register and Connection success", 201);
+		}
+		catch (err){
+				if (err.code === 'P2002') {
+					return res.status(400).json({ error: 'Email or username already exists' });
+			}
 	
-	
-			res.json({ message: "Connection success", accessToken: accessToken, refreshToken: refreshToken })
-	
+			console.error("Error: ", err);
+			return res.sendStatus(500);
 		}
 	}
 	catch (err)
 	{
-	    console.error(err);
+		console.error(err);
 		console.error(err.cause);
+		return res.sendStatus(500);
 	}
 		
 });
@@ -190,7 +208,7 @@ router.post("/dev", (req, res, next) => {
 	const devUser = req.header("x-dev-user");
 
 	if (!devUser) {
-		return res.status(401).json({ error: "Unauthorized" });
+		return res.sendStatus(401).json({ error: "Unauthorized" });
 	}
 	req.user = {
 		id: "dev-123",

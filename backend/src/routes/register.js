@@ -6,9 +6,9 @@ const prisma = require('../db');
 
 
 
-// signin route, here to create and signin users
+// register route, here to create and register users
 
-//	└──>curl -i -X POST http://localhost:3000/signin \
+//	└──>curl -i -X POST http://localhost:3000/register \
 //		  -H "Content-Type: application/json" \
 //		  -d '{"name":"MyName","password":"test","email":"MN@gmail.com"}'
 //

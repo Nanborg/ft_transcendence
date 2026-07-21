@@ -36,7 +36,7 @@ Base URL: `/api`
 
 ### 3.1 Auth
 
-#### POST /signin
+#### POST /register
 
 Request cible:
 
@@ -55,7 +55,7 @@ Success 201:
 
 ```json
 {
-  "message": "Sign up success",
+  "message": "Register success",
   "userId": 12,
   "username": "alice"
 }
