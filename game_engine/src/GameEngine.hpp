@@ -19,6 +19,19 @@
 #include "PlayerEntity.hpp"
 #include "WallEntity.hpp"
 
+enum inputTypes_e {
+	PING = 0,
+	JOIN = 1,
+	LEAVE = 2,
+	MOVE = 3,
+	BUILD = 4,
+	DELETE = 5,
+	R_CREATE = 6,
+	R_DESTROY = 7,
+	R_START = 8,
+	R_STOP = 9,
+};
+
 class GameEngine
 {
 public:
@@ -34,28 +47,22 @@ public:
 	void	sendEntityDelete( const AbstractEntity* entity );
 
 	void	manageInput( const json& in );
+	void	pushInput( const json& in);
+
+	bool	isRunning( void ) const;
 
 	int		newId( void );
 	void	init( void );
 	void	start( void );
 	void	stop( void );
+	void	tick( void );
 
-	private:
+private:
 	typedef std::unique_ptr<AbstractEntity>	entityPtr_t;
 	typedef std::list<entityPtr_t>			entityList_t;
 	typedef std::map<int, int>				playerIds_t;
 	typedef std::queue<json>				playerInput_t;
 
-	enum inputTypes_e {
-		PING = 0,
-		JOIN = 1,
-		LEAVE = 2,
-		MOVE = 3,
-		BUILD = 4,
-		DELETE = 5,
-	};
-
-	void	_loop_receiveMessages( void );
 	void	_loop_processInputs( void );
 	void	_loop_tickEntities( void );
 
@@ -72,9 +79,9 @@ public:
 	entityList_t				_entities;
 	playerIds_t					_playerIds;
 	playerInput_t				_playerInputs;
-	unsigned int				_uspt;
-	static const unsigned int	_target_uspt;
 };
 
-extern GameEngine *g_game;
+extern int			g_uspt;
+extern GameEngine*	g_game;
+
 #endif

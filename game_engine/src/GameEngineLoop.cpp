@@ -1,8 +1,10 @@
 #include "GameEngine.hpp"
 
-void	GameEngine::_loop_receiveMessages( void ) {
-	while (_io.pollApi() > 0)
-		_playerInputs.push(_io.getMsg());
+void	GameEngine::tick( void ) {
+	g_game = this;
+	_loop_processInputs();
+	_loop_tickEntities();
+	g_game = NULL;
 }
 
 void	GameEngine::_loop_processInputs( void ) {
