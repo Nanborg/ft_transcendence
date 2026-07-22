@@ -97,11 +97,10 @@ router.get("/42/callback", async (req, res) => {
 			}),
 		});
 		const body = await response.text();
-
-  if (!response.ok) {
-    console.error(body);
-    return res.status(response.status).send(body);
-  }
+		if (!response.ok) {
+			console.error(body);
+			return res.status(response.status).send(body);
+		}
 
 		const data = await response.json();
 		if (!data.access_token) {
