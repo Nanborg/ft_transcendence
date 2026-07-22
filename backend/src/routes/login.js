@@ -214,7 +214,7 @@ router.post("/dev", (req, res, next) => {
 	const devUser = req.header("x-dev-user");
 
 	if (!devUser) {
-		return res.sendStatus(401).json({ error: "Unauthorized" });
+		return res.status(401).json({ error: "Unauthorized" });
 	}
 	req.user = {
 		id: "dev-123",
