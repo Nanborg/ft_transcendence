@@ -96,7 +96,7 @@ router.get("/42/callback", async (req, res) => {
 				redirect_uri: "https://localhost/login/42/callback",
 			}),
 		});
-		const body = await response.text();
+		let body = await response.text();
 		if (!response.ok) {
 			console.error(body);
 			return res.status(response.status).send(body);
@@ -114,9 +114,10 @@ router.get("/42/callback", async (req, res) => {
 				"Authorization": "Bearer " + data.access_token
 			}
 		});
+		body = await infos_response.text();
 		if (!infos_response.ok) {
-			console.error(await infos_response.text());
-			return res.sendStatus(500);
+			console.error(body);
+			return res.status(infos_response.status).send(body);
 		}
 
 		const userData = await infos_response.json();
