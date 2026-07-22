@@ -96,10 +96,12 @@ router.get("/42/callback", async (req, res) => {
 				redirect_uri: "https://localhost/login/42/callback",
 			}),
 		});
-		if (!response.ok) {
-			console.error(await response.text());
-			return res.sendStatus(500);
-		}
+		const body = await response.text();
+
+  if (!response.ok) {
+    console.error(body);
+    return res.status(response.status).send(body);
+  }
 
 		const data = await response.json();
 		if (!data.access_token) {
