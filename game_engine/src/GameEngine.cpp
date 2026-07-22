@@ -1,15 +1,12 @@
 #include "GameEngine.hpp"
 
-GameEngine::GameEngine( int port ):
-	_io(port),
+GameEngine::GameEngine( const std::string& roomId ):
+	_roomId(roomId),
 	_running(false),
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
 void	GameEngine::manageInput( const json& in ) {
-	// TODO(neon-05): Strictly validate all incoming commands
-	// (player_input, player_join, player_leave/build/delete) and ignore
-	// invalid payloads without crashing the engine.
 	int type = in["type"];
 	switch (type) {
 		case inputTypes_e::PING:
@@ -59,8 +56,10 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	entityJ["velY"] = entity->getVelY();
 
 	out["type"] = "entityUpdate";
+	out["tick"] = _tick;
+	out["room"] = _roomId;
 	out["entity"] = entityJ;
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
@@ -69,8 +68,10 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
+	out["tick"] = _tick;
+	out["room"] = _roomId;
 	out["entity"]["entityId"] = entity->getId();
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 int		GameEngine::newId( void ) { return _nextEntityId++; }
@@ -107,8 +108,11 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 	return entity;
 }
 
-void	GameEngine::deleteEntity( int entityId ) {
-	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+typename GameEngine::entityList_t::iterator	GameEngine::getEntityIterator( int entityId ) {
+	return std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+}
+
+void	GameEngine::deleteEntity( entityList_t::iterator it ) {
 	if (it == _entities.end())
 		return;
 	sendEntityDelete(it->get());

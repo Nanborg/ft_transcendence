@@ -15,7 +15,7 @@ public:
 	bool doTick( void );
 
 	// true means collision, false means no collision
-	bool checkCollision( const  AbstractEntity& ) const;
+	bool checkCollision( const AbstractEntity& ) const;
 
 	unsigned int getId( void ) const;
 	unsigned int getType( void ) const;

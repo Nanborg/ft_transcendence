@@ -4,6 +4,7 @@ void	GameEngine::tick( void ) {
 	g_game = this;
 	_loop_processInputs();
 	_loop_tickEntities();
+	_tick++;
 	g_game = NULL;
 }
 

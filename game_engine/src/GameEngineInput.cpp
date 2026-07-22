@@ -4,8 +4,10 @@ void	GameEngine::_input_ping( const json& in ) {
 	json out;
 	out["type"] = "ping";
 	out["uspt"] = g_uspt;
+	out["tick"] = _tick;
+	out["room"] = _roomId;
 	out["entities"] = _entities.size();
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::_input_join( const json& in ) {
@@ -26,7 +28,7 @@ void	GameEngine::_input_leave( const json& in ) {
 	if (!in["playerId"].is_number())
 		return;
 	if (_playerIds.count(in["playerId"]) > 0) {
-		deleteEntity(_playerIds[in["playerId"]]);
+		deleteEntity(getEntityIterator(_playerIds[in["playerId"]]));
 		_playerIds.erase(in["playerId"]);
 	}
 }
@@ -38,7 +40,7 @@ void	GameEngine::_input_move( const json& in ) {
 		return;
 	if (_playerIds.count(in["playerId"]) > 0) {
 		int entityId = _playerIds[in["playerId"]];
-		entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+		entityList_t::iterator it = getEntityIterator(entityId);
 		AbstractEntity *e = it->get();
 		((PlayerEntity *) e)->movementInput(in["X"], in["Y"]);
 	}
@@ -58,6 +60,6 @@ void	GameEngine::_input_delete( const json& in ) {
 	if (!in["playerId"].is_number() || !in["entityId"].is_number())
 		return;
 	if (_playerIds.count(in["playerId"]) > 0) {
-		deleteEntity(in["entityId"]);
+		deleteEntity(getEntityIterator(in["entityId"]));
 	}
 }

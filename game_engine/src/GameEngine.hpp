@@ -1,15 +1,11 @@
 #ifndef GAMEENGINE_HPP
 #define GAMEENGINE_HPP
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
 #include <list>
 #include <map>
 #include <queue>
 #include <iostream>
 #include <memory>
-#include <typeinfo>
 #include <algorithm>
 #include <chrono>
 #include "ControllerIO.hpp"
@@ -35,13 +31,19 @@ enum inputTypes_e {
 class GameEngine
 {
 public:
-	GameEngine( int port );
+	typedef std::unique_ptr<AbstractEntity>	entityPtr_t;
+	typedef std::list<entityPtr_t>			entityList_t;
+	typedef std::map<int, int>				playerIds_t;
+	typedef std::queue<json>				playerInput_t;
+
+	GameEngine( const std::string& roomId );
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
 
-	AbstractEntity*	spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
-	void			deleteEntity( int entityId );
+	entityList_t::iterator	getEntityIterator( int entityId );
+	AbstractEntity*			spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
+	void					deleteEntity( entityList_t::iterator it );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
@@ -58,10 +60,6 @@ public:
 	void	tick( void );
 
 private:
-	typedef std::unique_ptr<AbstractEntity>	entityPtr_t;
-	typedef std::list<entityPtr_t>			entityList_t;
-	typedef std::map<int, int>				playerIds_t;
-	typedef std::queue<json>				playerInput_t;
 
 	void	_loop_processInputs( void );
 	void	_loop_tickEntities( void );
@@ -73,12 +71,12 @@ private:
 	void	_input_build( const json& in );
 	void	_input_delete( const json& in );
 
-	ControllerIO				_io;
-	bool						_running;
-	int							_nextEntityId;
-	entityList_t				_entities;
-	playerIds_t					_playerIds;
-	playerInput_t				_playerInputs;
+	bool				_running;
+	unsigned int		_nextEntityId, _tick;
+	entityList_t		_entities;
+	playerIds_t			_playerIds;
+	playerInput_t		_playerInputs;
+	const std::string	_roomId;
 };
 
 extern int			g_uspt;

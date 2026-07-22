@@ -1,10 +1,15 @@
-#include "GameEngine.hpp"
 #include <signal.h>
+#include "json.hpp"
+#include <string>
+#include <queue>
+#include "GameEngine.hpp"
+#include "ControllerIO.hpp"
 
 # define USPT_TARGET 100000
-int	g_uspt;
-GameEngine* g_game;
-typedef std::map<std::string, GameEngine>::iterator games_it;
+int				g_uspt;
+ControllerIO*	g_io;
+GameEngine*		g_game;
+typedef std::map<std::string, GameEngine> games_list;
 bool running = true;
 
 static void sig_stop( int ) { running = false; }
@@ -14,31 +19,40 @@ void receive_inputs( ControllerIO& io, std::queue<json>& inputs ) {
 		inputs.push(io.getMsg());
 }
 
-static void	input_r_create( std::map<std::string, GameEngine>& games, const json& in ) {
-	games.emplace(in["room"]);
+static void	input_r_create( games_list& games, const json& in ) {
+	if (games.count(in["room"]) == 0) {
+		games.emplace(in["room"], in["room"]);
+		std::cout << "room " << in["room"] << " created" << std::endl;
+	}
 }
 
-static void	input_r_destroy( std::map<std::string, GameEngine>& games, const json& in ) {
-	if (games.count(in["room"]) > 0)
+static void	input_r_destroy( games_list& games, const json& in ) {
+	if (games.count(in["room"]) > 0) {
 		games.erase(in["room"]);
+		std::cout << "room " << in["room"] << " deleted" << std::endl;
+	}
 }
 
-static void	input_r_start( std::map<std::string, GameEngine>& games, const json& in ) {
+static void	input_r_start( games_list& games, const json& in ) {
+	if (games.count(in["room"]) > 0) {
+		games.at(in["room"]).start();
+		std::cout << "room " << in["room"] << " now running" << std::endl;
+	}
+}
+
+static void	input_r_stop( games_list& games, const json& in ) {
+	if (games.count(in["room"]) > 0) {
+		games.at(in["room"]).stop();
+		std::cout << "room " << in["room"] << " now stopped" << std::endl;
+	}
+}
+
+static void input_r_distribute( games_list& games, const json& in ) {
 	if (games.count(in["room"]) > 0)
-		games[in["room"]].start();
+		games.at(in["room"]).pushInput(in);
 }
 
-static void	input_r_stop( std::map<std::string, GameEngine>& games, const json& in ) {
-	if (games.count(in["room"]) > 0)
-		games[in["room"]].stop();
-}
-
-static void input_r_distribute( std::map<std::string, GameEngine>& games, const json& in ) {
-	if (games.count(in["room"]) > 0)
-		games[in["room"]].pushInput(in);
-}
-
-void handle_inputs( std::queue<json>& inputs, std::map<std::string, GameEngine>	games ) {
+void handle_inputs( std::queue<json>& inputs, games_list& games ) {
 	json in;
 	while (!inputs.empty())
 	{
@@ -70,9 +84,6 @@ void handle_inputs( std::queue<json>& inputs, std::map<std::string, GameEngine>	
 			break;
 		}
 	}
-
-	return;
-	int type = in["type"];
 }
 
 int main( int argc, char const *argv[] ) {
@@ -83,16 +94,19 @@ int main( int argc, char const *argv[] ) {
 	// signals only for testing
 	signal(SIGINT, sig_stop);
 	signal(SIGTERM, sig_stop);
-	std::queue<json>					inputs;
-	std::map<std::string, GameEngine>	games;
-	ControllerIO						io (port);
-	io;
+
+
+
+	std::queue<json>	inputs;
+	games_list			games;
+	ControllerIO		io (port);
+	g_io = &io;
 
 	while (running) {
 		auto begin = std::chrono::steady_clock::now();
 		receive_inputs(io, inputs);
 		handle_inputs(inputs, games);
-		for (games_it it = games.begin(); it != games.end(); it++) {
+		for (games_list::iterator it = games.begin(); it != games.end(); it++) {
 			if (it->second.isRunning())
 			it->second.tick();
 		}
