@@ -3,6 +3,7 @@
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
 	_running(false),
+    _tick(0),
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
