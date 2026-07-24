@@ -2,46 +2,49 @@
 
 ## 1. Vision commune du projet
 
-Le projet est une application web complete autour d'un jeu cooperatif 2D qui
-melange combat, exploration, progression et ressources, dans l'esprit RPG.
+Le projet est une application web complete autour d'un RPG cooperatif 2D contre
+l'environnement. Les joueurs explorent une carte, combattent des ennemis,
+progressent en puissance et cherchent a atteindre puis vaincre un boss final.
 
 L'objectif n'est pas seulement de faire un mini-jeu, mais une experience
 complete : connexion, profil, amis, lobby, rooms, chat, ready system, lancement
-de partie, jeu coop 1 a 4 joueurs, scores, historique, leaderboard et
-progression gameplay.
+de partie, jeu coop 1 a 4 joueurs, combat temps reel, boss, scores, historique,
+leaderboard et progression gameplay.
 
 La premiere boucle jouable doit rester simple et testable : plusieurs joueurs
-apparaissent sur une map 2D, se deplacent, affrontent des menaces, gagnent du
-score, progressent pendant la partie, puis les resultats sont sauvegardes dans
-l'application. Cette base sert a obtenir vite un vrai jeu fonctionnel avant
-d'empiler trop de systemes.
+apparaissent sur une map 2D, se deplacent, affrontent des ennemis en temps reel,
+utilisent des attaques manuelles avec cooldowns, gagnent de l'experience ou des
+points, progressent pendant la partie, affrontent un boss simple, puis les
+resultats sont sauvegardes dans l'application.
 
-Les idees d'exploration, de ressources, de construction, de defense,
-d'automatisation legere et de mini-MMO restent des pistes de gameplay. Elles
-doivent se construire autour d'une boucle jouable claire, pas remplacer le jeu
-fonctionnel.
+Le jeu n'est pas un jeu de survie, de defense de base, de collecte intensive de
+ressources, de construction, d'automatisation ou de PvP. Le scope reste centre
+sur la boucle RPG jouable : exploration, combat temps reel, progression et boss.
 
 ## 2. Concept final du gameplay
 
-Le gameplay vise une version hybride qui rassemble les idees principales de
-l'equipe autour d'une meme boucle jouable :
+Le gameplay retenu est un RPG coop temps reel sur la carte principale :
 
 1. controle d'un personnage sur une map 2D ;
-2. dangers, ennemis et combat ;
-3. progression courte pendant la partie ;
-4. exploration et ressources simples ;
-5. objectifs de zone ;
-6. automatisation legere, boss, biomes etc possibles.
+2. exploration de la carte ;
+3. ennemis visibles directement sur la map ;
+4. attaques manuelles avec cooldowns ;
+5. progression par competences ;
+6. boss final comme objectif principal.
 
-Le concept final possible :
+Le concept final retenu :
 
-> 1 a 4 joueurs explorent une map 2D, affrontent des ennemis, recuperent XP et
-> ressources, ameliorent leur personnage, puis terminent un objectif clair.
+> 1 a 4 joueurs explorent une map 2D, affrontent des ennemis en temps reel,
+> ameliorent leurs competences, puis atteignent et battent un boss final.
 
 Le point de depart doit deja contenir les pieces utilisees par tout le concept :
-deplacement, map, interactions, ennemis, score, conditions de fin et
-multijoueur. Ces elements servent autant aux combats qu'a l'exploration, a la
-collecte, aux objectifs de zone et aux interactions de groupe.
+deplacement libre, map, collisions, entites, ennemis, attaques, HP, mort,
+respawn, boss, score, conditions de fin et multijoueur. Ces elements servent a
+obtenir une version jouable terminee avant d'ajouter des systemes secondaires.
+
+Le combat ne passe pas par une scene separee : pas de tour par tour, pas de
+sous-room de combat. Les joueurs voient les combats des autres sur la carte et
+peuvent rejoindre naturellement un combat proche.
 
 ## 3. Gameplay par couches
 
@@ -49,11 +52,12 @@ collecte, aux objectifs de zone et aux interactions de groupe.
 
 Objectif : avoir quelque chose de visible et controlable.
 
-- map 2D simple ;
+- map 2D fixe construite avec tiles ou sprites ;
 - joueur affiche ;
 - deplacement clavier ;
 - camera ou vue centree ;
-- limites de map.
+- limites de map ;
+- coordonnees continues en pixels.
 
 ### Couche 2 - Monde jouable
 
@@ -64,7 +68,8 @@ Objectif : donner une vraie sensation d'espace.
 - zones simples ;
 - HUD minimal ;
 - vie du joueur ;
-- indicateur de partie.
+- indicateur de partie ;
+- separation claire entre carte statique et entites dynamiques.
 
 ### Couche 3 - Premiers dangers
 
@@ -81,29 +86,33 @@ Objectif : rendre la map vivante et creer une premiere pression de jeu.
 
 Objectif : avoir la boucle principale.
 
-- attaque simple ;
-- arme automatique ou semi-automatique a decider ;
+- attaques manuelles ;
+- attaque melee ;
+- attaque distance ;
+- attaque ciblee ou de zone ;
 - projectiles ;
-- cooldown ;
+- cooldown separe par attaque ;
 - degats aux ennemis ;
 - ennemis qui meurent ;
-- score lie aux actions importantes : ennemis vaincus, objectif, ressources, etc.
+- score lie aux actions importantes : ennemis vaincus, boss, temps, morts, etc.
 
 ```txt
-bouger -> eviter -> attaquer -> tuer -> survivre
+bouger -> esquiver -> attaquer -> tuer -> progresser
 ```
 
-L'attaque automatique peut etre utile pour laisser le joueur alterner entre
-combat, recolte et defense, mais ce choix reste a valider avec l'equipe.
+Les attaques sont declenchees par le joueur. Le serveur ou le moteur garde le
+moment de derniere utilisation pour refuser une attaque encore en cooldown.
 
 ### Couche 5 - XP et upgrades
 
 Objectif : ajouter de la progression pendant la partie.
 
-- orbes XP ;
-- niveau ;
+- experience, or ou points gagnes en combattant ;
+- competences separees ;
+- niveau par competence ;
 - choix d'amelioration ;
-- ameliorations simples.
+- ameliorations simples visibles dans l'interface ;
+- checkpoints ou zones sures pour ameliorer les competences.
 
 Exemples d'upgrades :
 
@@ -112,10 +121,11 @@ Exemples d'upgrades :
 - cadence ;
 - HP max ;
 - taille de projectile ;
-- regeneration lente.
+- regeneration lente ;
+- reduction de cooldown.
 
 ```txt
-tuer -> recuperer XP -> level up -> choisir upgrade -> survivre plus longtemps
+tuer -> gagner XP/points -> ameliorer une competence -> survivre plus longtemps
 ```
 
 ### Couche 6 - Coop 1 a 4 joueurs
@@ -127,47 +137,32 @@ Objectif : passer du prototype solo a la vraie experience commune du projet.
 - score commun ou score mixte ;
 - ennemis qui ciblent le joueur le plus proche ;
 - mort individuelle ;
-- fin si tous les joueurs sont morts ;
-- fin si un objectif de zone echoue, selon le mode choisi ;
+- respawn possible apres un delai ;
+- protection courte apres respawn ou reconnexion ;
+- mode spectateur possible pour un joueur mort ;
+- fin si tous les joueurs sont morts ou si le boss est vaincu ;
 - lancement depuis une room.
 
-### Couche 7 - Exploration et ressources simples
+### Couche 7 - Boss et objectif principal
 
-Objectif : ajouter les idees d'exploration, de recolte et de mini-MMO avec un
-scope controle.
+Objectif : donner une fin claire a la partie.
 
-- 1 ou 2 ressources maximum au debut ;
-- recolte sur la map ;
-- drop par certains ennemis ;
-- inventaire tres simple ;
-- utilisation des ressources pendant la partie ;
-- points d'interet sur la map.
-
-Exemples : energie, metal, fragments.
-
-### Couche 8 - Objectifs de zone
-
-Objectif : donner des buts plus varies aux parties.
-
-- zone a proteger ;
-- ressource a extraire ;
-- objectif a terminer ;
-- construction ou defense legere si l'equipe valide cette direction ;
-- ennemis qui rodent, attaquent la base ou arrivent pendant certains evenements ;
-- ameliorations simples avec les ressources.
+- progression vers le boss final ;
+- boss simple ;
+- attaques du boss en temps reel ;
+- HP du boss ;
+- victoire quand le boss est vaincu ;
+- statistiques de fin : temps, morts, score.
 
 ```txt
-explorer -> collecter -> ameliorer -> remplir un objectif -> survivre plus longtemps
+explorer -> combattre -> progresser -> atteindre le boss -> vaincre le boss
 ```
 
-### Couche 9 - Automatisation legere, boss, biomes et polish
+### Couche 8 - Biomes, boss secondaires et polish
 
-Objectif : faire evoluer les ressources et les objectifs de partie vers des
-systemes plus vivants.
+Objectif : enrichir la map et les combats sans changer la boucle principale.
 
-- production automatique tres simple ;
-- generateurs ou collecteurs basiques ;
-- boss toutes les X minutes ;
+- boss secondaires ou variantes de boss ;
 - types d'ennemis ;
 - zones ou biomes ;
 - effets visuels ;
@@ -188,9 +183,12 @@ Le socle commun correspond a une application ou :
 - une partie peut etre lancee depuis le lobby ;
 - le jeu se lance dans le navigateur ;
 - 1 a 4 joueurs peuvent participer ;
+- chaque room possede son propre etat logique de partie ;
 - des ennemis apparaissent ;
 - les joueurs peuvent survivre, prendre des degats et mourir ;
-- la partie a une condition de victoire ou de defaite claire ;
+- un joueur mort peut respawn ou attendre en spectateur selon la regle retenue ;
+- une deconnexion conserve l'etat et la position du joueur ;
+- la partie a une condition de victoire ou de defaite claire, notamment le boss ;
 - une partie produit un score ;
 - les resultats sont sauvegardes ;
 - un historique ou un leaderboard affiche ces resultats.
@@ -258,8 +256,11 @@ Browser
     - Match history
 
   Game display
-    - rendu 2D
+    - rendu 2D pixel art / isometrique
     - HUD
+    - camera centree sur le joueur
+    - zone visible autour du joueur
+    - mini-carte possible
     - joueurs
     - ennemis
     - projectiles
@@ -288,13 +289,20 @@ Backend Node.js / Express
     - game session lifecycle
     - input routing
     - state broadcast
+    - roomId transmis au gameplay
+    - reconnexion et protection courte
 
   C++ gameplay module/service
+    - instances logiques par room
     - simulation tick
+    - carte statique
+    - entites dynamiques
     - player movement
     - enemy AI
     - collisions
     - combat
+    - cooldowns
+    - boss
     - score
     - end game result
 
@@ -313,26 +321,42 @@ Exemples de donnees entre Socket.IO et le gameplay :
 
 ```txt
 player:input
+  roomId
   playerId
   direction
   action
+  target
   timestamp
 
 game:state
+  roomId
+  tick
+  mapId
   players
   enemies
   projectiles
-  xp
-  resources
-  objectiveState
+  boss
   score
 
 game:end
   roomId
   duration
   victory
+  bossDefeated
   score
   playerStats
+```
+
+Backend -> gameplay :
+
+```txt
+room:create/start/stop/destroy
+  roomId
+
+player:join/leave/input
+  roomId
+  playerId
+  action
 ```
 
 ## 8. Repartition equipe
@@ -353,7 +377,7 @@ Decoupage possible cote gameplay :
 | Zone jeu | Responsable possible | Contenu |
 |---|---|---|
 | Simulation core | Game dev 1 | boucle tick, entites, collisions, combat |
-| Gameplay content | Game dev 2 | ennemis, armes, upgrades, vagues, balancing |
+| Gameplay content | Game dev 2 | ennemis, attaques, competences, boss, balancing |
 | Integration multiplayer | Game dev 3 / WebSocket | inputs, game state, room -> partie, fin de partie |
 
 Le Scrum Master aide l'equipe a garder clairs les issues, le planning, les
@@ -438,13 +462,15 @@ chatter et se mettre ready.
 
 Objectif : obtenir un jeu jouable avant la synchronisation complete.
 
-- afficher une map ;
+- afficher une map 2D fixe ;
 - afficher un joueur ;
-- gerer les deplacements ;
+- gerer les deplacements continus ;
 - ajouter collisions simples ;
+- separer carte statique et entites dynamiques ;
 - faire apparaitre des ennemis ;
-- ajouter une attaque simple ;
+- ajouter des attaques manuelles avec cooldowns ;
 - gerer degats, HP et mort ;
+- ajouter un boss simple ;
 - ajouter une condition de victoire ou defaite claire ;
 - produire un score.
 
@@ -456,10 +482,12 @@ Objectif : definir clairement les donnees echangees entre le backend temps reel
 et le gameplay.
 
 - definir les inputs envoyes au jeu ;
+- definir les commandes de lifecycle de room ;
 - definir le format de l'etat de jeu ;
 - definir le format de fin de partie ;
 - choisir le mode de communication avec le module gameplay ;
 - creer un premier appel minimal ;
+- transmettre le roomId a chaque commande gameplay ;
 - documenter les events importants.
 
 Resultat attendu : le backend sait envoyer des inputs et recevoir un etat de
@@ -476,7 +504,9 @@ Objectif : transformer le prototype en vraie partie coop.
 - synchroniser le score ;
 - gerer le lancement depuis la room ;
 - gerer la fin de partie ;
-- gerer une deconnexion simple.
+- gerer une deconnexion simple ;
+- conserver position et etat au reconnect ;
+- ajouter une protection courte apres reconnect ou respawn.
 
 Resultat attendu : jusqu'a 4 joueurs peuvent jouer ensemble depuis plusieurs
 navigateurs ou machines.
@@ -494,28 +524,36 @@ Objectif : rendre les parties persistantes.
 Resultat attendu : apres une partie, les resultats sont visibles dans
 l'application.
 
-### Phase 8 - Exploration, ressources et objectifs
+### Phase 8 - Progression, boss et statistiques
 
-Objectif : developper l'exploration, les ressources, les objectifs de zone et
-l'automatisation a partir des systemes deja poses.
+Objectif : consolider la boucle RPG retenue.
 
-- ressources simples ;
-- inventaire leger ;
+- competences separees ;
+- niveaux de competence ;
+- ameliorations visibles dans l'interface ;
+- checkpoints ou zones sures d'amelioration ;
+- boss plus lisible ;
+- statistiques de fin : temps, morts, score ;
+- leaderboard oriente speedrun ou score.
+
+Resultat attendu : la partie a une progression claire et une fin demonstrable.
+
+### Phase 9 - Exploration avancee et polish
+
+Objectif : enrichir l'exploration seulement apres la boucle de base.
+
 - points d'interet sur la map ;
-- objectif de zone ;
-- defense ou construction legere si validee par l'equipe ;
-- production automatique tres simple ;
-- boss ;
+- boss secondaires ou variantes ;
 - biomes ;
 - customisation ;
 - achievements ;
 - XP profil ;
 - badges.
 
-Resultat attendu : le projet gagne en richesse avec une map plus interessante,
-des choix de groupe et des objectifs plus varies.
+Resultat attendu : le projet gagne en richesse avec une map plus interessante
+et des combats plus varies.
 
-### Phase 9 - Stabilisation et evaluation
+### Phase 10 - Stabilisation et evaluation
 
 Objectif : rendre le projet stable, clair et defendable.
 
@@ -545,6 +583,10 @@ Resultat attendu : l'equipe peut faire une demonstration claire.
 - composant Chat ;
 - Game screen ;
 - HUD ;
+- camera centree sur le joueur ;
+- mini-carte possible ;
+- interface de competences ;
+- affichage des cooldowns ;
 - Leaderboard ;
 - Match History ;
 - affichage des erreurs ;
@@ -609,18 +651,22 @@ game:end
 Responsabilites :
 
 - rooms ;
+- lifecycle de partie par room ;
 - chat ;
 - ready system ;
 - lancement ;
+- routage des inputs avec roomId ;
 - diffusion etat jeu ;
 - deconnexion ;
-- reconnexion simple.
+- reconnexion simple ;
+- protection courte apres reconnexion.
 
 ### Gameplay
 
 Responsabilites :
 
 - boucle de simulation ;
+- carte statique ;
 - entites ;
 - joueurs ;
 - ennemis ;
@@ -628,10 +674,13 @@ Responsabilites :
 - collisions ;
 - degats ;
 - HP ;
+- attaques manuelles ;
+- cooldowns ;
+- boss ;
 - score ;
 - XP ;
+- competences ;
 - upgrades ;
-- vagues ;
 - conditions victoire / defaite ;
 - fin de partie.
 
@@ -652,6 +701,9 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 - ready system ;
 - gameplay minimum ;
 - multijoueur ;
+- rooms isolees cote gameplay ;
+- combat manuel temps reel ;
+- boss simple ;
 - score de fin de partie.
 
 ### Priorite 2 - Consolidation
@@ -661,6 +713,8 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 - historique des parties ;
 - leaderboard ;
 - reconnexion simple ;
+- respawn ou spectateur ;
+- protection courte apres reconnexion ou respawn ;
 - interface plus claire ;
 - README ;
 - script de demo ;
@@ -668,10 +722,6 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 
 ### Priorite 3 - Enrichissement gameplay
 
-- ressources simples ;
-- objectifs de zone ;
-- defense ou construction legere si validee par l'equipe ;
-- automatisation legere ;
 - customisation ;
 - achievements ;
 - XP de profil ;
@@ -688,6 +738,7 @@ Le gameplay recoit des donnees simples et renvoie un etat de jeu simple.
 - merger les petites branches terminees ;
 - tester le lobby avec plusieurs clients ;
 - tester une partie complete si possible ;
+- verifier que plusieurs rooms ne partagent pas le meme etat de jeu ;
 - mettre a jour les issues ;
 - noter les bugs bloquants ;
 - verifier que personne n'est bloque trop longtemps.
@@ -735,6 +786,8 @@ Une fonctionnalite est consideree terminee quand :
 | Integration tardive | Bugs difficiles a corriger | Integrer chaque semaine |
 | Branches trop longues | Merges compliques | Issues courtes, branches courtes, reviews regulieres |
 | Features trop larges | Base incomplete | Les relier a une boucle jouable concrete |
+| Contrat backend / moteur incomplet | Inputs ignores ou mauvaises rooms | Toujours transmettre roomId et tester plusieurs rooms |
+| Carte et entites melangees | Collisions et rendu difficiles | Garder carte statique et entites dynamiques separees |
 
 ## 16. Regle de production
 
@@ -752,6 +805,6 @@ La colonne vertebrale du projet reste :
 auth -> lobby -> room -> chat -> ready -> partie coop -> score -> historique
 ```
 
-Les idees de survie, exploration, ressources, construction, defense et
-automatisation doivent toutes se raccrocher a cette colonne vertebrale si elles
-sont retenues par l'equipe.
+Les ajouts futurs doivent se raccrocher a cette colonne vertebrale s'ils sont
+retenus par l'equipe. La boucle prioritaire reste exploration, combat temps
+reel, progression et boss final.
