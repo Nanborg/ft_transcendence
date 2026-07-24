@@ -18,10 +18,7 @@ ControllerIO::ControllerIO( int port ) {
 ControllerIO::~ControllerIO( void ) { close(_sockfd); }
 
 int ControllerIO::pollApi() {
-	int k = poll(&_pollFd, 1, 0);
-	if (k > 0)
-		std::cout << "found\n";
-	return k;
+	return poll(&_pollFd, 1, 0);
 }
 
 #define BUFFER_SIZE 4096
@@ -45,6 +42,7 @@ json ControllerIO::getMsg( void ) {
 
 void ControllerIO::sendMsg( std::string str ) {
 	int bytes = 0;
+	std::cout << "sending:\t\t" << str << std::endl;
 	while (!str.empty()) {
 		bytes = sendto(_sockfd, str.c_str(), MIN(str.length(), BUFFER_SIZE), 0, (struct sockaddr*) &_apiAddr, _apiSize);
 		if (bytes < 0)

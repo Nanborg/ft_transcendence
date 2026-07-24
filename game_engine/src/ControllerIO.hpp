@@ -29,4 +29,6 @@ private:
 	socklen_t		_apiSize;
 };
 
+extern ControllerIO*	g_io;
+
 #endif

@@ -1,19 +1,13 @@
 #include "GameEngine.hpp"
 
-const unsigned int GameEngine::_target_uspt = 100000;
-
-GameEngine::GameEngine( int port ):
-	_io(port),
+GameEngine::GameEngine( const std::string& roomId ):
+	_roomId(roomId),
 	_running(false),
+    _tick(0),
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
 void	GameEngine::manageInput( const json& in ) {
-	// TODO(neon-05): Strictly validate all incoming commands
-	// (player_input, player_join, player_leave/build/delete) and ignore
-	// invalid payloads without crashing the engine.
-	if (!in["type"].is_number())
-		return;
 	int type = in["type"];
 	switch (type) {
 		case inputTypes_e::PING:
@@ -45,6 +39,10 @@ void	GameEngine::manageInput( const json& in ) {
 	}
 }
 
+void GameEngine::pushInput( const json &in ) {
+	_playerInputs.push(in);
+}
+
 void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	json entityJ, out;
 	// TODO(neon-05): Replace or complement entityUpdate/entityDelete with a
@@ -59,8 +57,10 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	entityJ["velY"] = entity->getVelY();
 
 	out["type"] = "entityUpdate";
+	out["tick"] = _tick;
+	out["room"] = _roomId;
 	out["entity"] = entityJ;
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
@@ -69,31 +69,19 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
+	out["tick"] = _tick;
+	out["room"] = _roomId;
 	out["entity"]["entityId"] = entity->getId();
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 int		GameEngine::newId( void ) { return _nextEntityId++; }
 
+bool	GameEngine::isRunning( void ) const { return _running; }
+
 void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
 void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
-void	GameEngine::start( void ) {
-	_running = true;
-	while (_running) {
-		// TODO(neon-05): Add a stable engine tick counter and include it in
-		// game_state/game_end messages.
-		auto begin = std::chrono::steady_clock::now();
-		_loop_receiveMessages();
-		_loop_processInputs();
-		_loop_tickEntities();
-		auto end = std::chrono::steady_clock::now();
-
-		_uspt = std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
-		int sleep_time = _target_uspt - _uspt;
-		if (sleep_time > 0)
-			usleep(sleep_time);
-	}
-}
+void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	// TODO(neon-05): Implement collision checks for solid entities and damage
@@ -121,8 +109,11 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 	return entity;
 }
 
-void	GameEngine::deleteEntity( int entityId ) {
-	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+typename GameEngine::entityList_t::iterator	GameEngine::getEntityIterator( int entityId ) {
+	return std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+}
+
+void	GameEngine::deleteEntity( entityList_t::iterator it ) {
 	if (it == _entities.end())
 		return;
 	sendEntityDelete(it->get());
