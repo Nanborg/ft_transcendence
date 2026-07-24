@@ -121,6 +121,7 @@ class GameEngineService extends EventEmitter{
             (input.up === true ? 1 : 0);
         return this.send({
             type: ENGINE_INPUT_TYPE.MOVE,
+            room: roomId,
             playerId: enginePlayerId,
             X: x,
             Y: y,
@@ -135,6 +136,7 @@ class GameEngineService extends EventEmitter{
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
+                    room: room.id,
                     playerId: player.enginePlayerId,
                 });
                 joinedPlayerIds.push(player.enginePlayerId);
@@ -145,6 +147,7 @@ class GameEngineService extends EventEmitter{
                 try {
                     await this.send({
                         type: ENGINE_INPUT_TYPE.LEAVE,
+                        room: room.id,
                         playerId,
                     });
                 } catch (cleanupError) {
@@ -170,6 +173,7 @@ class GameEngineService extends EventEmitter{
         const player = session.players[playerIndex];
         await this.send({
             type: ENGINE_INPUT_TYPE.LEAVE,
+            room: roomId,
             playerId: player.enginePlayerId,
         });
         session.players.splice(playerIndex, 1);
