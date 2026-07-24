@@ -8,6 +8,46 @@ const { gameEngineService } = require("../services/gameEngineService");
 // These tests should cover create, join, ready, start, input, state, end,
 // leave, reconnect, and room deletion.
 module.exports = (io) => {
+	gameEngineService.on("entityUpdate", (message) => {
+		if (
+			!message ||
+			typeof message.room !== "string" ||
+			typeof message.entity !== "object" ||
+			message.entity === null
+		) {
+			console.error(
+				"Invalid entityUpdate received from game engine:",
+				message
+			);
+			return;
+		}
+		io.to(message.room).emit("game:entity:update", {
+			roomId: message.room,
+			tick: message.tick,
+			entity: message.entity,
+			timestamp: Date.now(),
+		});
+	});
+	gameEngineService.on("entityDelete", (message) => {
+		if (
+			!message ||
+			typeof message.room !== "string" ||
+			typeof message.entity !== "object" ||
+			message.entity === null
+		) {
+			console.error(
+				"Invalid entityDelete received from game engine:",
+				message
+			);
+			return;
+		}
+		io.to(message.room).emit("game:entity:delete", {
+			roomId: message.room,
+			tick: message.tick,
+			entity: message.entity,
+			timestamp: Date.now(),
+		});
+	});
 	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
 		addConnection(socket.user.id, socket);

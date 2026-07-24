@@ -205,6 +205,19 @@ class GameEngineService extends EventEmitter{
             });
             return;
         }
+        if (!message || typeof message !== "object" || Array.isArray(message))
+        {
+            console.error(
+                "Invalid message received from game engine:",
+                message
+            );
+            this.emit("invalid-message", {
+                error: new TypeError("Game engine message must be an object"),
+                raw: buffer.toString("utf8"),
+                remoteInfo,
+            });
+            return;
+        }
         this.emit("message", message, remoteInfo);
         if (typeof message.type === "string")
             this.emit(message.type, message, remoteInfo);
