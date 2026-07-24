@@ -6,7 +6,8 @@ GAME_PORT = 7297
 API_IP = "127.0.0.1"
 API_PORT = 7298
 
-MESSAGE = '{"type":0}' # ping
+#MESSAGE = '{"type":8, "room": "room-1234"}'
+MESSAGE = '{"type":0, "room": "room-1234"}' # ping
 #MESSAGE = '{"type":1, "playerId":0}' # join as player 0
 #MESSAGE = '{"type":2, "playerId":0}' # leave as player 0
 #MESSAGE = '{"type":4, "playerId":0, "typeId":2, "X":0, "Y":20}' # build

@@ -3,6 +3,8 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
+// TODO(yaoberso): Ensure history and leaderboard only read server-saved
+// GameRun/PlayerRunStats rows created from a validated game:end result.
 router.get('/history', authToken, async (req, res) => {
 	try{
         const userId = req.user.id

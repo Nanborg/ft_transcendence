@@ -11,6 +11,8 @@ PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY
 PlayerEntity::~PlayerEntity( void ) {}
 
 bool	PlayerEntity::tick( void ) {
+	// TODO(neon-05): Finalize player state for game_state serialization:
+	// HP, score, XP/level, alive/dead state, arena bounds, and input effects.
 	if (_receivedInput) {
 		_receivedInput = false;
 		return true;

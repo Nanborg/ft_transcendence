@@ -1,8 +1,11 @@
 #include "GameEngine.hpp"
 
-void	GameEngine::_loop_receiveMessages( void ) {
-	while (_io.pollApi() > 0)
-		_playerInputs.push(_io.getMsg());
+void	GameEngine::tick( void ) {
+	g_game = this;
+	_loop_processInputs();
+	_loop_tickEntities();
+	_tick++;
+	g_game = NULL;
 }
 
 void	GameEngine::_loop_processInputs( void ) {
@@ -13,6 +16,10 @@ void	GameEngine::_loop_processInputs( void ) {
 }
 
 void	GameEngine::_loop_tickEntities( void ) {
+	// TODO(neon-05): Add a collision pass + deferred destruction + cleanup of
+	// out-of-play entities per tick.
+	// TODO(neon-05): Produce game_end when the basic end condition is reached
+	// (objective complete, all players dead, timeout, or score limit).
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); )
 	{
 		if (it->get()->doTick()) {

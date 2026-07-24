@@ -14,8 +14,8 @@ public:
 
 	bool doTick( void );
 
-	// true means collision, false means no collision2
-	bool checkCollision( const  AbstractEntity& ) const;
+	// true means collision, false means no collision
+	bool checkCollision( const AbstractEntity& ) const;
 
 	unsigned int getId( void ) const;
 	unsigned int getType( void ) const;
@@ -47,6 +47,8 @@ enum EntityTypes {
 	NOENTITY = 0,
 	PLAYERENTITY = 1,
 	WALLENTITY = 2,
+	// TODO(neon-05): Add the minimum coop 2D entity types needed by the
+	// game_state contract: Enemy, Projectile, and Resource.
 };
 
 #endif
