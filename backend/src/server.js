@@ -25,7 +25,7 @@ const healthRoutes = require("./routes/health");
 const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
 const logoutRoutes = require("./routes/logout")
-const signinRoutes = require("./routes/signin")
+const registerRoutes = require("./routes/register")
 const scoresRoutes = require("./routes/scores")
 const tokenRoutes = require("./routes/token");
 
@@ -33,7 +33,7 @@ const tokenRoutes = require("./routes/token");
 app.use("/health", healthRoutes);
 app.use("/login", loginRoutes);
 app.use("/logout", logoutRoutes);
-app.use("/signin", signinRoutes);
+app.use("/register", registerRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 app.use('/friends', friendsRouter);

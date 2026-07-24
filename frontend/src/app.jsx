@@ -69,6 +69,48 @@ function App() {
     window.location.hash = '#/login';
   }, []);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    const queryIndex = hash.indexOf('?');
+
+    if (queryIndex === -1) {
+      return;
+    }
+
+    const params = new URLSearchParams(hash.slice(queryIndex + 1));
+    const isFortyTwoOauth = params.get('oauth') === '42';
+    const accessToken = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
+
+    if (!isFortyTwoOauth || !accessToken || !refreshToken) {
+      return;
+    }
+
+    async function finishFortyTwoLogin() {
+      setAuthStatus('loading');
+      setAuthError('');
+      try {
+        const user = await fetchCurrentUser(accessToken);
+        const session = { user, accessToken, refreshToken };
+
+        setAuthSession(session);
+        storeAuthSession(session);
+        setCurrentUser(user);
+        setAuthStatus('authenticated');
+        window.location.hash = '#/profile';
+      } catch (error) {
+        setCurrentUser(null);
+        setAuthSession(null);
+        clearStoredAuthSession();
+        setAuthStatus('error');
+        setAuthError(error.message);
+        window.location.hash = '#/login';
+      }
+    }
+
+    finishFortyTwoLogin();
+  }, []);
+
   const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
