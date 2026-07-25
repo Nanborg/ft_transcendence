@@ -1,5 +1,6 @@
 const dgram = require("dgram");
 const EventEmitter = require("events");
+const { type } = require("os");
 
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
@@ -10,6 +11,11 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     MOVE: 3,
     BUILD: 4,
     DELETE: 5,
+
+    ROOM_CREATE: 6,
+    ROOM_DESTROY: 7,
+    ROOM_START: 8,
+    ROOM_STOP: 9,
 });
 
 class GameEngineService extends EventEmitter{
@@ -131,8 +137,11 @@ class GameEngineService extends EventEmitter{
     async startGame(room) {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
+        let roomCreated = false;
 
         try {
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_CREATE, room: room.id });
+            roomCreated = true;
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
@@ -141,6 +150,7 @@ class GameEngineService extends EventEmitter{
                 });
                 joinedPlayerIds.push(player.enginePlayerId);
             }
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_START, room: room.id });
             return session;
         } catch (error) {
             for (const playerId of joinedPlayerIds) {
@@ -156,6 +166,13 @@ class GameEngineService extends EventEmitter{
                         playerId,
                         cleanupError
                     );
+                }
+            }
+            if (roomCreated) {
+                try {
+                    await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, room: room.id });
+                } catch (cleanupError) {
+                    console.error(`Unable to rollback engine room ${room.id};`, cleanupError);
                 }
             }
             this.removeSession(room.id);
@@ -177,6 +194,30 @@ class GameEngineService extends EventEmitter{
             playerId: player.enginePlayerId,
         });
         session.players.splice(playerIndex, 1);
+    }
+
+    async stopGame(roomId) {
+        const session = this.getSession(roomId);
+        if (!session)
+            return;
+        let firstError = null;
+        try {
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, room: roomId });
+        } catch (error) {
+            firstError = error;
+            console.log(`Unable to stop room ${roomId}:`, error);
+        }
+        try {
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, room: roomId });
+        } catch (error) {
+            if (!firstError)
+                firstError = error;
+            console.error(`Unable to destroy engine room ${roomId}:`, error);
+        } finally {
+            this.removeSession(roomId);
+        }
+        if (firstError)
+            throw firstError;
     }
 
     removeSession(roomId) {
