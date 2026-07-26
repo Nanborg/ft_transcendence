@@ -1,4 +1,5 @@
-import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
+//import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
+import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 
@@ -8,7 +9,7 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
     // The game page should not show preview state after the backend emits authoritative game states.
     // TODO(nanborg): Show a clear waiting state while no live game:state has been received.
     // TODO(nanborg): Render game:end with victory/defeat, final score, player stats, and navigation.
-    const renderedGameState = gameState || mockGameState;
+    const renderedGameState = gameState;
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Boolean(gameState);
     const isGameReady = hasRoom && gameStarted;
@@ -46,12 +47,24 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
             </>
         );
     }
+    if (!hasLiveGameState) {
+        return (
+            <>
+                <PageHeading title={title} description={description} />
+                <div className="game-panel">
+                    <h2>Waiting for live game state</h2>
+                    <p className="game-muted">The game started, but the server has not sent a game state yet.</p>
+                    <button type="button" onClick={() => { window.location.hash = '#/room'; }}> Back to room </button>
+                </div>
+            </>
+        );
+    }
     return (
         <>
             <PageHeading title={title} description={description} />
             <div className="game-panel">
                 <div className="game-hud">
-                    <p>{hasLiveGameState ? 'Live game state' : 'Preview game state'}</p>
+                    <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
                 </div>
                 <GameCanvas gameState={renderedGameState} />

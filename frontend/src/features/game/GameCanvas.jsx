@@ -39,13 +39,28 @@ export const mockGameState = {
     ],
 };
 
+function drawSquare(context, entity, color, fallbackSize = 20) {
+    const size = entity.size || fallbackSize;
+    context.fillStyle = color;
+    context.fillRect(entity.x || 0, entity.y || 0, size, size);
+}
+
+function drawCircle(context, entity, color, fallbackSize = 8) {
+    const size = entity.size || fallbackSize;
+    context.fillStyle = color;
+    context.beginPath();
+    context.arc(entity.x || 0, entity.y || 0, size, 0, Math.PI * 2);
+    context.fill();
+}
 
 export function GameCanvas({ gameState }) {
     const canvasRef = useRef(null);
-    const width = gameState?.width || 800;
-    const height = gameState?.height || 450;
+    const width = gameState?.map?.width || gameState?.width || 800;
+    const height = gameState?.map?.height || gameState?.height || 450;
     const players = Array.isArray(gameState?.players) ? gameState.players : [];
-    const objects = Array.isArray(gameState?.objects) ? gameState.objects : [];
+    const enemies = Array.isArray(gameState?.enemies) ? gameState.enemies : [];
+    const projectiles = Array.isArray(gameState?.projectiles) ? gameState.projectiles : [];
+    const resources = Array.isArray(gameState?.resources) ? gameState.resources : [];
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -57,15 +72,19 @@ export function GameCanvas({ gameState }) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#000000';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        resources.forEach(resource => {
+            drawCircle(context, resource, '#facc11', 6);
+        });
+        enemies.forEach(enemy => {
+            drawSquare(context, enemy, '#ef4444', 22);
+        });
+        projectiles.forEach(projectile => {
+            drawCircle(context, projectile, '#7611fa', 6);
+        });
         players.forEach(player => {
-            context.fillStyle = player.color;
-            context.fillRect(player.x, player.y, player.size, player.size);
+            drawSquare(context, player, player.color || '#22c55e', 24);
         });
-        objects.forEach(object => {
-            context.fillStyle = object.color;
-            context.fillRect(object.x, object.y, object.size, object.size);
-        });
-    }, [gameState, players, objects]);
+    }, [gameState, players, enemies, projectiles, resources]);
     return (
         <canvas
             ref={canvasRef}
