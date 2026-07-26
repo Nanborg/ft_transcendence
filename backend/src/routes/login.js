@@ -40,8 +40,8 @@ router.post("/", OAuth, (req, res) => {
 router.get("/42", (req, res) => {
 	const url =
 		"https://api.intra.42.fr/oauth/authorize" +
-		"?client_id=" + process.env.FT_CLIENT_ID +
-		"&redirect_uri=" + encodeURIComponent("https://localhost/login/42/callback") +
+		"?client_id=" + process.env.OAUTH42_CLIENT_ID +
+		"&redirect_uri=" + encodeURIComponent("https://localhost/api/login/42/callback") +
 		"&response_type=code";
 
 	return res.redirect(url);
@@ -90,10 +90,10 @@ router.get("/42/callback", async (req, res) => {
 			},
 			body: JSON.stringify({
 				grant_type: "authorization_code",
-				client_id: process.env.FT_CLIENT_ID,
-				client_secret: process.env.FT_CLIENT_SECRET,
+				client_id: process.env.OAUTH42_CLIENT_ID,
+				client_secret: process.env.OAUTH42_CLIENT_SECRET,
 				code: code,
-				redirect_uri: "https://localhost/login/42/callback",
+				redirect_uri: "https://localhost/api/login/42/callback",
 			}),
 		});
 		let body = await response.text();
@@ -102,7 +102,7 @@ router.get("/42/callback", async (req, res) => {
 			return res.status(response.status).send(body);
 		}
 
-		const data = await response.json();
+		const data = JSON.parse(body);
 		if (!data.access_token) {
 			return res.status(401).json(data);
 		}
@@ -120,7 +120,7 @@ router.get("/42/callback", async (req, res) => {
 			return res.status(infos_response.status).send(body);
 		}
 
-		const userData = await infos_response.json();
+		const userData = JSON.parse(body);
 		if (!userData.id || !userData.email)
 			return res.sendStatus(500);
 
