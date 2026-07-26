@@ -8,6 +8,93 @@ const { gameEngineService } = require("../services/gameEngineService");
 // These tests should cover create, join, ready, start, input, state, end,
 // leave, reconnect, and room deletion.
 module.exports = (io) => {
+	gameEngineService.on("entityUpdate", (message) => {
+		if (
+			!message ||
+			typeof message.room !== "string" ||
+			typeof message.entity !== "object" ||
+			message.entity === null
+		) {
+			console.error(
+				"Invalid entityUpdate received from game engine:",
+				message
+			);
+			return;
+		}
+		io.to(message.room).emit("game:entity:update", {
+			roomId: message.room,
+			tick: message.tick,
+			entity: message.entity,
+			timestamp: Date.now(),
+		});
+	});
+	gameEngineService.on("gameState", (message) => {
+		if (!message || typeof message.room !== "string" || typeof message.state !== "object" || message.state === null)
+		{
+			console.error("Invalid gameState received from game engine:", message);
+			return;
+		}
+		io.to(message.room).emit("game:state", {
+			roomId: message.room,
+			tick: message.tick,
+			state: message.state,
+			timestamp: Date.now(),
+		});
+	});
+	gameEngineService.on("gameEnd", async (message) => {
+		if (!message || typeof message.room !== "string" || typeof message.reason !== "string")
+		{
+			console.error("Invalid gameEnd received from game engine:", message);
+			return;
+		}
+		const roomId = message.room;
+		try{
+			const room = await resetGameStart(roomId);
+			io.to(roomId).emit("game:end", {
+				roomId,
+				reason: message.reason,
+				winner: message.winner ?? null,
+				finalState: message.finalState ?? null,
+				tick: message.tick,
+				timestamp: Date.now(),
+			});
+			io.to(roomId).emit("room:update", room);
+		} catch (error) {
+			console.error(`Unable to complete game end for room ${roomId};`, error);
+			io.to(roomId).emit("game:error", {
+				roomId,
+				code: "GAME_END_PROCESSING_FAILED",
+				message: "Unable to complete the game end",
+				timestamp: Date.now(),
+			});
+		} finally {
+			try {
+				await gameEngineService.stopGame(roomId);
+			} catch (cleanupError) {
+				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
+			}
+		}
+	});
+	gameEngineService.on("entityDelete", (message) => {
+		if (
+			!message ||
+			typeof message.room !== "string" ||
+			typeof message.entity !== "object" ||
+			message.entity === null
+		) {
+			console.error(
+				"Invalid entityDelete received from game engine:",
+				message
+			);
+			return;
+		}
+		io.to(message.room).emit("game:entity:delete", {
+			roomId: message.room,
+			tick: message.tick,
+			entity: message.entity,
+			timestamp: Date.now(),
+		});
+	});
 	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
 		addConnection(socket.user.id, socket);
@@ -73,8 +160,6 @@ module.exports = (io) => {
 			}
 		});
 
-		// TODO: Relay engine entityUpdate, entityDelete, and gameEnd messages
-		// to the correct Socket.IO room.
 		socket.on("game:start", async (payload) => {
 			if (!payload || typeof payload.roomId !== "string") {
 				socket.emit("room:error", {
@@ -110,11 +195,6 @@ module.exports = (io) => {
 				}
 
 				io.to(roomId).emit("room:update", room);
-				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
-				// and add timestamp at relay time while preserving engine tick.
-				// TODO(princiamf2): Map engine game_end to Socket.IO game:end.
-				// TODO(yaoberso): Persist trusted game:end results into GameRun
-				// and PlayerRunStats after server-side validation.
 				io.to(roomId).emit("game:start", {
 					roomId: room.id,
 					status: room.status,
