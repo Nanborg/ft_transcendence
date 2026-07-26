@@ -195,11 +195,6 @@ module.exports = (io) => {
 				}
 
 				io.to(roomId).emit("room:update", room);
-				// TODO(princiamf2): Map engine game_state to Socket.IO game:state
-				// and add timestamp at relay time while preserving engine tick.
-				// TODO(princiamf2): Map engine game_end to Socket.IO game:end.
-				// TODO(yaoberso): Persist trusted game:end results into GameRun
-				// and PlayerRunStats after server-side validation.
 				io.to(roomId).emit("game:start", {
 					roomId: room.id,
 					status: room.status,

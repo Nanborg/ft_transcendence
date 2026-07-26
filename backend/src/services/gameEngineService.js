@@ -1,6 +1,5 @@
 const dgram = require("dgram");
 const EventEmitter = require("events");
-const { type } = require("os");
 
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
