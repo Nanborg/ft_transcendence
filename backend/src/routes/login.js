@@ -40,7 +40,7 @@ router.post("/", OAuth, (req, res) => {
 router.get("/42", (req, res) => {
 	const url =
 		"https://api.intra.42.fr/oauth/authorize" +
-		"?client_id=" + process.env.FT_CLIENT_ID +
+		"?client_id=" + process.env.OAUTH42_CLIENT_ID +
 		"&redirect_uri=" + encodeURIComponent("https://localhost/api/login/42/callback") +
 		"&response_type=code";
 
@@ -90,8 +90,8 @@ router.get("/42/callback", async (req, res) => {
 			},
 			body: JSON.stringify({
 				grant_type: "authorization_code",
-				client_id: process.env.FT_CLIENT_ID,
-				client_secret: process.env.FT_CLIENT_SECRET,
+				client_id: process.env.OAUTH42_CLIENT_ID,
+				client_secret: process.env.OAUTH42_CLIENT_SECRET,
 				code: code,
 				redirect_uri: "https://localhost/api/login/42/callback",
 			}),
