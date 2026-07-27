@@ -2,6 +2,8 @@ require("dotenv").config();
 console.log("ACCESS_SECRET_TOKEN loaded:", !!process.env.ACCESS_SECRET_TOKEN);
 console.log("REFRESH_SECRET_TOKEN loaded:", !!process.env.REFRESH_SECRET_TOKEN);
 
+console.log("OAUTH42_CLIENT_ID loaded:", !!process.env.OAUTH42_CLIENT_ID);
+console.log("OAUTH42_CLIENT_SECRET loaded:", !!process.env.OAUTH42_CLIENT_SECRET);
 
 const express = require("express");
 const http = require("http");
