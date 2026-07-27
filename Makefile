@@ -1,8 +1,10 @@
 
-all: up
+all:
+	sudo sh scripts/generate-dev-cert.sh
+	docker compose up -d --build
 
 up:
-	docker compose up --build
+	docker compose up
 
 test-backend:
 	docker compose up backend --build --no-deps
