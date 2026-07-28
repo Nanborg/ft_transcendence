@@ -16,6 +16,9 @@ export function useRoom(socket, currentUser) {
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
     const [latestGameState, setLatestGameState] = useState(null);
+    const [gameEntities, setGameEntities] = useState([]);
+    const [gameResult, setGameResult] = useState(null);
+    const [gameError, setGameError] = useState('');
     const [roomNameInput, setRoomNameInput] = useState('');
 
     useEffect(() => {
@@ -54,13 +57,78 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
+            setLatestGameState(null);
+            setGameEntities([]);
+            setGameError('');
+            setGameResult(null);
             setRoomStatus('started');
             setRoomError('');
             window.location.hash = '#/game';
         }
 
+        function handleEntityUpdate(entityUpdatePayload) {
+            if (
+                !entityUpdatePayload ||
+                typeof entityUpdatePayload.roomId !== 'string' ||
+                typeof entityUpdatePayload.entity !== 'object' ||
+                entityUpdatePayload.entity === null ||
+                typeof entityUpdatePayload.entity.entityId !== 'number'
+            ) {
+                console.error('Invalid game:entity:update payload', entityUpdatePayload);
+                return;
+            }
+            const updatedEntity = entityUpdatePayload.entity;
+            setGameEntities(previousEntities => {
+                const entityAlreadyExists = previousEntities.some(
+                    entity => entity.entityId === updatedEntity.entityId
+                );
+                if (!entityAlreadyExists)
+                    return [...previousEntities, updatedEntity];
+                return previousEntities.map(entity =>
+                    entity.entityId === updatedEntity.entityId ? updatedEntity : entity
+                );
+            });
+        }
+
+        function handleEntityDelete(entityDeletePayload)
+        {
+            if (
+                !entityDeletePayload ||
+                typeof entityDeletePayload.roomId !== 'string' ||
+                typeof entityDeletePayload.entity !== 'object' ||
+                entityDeletePayload.entity === null ||
+                typeof entityDeletePayload.entity.entityId !== 'number'
+            ) {
+                console.error("Invalid game:entity:delete payload", entityDeletePayload);
+                return;
+            }
+            const deletedEntityId = entityDeletePayload.entity.entityId;
+            setGameEntities(previousEntities =>
+                previousEntities.filter(
+                    entity => entity.entityId !== deletedEntityId
+                )
+            );
+        }
+
         function handleGameState(gameStatePayload) {
-            setLatestGameState(gameStatePayload);
+            if (!gameStatePayload || typeof gameStatePayload.state !== 'object' || gameStatePayload.state === null)
+            {
+                console.error("Invalid game:state payload:", gameStatePayload);
+                return;
+            }
+            setGameEntities([]);
+            setLatestGameState(gameStatePayload.state);
+        }
+
+        function handleGameError(gameErrorPayload) {
+            if (!gameErrorPayload || typeof gameErrorPayload.message !== 'string')
+            {
+                console.error('Invalid game:error payload:', gameErrorPayload);
+                return;
+            }
+            setGameStarted(false);
+            setGameError(gameErrorPayload.message);
+            setRoomStatus('error');
         }
 
         function handleRoomRemoved() {
@@ -69,12 +137,29 @@ export function useRoom(socket, currentUser) {
             window.location.hash = '#/room';
         }
 
+        function handleGameEnd(gameEndPayload) {
+            if (!gameEndPayload || typeof gameEndPayload.roomId !== 'string' || typeof gameEndPayload.reason !== 'string')
+            {
+                console.error("Invalid game:end payload:", gameEndPayload);
+                return;
+            }
+            setGameStarted(false);
+            setGameStartInfo(null);
+            setGameResult(gameEndPayload);
+            setRoomStatus('finished');
+            setRoomError('');
+        }
+
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
         socket.on('chat:message', handleChatMessage);
         socket.on('game:start', handleGameStart);
+        socket.on('game:entity:update', handleEntityUpdate);
+        socket.on('game:entity:delete', handleEntityDelete);
         socket.on('game:state', handleGameState);
+        socket.on('game:end', handleGameEnd);
+        socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
 
         return () => {
@@ -83,7 +168,11 @@ export function useRoom(socket, currentUser) {
             socket.off('room:error', handleRoomError);
             socket.off('chat:message', handleChatMessage);
             socket.off('game:start', handleGameStart);
+            socket.off('game:entity:update', handleEntityUpdate);
+            socket.off('game:entity:delete', handleEntityDelete);
             socket.off('game:state', handleGameState);
+            socket.off('game:end', handleGameEnd);
+            socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
         };
     }, [socket]);
@@ -138,6 +227,9 @@ export function useRoom(socket, currentUser) {
         setGameStarted(false);
         setGameStartInfo(null);
         setLatestGameState(null);
+        setGameError('');
+        setGameEntities([]);
+        setGameResult(null);
     }
 
     function leaveRoom() {
@@ -149,6 +241,14 @@ export function useRoom(socket, currentUser) {
             roomId: currentRoom.id,
         });
         resetRoom();
+    }
+
+    function leaveGame() {
+        if (!socket || !currentRoom)
+            return;
+        socket.emit('room:leave', {roomId: currentRoom.id});
+        resetRoom();
+        window.location.hash = '#/lobby';
     }
 
     function toggleReady() {
@@ -209,5 +309,9 @@ export function useRoom(socket, currentUser) {
         gameStarted,
         roomNameInput,
         setRoomNameInput,
+        gameResult,
+        gameEntities,
+        gameError,
+        leaveGame,
     };
 }

@@ -52,10 +52,14 @@ module.exports = (io) => {
 			const room = await resetGameStart(roomId);
 			io.to(roomId).emit("game:end", {
 				roomId,
-				reason: message.reason,
-				winner: message.winner ?? null,
-				finalState: message.finalState ?? null,
+				status: "ended",
 				tick: message.tick,
+				durationMs: message.durationMs,
+				victory: message.victory,
+				reason: message.reason,
+				score: message.score ?? null,
+				players: Array.isArray(message.players) ? message.players : [],
+				finalState: message.finalState ?? null,
 				timestamp: Date.now(),
 			});
 			io.to(roomId).emit("room:update", room);
@@ -286,10 +290,20 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId } = payload;
+				const roomBeforeLeave = await getRoom(roomId);
+				const isLastPlayer =
+					roomBeforeLeave &&
+					roomBeforeLeave.players.length === 1 &&
+					String(roomBeforeLeave.players[0].id) ===
+						String(socket.user.id);
 				try {
-					await gameEngineService.removePlayer(roomId, socket.user.id);
+					if (isLastPlayer) {
+						await gameEngineService.stopGame(roomId);
+					} else {
+						await gameEngineService.removePlayer(roomId, socket.user.id);
+					}
 				} catch (error) {
-					console.error("Unable to remove player from game engine", error);
+					console.error(`Unable to remove user ${socket.user.id} from engine room ${roomId}:`, error);
 				}
 				const room = await leaveRoom(roomId, socket.user.id);
 				socket.leave(roomId);

@@ -39,6 +39,8 @@ export const mockGameState = {
     ],
 };
 
+const ENGINE_ENTITY_TYPE = Object.freeze({ PLAYER: 1, WALL: 2, });
+
 function drawSquare(context, entity, color, fallbackSize = 20) {
     const size = entity.size || fallbackSize;
     context.fillStyle = color;
@@ -53,7 +55,7 @@ function drawCircle(context, entity, color, fallbackSize = 8) {
     context.fill();
 }
 
-export function GameCanvas({ gameState }) {
+export function GameCanvas({ gameState, gameEntities  }) {
     const canvasRef = useRef(null);
     const width = gameState?.map?.width || gameState?.width || 800;
     const height = gameState?.map?.height || gameState?.height || 450;
@@ -61,10 +63,11 @@ export function GameCanvas({ gameState }) {
     const enemies = Array.isArray(gameState?.enemies) ? gameState.enemies : [];
     const projectiles = Array.isArray(gameState?.projectiles) ? gameState.projectiles : [];
     const resources = Array.isArray(gameState?.resources) ? gameState.resources : [];
+    const incrementalEntities = !gameState && Array.isArray(gameEntities) ? gameEntities : [];
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas || !gameState) {
+        if (!canvas || (!gameState && incrementalEntities.length === 0)) {
             return;
         }
 
@@ -72,6 +75,23 @@ export function GameCanvas({ gameState }) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.fillStyle = '#000000';
         context.fillRect(0, 0, canvas.width, canvas.height);
+        incrementalEntities.forEach(entity => {
+            const color =
+                entity.entityTypeId === ENGINE_ENTITY_TYPE.PLAYER
+                    ? '#22c55e'
+                    : '#64748b';
+
+            drawSquare(
+                context,
+                {
+                    x: entity.posX,
+                    y: entity.posY,
+                    size: 10,
+                },
+                color,
+                10
+            );
+        });
         resources.forEach(resource => {
             drawCircle(context, resource, '#facc11', 6);
         });
@@ -84,7 +104,7 @@ export function GameCanvas({ gameState }) {
         players.forEach(player => {
             drawSquare(context, player, player.color || '#22c55e', 24);
         });
-    }, [gameState, players, enemies, projectiles, resources]);
+    }, [gameState, players, enemies, projectiles, resources, incrementalEntities]);
     return (
         <canvas
             ref={canvasRef}
