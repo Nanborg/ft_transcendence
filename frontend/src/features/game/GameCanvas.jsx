@@ -77,7 +77,7 @@ export function GameCanvas({ gameState, gameEntities  }) {
         context.fillRect(0, 0, canvas.width, canvas.height);
         incrementalEntities.forEach(entity => {
             const color =
-                entity.entityTypeId === ENGINE_ENTITY_TYPE.PLAYER
+                (entity.typeId ?? entity.entityTypeId) === ENGINE_ENTITY_TYPE.PLAYER
                     ? '#22c55e'
                     : '#64748b';
 
