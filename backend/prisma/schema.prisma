@@ -71,17 +71,23 @@ model GameRun {
   id              Int              @id @default(autoincrement())
   roomId          String
   won             Boolean
+  lost            Boolean
+  abandoned       Boolean
   durationSeconds Int
   stats           PlayerRunStats[]
   createdAt       DateTime         @default(now())
 }
 
 model PlayerRunStats {
-  id        Int     @id @default(autoincrement())
-  gameRunId Int
-  gameRun   GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
-  userId    Int
-  user      User    @relation(fields: [userId], references: [id])
-  score     Int
-  xp        Int
+  id                Int     @id @default(autoincrement())
+  gameRunId         Int
+  gameRun           GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
+  userId            Int
+  user              User    @relation(fields: [userId], references: [id])
+  deaths            Int
+  damageDealt       Int
+  damageReceived    Int
+  upgrade1          Int
+  upgrade2          Int
+  upgrade3          Int
 }

@@ -3,8 +3,6 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
-// TODO(yaoberso): Ensure history and leaderboard only read server-saved
-// GameRun/PlayerRunStats rows created from a validated game:end result.
 router.get('/history', authToken, async (req, res) => {
 	try{
         const userId = req.user.id
@@ -31,23 +29,16 @@ router.get('/history', authToken, async (req, res) => {
 
 router.get("/leaderboard", async (req, res) => {
     try {
-        const topPlayers = await prisma.playerRunStats.groupBy({
-            by: ['userId'],
-            _max: {
-                score: true
-            },
-            orderBy:
-			[{
-				_max: {
-					score: 'desc',
-				}
-			},
-			{
-				userId: 'asc',
-			}],
-            take: 10
+        const topGame = await prisma.gameRun.findMany({
+            where: { won: true },
+            orderBy:[
+                { durationSeconds: 'asc' },
+			    { roomId: 'asc',}
+            ],
+            take: 10,
+            include: { stats: true }
         });
-        res.json(topPlayers);
+        res.json(topGame);
     }
 	catch (error) {
         console.error(error);
