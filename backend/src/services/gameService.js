@@ -7,15 +7,18 @@ function adaptPayloadForDB(enginePayload) {
         lost: enginePayload.win === false && enginePayload.reason !== "abandoned",
         abandoned: enginePayload.reason === "abandoned",
         durationSeconds: enginePayload.durationSeconds,
-        players: enginePayload.playerData.map(p => ({
-            userId: p.playerId,
-            deaths: p.deaths,
-            damageDealt: p.damageDealt || 0,
-            damageReceived: p.damageReceived || 0,
-            upgrade1: p.upgrades.melee || 0,
-            upgrade2: p.upgrades.ranged || 0,
-            upgrade3: p.upgrades.shield || 0,
-        }))
+        players: (Array.isArray(enginePayload.playerData) ? enginePayload.playerData : []).map(p => {
+            const upgrades = p.upgrades || {};
+            return {
+                userId: p.playerId,
+                deaths: p.deaths || 0,
+                damageDealt: p.damageDealt || 0,
+                damageReceived: p.damageReceived || 0,
+                upgrade1: upgrades.melee || 0,
+                upgrade2: upgrades.ranged || 0,
+                upgrade3: upgrades.shield || 0,
+            };
+        })
     };
 }
 
