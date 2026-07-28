@@ -21,7 +21,7 @@ function adaptPayloadForDB(enginePayload) {
 
 async function saveGameResults(gameData) {
     try {
-        if (!gameData.roomId || gameData.won === undefined || !gameData.durationSeconds || !gameData.players) {
+        if (!gameData.roomId || gameData.won === undefined || typeof gameData.durationSeconds !== "number" || !Array.isArray(gameData.players)) {
             throw new Error("Invalid game data");
         }
         const savedGame = await prisma.gameRun.create({
