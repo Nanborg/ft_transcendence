@@ -20,36 +20,39 @@ void receive_inputs( ControllerIO& io, std::queue<json>& inputs ) {
 }
 
 static void	input_r_create( games_list& games, const json& in ) {
-	if (games.count(in["room"]) == 0) {
-		games.emplace(in["room"], in["room"]);
-		std::cout << "room " << in["room"] << " created" << std::endl;
+	if (games.count(in["roomId"]) == 0) {
+		games_list::iterator it = games.emplace(in["roomId"], in["roomId"]).first;
+		g_game = &it->second;
+		it->second.init(in);
+		g_game = NULL;
+		std::cout << "room " << in["roomId"] << " created" << std::endl;
 	}
 }
 
 static void	input_r_destroy( games_list& games, const json& in ) {
-	if (games.count(in["room"]) > 0) {
-		games.erase(in["room"]);
-		std::cout << "room " << in["room"] << " deleted" << std::endl;
+	if (games.count(in["roomId"]) > 0) {
+		games.erase(in["roomId"]);
+		std::cout << "roomId " << in["roomId"] << " deleted" << std::endl;
 	}
 }
 
 static void	input_r_start( games_list& games, const json& in ) {
-	if (games.count(in["room"]) > 0) {
-		games.at(in["room"]).start();
-		std::cout << "room " << in["room"] << " now running" << std::endl;
+	if (games.count(in["roomId"]) > 0) {
+		games.at(in["roomId"]).start();
+		std::cout << "roomId " << in["roomId"] << " now running" << std::endl;
 	}
 }
 
 static void	input_r_stop( games_list& games, const json& in ) {
-	if (games.count(in["room"]) > 0) {
-		games.at(in["room"]).stop();
-		std::cout << "room " << in["room"] << " now stopped" << std::endl;
+	if (games.count(in["roomId"]) > 0) {
+		games.at(in["roomId"]).stop();
+		std::cout << "roomId " << in["roomId"] << " now stopped" << std::endl;
 	}
 }
 
 static void input_r_distribute( games_list& games, const json& in ) {
-	if (games.count(in["room"]) > 0)
-		games.at(in["room"]).pushInput(in);
+	if (games.count(in["roomId"]) > 0)
+		games.at(in["roomId"]).pushInput(in);
 }
 
 void handle_inputs( std::queue<json>& inputs, games_list& games ) {
@@ -58,7 +61,7 @@ void handle_inputs( std::queue<json>& inputs, games_list& games ) {
 	{
 		in = inputs.front();
 		inputs.pop();
-		if (!in["type"].is_number() || !in["room"].is_string())
+		if (!in["type"].is_number() || !in["roomId"].is_string())
 			continue;
 		int type = in["type"];
 		switch (type)

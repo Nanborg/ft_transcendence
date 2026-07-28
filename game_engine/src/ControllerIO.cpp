@@ -37,7 +37,11 @@ json ControllerIO::getMsg( void ) {
 	}
 	if (_apiAddr.sin_addr.s_addr == 0)
 		_apiAddr = sender;
-	return json::parse(str);
+	try {
+		return json::parse(str);
+	} catch( const json::parse_error& ) {
+		return json();
+	}
 }
 
 void ControllerIO::sendMsg( std::string str ) {
