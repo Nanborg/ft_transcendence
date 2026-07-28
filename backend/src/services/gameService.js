@@ -4,8 +4,8 @@ function adaptPayloadForDB(enginePayload) {
     return {
         roomId: enginePayload.roomId,
         won: enginePayload.win === true,
-        lost: enginePayload.win === false && enginePayload.reason !== "abandoned",
-        abandoned: enginePayload.reason === "abandoned",
+        lost: enginePayload.win === false && enginePayload.reason !== "abandoned" && enginePayload.reason !== "all_players_left",
+        abandoned: enginePayload.reason === "abandoned" || enginePayload.reason === "all_players_left",
         durationSeconds: enginePayload.durationSeconds,
         players: (Array.isArray(enginePayload.playerData) ? enginePayload.playerData : []).map(p => {
             const upgrades = p.upgrades || {};
