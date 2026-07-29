@@ -3,7 +3,7 @@
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
 	_running(false),
-    _tick(0),
+	_tick(0),
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
@@ -39,38 +39,33 @@ void	GameEngine::manageInput( const json& in ) {
 	}
 }
 
-void GameEngine::pushInput( const json &in ) {
+void GameEngine::pushInput( const json& in ) {
 	_playerInputs.push(in);
 }
 
 void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
-	json entityJ, out;
-	// TODO(neon-05): Replace or complement entityUpdate/entityDelete with a
-	// full game_state payload compatible with docs/formats_communication_reference.md.
-	// Include players, enemies, projectiles, resources, objective, score, and tick.
+	json entityJson, out;
 
-	entityJ["entityId"] = entity->getId();
-	entityJ["entityTypeId"] = entity->getType();
-	entityJ["posX"] = entity->getPosX();
-	entityJ["posY"] = entity->getPosY();
-	entityJ["velX"] = entity->getVelX();
-	entityJ["velY"] = entity->getVelY();
+	entityJson["entityId"] = entity->getId();
+	entityJson["typeId"] = entity->getType();
+	entityJson["posX"] = entity->getPosX();
+	entityJson["posY"] = entity->getPosY();
+	entityJson["velX"] = entity->getVelX();
+	entityJson["velY"] = entity->getVelY();
 
 	out["type"] = "entityUpdate";
 	out["tick"] = _tick;
-	out["room"] = _roomId;
-	out["entity"] = entityJ;
+	out["roomId"] = _roomId;
+	out["entity"] = entityJson;
 	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	json out;
-	// TODO(neon-05): Keep entityDelete compatible with the backend state mapper
-	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
 	out["tick"] = _tick;
-	out["room"] = _roomId;
+	out["roomId"] = _roomId;
 	out["entity"]["entityId"] = entity->getId();
 	g_io->sendMsg(out.dump());
 }
@@ -79,8 +74,32 @@ int		GameEngine::newId( void ) { return _nextEntityId++; }
 
 bool	GameEngine::isRunning( void ) const { return _running; }
 
+bool	GameEngine::_invalid_entity( const json& in ) {
+	if (!in["typeId"].is_number_integer())
+		return true;
+	if (!in["posX"].is_number_integer())
+		return true;
+	if (!in["posY"].is_number_integer())
+		return true;
+	if (!in["velX"].is_number_integer())
+		return true;
+	if (!in["velY"].is_number_integer())
+		return true;
+	return false;
+}
+
+void	GameEngine::init( const json& in ) {
+	// _scale = in["scale"];
+	json entities = in["entities"];
+	for (size_t i = 0; i < entities.size(); i++) {
+		if (_invalid_entity(entities[i]))
+			continue;
+		std::cout << entities[i].dump() << std::endl;
+		spawnNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
+	}
+}
+
 void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
-void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {

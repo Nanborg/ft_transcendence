@@ -8,7 +8,8 @@ void	GameEngine::tick( void ) {
 	g_game = NULL;
 }
 
-void	GameEngine::_loop_processInputs( void ) {
+void GameEngine::_loop_processInputs(void)
+{
 	while (!_playerInputs.empty()) {
 		manageInput(_playerInputs.front());
 		_playerInputs.pop();

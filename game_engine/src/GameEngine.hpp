@@ -49,17 +49,19 @@ public:
 	void	sendEntityDelete( const AbstractEntity* entity );
 
 	void	manageInput( const json& in );
-	void	pushInput( const json& in);
+	void	pushInput( const json& in );
 
 	bool	isRunning( void ) const;
+	void	init( const json& in );
 
 	int		newId( void );
-	void	init( void );
 	void	start( void );
 	void	stop( void );
 	void	tick( void );
 
 private:
+
+	static bool		_invalid_entity( const json& in );
 
 	void	_loop_processInputs( void );
 	void	_loop_tickEntities( void );
