@@ -1,0 +1,62 @@
+const fs = require('fs');
+
+'use strict';
+// '.' (floor) is not as game engine don't want them (see IGNORED_CHARS below).
+const CHAR_CONFIG = {
+	'#': { typeId: 0, state: { blocking: true } },
+	S: { typeId: 1, state: { blocking: false } },
+	B: { typeId: 2, state: { blocking: true } },
+	C: { typeId: 3, state: { blocking: true } },
+};
+
+// Characters that are just terrain and should never become entities.
+const IGNORED_CHARS = new Set(['.']);
+
+// (x, y) -> (col*SCALE, row*SCALE).
+const SCALE = 1000;
+
+
+// Reads map file and converts the entities to the JSON format.
+function mapConv(filePath) {
+	const raw = fs.readFileSync(filePath, 'utf8');
+	const lines = raw.split(/\r?\n/);
+
+	// Everything before the "Seed:" line is the grid. Metadata comes after a blank line at the end of the file.
+	const seedLineIdx = lines.findIndex((l) => l.trim().startsWith('Seed:'));
+	const gridLines = (seedLineIdx === -1 ? lines : lines.slice(0, seedLineIdx)).filter((l) => l.trim().length > 0);
+
+	const entities = [];
+	const unknownChars = new Set();
+
+	gridLines.forEach((line, row) => {
+		for (let col = 0; col < line.length; col++)
+		{
+			const ch = line[col];
+			if (IGNORED_CHARS.has(ch))
+				continue;
+
+			const config = CHAR_CONFIG[ch];
+			if (!config)
+			{
+				unknownChars.add(ch);
+				continue; // unknown characters are skipped
+			}
+
+			entities.push({
+				typeId: config.typeId,
+				posX: col * SCALE,
+				posY: row * SCALE,
+				velX: 0,
+				velY: 0,
+				state: { ...config.state },
+			});
+		}
+	});
+
+	if (unknownChars.size > 0)
+		console.warn(`Warning: found unknown characters (skipped): ${[...unknownChars].join(', ')}`);
+
+	return entities;
+}
+
+module.exports = { mapConv };
