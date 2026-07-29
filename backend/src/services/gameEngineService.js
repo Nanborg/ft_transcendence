@@ -1,5 +1,7 @@
 const dgram = require("dgram");
 const EventEmitter = require("events");
+const path = require("path");
+const { mapConv } = require("../game/mapConv");
 
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
@@ -17,7 +19,7 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_STOP: 9,
 });
 
-class GameEngineService extends EventEmitter{
+class GameEngineService extends EventEmitter {
     constructor({
         host = DEFAULT_ENGINE_HOST,
         port = DEFAULT_ENGINE_PORT,
@@ -41,7 +43,7 @@ class GameEngineService extends EventEmitter{
 
         this.socket.on("listening", () => {
             const address = this.socket.address();
-            
+
             console.log(
                 `Game engine UDP client listening on ${address.address}:${address.port}`
             );
@@ -107,8 +109,7 @@ class GameEngineService extends EventEmitter{
         return this.sessions.get(roomId) || null;
     }
 
-    cacheEntityUpdate(roomId, entity, tick)
-    {
+    cacheEntityUpdate(roomId, entity, tick) {
         const session = this.getSession(roomId);
         if (!session || !entity || typeof entity.entityId !== "number")
             return false;
@@ -118,8 +119,7 @@ class GameEngineService extends EventEmitter{
         return true;
     }
 
-    cacheEntityDelete(roomId, entityId, tick)
-    {
+    cacheEntityDelete(roomId, entityId, tick) {
         const session = this.getSession(roomId);
         if (!session || typeof entityId !== "number")
             return false;
@@ -129,8 +129,7 @@ class GameEngineService extends EventEmitter{
         return true;
     }
 
-    getStateSnapshot(roomId)
-    {
+    getStateSnapshot(roomId) {
         const session = this.getSession(roomId);
         if (!session)
             return null;
@@ -159,7 +158,7 @@ class GameEngineService extends EventEmitter{
         if (enginePlayerId === null) {
             throw new Error("Engine player mapping not found");
         }
-        const x = 
+        const x =
             (input.right === true ? 1 : 0) -
             (input.left === true ? 1 : 0);
         const y =
@@ -178,9 +177,17 @@ class GameEngineService extends EventEmitter{
         const session = this.createSession(room);
         const joinedPlayerIds = [];
         let roomCreated = false;
-
+        const mapPayload = mapConv(
+            path.join(__dirname, "../game/maps/1_map_50_50_10_1_55.txt"),
+            room.id
+        );
         try {
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_CREATE, roomId: room.id, scale: 1000, entities: [], });
+            await this.send({
+                type: ENGINE_INPUT_TYPE.ROOM_CREATE,
+                roomId: room.id,
+                scale: mapPayload.scale,
+                entities: mapPayload.entities,
+            });
             roomCreated = true;
             for (const player of session.players) {
                 await this.send({
@@ -287,8 +294,7 @@ class GameEngineService extends EventEmitter{
             });
             return;
         }
-        if (!message || typeof message !== "object" || Array.isArray(message))
-        {
+        if (!message || typeof message !== "object" || Array.isArray(message)) {
             console.error(
                 "Invalid message received from game engine:",
                 message
