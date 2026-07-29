@@ -1,116 +1,269 @@
-//import { array } from 'node:stream/iter';
 import { useEffect, useRef } from 'react';
-//Nanborg
-// TODO(nanborg): Remove this mock state after GamePage is wired to Socket.IO game:state.
-// TODO(nanborg): Render the coop 2D game:state contract: players, enemies,
-// projectiles, resources, objective, and score.
-export const mockGameState = {
-    status: 'mock',
-    score: 0,
-    width: 800,
-    height: 450,
-    players: [
-        {
-            id: 'player-1',
-            name: 'Player 1',
-            x: 120,
-            y: 180,
-            size: 28,
-            color: '#22cc44',
-        },
-        {
-            id: 'player-2',
-            name: 'Player 2',
-            x: 620,
-            y: 220,
-            size: 28,
-            color: '#2aabee',
-        },
-    ],
-    objects: [
-        {
-            id: 'object-1',
-            type: 'ball',
-            x: 390,
-            y: 210,
-            size: 16,
-            color: '#facc11',
-        },
-    ],
-};
 
-const ENGINE_ENTITY_TYPE = Object.freeze({ PLAYER: 1, WALL: 2, });
+const ENGINE_ENTITY_TYPE = Object.freeze({
+    PLAYER: 1,
+    WALL: 2,
+});
+
+const INTERPOLATION_DURATION_MS = 100;
+const TELEPORT_DISTANCE = 150;
 
 function drawSquare(context, entity, color, fallbackSize = 20) {
     const size = entity.size || fallbackSize;
+
     context.fillStyle = color;
-    context.fillRect(entity.x || 0, entity.y || 0, size, size);
+    context.fillRect(
+        entity.x || 0,
+        entity.y || 0,
+        size,
+        size
+    );
 }
 
 function drawCircle(context, entity, color, fallbackSize = 8) {
     const size = entity.size || fallbackSize;
+
     context.fillStyle = color;
     context.beginPath();
-    context.arc(entity.x || 0, entity.y || 0, size, 0, Math.PI * 2);
+    context.arc(
+        entity.x || 0,
+        entity.y || 0,
+        size,
+        0,
+        Math.PI * 2
+    );
     context.fill();
 }
 
-export function GameCanvas({ gameState, gameEntities  }) {
+function getInterpolatedPosition(track, now) {
+    if (track.duration === 0) {
+        return {
+            x: track.targetX,
+            y: track.targetY,
+        };
+    }
+
+    const progress = Math.min(
+        1,
+        (now - track.startedAt) / track.duration
+    );
+
+    return {
+        x:
+            track.fromX +
+            (track.targetX - track.fromX) * progress,
+        y:
+            track.fromY +
+            (track.targetY - track.fromY) * progress,
+    };
+}
+
+export function GameCanvas({ gameState, gameEntities }) {
     const canvasRef = useRef(null);
-    const width = gameState?.map?.width || gameState?.width || 800;
-    const height = gameState?.map?.height || gameState?.height || 450;
-    const players = Array.isArray(gameState?.players) ? gameState.players : [];
-    const enemies = Array.isArray(gameState?.enemies) ? gameState.enemies : [];
-    const projectiles = Array.isArray(gameState?.projectiles) ? gameState.projectiles : [];
-    const resources = Array.isArray(gameState?.resources) ? gameState.resources : [];
-    const incrementalEntities = !gameState && Array.isArray(gameEntities) ? gameEntities : [];
+    const entityTracksRef = useRef(new Map());
+    const gameStateRef = useRef(gameState);
+
+    const width =
+        gameState?.map?.width ||
+        gameState?.width ||
+        800;
+
+    const height =
+        gameState?.map?.height ||
+        gameState?.height ||
+        450;
+
+    gameStateRef.current = gameState;
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas || (!gameState && incrementalEntities.length === 0)) {
+        if (!Array.isArray(gameEntities))
             return;
-        }
 
-        const context = canvas.getContext('2d');
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = '#000000';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        incrementalEntities.forEach(entity => {
-            const color =
-                (entity.typeId ?? entity.entityTypeId) === ENGINE_ENTITY_TYPE.PLAYER
-                    ? '#22c55e'
-                    : '#64748b';
+        const now = performance.now();
+        const receivedEntityIds = new Set();
 
-            drawSquare(
-                context,
-                {
+        gameEntities.forEach(entity => {
+            if (
+                !entity ||
+                typeof entity.entityId !== 'number' ||
+                typeof entity.posX !== 'number' ||
+                typeof entity.posY !== 'number'
+            ) {
+                return;
+            }
+
+            receivedEntityIds.add(entity.entityId);
+
+            const previousTrack =
+                entityTracksRef.current.get(entity.entityId);
+
+            if (
+                previousTrack &&
+                previousTrack.targetX === entity.posX &&
+                previousTrack.targetY === entity.posY
+            ) {
+                previousTrack.entity = entity;
+                return;
+            }
+
+            const currentPosition = previousTrack
+                ? getInterpolatedPosition(previousTrack, now)
+                : {
                     x: entity.posX,
                     y: entity.posY,
-                    size: 10,
-                },
-                color,
-                10
+                };
+
+            const distance = Math.hypot(
+                entity.posX - currentPosition.x,
+                entity.posY - currentPosition.y
             );
+
+            const mustTeleport =
+                !previousTrack ||
+                distance >= TELEPORT_DISTANCE;
+
+            entityTracksRef.current.set(entity.entityId, {
+                entity,
+                fromX: mustTeleport
+                    ? entity.posX
+                    : currentPosition.x,
+                fromY: mustTeleport
+                    ? entity.posY
+                    : currentPosition.y,
+                targetX: entity.posX,
+                targetY: entity.posY,
+                startedAt: now,
+                duration: mustTeleport
+                    ? 0
+                    : INTERPOLATION_DURATION_MS,
+            });
         });
-        resources.forEach(resource => {
-            drawCircle(context, resource, '#facc11', 6);
+
+        entityTracksRef.current.forEach((track, entityId) => {
+            if (!receivedEntityIds.has(entityId))
+                entityTracksRef.current.delete(entityId);
         });
-        enemies.forEach(enemy => {
-            drawSquare(context, enemy, '#ef4444', 22);
-        });
-        projectiles.forEach(projectile => {
-            drawCircle(context, projectile, '#7611fa', 6);
-        });
-        players.forEach(player => {
-            drawSquare(context, player, player.color || '#22c55e', 24);
-        });
-    }, [gameState, players, enemies, projectiles, resources, incrementalEntities]);
+    }, [gameEntities]);
+
+    useEffect(() => {
+        let animationFrameId;
+
+        function render(now) {
+            const canvas = canvasRef.current;
+
+            if (!canvas)
+                return;
+
+            const context = canvas.getContext('2d');
+            const currentGameState = gameStateRef.current;
+
+            context.clearRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            context.fillStyle = '#000000';
+            context.fillRect(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+            entityTracksRef.current.forEach(track => {
+                const position =
+                    getInterpolatedPosition(track, now);
+
+                const color =
+                    (
+                        track.entity.typeId ??
+                        track.entity.entityTypeId
+                    ) === ENGINE_ENTITY_TYPE.PLAYER
+                        ? '#22c55e'
+                        : '#64748b';
+
+                drawSquare(
+                    context,
+                    {
+                        x: position.x,
+                        y: position.y,
+                        size: 10,
+                    },
+                    color,
+                    10
+                );
+            });
+
+            const resources = Array.isArray(
+                currentGameState?.resources
+            )
+                ? currentGameState.resources
+                : [];
+
+            const enemies = Array.isArray(
+                currentGameState?.enemies
+            )
+                ? currentGameState.enemies
+                : [];
+
+            const projectiles = Array.isArray(
+                currentGameState?.projectiles
+            )
+                ? currentGameState.projectiles
+                : [];
+
+            const players = Array.isArray(
+                currentGameState?.players
+            )
+                ? currentGameState.players
+                : [];
+
+            resources.forEach(resource => {
+                drawCircle(context, resource, '#facc11', 6);
+            });
+
+            enemies.forEach(enemy => {
+                drawSquare(context, enemy, '#ef4444', 22);
+            });
+
+            projectiles.forEach(projectile => {
+                drawCircle(
+                    context,
+                    projectile,
+                    '#7611fa',
+                    6
+                );
+            });
+
+            players.forEach(player => {
+                drawSquare(
+                    context,
+                    player,
+                    player.color || '#22c55e',
+                    24
+                );
+            });
+
+            animationFrameId =
+                requestAnimationFrame(render);
+        }
+
+        animationFrameId = requestAnimationFrame(render);
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
     return (
         <canvas
             ref={canvasRef}
             className="game-canvas"
             width={width}
             height={height}
-            aria-label="Game preview" />
+            aria-label="Live game state"
+        />
     );
 }
