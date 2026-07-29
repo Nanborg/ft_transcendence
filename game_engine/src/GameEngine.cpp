@@ -47,7 +47,7 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	json entityJson, out;
 
 	entityJson["entityId"] = entity->getId();
-	entityJson["entityTypeId"] = entity->getType();
+	entityJson["typeId"] = entity->getType();
 	entityJson["posX"] = entity->getPosX();
 	entityJson["posY"] = entity->getPosY();
 	entityJson["velX"] = entity->getVelX();
@@ -81,9 +81,9 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 		return true;
 	if (!in["posY"].is_number_integer())
 		return true;
-	if (!in["posX"].is_number_integer())
+	if (!in["velX"].is_number_integer())
 		return true;
-	if (!in["posY"].is_number_integer())
+	if (!in["velY"].is_number_integer())
 		return true;
 	return false;
 }
