@@ -12,10 +12,6 @@ const CHAR_CONFIG = {
 // Characters that are just terrain and should never become entities.
 const IGNORED_CHARS = new Set(['.']);
 
-// (x, y) -> (col*SCALE, row*SCALE).
-const SCALE = 1000;
-
-
 // Reads map file and converts the entities to the JSON format.
 function mapConv(filePath) {
 	const raw = fs.readFileSync(filePath, 'utf8');
@@ -29,6 +25,9 @@ function mapConv(filePath) {
 	const unknownChars = new Set();
 
 	gridLines.forEach((line, row) => {
+
+		// (x, y) -> (col*SCALE, row*SCALE).
+		const SCALE = 2**31 / line.length ;
 		for (let col = 0; col < line.length; col++)
 		{
 			const ch = line[col];
