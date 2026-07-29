@@ -8,7 +8,7 @@ function formatHistoryData(rawGames) {
     return {
       gameRunId: game.id,
       roomId: game.roomId,
-      result: game.won ? "won" : "lost",
+      result: game.abandoned ? "abandoned" : game.won ? "won" : "lost",
       durationSeconds: game.durationSeconds,
       createdAt: new Date(game.createdAt).getTime(),
       players: game.stats.map(stat => {
