@@ -98,6 +98,7 @@ class GameEngineService extends EventEmitter {
             createdAt: Date.now(),
             startedAt: null,
             tick: 0,
+            map: null,
             entities: new Map(),
             playerData: [],
         };
@@ -138,6 +139,7 @@ class GameEngineService extends EventEmitter {
             tick: session.tick,
             serverStartedAt: session.startedAt,
             end: false,
+            map: session.map,
             entities: Array.from(session.entities.values()),
             playerData: session.playerData,
         };
@@ -181,6 +183,11 @@ class GameEngineService extends EventEmitter {
             path.join(__dirname, "../game/maps/1_map_50_50_10_1_55.txt"),
             room.id
         );
+        session.map = {
+            width: mapPayload.width,
+            height: mapPayload.height,
+            scale: mapPayload.scale,
+        };
         try {
             await this.send({
                 type: ENGINE_INPUT_TYPE.ROOM_CREATE,

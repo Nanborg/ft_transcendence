@@ -66,6 +66,11 @@ room.
   "tick": 0,
   "serverStartedAt": 1750000000000,
   "end": false,
+  "map": {
+    "width": 50000,
+    "height": 50000,
+    "scale": 1000
+  },
   "entities": [
     {
       "entityId": 42,
@@ -112,6 +117,11 @@ Regles:
 - `playerEntityId` relie un joueur a son entity moteur.
 - `cooldowns` sont en ticks restants.
 - `serverStartedAt` permet au front d'afficher un timer local pendant la partie.
+- `map` contient les metadonnees statiques de la map envoyees au debut de
+  partie et lors d'une resync.
+- `map.width` et `map.height` sont exprimes dans le meme espace de coordonnees
+  que les entities.
+- `map.scale` sert a convertir les cases de la map en coordonnees moteur.
 
 ## 3. game:state:update
 

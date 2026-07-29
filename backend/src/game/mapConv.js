@@ -25,19 +25,19 @@ function mapConv(filePath, roomId) {
 	const unknownChars = new Set();
 
 	const SCALE = Math.floor((2 ** 31) / gridLines[0].length);
+	const width = gridLines[0].length * SCALE;
+	const height = gridLines.length * SCALE;
 	// const SCALE = 1;
 	gridLines.forEach((line, row) => {
 
 		// (x, y) -> (col*SCALE, row*SCALE).
-		for (let col = 0; col < line.length; col++)
-		{
+		for (let col = 0; col < line.length; col++) {
 			const ch = line[col];
 			if (IGNORED_CHARS.has(ch))
 				continue;
 
 			const config = CHAR_CONFIG[ch];
-			if (!config)
-			{
+			if (!config) {
 				unknownChars.add(ch);
 				continue; // unknown characters are skipped
 			}
@@ -57,10 +57,12 @@ function mapConv(filePath, roomId) {
 		console.warn(`Warning: found unknown characters (skipped): ${[...unknownChars].join(', ')}`);
 
 	return {
-	roomId: roomId,
-	scale: SCALE,
-	entities,
-  };
+		roomId: roomId,
+		width,
+		height,
+		scale: SCALE,
+		entities,
+	};
 
 }
 
