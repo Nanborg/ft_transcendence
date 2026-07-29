@@ -3,17 +3,17 @@ const fs = require('fs');
 'use strict';
 // '.' (floor) is not as game engine don't want them (see IGNORED_CHARS below).
 const CHAR_CONFIG = {
-	'#': { typeId: 0, state: { blocking: true } },
-	S: { typeId: 1, state: { blocking: false } },
-	B: { typeId: 2, state: { blocking: true } },
-	C: { typeId: 3, state: { blocking: true } },
+	'#': { typeId: 2, state: { blocking: true } },
+	B: { typeId: 109, state: { blocking: true } },
+	C: { typeId: 300, state: { blocking: true } },
+	S: { typeId: 301, state: { blocking: false } },
 };
 
 // Characters that are just terrain and should never become entities.
 const IGNORED_CHARS = new Set(['.']);
 
 // Reads map file and converts the entities to the JSON format.
-function mapConv(filePath) {
+function mapConv(filePath, roomId) {
 	const raw = fs.readFileSync(filePath, 'utf8');
 	const lines = raw.split(/\r?\n/);
 
@@ -24,10 +24,11 @@ function mapConv(filePath) {
 	const entities = [];
 	const unknownChars = new Set();
 
+	const SCALE = Math.floor((2 ** 31) / gridLines[0].length);
+	// const SCALE = 1;
 	gridLines.forEach((line, row) => {
 
 		// (x, y) -> (col*SCALE, row*SCALE).
-		const SCALE = 2**31 / line.length ;
 		for (let col = 0; col < line.length; col++)
 		{
 			const ch = line[col];
@@ -55,7 +56,12 @@ function mapConv(filePath) {
 	if (unknownChars.size > 0)
 		console.warn(`Warning: found unknown characters (skipped): ${[...unknownChars].join(', ')}`);
 
-	return entities;
+	return {
+	roomId: roomId,
+	scale: SCALE,
+	entities,
+  };
+
 }
 
 module.exports = { mapConv };
