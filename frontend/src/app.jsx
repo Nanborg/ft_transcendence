@@ -132,19 +132,37 @@ function App() {
         token: authSession.accessToken,
       },
     });
+    let connectionReplacedMessage = '';
     // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
     window.socket = nextSocket;
     // DEV DEBUG END app.jsx socket console exposure.
     setSocket(nextSocket);
 
+    nextSocket.on('connection:replaced', (payload = {}) => {
+        connectionReplacedMessage =
+            typeof payload.message === 'string'
+                ? payload.message
+                : 'This account was opened in another tab or browser.';
+
+        setSocketStatus(
+            `connection replaced: ${connectionReplacedMessage}`
+        );
+    });
     nextSocket.on('connect', () => {
       setSocketStatus(`connected: ${nextSocket.id}`);
       console.log('socket connected:', nextSocket.id);
     });
 
     nextSocket.on('disconnect', () => {
-      setSocketStatus('disconnected');
-      console.log('socket disconnected');
+        if (connectionReplacedMessage) {
+            setSocketStatus(
+                `connection replaced: ${connectionReplacedMessage}`
+            );
+        } else {
+            setSocketStatus('disconnected');
+        }
+
+        console.log('socket disconnected');
     });
 
     nextSocket.on('connect_error', (error) => {
@@ -283,10 +301,14 @@ function App() {
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
-              gameState={room.latestGameState}
+              // gameState={room.latestGameState}
+              gameEntities={room.gameEntities}
+              gameError={room.gameError}
+              gameResult={room.gameResult}
               socket={socket}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
+              onLeaveGame={room.leaveGame}
             />
           )}
           {currentPage.id === 'login' && (

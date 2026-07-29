@@ -15,8 +15,13 @@ export function useRoom(socket, currentUser) {
     const [chatMessages, setChatMessages] = useState([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
-    const [latestGameState, setLatestGameState] = useState(null);
+    // const [latestGameState, setLatestGameState] = useState(null);
+    const [gameEntities, setGameEntities] = useState([]);
+    const [gameResult, setGameResult] = useState(null);
+    const [gameError, setGameError] = useState('');
     const [roomNameInput, setRoomNameInput] = useState('');
+    const [gamePlayerData, setGamePlayerData] = useState([]);
+    const [gameStartedAt, setGameStartedAt] = useState(null);
 
     useEffect(() => {
         if (!socket) {
@@ -54,13 +59,94 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
+            // setLatestGameState(null);
+            setGameEntities([]);
+            setGamePlayerData([]);
+            setGameStartedAt(null);
+            setGameError('');
+            setGameResult(null);
             setRoomStatus('started');
             setRoomError('');
             window.location.hash = '#/game';
         }
 
-        function handleGameState(gameStatePayload) {
-            setLatestGameState(gameStatePayload);
+        function handleGameStateInit(gameStateInitPayload)
+        {
+            if (
+                !gameStateInitPayload ||
+                typeof gameStateInitPayload.roomId !== 'string' ||
+                typeof gameStateInitPayload.tick !== 'number' ||
+                typeof gameStateInitPayload.serverStartedAt !== 'number' ||
+                !Array.isArray(gameStateInitPayload.entities) ||
+                !Array.isArray(gameStateInitPayload.playerData)
+            ) {
+                console.error('Invalid game:state:init payload:', gameStateInitPayload);
+                return;
+            }
+            setGameStarted(true);
+            setGameEntities(gameStateInitPayload.entities);
+            setGamePlayerData(gameStateInitPayload.playerData);
+            setGameStartedAt(gameStateInitPayload.serverStartedAt);
+            // setLatestGameState(null);
+            setGameError('');
+            setGameResult(null);
+            setRoomStatus('started');
+            setRoomError('');
+            window.location.hash = '#/game';
+        }
+
+        function handleGameStateUpdate(gameStateUpdatePayload)
+        {
+            if (
+                !gameStateUpdatePayload ||
+                typeof gameStateUpdatePayload.roomId !== 'string' ||
+                !Array.isArray(gameStateUpdatePayload.entityUpdate) ||
+                !Array.isArray(gameStateUpdatePayload.entityDelete) ||
+                !Array.isArray(gameStateUpdatePayload.playerData)
+            ) {
+                console.error('Invalid game:state:update payload:', gameStateUpdatePayload);
+                return;
+            }
+
+            setGameEntities(previousEntities => {
+                const updateEntities = new Map(
+                    previousEntities.map(entity => [
+                        entity.entityId,
+                        entity,
+                    ])
+                );
+                gameStateUpdatePayload.entityUpdate.forEach(entity => {
+                    if (entity && typeof entity.entityId === 'number')
+                        updateEntities.set(entity.entityId, entity);
+                });
+                gameStateUpdatePayload.entityDelete.forEach(entity => {
+                    if (entity && typeof entity.entityId === 'number')
+                        updateEntities.delete(entity.entityId);
+                });
+                return Array.from(updateEntities.values());
+            });
+            setGamePlayerData(gameStateUpdatePayload.playerData);
+        }
+
+        // function handleGameState(gameStatePayload) {
+        //     if (!gameStatePayload || typeof gameStatePayload.state !== 'object' || gameStatePayload.state === null)
+        //     {
+        //         console.error("Invalid game:state payload:", gameStatePayload);
+        //         return;
+        //     }
+        //     setGameEntities([]);
+        //     setLatestGameState(gameStatePayload.state);
+        // }
+
+        function handleGameError(gameErrorPayload) {
+            if (!gameErrorPayload || typeof gameErrorPayload.message !== 'string')
+            {
+                console.error('Invalid game:error payload:', gameErrorPayload);
+                return;
+            }
+            setGameStarted(false);
+            setGameError(gameErrorPayload.message);
+            setRoomStatus('error');
         }
 
         function handleRoomRemoved() {
@@ -69,12 +155,36 @@ export function useRoom(socket, currentUser) {
             window.location.hash = '#/room';
         }
 
+        function handleGameEnd(gameEndPayload) {
+            if (!gameEndPayload || typeof gameEndPayload.roomId !== 'string' || typeof gameEndPayload.tick !== 'number' ||
+                typeof gameEndPayload.durationSeconds !== 'number' || gameEndPayload.end !== true || typeof gameEndPayload.win !== 'boolean' ||
+                typeof gameEndPayload.reason !== 'string' || !Array.isArray(gameEndPayload.entities) || !Array.isArray(gameEndPayload.playerData))
+            {
+                console.error("Invalid game:end payload:", gameEndPayload);
+                return;
+            }
+            setGameStarted(false);
+            setGameStartInfo(null);
+            // setLatestGameState(null);
+            setGameEntities(gameEndPayload.entities);
+            setGamePlayerData(gameEndPayload.playerData);
+            setGameStartedAt(null);
+            setGameResult(gameEndPayload);
+            setGameError('');
+            setRoomStatus('finished');
+            setRoomError('');
+        }
+
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
         socket.on('chat:message', handleChatMessage);
         socket.on('game:start', handleGameStart);
-        socket.on('game:state', handleGameState);
+        socket.on('game:state:init', handleGameStateInit);
+        socket.on('game:state:update', handleGameStateUpdate);
+        // socket.on('game:state', handleGameState);
+        socket.on('game:end', handleGameEnd);
+        socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
 
         return () => {
@@ -83,10 +193,25 @@ export function useRoom(socket, currentUser) {
             socket.off('room:error', handleRoomError);
             socket.off('chat:message', handleChatMessage);
             socket.off('game:start', handleGameStart);
-            socket.off('game:state', handleGameState);
+            socket.off('game:state:init', handleGameStateInit);
+            socket.off('game:state:update', handleGameStateUpdate);
+            // socket.off('game:state', handleGameState);
+            socket.off('game:end', handleGameEnd);
+            socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
         };
     }, [socket]);
+
+    useEffect(() => {
+        if (!socket || !currentRoom || currentRoom.status !== 'started')
+            return undefined;
+        function requestGameResync() {
+            socket.emit('game:resync', { roomId: currentRoom.id });
+        }
+        requestGameResync();
+        socket.on('connect', requestGameResync);
+        return () => { socket.off('connect', requestGameResync); };
+    }, [socket, currentRoom?.id, currentRoom?.status]);
 
     useEffect(() => {
         if (!currentUser) {
@@ -137,7 +262,12 @@ export function useRoom(socket, currentUser) {
         setChatInput('');
         setGameStarted(false);
         setGameStartInfo(null);
-        setLatestGameState(null);
+        // setLatestGameState(null);
+        setGameError('');
+        setGameEntities([]);
+        setGamePlayerData([]);
+        setGameStartedAt(null);
+        setGameResult(null);
     }
 
     function leaveRoom() {
@@ -149,6 +279,14 @@ export function useRoom(socket, currentUser) {
             roomId: currentRoom.id,
         });
         resetRoom();
+    }
+
+    function leaveGame() {
+        if (!socket || !currentRoom)
+            return;
+        socket.emit('room:leave', {roomId: currentRoom.id});
+        resetRoom();
+        window.location.hash = '#/lobby';
     }
 
     function toggleReady() {
@@ -205,9 +343,15 @@ export function useRoom(socket, currentUser) {
         sendChatMessage,
         startGame,
         gameStartInfo,
-        latestGameState,
+        // latestGameState,
         gameStarted,
         roomNameInput,
         setRoomNameInput,
+        gameResult,
+        gameEntities,
+        gameError,
+        leaveGame,
+        gamePlayerData,
+        gameStartedAt,
     };
 }

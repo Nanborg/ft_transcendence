@@ -94,6 +94,10 @@ class GameEngineService extends EventEmitter{
             roomId: room.id,
             players,
             createdAt: Date.now(),
+            startedAt: null,
+            tick: 0,
+            entities: new Map(),
+            playerData: [],
         };
         this.sessions.set(room.id, session);
         return session;
@@ -101,6 +105,43 @@ class GameEngineService extends EventEmitter{
 
     getSession(roomId) {
         return this.sessions.get(roomId) || null;
+    }
+
+    cacheEntityUpdate(roomId, entity, tick)
+    {
+        const session = this.getSession(roomId);
+        if (!session || !entity || typeof entity.entityId !== "number")
+            return false;
+        session.entities.set(entity.entityId, entity);
+        if (typeof tick === "number")
+            session.tick = tick;
+        return true;
+    }
+
+    cacheEntityDelete(roomId, entityId, tick)
+    {
+        const session = this.getSession(roomId);
+        if (!session || typeof entityId !== "number")
+            return false;
+        session.entities.delete(entityId);
+        if (typeof tick === "number")
+            session.tick = tick;
+        return true;
+    }
+
+    getStateSnapshot(roomId)
+    {
+        const session = this.getSession(roomId);
+        if (!session)
+            return null;
+        return {
+            roomId: session.roomId,
+            tick: session.tick,
+            serverStartedAt: session.startedAt,
+            end: false,
+            entities: Array.from(session.entities.values()),
+            playerData: session.playerData,
+        };
     }
 
     getEnginePlayerId(roomId, userId) {
@@ -126,10 +167,10 @@ class GameEngineService extends EventEmitter{
             (input.up === true ? 1 : 0);
         return this.send({
             type: ENGINE_INPUT_TYPE.MOVE,
-            room: roomId,
+            roomId,
             playerId: enginePlayerId,
-            X: x,
-            Y: y,
+            velX: x,
+            velY: y,
         });
     }
 
@@ -139,24 +180,25 @@ class GameEngineService extends EventEmitter{
         let roomCreated = false;
 
         try {
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_CREATE, room: room.id });
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_CREATE, roomId: room.id, scale: 1000, entities: [], });
             roomCreated = true;
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
-                    room: room.id,
+                    roomId: room.id,
                     playerId: player.enginePlayerId,
                 });
                 joinedPlayerIds.push(player.enginePlayerId);
             }
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_START, room: room.id });
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_START, roomId: room.id });
+            session.startedAt = Date.now();
             return session;
         } catch (error) {
             for (const playerId of joinedPlayerIds) {
                 try {
                     await this.send({
                         type: ENGINE_INPUT_TYPE.LEAVE,
-                        room: room.id,
+                        roomId: room.id,
                         playerId,
                     });
                 } catch (cleanupError) {
@@ -169,7 +211,7 @@ class GameEngineService extends EventEmitter{
             }
             if (roomCreated) {
                 try {
-                    await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, room: room.id });
+                    await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, roomId: room.id });
                 } catch (cleanupError) {
                     console.error(`Unable to rollback engine room ${room.id};`, cleanupError);
                 }
@@ -189,7 +231,7 @@ class GameEngineService extends EventEmitter{
         const player = session.players[playerIndex];
         await this.send({
             type: ENGINE_INPUT_TYPE.LEAVE,
-            room: roomId,
+            roomId,
             playerId: player.enginePlayerId,
         });
         session.players.splice(playerIndex, 1);
@@ -201,13 +243,13 @@ class GameEngineService extends EventEmitter{
             return;
         let firstError = null;
         try {
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, room: roomId });
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, roomId });
         } catch (error) {
             firstError = error;
             console.log(`Unable to stop room ${roomId}:`, error);
         }
         try {
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, room: roomId });
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, roomId });
         } catch (error) {
             if (!firstError)
                 firstError = error;

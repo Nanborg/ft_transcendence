@@ -3,16 +3,12 @@ import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 
-export function GamePage({ title, description, gameState, socket, currentRoom, gameStarted }) {
-    //Nanborg
-    // TODO(nanborg): Remove the mockGameState fallback once live game:state is required for rendering.
-    // The game page should not show preview state after the backend emits authoritative game states.
-    // TODO(nanborg): Show a clear waiting state while no live game:state has been received.
-    // TODO(nanborg): Render game:end with victory/defeat, final score, player stats, and navigation.
-    const renderedGameState = gameState;
+export function GamePage({ title, description, gameState, gameEntities, gameResult, socket, currentRoom, gameStarted, gameError, onLeaveGame }) {
+    // const renderedGameState = gameState;
     const hasRoom = Boolean(currentRoom);
-    const hasLiveGameState = Boolean(gameState);
+    const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
     const isGameReady = hasRoom && gameStarted;
+    const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
 
     usePlayerInput({
         socket,
@@ -28,6 +24,113 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
                     <p className="game-muted">Join or create a room before opening the game.</p>
                     <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
                         Go to lobby
+                    </button>
+                </div>
+            </>
+        );
+    }
+    if (gameError) {
+        return (
+            <>
+                <PageHeading title={title} description={description} />
+
+                <div className="game-panel">
+                    <h2>Game error</h2>
+                    <p className="room-error">{gameError}</p>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.location.hash = '#/room';
+                        }}
+                    >
+                        Back to room
+                    </button>
+                </div>
+            </>
+        );
+    }
+    if (gameResult) {
+        return (
+            <>
+                <PageHeading title={title} description={description} />
+
+                <div className="game-panel">
+                    <h2>
+                        {gameResult.win
+                            ? 'Mission completed'
+                            : 'Mission failed'}
+                    </h2>
+
+                    <div className="game-hud">
+                        <p>Reason: {gameResult.reason}</p>
+                        <p>
+                            Duration:{' '}
+                            {typeof gameResult.durationSeconds === 'number'
+                                ? `${gameResult.durationSeconds} seconds`
+                                : 'Unavailable'}
+                        </p>
+                    </div>
+
+                    <h3>Player statistics</h3>
+
+                    {playerStats.length > 0 ? (
+                        <table className="game-stats-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Deaths</th>
+                                    <th>Life</th>
+                                    <th>Connection</th>
+                                    <th>Melee</th>
+                                    <th>Ranged</th>
+                                    <th>Shield</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                 {playerStats.map((player) => (
+                                    <tr key={player.playerId}>
+                                        <td>{player.username ?? `Player ${player.playerId}`}</td>
+                                        <td>{player.deaths ?? 0}</td>
+                                        <td>{player.alive ? 'Alive' : 'Dead'}</td>
+                                        <td>
+                                            {player.disconnected
+                                                ? 'Disconnected'
+                                                : 'Connected'}
+                                        </td>
+                                        <td>
+                                            Level {player.upgrades?.melee ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.melee ?? 0} ticks
+                                        </td>
+                                        <td>
+                                            Level {player.upgrades?.ranged ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.ranged ?? 0} ticks
+                                        </td>
+                                        <td>
+                                            Level {player.upgrades?.shield ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.shield ?? 0} ticks
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="game-muted">
+                            No player statistics received.
+                        </p>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            window.location.hash = '#/room';
+                        }}
+                    >
+                        Back to room
                     </button>
                 </div>
             </>
@@ -67,7 +170,17 @@ export function GamePage({ title, description, gameState, socket, currentRoom, g
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
                 </div>
-                <GameCanvas gameState={renderedGameState} />
+                <GameCanvas
+                    // gameState={renderedGameState}
+                    gameEntities={gameEntities}
+                />
+                <button
+                    type="button"
+                    className="game-leave-button"
+                    onClick={onLeaveGame}
+                >
+                    Leave game
+                </button>
             </div>
         </>
     );
