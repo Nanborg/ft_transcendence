@@ -4,16 +4,11 @@ import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 
 export function GamePage({ title, description, gameState, gameEntities, gameResult, socket, currentRoom, gameStarted, gameError, onLeaveGame }) {
-    //Nanborg
-    // TODO(nanborg): Remove the mockGameState fallback once live game:state is required for rendering.
-    // The game page should not show preview state after the backend emits authoritative game states.
-    // TODO(nanborg): Show a clear waiting state while no live game:state has been received.
-    // TODO(nanborg): Render game:end with victory/defeat, final score, player stats, and navigation.
-    const renderedGameState = gameState;
+    // const renderedGameState = gameState;
     const hasRoom = Boolean(currentRoom);
-    const hasLiveGameState = Boolean(gameState) || (Array.isArray(gameEntities) && gameEntities.length > 0);
+    const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
     const isGameReady = hasRoom && gameStarted;
-    const playerStats = Array.isArray(gameResult?.players) ? gameResult.players : [];
+    const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
 
     usePlayerInput({
         socket,
@@ -62,7 +57,7 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
 
                 <div className="game-panel">
                     <h2>
-                        {gameResult.victory
+                        {gameResult.win
                             ? 'Mission completed'
                             : 'Mission failed'}
                     </h2>
@@ -71,21 +66,11 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                         <p>Reason: {gameResult.reason}</p>
                         <p>
                             Duration:{' '}
-                            {typeof gameResult.durationMs === 'number'
-                                ? `${Math.round(gameResult.durationMs / 1000)} seconds`
+                            {typeof gameResult.durationSeconds === 'number'
+                                ? `${gameResult.durationSeconds} seconds`
                                 : 'Unavailable'}
                         </p>
                     </div>
-
-                    {gameResult.score && (
-                        <div className="game-hud">
-                            <p>Team score: {gameResult.score.team}</p>
-                            <p>Kills: {gameResult.score.kills}</p>
-                            <p>
-                                Resources: {gameResult.score.resources}
-                            </p>
-                        </div>
-                    )}
 
                     <h3>Player statistics</h3>
 
@@ -94,32 +79,41 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                             <thead>
                                 <tr>
                                     <th>Player</th>
-                                    <th>Score</th>
-                                    <th>Kills</th>
                                     <th>Deaths</th>
-                                    <th>Damage</th>
-                                    <th>Resources</th>
-                                    <th>State</th>
+                                    <th>Life</th>
+                                    <th>Connection</th>
+                                    <th>Melee</th>
+                                    <th>Ranged</th>
+                                    <th>Shield</th>
                                 </tr>
                             </thead>
 
                             <tbody>
-                                {playerStats.map((player) => (
-                                    <tr
-                                        key={
-                                            player.id ??
-                                            player.enginePlayerId
-                                        }
-                                    >
-                                        <td>{player.username}</td>
-                                        <td>{player.score}</td>
-                                        <td>{player.kills}</td>
-                                        <td>{player.deaths}</td>
-                                        <td>{player.damageDone}</td>
+                                 {playerStats.map((player) => (
+                                    <tr key={player.playerId}>
+                                        <td>{player.username ?? `Player ${player.playerId}`}</td>
+                                        <td>{player.deaths ?? 0}</td>
+                                        <td>{player.alive ? 'Alive' : 'Dead'}</td>
                                         <td>
-                                            {player.resourcesCollected}
+                                            {player.disconnected
+                                                ? 'Disconnected'
+                                                : 'Connected'}
                                         </td>
-                                        <td>{player.state}</td>
+                                        <td>
+                                            Level {player.upgrades?.melee ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.melee ?? 0} ticks
+                                        </td>
+                                        <td>
+                                            Level {player.upgrades?.ranged ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.ranged ?? 0} ticks
+                                        </td>
+                                        <td>
+                                            Level {player.upgrades?.shield ?? 0}
+                                            {' / '}
+                                            {player.cooldowns?.shield ?? 0} ticks
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -177,7 +171,7 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
                 </div>
                 <GameCanvas
-                    gameState={renderedGameState}
+                    // gameState={renderedGameState}
                     gameEntities={gameEntities}
                 />
                 <button

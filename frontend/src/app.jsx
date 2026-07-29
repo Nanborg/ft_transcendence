@@ -301,7 +301,7 @@ function App() {
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
-              gameState={room.latestGameState}
+              // gameState={room.latestGameState}
               gameEntities={room.gameEntities}
               gameError={room.gameError}
               gameResult={room.gameResult}

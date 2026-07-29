@@ -7,11 +7,22 @@ const { gameEngineService } = require("../services/gameEngineService");
 // invalid payloads, disconnects, and multi-room isolation.
 // These tests should cover create, join, ready, start, input, state, end,
 // leave, reconnect, and room deletion.
+function normalizeEngineEntity(entity)
+{
+	const normalizedEntity = {
+		...entity,
+	};
+	if (typeof normalizedEntity.typeId !== "number" && typeof normalizedEntity.entityTypeId === "number")
+		normalizedEntity.typeId = normalizedEntity.entityTypeId;
+	delete normalizedEntity.entityTypeId;
+	return normalizedEntity;
+}
 module.exports = (io) => {
 	gameEngineService.on("entityUpdate", (message) => {
+		const roomId = message?.roomId ?? message?.room;
 		if (
 			!message ||
-			typeof message.room !== "string" ||
+			typeof roomId !== "string" ||
 			typeof message.entity !== "object" ||
 			message.entity === null
 		) {
@@ -21,46 +32,56 @@ module.exports = (io) => {
 			);
 			return;
 		}
-		io.to(message.room).emit("game:entity:update", {
-			roomId: message.room,
+		const entity = normalizeEngineEntity(message.entity);
+		gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
+		io.to(roomId).emit("game:state:update", {
+			roomId,
 			tick: message.tick,
-			entity: message.entity,
-			timestamp: Date.now(),
+			end: false,
+			entityUpdate: [ entity ],
+			entityDelete: [],
+			playerData: [],
 		});
 	});
-	gameEngineService.on("gameState", (message) => {
-		if (!message || typeof message.room !== "string" || typeof message.state !== "object" || message.state === null)
-		{
-			console.error("Invalid gameState received from game engine:", message);
-			return;
-		}
-		io.to(message.room).emit("game:state", {
-			roomId: message.room,
-			tick: message.tick,
-			state: message.state,
-			timestamp: Date.now(),
-		});
-	});
+	// gameEngineService.on("gameState", (message) => {
+	// 	if (!message || typeof message.room !== "string" || typeof message.state !== "object" || message.state === null)
+	// 	{
+	// 		console.error("Invalid gameState received from game engine:", message);
+	// 		return;
+	// 	}
+	// 	io.to(message.room).emit("game:state", {
+	// 		roomId: message.room,
+	// 		tick: message.tick,
+	// 		state: message.state,
+	// 		timestamp: Date.now(),
+	// 	});
+	// });
 	gameEngineService.on("gameEnd", async (message) => {
-		if (!message || typeof message.room !== "string" || typeof message.reason !== "string")
+		const roomId = message?.roomId ?? message?.room;
+		if (!message || typeof roomId !== "string" || typeof message.reason !== "string")
 		{
 			console.error("Invalid gameEnd received from game engine:", message);
 			return;
 		}
-		const roomId = message.room;
+		const snapshot = gameEngineService.getStateSnapshot(roomId);
+		const endedAt = Date.now();
+		const serverStartedAt = snapshot?.serverStartedAt;
+		const durationSeconds = typeof serverStartedAt === "number" ? Math.max(0, Math.floor((endedAt - serverStartedAt) / 1000)) : 0;
+		const entities = Array.isArray(message.entities) ? message.entities.map(normalizeEngineEntity) : snapshot?.entities ?? [];
+		const playerData = Array.isArray(message.playerData) ? message.playerData : snapshot?.playerData ?? [];
+		const tick = typeof message.tick === "number" ? message.tick : snapshot?.tick ?? 0;
+		const win = typeof message.win === "boolean" ? message.win : message.victory === true;
 		try{
 			const room = await resetGameStart(roomId);
 			io.to(roomId).emit("game:end", {
 				roomId,
-				status: "ended",
-				tick: message.tick,
-				durationMs: message.durationMs,
-				victory: message.victory,
+				tick,
+				durationSeconds,
+				end: true,
+				win,
 				reason: message.reason,
-				score: message.score ?? null,
-				players: Array.isArray(message.players) ? message.players : [],
-				finalState: message.finalState ?? null,
-				timestamp: Date.now(),
+				entities,
+				playerData,
 			});
 			io.to(roomId).emit("room:update", room);
 		} catch (error) {
@@ -69,7 +90,6 @@ module.exports = (io) => {
 				roomId,
 				code: "GAME_END_PROCESSING_FAILED",
 				message: "Unable to complete the game end",
-				timestamp: Date.now(),
 			});
 		} finally {
 			try {
@@ -80,11 +100,13 @@ module.exports = (io) => {
 		}
 	});
 	gameEngineService.on("entityDelete", (message) => {
+		const roomId = message?.roomId ?? message?.room;
 		if (
 			!message ||
-			typeof message.room !== "string" ||
+			typeof roomId !== "string" ||
 			typeof message.entity !== "object" ||
-			message.entity === null
+			message.entity === null ||
+			typeof message.entity.entityId !== "number"
 		) {
 			console.error(
 				"Invalid entityDelete received from game engine:",
@@ -92,11 +114,14 @@ module.exports = (io) => {
 			);
 			return;
 		}
-		io.to(message.room).emit("game:entity:delete", {
-			roomId: message.room,
+		gameEngineService.cacheEntityDelete(roomId, message.entity.entityId, message.tick);
+		io.to(roomId).emit("game:state:update", {
+			roomId,
 			tick: message.tick,
-			entity: message.entity,
-			timestamp: Date.now(),
+			end: false,
+			entityUpdate: [],
+			entityDelete: [{ entityId: message.entity.entityId }],
+			playerData: [],
 		});
 	});
 	io.on("connection", async (socket) => {
@@ -206,11 +231,55 @@ module.exports = (io) => {
 					enginePlayers: engineSession.players,
 					timestamp: Date.now(),
 				});
+				const initialState = gameEngineService.getStateSnapshot(roomId);
+				if (initialState)
+					io.to(roomId).emit("game:state:init", initialState);
 				console.log(`game starting in room ${room.id}`);
 			} catch (error) {
 				socket.emit("room:error", {
 					event: "game:start",
 					message: error.message,
+				});
+			}
+		});
+
+		socket.on("game:resync", async (payload) => {
+			if (!payload || typeof payload.roomId !== "string")
+			{
+				socket.emit("game:error", {
+					roomId: payload?.roomId ?? "",
+					code: "INVALID_PAYLOAD",
+					message: "Invalid game resync payload",
+				});
+				return;
+			}
+			const { roomId } = payload;
+			try {
+				const player = await getPlayerInRoom(roomId, socket.user.id);
+				if (!player) {
+					socket.emit("game:error", {
+						roomId,
+						code: "PLAYER_NOT_IN_ROOM",
+						message: "Player is not in room",
+					});
+					return;
+				}
+				const snapshot = gameEngineService.getStateSnapshot(roomId);
+				if (!snapshot) {
+					socket.emit("game:error", {
+						roomId,
+						code: "GAME_NOT_RUNNING",
+						message: "Game is not running",
+					});
+					return;
+				}
+				socket.emit("game:state:init", snapshot);
+			} catch (error) {
+				console.error(`Unable to resync game state for room ${roomId}:`, error);
+				socket.emit("game:error", {
+					roomId,
+					code: "GAME_RESYNC_FAILED",
+					message: "Unable to resync game state",
 				});
 			}
 		});
