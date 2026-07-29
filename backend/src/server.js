@@ -41,6 +41,23 @@ app.use("/token", tokenRoutes);
 app.use('/friends', friendsRouter);
 app.use('/scores', scoresRoutes);
 
+const { mapConv } = require('./game/mapConv.js');
+
+// const { execSync } = require('child_process');
+// console.log(execSync(`ls -R "${__dirname}"`).toString());
+
+try {
+	const result = mapConv("/app/src/game/maps/1_map_50_50_10_1_55.txt", "room-123456789");
+	console.log(result);
+}
+catch (err)
+{
+	console.error(err);
+	console.error(err.cause);
+}
+
+
+
 function shutdown(signal) {
     console.log(`${signal} received, shutting down`);
     gameEngineService.close();
