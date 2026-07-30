@@ -6,17 +6,18 @@ const { mapConv } = require("../game/mapConv");
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
 const ENGINE_INPUT_TYPE = Object.freeze({
-    PING: 0,
-    JOIN: 1,
-    LEAVE: 2,
-    MOVE: 3,
-    BUILD: 4,
-    DELETE: 5,
+    ROOM_CREATE: 0,
+    ROOM_DESTROY: 1,
+    ROOM_START: 2,
+    ROOM_STOP: 3,
 
-    ROOM_CREATE: 6,
-    ROOM_DESTROY: 7,
-    ROOM_START: 8,
-    ROOM_STOP: 9,
+    PING: 100,
+    SYNC: 101,
+
+    JOIN: 110,
+    LEAVE: 111,
+    MOVE: 112,
+    ACTION: 113,
 });
 
 class GameEngineService extends EventEmitter {
