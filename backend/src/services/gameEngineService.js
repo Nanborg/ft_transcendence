@@ -20,6 +20,13 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     ACTION: 113,
 });
 
+const PLAYER_ACTION = Object.freeze({
+    NONE: 0,
+    MELEE: 1,
+    RANGED: 2,
+    SHIELD: 3,
+});
+
 class GameEngineService extends EventEmitter {
     constructor({
         host = DEFAULT_ENGINE_HOST,
@@ -176,6 +183,20 @@ class GameEngineService extends EventEmitter {
         });
     }
 
+    sendPlayerAction(roomId, userId, action) {
+        const enginePlayerId = this.getEnginePlayerId(roomId, userId);
+        if (enginePlayerId === null)
+            throw new Error("Engine player mapping not found");
+        if (!Object.values(PLAYER_ACTION).includes(action))
+            throw new TypeError("Invalid player action");
+        return this.send({
+            type: ENGINE_INPUT_TYPE.ACTION,
+            roomId,
+            playerId: enginePlayerId,
+            action,
+        });
+    }
+
     async startGame(room) {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
@@ -329,6 +350,8 @@ class GameEngineService extends EventEmitter {
 const gameEngineService = new GameEngineService();
 
 module.exports = {
+    ENGINE_INPUT_TYPE,
+    PLAYER_ACTION,
     GameEngineService,
     gameEngineService,
 };

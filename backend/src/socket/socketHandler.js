@@ -1,6 +1,6 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
-const { gameEngineService } = require("../services/gameEngineService");
+const { gameEngineService, PLAYER_ACTION } = require("../services/gameEngineService");
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
@@ -289,7 +289,8 @@ module.exports = (io) => {
 				!payload ||
 				typeof payload.roomId !== "string" ||
 				typeof payload.input !== "object" ||
-				payload.input === null
+				payload.input === null ||
+				Array.isArray(payload.input)
 			) {
 				socket.emit("room:error", {
 					event: "player:input",
@@ -299,16 +300,45 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId, input } = payload;
-				const validKeys = ["up", "down", "left", "right", "action"];
-				const hasInvalidKey = Object.keys(input).some((key) => !validKeys.includes(key));
-				if (hasInvalidKey) {
+				const movementKeys = ["up", "down", "left", "right"];
+				const validKeys = [...movementKeys, "action"];
+				const inputKeys = Object.keys(input);
+				const hasMovement = movementKeys.some((key) => Object.hasOwn(input, key));
+				const hasAction = Object.hasOwn(input, "action");
+				const hasInvalidKey = inputKeys.some((key) => !validKeys.includes(key));
+				const hasInvalidMovement = hasMovement && movementKeys.some((key) => typeof input[key] !== "boolean");
+				const normalizedAction =
+					typeof input.action === "boolean"
+						? input.action
+							? PLAYER_ACTION.MELEE
+							: PLAYER_ACTION.NONE
+						: input.action;
+				const hasInvalidAction = hasAction && !Object.values(PLAYER_ACTION).includes(normalizedAction);
+				if (
+					inputKeys.length === 0 ||
+					(!hasMovement && !hasAction) ||
+					hasInvalidKey ||
+					hasInvalidMovement ||
+					hasInvalidAction
+				) {
 					socket.emit("room:error", {
 						event: "player:input",
 						message: "Invalid input",
 					});
 					return;
 				}
-				const { room, error } = await setPlayerInput(roomId, socket.user.id, input);
+				const normalizedInput = {
+					...(hasMovement && {
+						up: input.up,
+						down: input.down,
+						left: input.left,
+						right: input.right,
+					}),
+					...(hasAction && {
+						action: normalizedAction,
+					}),
+				};
+				const { error } = await setPlayerInput(roomId, socket.user.id, normalizedInput);
 				if (error) {
 					socket.emit("room:error", {
 						event: "player:input",
@@ -317,11 +347,20 @@ module.exports = (io) => {
 					return;
 				}
 				try {
-					await gameEngineService.sendPlayerInput(
-						roomId,
-						socket.user.id,
-						input
-					);
+					if (hasMovement) {
+						await gameEngineService.sendPlayerInput(
+							roomId,
+							socket.user.id,
+							normalizedInput
+						);
+					}
+					if (hasAction) {
+						await gameEngineService.sendPlayerAction(
+							roomId,
+							socket.user.id,
+							normalizedAction
+						);
+					}
 				} catch (error) {
 					console.error("Unable to send player input to game engine:", error);
 					socket.emit("room:error", {
@@ -332,13 +371,7 @@ module.exports = (io) => {
 				}
 				io.to(roomId).emit("player:input", {
 					playerId: socket.user.id,
-					input: {
-						up: input.up === true,
-						down: input.down === true,
-						left: input.left === true,
-						right: input.right === true,
-						action: input.action === true,
-					},
+					input: normalizedInput,
 					timestamp: Date.now(),
 				});
 			} catch (error) {
