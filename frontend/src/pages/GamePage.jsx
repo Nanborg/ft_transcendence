@@ -1,19 +1,103 @@
-//import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
 import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
+import { useEffect, useState } from 'react';
 
-export function GamePage({ title, description, gameState, gameEntities, gameResult, socket, currentRoom, gameStarted, gameError, onLeaveGame }) {
-    // const renderedGameState = gameState;
+function formatDuration(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function useGameTimer(startedAt, enabled) {
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    useEffect(() => {
+        if (!enabled || typeof startedAt !== 'number')
+        {
+            setElapsedSeconds(0);
+            return undefined;
+        }
+        function updateTimer() {
+            setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+        }
+        updateTimer();
+        const intervalId = window.setInterval(updateTimer, 250);
+        return () => { window.clearInterval(intervalId); };
+    }, [startedAt, enabled]);
+    return elapsedSeconds;
+}
+
+export function GamePage({
+    title,
+    description,
+    currentPlayerId,
+    gameMap,
+    gameEntities,
+    gameStartedAt,
+    gamePlayerData,
+    gameResult,
+    socket,
+    currentRoom,
+    gameStarted,
+    gameError,
+    onLeaveGame
+}) {
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
     const isGameReady = hasRoom && gameStarted;
+    const elapsedSeconds = useGameTimer(gameStartedAt, isGameReady);
     const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
+    const currentPlayer = Array.isArray(gamePlayerData)
+        ? gamePlayerData.find(player =>
+            String(player.playerId) === String(currentPlayerId)
+        )
+        : null;
+    const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
+    const [pendingUpgrade, setPendingUpgrade] = useState(null);
+    const [checkpointError, setCheckpointError] = useState('');
+
+    useEffect(() => {
+        if (!socket)
+            return undefined;
+        function handleCheckpointError(payload) {
+            if (
+                payload?.roomId &&
+                payload.roomId !== currentRoom?.id
+            )
+                return;
+            setPendingUpgrade(null);
+            setCheckpointError(
+                payload?.message || 'Unable to apply upgrade'
+            );
+        }
+        socket.on('checkpoint:error', handleCheckpointError);
+        return () => {
+            socket.off('checkpoint:error', handleCheckpointError);
+        };
+    }, [socket, currentRoom?.id]);
+
+    useEffect(() => {
+        if (!isAtCheckpoint) {
+            setPendingUpgrade(null);
+            setCheckpointError('');
+        }
+    }, [isAtCheckpoint]);
+
+    function selectCheckpointUpgrade(upgrade) {
+        if (!socket || !currentRoom || !isAtCheckpoint || pendingUpgrade)
+            return;
+        setPendingUpgrade(upgrade);
+        setCheckpointError('');
+        socket.emit('checkpoint:upgrade', {
+            roomId: currentRoom.id,
+            upgrade,
+        });
+    }
 
     usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady,
+        enabled: isGameReady && !isAtCheckpoint,
     });
     if (!hasRoom) {
         return (
@@ -80,6 +164,8 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                                 <tr>
                                     <th>Player</th>
                                     <th>Deaths</th>
+                                    <th>Damage dealt</th>
+                                    <th>Damage received</th>
                                     <th>Life</th>
                                     <th>Connection</th>
                                     <th>Melee</th>
@@ -93,6 +179,8 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                                     <tr key={player.playerId}>
                                         <td>{player.username ?? `Player ${player.playerId}`}</td>
                                         <td>{player.deaths ?? 0}</td>
+                                        <td>{player.damageDealt ?? 0}</td>
+                                        <td>{player.damageReceived ?? 0}</td>
                                         <td>{player.alive ? 'Alive' : 'Dead'}</td>
                                         <td>
                                             {player.disconnected
@@ -169,11 +257,71 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                 <div className="game-hud">
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
+                    <p>Time: {formatDuration(elapsedSeconds)}</p>
                 </div>
                 <GameCanvas
-                    // gameState={renderedGameState}
+                    currentPlayerId={currentPlayerId}
+                    gameMap={gameMap}
                     gameEntities={gameEntities}
+                    gamePlayerData={gamePlayerData}
                 />
+                {isAtCheckpoint && (
+                    <section
+                        className="checkpoint-upgrade"
+                        aria-labelledby="checkpoint-upgrade-title"
+                    >
+                        <h2 id="checkpoint-upgrade-title">
+                            Choose an upgrade
+                        </h2>
+                        <p>
+                            Select one ability to improve before continuing.
+                        </p>
+                        <div className="checkpoint-upgrade-list">
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('melee')}
+                            >
+                                <strong>Melee</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.melee ?? 0}
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('ranged')}
+                            >
+                                <strong>Ranged</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.ranged ?? 0}
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('shield')}
+                            >
+                                <strong>Shield</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.shield ?? 0}
+                                </span>
+                            </button>
+                        </div>
+
+                        {pendingUpgrade && (
+                            <p>
+                                Applying {pendingUpgrade} upgrade…
+                            </p>
+                        )}
+
+                        {checkpointError && (
+                            <p className="room-error">
+                                {checkpointError}
+                            </p>
+                        )}
+                    </section>
+                )}
                 <button
                     type="button"
                     className="game-leave-button"

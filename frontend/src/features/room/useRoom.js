@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react';
 
 /*
 function getPlayerName(currentUser) {
@@ -22,20 +22,31 @@ export function useRoom(socket, currentUser) {
     const [roomNameInput, setRoomNameInput] = useState('');
     const [gamePlayerData, setGamePlayerData] = useState([]);
     const [gameStartedAt, setGameStartedAt] = useState(null);
+    const [gameMap, setGameMap] = useState(null);
+    const currentRoomIdRef = useRef(null);
 
     useEffect(() => {
         if (!socket) {
             return undefined;
         }
 
-        function handleRoomCreated(room) {
+        function setActiveRoom(room) {
+            currentRoomIdRef.current = room?.id ?? null;
             setCurrentRoom(room);
+        }
+
+        function isCurrentRoomPayload(payload) {
+            return (payload && typeof payload.roomId === 'string' && payload.roomId === currentRoomIdRef.current);
+        }
+
+        function handleRoomCreated(room) {
+            setActiveRoom(room);
             setRoomStatus('joined');
             setRoomError('');
         }
 
         function handleRoomUpdate(room) {
-            setCurrentRoom(room);
+            setActiveRoom(room);
             setRoomStatus('joined');
             setRoomError('');
         }
@@ -51,12 +62,10 @@ export function useRoom(socket, currentUser) {
                 chatMessage,
             ]);
         }
-        //Nanborg
-        // TODO(nanborg): Keep game:state as the server-authoritative state
-        // after game:start; GamePage should render it instead of mockGameState.
-        // TODO(nanborg): Listen to game:end and store the final result for the
-        // post-game screen.
+
         function handleGameStart(gameStartPayload) {
+            if (!isCurrentRoomPayload(gameStartPayload))
+                return;
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
             // setLatestGameState(null);
@@ -67,6 +76,7 @@ export function useRoom(socket, currentUser) {
             setGameResult(null);
             setRoomStatus('started');
             setRoomError('');
+            setGameMap(null);
             window.location.hash = '#/game';
         }
 
@@ -83,7 +93,10 @@ export function useRoom(socket, currentUser) {
                 console.error('Invalid game:state:init payload:', gameStateInitPayload);
                 return;
             }
+            if (!isCurrentRoomPayload(gameStateInitPayload))
+                return;
             setGameStarted(true);
+            setGameMap(gameStateInitPayload.map ?? null);
             setGameEntities(gameStateInitPayload.entities);
             setGamePlayerData(gameStateInitPayload.playerData);
             setGameStartedAt(gameStateInitPayload.serverStartedAt);
@@ -107,7 +120,8 @@ export function useRoom(socket, currentUser) {
                 console.error('Invalid game:state:update payload:', gameStateUpdatePayload);
                 return;
             }
-
+            if (!isCurrentRoomPayload(gameStateUpdatePayload))
+                return;
             setGameEntities(previousEntities => {
                 const updateEntities = new Map(
                     previousEntities.map(entity => [
@@ -116,8 +130,17 @@ export function useRoom(socket, currentUser) {
                     ])
                 );
                 gameStateUpdatePayload.entityUpdate.forEach(entity => {
-                    if (entity && typeof entity.entityId === 'number')
-                        updateEntities.set(entity.entityId, entity);
+                    if (!entity || typeof entity.entityId !== 'number')
+                        return;
+                    const previousEntity = updateEntities.get(entity.entityId);
+                    updateEntities.set(entity.entityId, {
+                        ...previousEntity,
+                        ...entity,
+                        state: {
+                            ...previousEntity?.state,
+                            ...entity.state,
+                        },
+                    });
                 });
                 gameStateUpdatePayload.entityDelete.forEach(entity => {
                     if (entity && typeof entity.entityId === 'number')
@@ -125,7 +148,34 @@ export function useRoom(socket, currentUser) {
                 });
                 return Array.from(updateEntities.values());
             });
-            setGamePlayerData(gameStateUpdatePayload.playerData);
+            if (gameStateUpdatePayload.playerData.length > 0) {
+                setGamePlayerData(previousPlayers => {
+                    const playersById = new Map(
+                        previousPlayers.map(player => [
+                            player.playerId,
+                            player,
+                        ])
+                    );
+                    gameStateUpdatePayload.playerData.forEach(player => {
+                        if (!player || typeof player.playerId !== 'number')
+                            return;
+                        const previousPlayer = playersById.get(player.playerId);
+                        playersById.set(player.playerId, {
+                            ...previousPlayer,
+                            ...player,
+                            upgrades: {
+                                ...previousPlayer?.upgrades,
+                                ...player.upgrades,
+                            },
+                            cooldowns: {
+                                ...previousPlayer?.cooldowns,
+                                ...player.cooldowns,
+                            },
+                        });
+                    });
+                    return Array.from(playersById.values());
+                });
+            }
         }
 
         // function handleGameState(gameStatePayload) {
@@ -144,12 +194,16 @@ export function useRoom(socket, currentUser) {
                 console.error('Invalid game:error payload:', gameErrorPayload);
                 return;
             }
+            if (!isCurrentRoomPayload(gameErrorPayload))
+                return;
             setGameStarted(false);
             setGameError(gameErrorPayload.message);
             setRoomStatus('error');
         }
 
-        function handleRoomRemoved() {
+        function handleRoomRemoved(payload) {
+            if (!isCurrentRoomPayload(payload))
+                return;
             resetRoom();
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
@@ -163,6 +217,8 @@ export function useRoom(socket, currentUser) {
                 console.error("Invalid game:end payload:", gameEndPayload);
                 return;
             }
+            if (!isCurrentRoomPayload(gameEndPayload))
+                return;
             setGameStarted(false);
             setGameStartInfo(null);
             // setLatestGameState(null);
@@ -253,6 +309,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function resetRoom() {
+        currentRoomIdRef.current = null;
         setCurrentRoom(null);
         setRoomStatus('idle');
         setRoomError('');
@@ -268,6 +325,7 @@ export function useRoom(socket, currentUser) {
         setGamePlayerData([]);
         setGameStartedAt(null);
         setGameResult(null);
+        setGameMap(null);
     }
 
     function leaveRoom() {
@@ -348,6 +406,7 @@ export function useRoom(socket, currentUser) {
         roomNameInput,
         setRoomNameInput,
         gameResult,
+        gameMap,
         gameEntities,
         gameError,
         leaveGame,

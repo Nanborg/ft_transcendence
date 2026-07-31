@@ -301,8 +301,11 @@ function App() {
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
-              // gameState={room.latestGameState}
+              currentPlayerId={currentUser?.id}
+              gameMap={room.gameMap}
               gameEntities={room.gameEntities}
+              gameStartedAt={room.gameStartedAt}
+              gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
