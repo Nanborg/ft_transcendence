@@ -250,9 +250,9 @@ export function GamePage({
         );
     }
     return (
-        <>
+        <div className="game-overlay">
             <PageHeading title={title} description={description} />
-            <div className="game-panel">
+            <div className="game-panel game-overlay-panel">
                 <div className="game-hud">
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
@@ -331,6 +331,6 @@ export function GamePage({
                     Leave game
                 </button>
             </div>
-        </>
+        </div>
     );
 }

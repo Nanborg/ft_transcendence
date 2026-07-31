@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { ENTITY_TYPE } from './gameProtocol';
 
-const CANVAS_WIDTH = 800;
-const MIN_CANVAS_HEIGHT = 450;
-const MAX_CANVAS_HEIGHT = 800;
-const VIEW_WIDTH_IN_TILES = 20;
+const CANVAS_WIDTH = 960;
+const MIN_CANVAS_HEIGHT = 540;
+const MAX_CANVAS_HEIGHT = 720;
+const VIEW_WIDTH_IN_TILES = 18;
 const INTERPOLATION_DURATION_MS = 100;
 
 function getInterpolatedPosition(track, now) {
