@@ -21,6 +21,6 @@ bool	PlayerEntity::tick( void ) {
 
 void PlayerEntity::movementInput( int velX, int velY ) {
 	_receivedInput = true;
-	_velX = velX;
-	_velY = velY;
+	_velX = velX * g_game->getScale();
+	_velY = velY * g_game->getScale();
 }
