@@ -10,7 +10,7 @@ AbstractHitboxEntity::~AbstractHitboxEntity( void ) {}
 bool	AbstractHitboxEntity::_templateTick( void ) {
 	_health--;
 	_posX += _velX;
-	_posY = _velY;
+	_posY += _velY;
 	return false;
 }
 
