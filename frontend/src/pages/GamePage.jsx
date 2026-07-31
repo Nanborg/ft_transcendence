@@ -1,10 +1,21 @@
-//import { GameCanvas, mockGameState } from "../features/game/GameCanvas";
 import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 
-export function GamePage({ title, description, gameState, gameEntities, gameResult, socket, currentRoom, gameStarted, gameError, onLeaveGame }) {
-    // const renderedGameState = gameState;
+export function GamePage({
+    title,
+    description,
+    currentPlayerId,
+    gameMap,
+    gameEntities,
+    gamePlayerData,
+    gameResult,
+    socket,
+    currentRoom,
+    gameStarted,
+    gameError,
+    onLeaveGame
+}) {
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
     const isGameReady = hasRoom && gameStarted;
@@ -171,8 +182,10 @@ export function GamePage({ title, description, gameState, gameEntities, gameResu
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
                 </div>
                 <GameCanvas
-                    // gameState={renderedGameState}
+                    currentPlayerId={currentPlayerId}
+                    gameMap={gameMap}
                     gameEntities={gameEntities}
+                    gamePlayerData={gamePlayerData}
                 />
                 <button
                     type="button"
