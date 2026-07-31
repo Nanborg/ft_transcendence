@@ -1,6 +1,31 @@
 import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
+import { useEffect, useState } from 'react';
+
+function formatDuration(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function useGameTimer(startedAt, enabled) {
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    useEffect(() => {
+        if (!enabled || typeof startedAt !== 'number')
+        {
+            setElapsedSeconds(0);
+            return undefined;
+        }
+        function updateTimer() {
+            setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
+        }
+        updateTimer();
+        const intervalId = window.setInterval(updateTimer, 250);
+        return () => { window.clearInterval(intervalId); };
+    }, [startedAt, enabled]);
+    return elapsedSeconds;
+}
 
 export function GamePage({
     title,
@@ -8,6 +33,7 @@ export function GamePage({
     currentPlayerId,
     gameMap,
     gameEntities,
+    gameStartedAt,
     gamePlayerData,
     gameResult,
     socket,
@@ -19,6 +45,7 @@ export function GamePage({
     const hasRoom = Boolean(currentRoom);
     const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
     const isGameReady = hasRoom && gameStarted;
+    const elapsedSeconds = useGameTimer(gameStartedAt, isGameReady);
     const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
 
     usePlayerInput({
@@ -91,6 +118,8 @@ export function GamePage({
                                 <tr>
                                     <th>Player</th>
                                     <th>Deaths</th>
+                                    <th>Damage dealt</th>
+                                    <th>Damage received</th>
                                     <th>Life</th>
                                     <th>Connection</th>
                                     <th>Melee</th>
@@ -104,6 +133,8 @@ export function GamePage({
                                     <tr key={player.playerId}>
                                         <td>{player.username ?? `Player ${player.playerId}`}</td>
                                         <td>{player.deaths ?? 0}</td>
+                                        <td>{player.damageDealt ?? 0}</td>
+                                        <td>{player.damageReceived ?? 0}</td>
                                         <td>{player.alive ? 'Alive' : 'Dead'}</td>
                                         <td>
                                             {player.disconnected
@@ -180,6 +211,7 @@ export function GamePage({
                 <div className="game-hud">
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
+                    <p>Time: {formatDuration(elapsedSeconds)}</p>
                 </div>
                 <GameCanvas
                     currentPlayerId={currentPlayerId}

@@ -304,6 +304,7 @@ function App() {
               currentPlayerId={currentUser?.id}
               gameMap={room.gameMap}
               gameEntities={room.gameEntities}
+              gameStartedAt={room.gameStartedAt}
               gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}
               gameResult={room.gameResult}
