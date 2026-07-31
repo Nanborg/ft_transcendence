@@ -2,6 +2,8 @@ require("dotenv").config();
 console.log("ACCESS_SECRET_TOKEN loaded:", !!process.env.ACCESS_SECRET_TOKEN);
 console.log("REFRESH_SECRET_TOKEN loaded:", !!process.env.REFRESH_SECRET_TOKEN);
 
+console.log("OAUTH42_CLIENT_ID loaded:", !!process.env.OAUTH42_CLIENT_ID);
+console.log("OAUTH42_CLIENT_SECRET loaded:", !!process.env.OAUTH42_CLIENT_SECRET);
 
 const express = require("express");
 const http = require("http");
@@ -25,7 +27,7 @@ const healthRoutes = require("./routes/health");
 const usersRoutes = require("./routes/users")
 const loginRoutes = require("./routes/login")
 const logoutRoutes = require("./routes/logout")
-const signinRoutes = require("./routes/signin")
+const registerRoutes = require("./routes/register")
 const scoresRoutes = require("./routes/scores")
 const tokenRoutes = require("./routes/token");
 
@@ -33,11 +35,28 @@ const tokenRoutes = require("./routes/token");
 app.use("/health", healthRoutes);
 app.use("/login", loginRoutes);
 app.use("/logout", logoutRoutes);
-app.use("/signin", signinRoutes);
+app.use("/register", registerRoutes);
 app.use("/users", usersRoutes);
 app.use("/token", tokenRoutes);
 app.use('/friends', friendsRouter);
 app.use('/scores', scoresRoutes);
+
+const { mapConv } = require('./game/mapConv.js');
+
+// const { execSync } = require('child_process');
+// console.log(execSync(`ls -R "${__dirname}"`).toString());
+
+try {
+	const result = mapConv("/app/src/game/maps/1_map_50_50_10_5_54.txt", "room-123456789");
+	console.log(result);
+}
+catch (err)
+{
+	console.error(err);
+	console.error(err.cause);
+}
+
+
 
 function shutdown(signal) {
     console.log(`${signal} received, shutting down`);

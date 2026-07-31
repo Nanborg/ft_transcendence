@@ -11,6 +11,9 @@ export function DevLoginForm({
   onEmailChange,
   onRegister,
 }) {
+  function handleFortyTwoLogin() {
+    window.location.href = '/api/login/42';
+  }
   return (
     <form className="login-form" onSubmit={authMode === 'register' ? onRegister : onSubmit}>
       <label htmlFor="dev-user-name">Username</label>
@@ -46,7 +49,11 @@ export function DevLoginForm({
       >
         {authMode === 'login' ? 'Create account' : 'Back to login'}
       </button>
-
+      {authMode === 'login' && (
+        <button type="button" onClick={handleFortyTwoLogin}>
+          Login with 42
+        </button>
+      )}
       <button type="submit" disabled={authStatus === 'loading'}>
         {authStatus === 'loading' ? 'Loading...' : authMode === 'register' ? 'Create account' : 'Login'}
       </button>

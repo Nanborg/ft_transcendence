@@ -3,8 +3,50 @@ const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
 
-// TODO(yaoberso): Ensure history and leaderboard only read server-saved
-// GameRun/PlayerRunStats rows created from a validated game:end result.
+function formatHistoryData(rawGames) {
+  return rawGames.map(game => {
+    return {
+      gameRunId: game.id,
+      roomId: game.roomId,
+      result: game.abandoned ? "abandoned" : game.won ? "won" : "lost",
+      durationSeconds: game.durationSeconds,
+      createdAt: new Date(game.createdAt).getTime(),
+      players: game.stats.map(stat => {
+        return {
+          playerId: stat.userId,
+          username: stat.user.username,
+          deaths: stat.deaths,
+          damageDealt: stat.damageDealt,
+          damageReceived: stat.damageReceived,
+          upgrades: {
+            melee: stat.upgrade1,
+            ranged: stat.upgrade2,
+            shield: stat.upgrade3
+          }
+        };
+      })
+    };
+  });
+}
+
+function formatLeaderboardData(rawGames) {
+  return rawGames.map((game, index) => {
+    return {
+      rank: index + 1,
+      gameRunId: game.id,
+      roomId: game.roomId,
+      durationSeconds: game.durationSeconds,
+      createdAt: new Date(game.createdAt).getTime(),
+      players: game.stats.map(stat => {
+        return {
+          playerId: stat.userId,
+          username: stat.user.username
+        };
+      })
+    };
+  });
+}
+
 router.get('/history', authToken, async (req, res) => {
 	try{
         const userId = req.user.id
@@ -20,9 +62,16 @@ router.get('/history', authToken, async (req, res) => {
             orderBy: {
                 createdAt: 'desc'
             },
-            select: { won: true, durationSeconds: true, createdAt: true, stats: true}
+            include: {
+                stats: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
         })
-        res.json(gamesStats);
+        const cleanHistory = formatHistoryData(gamesStats);
+        res.json(cleanHistory);
     }
     catch (error) {
         res.status(500).json({ error: "internal error" });
@@ -31,23 +80,23 @@ router.get('/history', authToken, async (req, res) => {
 
 router.get("/leaderboard", async (req, res) => {
     try {
-        const topPlayers = await prisma.playerRunStats.groupBy({
-            by: ['userId'],
-            _max: {
-                score: true
-            },
-            orderBy:
-			[{
-				_max: {
-					score: 'desc',
-				}
-			},
-			{
-				userId: 'asc',
-			}],
-            take: 10
+        const topGame = await prisma.gameRun.findMany({
+            where: { won: true },
+            orderBy:[
+                { durationSeconds: 'asc' },
+			    { roomId: 'asc',}
+            ],
+            take: 10,
+            include: {
+                stats: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
         });
-        res.json(topPlayers);
+        const cleanLeaderboard = formatLeaderboardData(topGame);
+        res.json(cleanLeaderboard);
     }
 	catch (error) {
         console.error(error);
