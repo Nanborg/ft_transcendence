@@ -311,6 +311,8 @@ class GameEngineService extends EventEmitter {
                 entities: [],
             });
 
+            roomCreated = true;
+
             for (let i = 0; i < mapPayload.entities.length; i += 50) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.ROOM_ENTITIES_ADD,
@@ -319,7 +321,6 @@ class GameEngineService extends EventEmitter {
                     entities: mapPayload.entities.slice(i, i + 50),
                 });
             }
-            roomCreated = true;
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
