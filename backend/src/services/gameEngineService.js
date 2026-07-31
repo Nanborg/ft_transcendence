@@ -10,6 +10,7 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_DESTROY: 1,
     ROOM_START: 2,
     ROOM_STOP: 3,
+    ROOM_ENTITIES_ADD: 10,
 
     PING: 100,
     SYNC: 101,
@@ -19,7 +20,6 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     MOVE: 112,
     ACTION: 113,
 
-    CHECKPOINT_UPGRADE: 114,
 });
 
 const PLAYER_ACTION = Object.freeze({
@@ -278,16 +278,14 @@ class GameEngineService extends EventEmitter {
         if (!Object.values(PLAYER_UPGRADE).includes(upgrade))
             throw new TypeError("Invalid player upgrade");
         return this.send({
-            type: ENGINE_INPUT_TYPE.CHECKPOINT_UPGRADE,
+            type: ENGINE_INPUT_TYPE.ACTION,
             roomId,
-            playerData: {
-                ...playerData,
-                playerId: enginePlayerId,
-                upgrades: {
-                    melee: upgrade === PLAYER_UPGRADE.MELEE,
-                    ranged: upgrade === PLAYER_UPGRADE.RANGED,
-                    shield: upgrade === PLAYER_UPGRADE.SHIELD,
-                },
+            playerId: enginePlayerId,
+            action: PLAYER_ACTION.NONE,
+            upgrade: {
+                melee: upgrade === PLAYER_UPGRADE.MELEE,
+                ranged: upgrade === PLAYER_UPGRADE.RANGED,
+                shield: upgrade === PLAYER_UPGRADE.SHIELD,
             },
         });
     }
@@ -297,7 +295,7 @@ class GameEngineService extends EventEmitter {
         const joinedPlayerIds = [];
         let roomCreated = false;
         const mapPayload = mapConv(
-            path.join(__dirname, "../game/maps/1_map_50_50_10_1_55.txt"),
+            path.join(__dirname, "../game/maps/1_map_50_50_10_5_54.txt"),
             room.id
         );
         session.map = {
@@ -310,8 +308,17 @@ class GameEngineService extends EventEmitter {
                 type: ENGINE_INPUT_TYPE.ROOM_CREATE,
                 roomId: room.id,
                 scale: mapPayload.scale,
-                entities: mapPayload.entities,
+                entities: [],
             });
+
+            for (let i = 0; i < mapPayload.entities.length; i += 50) {
+                await this.send({
+                    type: ENGINE_INPUT_TYPE.ROOM_ENTITIES_ADD,
+                    roomId: room.id,
+                    scale: mapPayload.scale,
+                    entities: mapPayload.entities.slice(i, i + 50),
+                });
+            }
             roomCreated = true;
             for (const player of session.players) {
                 await this.send({

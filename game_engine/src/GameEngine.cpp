@@ -76,36 +76,6 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 		return true;
 	if (!in["posY"].is_number_integer())
 		return true;
-	if (!in["posX"].is_number_integer())
-		return true;
-	if (!in["posY"].is_number_integer())
-		return true;
-	return false;
-}
-
-void	GameEngine::init( const json& in ) {
-	if (!in["scale"].is_number_integer())
-		return;
-	if (!in["entities"].is_array())
-		return;
-
-		_scale = in["scale"];
-	json entities = in["entities"];
-	for (size_t i = 0; i < entities.size(); i++) {
-		if (_invalid_entity(entities[i]))
-			continue;
-		std::cout << entities[i].dump() << std::endl;
-		spawnNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
-	}
-}
-
-bool	GameEngine::_invalid_entity( const json& in ) {
-	if (!in["typeId"].is_number_integer())
-		return true;
-	if (!in["posX"].is_number_integer())
-		return true;
-	if (!in["posY"].is_number_integer())
-		return true;
 	if (!in["velX"].is_number_integer())
 		return true;
 	if (!in["velY"].is_number_integer())
