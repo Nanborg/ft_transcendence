@@ -12,7 +12,6 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_DESTROY: 1,
     ROOM_START: 2,
     ROOM_STOP: 3,
-    ROOM_ENTITIES_ADD: 10,
 
     PING: 100,
     SYNC: 101,
@@ -379,18 +378,11 @@ class GameEngineService extends EventEmitter {
                 roomId: room.id,
                 scale: mapPayload.scale,
                 entities: [],
+                entitiesFile: session.engineMapFile,
             });
 
             roomCreated = true;
 
-            for (let i = 0; i < mapPayload.entities.length; i += 50) {
-                await this.send({
-                    type: ENGINE_INPUT_TYPE.ROOM_ENTITIES_ADD,
-                    roomId: room.id,
-                    scale: mapPayload.scale,
-                    entities: mapPayload.entities.slice(i, i + 50),
-                });
-            }
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
