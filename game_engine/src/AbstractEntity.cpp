@@ -2,7 +2,7 @@
 #include "GameEngine.hpp"
 #include <iostream>
 
-AbstractEntity::AbstractEntity( unsigned int type, int size, int posX, int posY, int health, bool passableHitBox ):
+AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox ):
 	_typeId(type),
 	_id(g_game->newId()),
 	_size(size),
@@ -26,10 +26,23 @@ bool AbstractEntity::doTick( void ) {
 }
 
 bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
-	int diffX = _posX - o._posX, diffY = _posY - o._posY, dist = _size + o._size;
-	long dist2 = diffX*diffX + diffY*diffY, min = dist*dist;
+	int dist = _size + o._size;
+	return o.distance(_posX, _posY) < dist;
+}
 
-	return dist2 < min;
+json AbstractEntity::toJson( void ) const {
+	json entityJson;
+
+	entityJson["entityId"] = _id;
+	entityJson["typeId"] = _typeId;
+	entityJson["posX"] = _posX;
+	entityJson["posY"] = _posY;
+	entityJson["velX"] = _velX;
+	entityJson["velY"] = _velY;
+	entityJson["health"] = _health;
+	entityJson["state"] = _state;
+
+	return entityJson;
 }
 
 unsigned int AbstractEntity::getId( void ) const { return _id; }
@@ -48,3 +61,9 @@ void	AbstractEntity::setPosX( int posX ) { _posX = posX; }
 void	AbstractEntity::setPosY( int posY ) { _posY = posY; }
 void	AbstractEntity::setHealth( int health ) { _health = health; }
 void	AbstractEntity::setPassableHitBox( bool passableHitBox ) { _passableHitBox = passableHitBox; }
+
+unsigned int AbstractEntity::distance( int posX, int posY ) const {
+	int diffX = _posX - posX, diffY = _posY - posY;
+	long dist2 = diffX*diffX + diffY*diffY;
+	return (sqrtl(dist2));
+}

@@ -1,8 +1,22 @@
 CC = g++
-CFLAGS = -c
+CFLAGS = -I.
 LFLAGS =
 
 NAME = gameEngineRuntime
+
+ENTITIES = \
+	entities/PlayerEntity.cpp \
+	entities/WallEntity.cpp \
+	entities/WalkingGoobEntity.cpp \
+	entities/ShootingGoobEntity.cpp \
+	entities/TankGoobEntity.cpp \
+	entities/LordGoobEntity.cpp \
+	entities/LaserSlashEntity.cpp \
+	entities/LaserProjectileEntity.cpp \
+	entities/LaserShieldEntity.cpp \
+	entities/BossProjectileEntity.cpp \
+	entities/CheckpointEntity.cpp \
+	entities/SpawnPointEntity.cpp \
 
 SRC = \
 	run.cpp \
@@ -12,8 +26,8 @@ SRC = \
 	ControllerIO.cpp \
 	AbstractEntity.cpp \
 	AbstractMovingEntity.cpp \
-	PlayerEntity.cpp \
-	WallEntity.cpp \
+	AbstractHitboxEntity.cpp \
+	$(ENTITIES) \
 
 OBJ = $(SRC:.cpp=.o)
 
@@ -23,7 +37,7 @@ $(NAME): $(OBJ)
 	$(CC) $(LFLAGS) $(OBJ) -o $@
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ)
@@ -32,6 +46,8 @@ fclean: clean
 	rm -rf $(NAME)
 
 re: fclean all
+
 # TODO(neon-05): Add a 'lint-style' target (whitespace + style) to prevent
 #regressions detected by git diff --check.
+
 .PHONY: all clean fclean re

@@ -1,7 +1,8 @@
 #ifndef PLAYERENTITY_HPP
 #define PLAYERENTITY_HPP
 
-#include "AbstractMovingEntity.hpp"
+#include <AbstractMovingEntity.hpp>
+#include <GameEngine.hpp>
 
 class PlayerEntity: public AbstractMovingEntity
 {

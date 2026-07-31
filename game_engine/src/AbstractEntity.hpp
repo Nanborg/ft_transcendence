@@ -1,21 +1,28 @@
 #ifndef ABSTRACT_HPP
 #define ABSTRACT_HPP
 #include <cstdint>
+#include <enumEntityTypes.h>
+#include <json.hpp>
+
+using namespace nlohmann;
 
 class AbstractEntity
 {
 public:
-	AbstractEntity( unsigned int type, int size, int posX, int posY, int health, bool passableHitBox );
+	AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox );
 	virtual ~AbstractEntity( void ) = 0;
 
 	// write override tick behavior here
 	// return true to send updates to client
 	virtual bool tick( void );
 
+
 	bool doTick( void );
 
 	// true means collision, false means no collision
 	bool checkCollision( const AbstractEntity& ) const;
+
+	json	toJson( void ) const;
 
 	unsigned int getId( void ) const;
 	unsigned int getType( void ) const;
@@ -27,28 +34,21 @@ public:
 	int		getHealth( void ) const;
 	bool	getPassableHitBox( void ) const;
 
-
 	void	setSize( int size );
 	void	setPosX( int posX );
 	void	setPosY( int posY );
 	void	setHealth( int posY );
 	void	setPassableHitBox( bool passableHitBox );
 
+	unsigned int	distance( int posX, int posY ) const;
+
 	protected:
 	virtual bool _templateTick( void );
 
+	json				_state;
 	const unsigned int	_id, _typeId;
 	int					_size, _posX, _posY, _velX, _velY, _health;
 	bool				_passableHitBox;
-};
-
-// add entries here for all new entity types
-enum EntityTypes {
-	NOENTITY = 0,
-	PLAYERENTITY = 1,
-	WALLENTITY = 2,
-	// TODO(neon-05): Add the minimum coop 2D entity types needed by the
-	// game_state contract: Enemy, Projectile, and Resource.
 };
 
 #endif

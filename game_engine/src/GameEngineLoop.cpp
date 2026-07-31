@@ -1,4 +1,4 @@
-#include "GameEngine.hpp"
+#include <GameEngine.hpp>
 
 void	GameEngine::tick( void ) {
 	g_game = this;
