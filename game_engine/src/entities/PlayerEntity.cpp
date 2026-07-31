@@ -1,8 +1,7 @@
 #include "PlayerEntity.hpp"
-#include "GameEngine.hpp"
 
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
-	AbstractMovingEntity(EntityTypes::PLAYERENTITY, 10, posX, posY, velX, velY, 10, false),
+	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
 	_playerId(playerId),
 	_receivedInput(true) {
 		std::cout << "new player (id " << _playerId << ")\n";

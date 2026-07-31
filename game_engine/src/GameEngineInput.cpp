@@ -1,4 +1,4 @@
-#include "GameEngine.hpp"
+#include <GameEngine.hpp>
 
 void	GameEngine::_input_ping( const json& in ) {
 	json out;
@@ -8,6 +8,21 @@ void	GameEngine::_input_ping( const json& in ) {
 	out["roomId"] = _roomId;
 	out["nextEntityId"] = _nextEntityId;
 	out["entities"] = _entities.size();
+	g_io->sendMsg(out.dump());
+}
+
+void	GameEngine::_input_sync( const json& in ) {
+	json out;
+
+	out["type"] = "sync";
+	out["roomId"] = _roomId;
+	out["tick"] = _tick;
+	out["end"] = false;
+	out["entities"] = json::array();
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
+		out["entities"][std::distance(_entities.begin(), it)] = it->get()->toJson();
+	}
+	out["players"] = json::array();
 	g_io->sendMsg(out.dump());
 }
 
@@ -54,30 +69,6 @@ void	GameEngine::_input_move( const json& in ) {
 	}
 }
 
-void	GameEngine::_input_build( const json& in ) {
-	// TODO(neon-05): Decide whether build/delete stay in the minimum playable
-	// scope or move to a later gameplay layer.
-	if (!in["playerId"].is_number_integer())
-		return;
-	if (!in["typeId"].is_number_integer())
-		return;
-	if (!in["posX"].is_number_integer())
-		return;
-	if (!in["posY"].is_number_integer())
-		return;
+void	GameEngine::_input_action( const json& in ) {
 
-	if (_playerIds.count(in["playerId"]) > 0) {
-		spawnNewEntity(in["typeId"], in["posX"], in["posY"], 0, 0);
-	}
-}
-
-void	GameEngine::_input_delete( const json& in ) {
-	if (!in["playerId"].is_number_integer())
-		return;
-	if (!in["entityId"].is_number_integer())
-		return;
-
-	if (_playerIds.count(in["playerId"]) > 0) {
-		deleteEntity(getEntityIterator(in["entityId"]));
-	}
 }

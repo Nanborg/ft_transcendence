@@ -1,9 +1,10 @@
 #include <signal.h>
-#include "json.hpp"
 #include <string>
 #include <queue>
-#include "GameEngine.hpp"
-#include "ControllerIO.hpp"
+
+#include <json.hpp>
+#include <GameEngine.hpp>
+#include <ControllerIO.hpp>
 
 # define USPT_TARGET 100000
 int				g_uspt;
@@ -66,19 +67,19 @@ void handle_inputs( std::queue<json>& inputs, games_list& games ) {
 		int type = in["type"];
 		switch (type)
 		{
-		case inputTypes_e::R_CREATE:
+		case InputTypes::R_CREATE:
 			input_r_create(games, in);
 			break;
 
-		case inputTypes_e::R_DESTROY:
+		case InputTypes::R_DESTROY:
 			input_r_destroy(games, in);
 			break;
 
-		case inputTypes_e::R_START:
+		case InputTypes::R_START:
 			input_r_start(games, in);
 			break;
 
-		case inputTypes_e::R_STOP:
+		case InputTypes::R_STOP:
 			input_r_stop(games, in);
 			break;
 
