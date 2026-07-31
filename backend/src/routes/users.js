@@ -77,13 +77,15 @@ router.patch('/me', authToken, async (req, res) => {
             updateData.username = username.trim();
         }
         if (avatar !== undefined) {
-            if (typeof avatar !== 'string' || avatar.trim() === '') {
+            if (avatar === null || (typeof avatar === 'string' && avatar.trim() === '')) {
+                updateData.avatar = null;
+            }
+            else if (typeof avatar !== 'string') {
                 return res.status(400).json({ error: "invalid avatar" });
             }
-            updateData.avatar = avatar.trim();
-        }
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({ error: "invalid data" });
+            else {
+                updateData.avatar = avatar.trim();
+            }
         }
         const updatedUser = await prisma.user.update({
             where: { id: req.user.id },
