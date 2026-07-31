@@ -84,7 +84,12 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 }
 
 void	GameEngine::init( const json& in ) {
-	// _scale = in["scale"];
+	if (!in["scale"].is_number_integer())
+		return;
+	if (!in["entities"].is_array())
+		return;
+
+	_scale = in["scale"];
 	json entities = in["entities"];
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))
