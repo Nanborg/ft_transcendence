@@ -47,11 +47,57 @@ export function GamePage({
     const isGameReady = hasRoom && gameStarted;
     const elapsedSeconds = useGameTimer(gameStartedAt, isGameReady);
     const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
+    const currentPlayer = Array.isArray(gamePlayerData)
+        ? gamePlayerData.find(player =>
+            String(player.playerId) === String(currentPlayerId)
+        )
+        : null;
+    const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
+    const [pendingUpgrade, setPendingUpgrade] = useState(null);
+    const [checkpointError, setCheckpointError] = useState('');
+
+    useEffect(() => {
+        if (!socket)
+            return undefined;
+        function handleCheckpointError(payload) {
+            if (
+                payload?.roomId &&
+                payload.roomId !== currentRoom?.id
+            )
+                return;
+            setPendingUpgrade(null);
+            setCheckpointError(
+                payload?.message || 'Unable to apply upgrade'
+            );
+        }
+        socket.on('checkpoint:error', handleCheckpointError);
+        return () => {
+            socket.off('checkpoint:error', handleCheckpointError);
+        };
+    }, [socket, currentRoom?.id]);
+
+    useEffect(() => {
+        if (!isAtCheckpoint) {
+            setPendingUpgrade(null);
+            setCheckpointError('');
+        }
+    }, [isAtCheckpoint]);
+
+    function selectCheckpointUpgrade(upgrade) {
+        if (!socket || !currentRoom || !isAtCheckpoint || pendingUpgrade)
+            return;
+        setPendingUpgrade(upgrade);
+        setCheckpointError('');
+        socket.emit('checkpoint:upgrade', {
+            roomId: currentRoom.id,
+            upgrade,
+        });
+    }
 
     usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady,
+        enabled: isGameReady && !isAtCheckpoint,
     });
     if (!hasRoom) {
         return (
@@ -219,6 +265,63 @@ export function GamePage({
                     gameEntities={gameEntities}
                     gamePlayerData={gamePlayerData}
                 />
+                {isAtCheckpoint && (
+                    <section
+                        className="checkpoint-upgrade"
+                        aria-labelledby="checkpoint-upgrade-title"
+                    >
+                        <h2 id="checkpoint-upgrade-title">
+                            Choose an upgrade
+                        </h2>
+                        <p>
+                            Select one ability to improve before continuing.
+                        </p>
+                        <div className="checkpoint-upgrade-list">
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('melee')}
+                            >
+                                <strong>Melee</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.melee ?? 0}
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('ranged')}
+                            >
+                                <strong>Ranged</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.ranged ?? 0}
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={pendingUpgrade !== null}
+                                onClick={() => selectCheckpointUpgrade('shield')}
+                            >
+                                <strong>Shield</strong>
+                                <span>
+                                    Level {currentPlayer.upgrades?.shield ?? 0}
+                                </span>
+                            </button>
+                        </div>
+
+                        {pendingUpgrade && (
+                            <p>
+                                Applying {pendingUpgrade} upgrade…
+                            </p>
+                        )}
+
+                        {checkpointError && (
+                            <p className="room-error">
+                                {checkpointError}
+                            </p>
+                        )}
+                    </section>
+                )}
                 <button
                     type="button"
                     className="game-leave-button"
