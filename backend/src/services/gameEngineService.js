@@ -131,9 +131,40 @@ class GameEngineService extends EventEmitter {
         if (!session || !entity || typeof entity.entityId !== "number")
             return false;
         session.entities.set(entity.entityId, entity);
+        const enginePlayerId = entity.state?.playerId;
+        let normalizedPlayer = null;
+        if (entity.typeId === 1 && typeof enginePlayerId === "number") {
+            const player = session.players.find(entry => entry.enginePlayerId === enginePlayerId);
+            if (player) {
+                player.playerEntityId = entity.entityId;
+                const previousIndex = session.playerData.findIndex(entry =>
+                    String(entry.playerId) === String(player.userId)
+                );
+                const previousPlayer = previousIndex >= 0
+                    ? session.playerData[previousIndex]
+                    : null;
+                normalizedPlayer = {
+                    ...previousPlayer,
+                    playerId: player.userId,
+                    enginePlayerId,
+                    playerEntityId: entity.entityId,
+                    alive: entity.health > 0,
+                    upgrades: {
+                        ...previousPlayer?.upgrades,
+                    },
+                    cooldowns: {
+                        ...previousPlayer?.cooldowns,
+                    },
+                };
+                if (previousIndex >= 0)
+                    session.playerData[previousIndex] = normalizedPlayer;
+                else
+                    session.playerData.push(normalizedPlayer);
+            }
+        }
         if (typeof tick === "number")
             session.tick = tick;
-        return true;
+        return normalizedPlayer || true;
     }
 
     cacheEntityDelete(roomId, entityId, tick) {
@@ -319,6 +350,16 @@ class GameEngineService extends EventEmitter {
                     entities: mapPayload.entities.slice(i, i + 50),
                 });
             }
+
+            mapPayload.entities.forEach((entity, entityId) => {
+                session.entities.set(entityId, {
+                    ...entity,
+                    entityId,
+                    health: 0x7FFFFFFF,
+                });
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 300));
             roomCreated = true;
             for (const player of session.players) {
                 await this.send({

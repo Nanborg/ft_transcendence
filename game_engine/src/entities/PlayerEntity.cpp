@@ -4,8 +4,9 @@ PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY
 	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
 	_playerId(playerId),
 	_receivedInput(true) {
-		std::cout << "new player (id " << _playerId << ")\n";
-	}
+			_state["playerId"] = _playerId;
+			std::cout << "new player (id " << _playerId << ")\n";
+		}
 
 PlayerEntity::~PlayerEntity( void ) {}
 

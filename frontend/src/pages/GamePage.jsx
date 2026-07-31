@@ -12,8 +12,7 @@ function formatDuration(totalSeconds) {
 function useGameTimer(startedAt, enabled) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     useEffect(() => {
-        if (!enabled || typeof startedAt !== 'number')
-        {
+        if (!enabled || typeof startedAt !== 'number') {
             setElapsedSeconds(0);
             return undefined;
         }
@@ -175,7 +174,7 @@ export function GamePage({
                             </thead>
 
                             <tbody>
-                                 {playerStats.map((player) => (
+                                {playerStats.map((player) => (
                                     <tr key={player.playerId}>
                                         <td>{player.username ?? `Player ${player.playerId}`}</td>
                                         <td>{player.deaths ?? 0}</td>
@@ -258,6 +257,8 @@ export function GamePage({
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
                     <p>Time: {formatDuration(elapsedSeconds)}</p>
+                    <p>Entities: {gameEntities?.length ?? 0}</p>
+                    <p>Map: {gameMap ? `${gameMap.width} x ${gameMap.height} / ${gameMap.scale}` : 'none'}</p>
                 </div>
                 <GameCanvas
                     currentPlayerId={currentPlayerId}

@@ -211,7 +211,7 @@ function drawEntity({
         Math.min(
             48,
             camera.tileSize *
-                Math.min(camera.scaleX, camera.scaleY)
+            Math.min(camera.scaleX, camera.scaleY)
         )
     );
 
@@ -230,9 +230,9 @@ function drawEntity({
 
     switch (type) {
         case ENTITY_TYPE.WALL:
-            context.fillStyle = '#334155';
-            context.strokeStyle = '#64748b';
-            context.lineWidth = 1;
+            context.fillStyle = '#2563eb';
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 2;
             context.fillRect(
                 screen.x,
                 screen.y,
@@ -263,7 +263,9 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.WALKING_ROBOT:
-            context.fillStyle = '#ef4444';
+            context.fillStyle = '#ff0000';
+            context.shadowColor = '#ff0000';
+            context.shadowBlur = 12;
             context.fillRect(
                 screen.x - tilePixels * 0.3,
                 screen.y - tilePixels * 0.3,
@@ -518,10 +520,6 @@ export function GameCanvas({
             });
         });
 
-        entityTracksRef.current.forEach((track, entityId) => {
-            if (!receivedEntityIds.has(entityId))
-                entityTracksRef.current.delete(entityId);
-        });
     }, [gameEntities, gameMap?.scale]);
 
     useEffect(() => {

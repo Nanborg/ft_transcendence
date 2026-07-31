@@ -65,18 +65,18 @@ module.exports = (io) => {
 				message
 			);
 			return;
-		}
-		const entity = normalizeEngineEntity(message.entity);
-		gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
-		io.to(roomId).emit("game:state:update", {
-			roomId,
-			tick: message.tick,
-			end: false,
-			entityUpdate: [ entity ],
-			entityDelete: [],
-			playerData: [],
+			}
+			const entity = normalizeEngineEntity(message.entity);
+			const playerUpdate = gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
+			io.to(roomId).emit("game:state:update", {
+				roomId,
+				tick: message.tick,
+				end: false,
+				entityUpdate: [ entity ],
+				entityDelete: [],
+				playerData: playerUpdate && playerUpdate !== true ? [playerUpdate] : [],
+			});
 		});
-	});
 	gameEngineService.on("gameEnd", async (message) => {
 		const roomId = message?.roomId ?? message?.room;
 		if (!message || typeof roomId !== "string" || typeof message.reason !== "string")

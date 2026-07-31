@@ -162,8 +162,8 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
 	entityList_t::iterator	min = _entities.end();
 	unsigned int			dist, distmin = 0xFFFFFFFF;
-	for (entityList_t::iterator it; it != _entities.end(); it++) {
-		if (it->get()->getType() == typeId)
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
+		if (it->get()->getType() != (unsigned int)typeId)
 			continue;
 		dist = it->get()->distance(posX, posY);
 		if (dist < distmin) {
@@ -171,6 +171,8 @@ AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, i
 			distmin = dist;
 		}
 	}
+	if (min == _entities.end())
+		return NULL;
 	return min->get();
 }
 
