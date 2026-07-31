@@ -47,7 +47,7 @@ const { mapConv } = require('./game/mapConv.js');
 // console.log(execSync(`ls -R "${__dirname}"`).toString());
 
 try {
-	const result = mapConv("/app/src/game/maps/1_map_50_50_10_1_55.txt", "room-123456789");
+	const result = mapConv("/app/src/game/maps/1_map_50_50_10_5_54.txt", "room-123456789");
 	console.log(result);
 }
 catch (err)

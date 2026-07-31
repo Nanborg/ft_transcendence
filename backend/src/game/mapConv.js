@@ -7,6 +7,10 @@ const CHAR_CONFIG = {
 	B: { typeId: 109, state: { blocking: true } },
 	C: { typeId: 300, state: { blocking: true } },
 	S: { typeId: 301, state: { blocking: false } },
+
+	'1': { typeId: 100, state: { blocking: false } },
+	'2': { typeId: 101, state: { blocking: false } },
+	'3': { typeId: 102, state: { blocking: false } },
 };
 
 // Characters that are just terrain and should never become entities.
