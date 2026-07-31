@@ -17,7 +17,9 @@ void AbstractMovingEntity::setVelY( int velY ) { _velY = velY; }
 
 bool AbstractMovingEntity::_templateTick( void )
 {
+	if (_velX == 0 && _velY == 0)
+		return false;
 	_posX += _velX;
 	_posY += _velY;
-	return false;
+	return true;
 }
