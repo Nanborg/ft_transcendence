@@ -18,6 +18,8 @@ const ENGINE_INPUT_TYPE = Object.freeze({
     LEAVE: 111,
     MOVE: 112,
     ACTION: 113,
+
+    CHECKPOINT_UPGRADE: 114,
 });
 
 const PLAYER_ACTION = Object.freeze({
@@ -25,6 +27,12 @@ const PLAYER_ACTION = Object.freeze({
     MELEE: 1,
     RANGED: 2,
     SHIELD: 3,
+});
+
+const PLAYER_UPGRADE = Object.freeze({
+    MELEE: "melee",
+    RANGED: "ranged",
+    SHIELD: "shield",
 });
 
 class GameEngineService extends EventEmitter {
@@ -163,6 +171,63 @@ class GameEngineService extends EventEmitter {
         return player ? player.enginePlayerId : null;
     }
 
+    getUserIdByEnginePlayerId(roomId, enginePlayerId) {
+        const session = this.getSession(roomId);
+        if (!session)
+            return null;
+        const player = session.players.find(entry => entry.enginePlayerId === enginePlayerId);
+        return player ? player.userId : null;
+    }
+
+    cachePlayerUpdate(roomId, playerData, tick) {
+        const session = this.getSession(roomId);
+        if (!session ||
+            !playerData ||
+            typeof playerData !== "object" ||
+            Array.isArray(playerData) ||
+            typeof playerData.playerId !== "number"
+        )
+            return null;
+        const enginePlayerId = playerData.playerId;
+        const userId = this.getUserIdByEnginePlayerId(roomId, enginePlayerId);
+        if (userId === null)
+            return null;
+        const previousIndex = session.playerData.findIndex(player =>
+            String(player.playerId) === String(userId)
+        );
+        const previousPlayer = previousIndex >= 0
+            ? session.playerData[previousIndex]
+            : null;
+        const normalizedPlayer = {
+            ...previousPlayer,
+            ...playerData,
+            playerId: userId,
+            enginePlayerId,
+            upgrades: {
+                ...previousPlayer?.upgrades,
+                ...playerData.upgrades,
+            },
+            cooldowns: {
+                ...previousPlayer?.cooldowns,
+                ...playerData.cooldowns,
+            },
+        };
+        if (previousIndex >= 0)
+            session.playerData[previousIndex] = normalizedPlayer;
+        else
+            session.playerData.push(normalizedPlayer);
+        if (typeof tick === "number")
+            session.tick = tick;
+        return normalizedPlayer;
+    }
+
+    getPlayerData(roomId, userId) {
+        const session = this.getSession(roomId);
+        if (!session)
+            return null;
+        return session.playerData.find(player => String(player.playerId) === String(userId)) || null;
+    }
+
     sendPlayerInput(roomId, userId, input) {
         const enginePlayerId = this.getEnginePlayerId(roomId, userId);
         if (enginePlayerId === null) {
@@ -194,6 +259,36 @@ class GameEngineService extends EventEmitter {
             roomId,
             playerId: enginePlayerId,
             action,
+        });
+    }
+
+    sendCheckpointUpgrade(
+        roomId,
+        userId,
+        playerData,
+        upgrade
+    ) {
+        const enginePlayerId = this.getEnginePlayerId(roomId, userId);
+        if (enginePlayerId === null)
+            throw new Error("Engine player mapping not found");
+        if (!playerData || typeof playerData !== "object" || Array.isArray(playerData))
+            throw new TypeError("Invalid player data");
+        if (playerData.atACheckpoint !== true)
+            throw new Error("Player is not at a checkpoint");
+        if (!Object.values(PLAYER_UPGRADE).includes(upgrade))
+            throw new TypeError("Invalid player upgrade");
+        return this.send({
+            type: ENGINE_INPUT_TYPE.CHECKPOINT_UPGRADE,
+            roomId,
+            playerData: {
+                ...playerData,
+                playerId: enginePlayerId,
+                upgrades: {
+                    melee: upgrade === PLAYER_UPGRADE.MELEE,
+                    ranged: upgrade === PLAYER_UPGRADE.RANGED,
+                    shield: upgrade === PLAYER_UPGRADE.SHIELD,
+                },
+            },
         });
     }
 
@@ -352,6 +447,7 @@ const gameEngineService = new GameEngineService();
 module.exports = {
     ENGINE_INPUT_TYPE,
     PLAYER_ACTION,
+    PLAYER_UPGRADE,
     GameEngineService,
     gameEngineService,
 };

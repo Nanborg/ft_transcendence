@@ -1,6 +1,6 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
-const { gameEngineService, PLAYER_ACTION } = require("../services/gameEngineService");
+const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
@@ -18,6 +18,40 @@ function normalizeEngineEntity(entity)
 	return normalizedEntity;
 }
 module.exports = (io) => {
+	gameEngineService.on("playerUpdate", message => {
+		const roomId = message?.roomId ?? message?.room;
+		if (
+			!message ||
+			typeof roomId !== "string" ||
+			!message.playerData ||
+			typeof message.playerData !== "object" ||
+			Array.isArray(message.playerData)
+		) {
+			console.error("Invalid playerUpdate received from game engine:", message);
+			return;
+		}
+		const normalizedPlayer = gameEngineService.cachePlayerUpdate(
+			roomId,
+			message.playerData,
+			message.tick
+		);
+		if (!normalizedPlayer) {
+			console.error(`Unable to map playerupdate for room ${roomId}:`, message.playerData);
+			return;
+		}
+		const session = gameEngineService.getSession(roomId);
+		io.to(roomId).emit("game:state:update", {
+			roomId,
+			tick:
+				typeof message.tick === "number"
+					? message.tick
+					: session?.tick ?? 0,
+			end: false,
+			entityUpdate: [],
+			entityDelete: [],
+			playerData: [normalizedPlayer],
+		});
+	});
 	gameEngineService.on("entityUpdate", (message) => {
 		const roomId = message?.roomId ?? message?.room;
 		if (
@@ -43,19 +77,6 @@ module.exports = (io) => {
 			playerData: [],
 		});
 	});
-	// gameEngineService.on("gameState", (message) => {
-	// 	if (!message || typeof message.room !== "string" || typeof message.state !== "object" || message.state === null)
-	// 	{
-	// 		console.error("Invalid gameState received from game engine:", message);
-	// 		return;
-	// 	}
-	// 	io.to(message.room).emit("game:state", {
-	// 		roomId: message.room,
-	// 		tick: message.tick,
-	// 		state: message.state,
-	// 		timestamp: Date.now(),
-	// 	});
-	// });
 	gameEngineService.on("gameEnd", async (message) => {
 		const roomId = message?.roomId ?? message?.room;
 		if (!message || typeof roomId !== "string" || typeof message.reason !== "string")
@@ -378,6 +399,63 @@ module.exports = (io) => {
 				socket.emit("room:error", {
 					event: "player:input",
 					message: error.message,
+				});
+			}
+		});
+
+		socket.on("checkpoint:upgrade", async payload => {
+			if (
+				!payload ||
+				typeof payload.roomId !== "string" ||
+				!Object.values(PLAYER_UPGRADE).includes(payload.upgrade)
+			) {
+				socket.emit("checkpoint:error", {
+					roomId: payload?.roomId ?? "",
+					code: "INVALID_PAYLOAD",
+					message: "Invalid checkpoint upgrade payload",
+				});
+				return;
+			}
+			const { roomId, upgrade } = payload;
+			try {
+				const player = await getPlayerInRoom(roomId, socket.user.id);
+				if (!player) {
+					socket.emit("checkpoint:error", {
+						roomId,
+						code: "PLAYER_NOT_IN_ROOM",
+						message: "Player is not in room",
+					});
+					return;
+				}
+				const playerData = gameEngineService.getPlayerData(roomId, socket.user.id);
+				if (!playerData) {
+					socket.emit("checkpoint:error", {
+						roomId,
+						code: "PLAYER_DATA_UNAVAILABLE",
+						message: "Player data is unavailable",
+					});
+					return;
+				}
+				if (playerData.atACheckpoint !== true) {
+					socket.emit("checkpoint:error", {
+						roomId,
+						code: "PLAYER_NOT_AT_CHECKPOINT",
+						message: "Player is not at a checkpoint",
+					});
+					return;
+				}
+				await gameEngineService.sendCheckpointUpgrade(
+					roomId,
+					socket.user.id,
+					playerData,
+					upgrade
+				);
+			} catch (error) {
+				console.error(`Unable to upgrade ${upgrade} for user ${socket.user.id}:`, error);
+				socket.emit("checkpoint:error", {
+					roomId,
+					code: "CHECKPOINT_UPGRADE_FAILED",
+					message: "Unable to upgrade ability",
 				});
 			}
 		});
