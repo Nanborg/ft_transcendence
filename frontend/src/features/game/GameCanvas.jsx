@@ -6,6 +6,11 @@ const MIN_CANVAS_HEIGHT = 450;
 const MAX_CANVAS_HEIGHT = 800;
 const VIEW_WIDTH_IN_TILES = 20;
 const INTERPOLATION_DURATION_MS = 100;
+const STATIC_MAP_ENTITY_TYPES = new Set([
+    ENTITY_TYPE.WALL,
+    ENTITY_TYPE.CHECKPOINT,
+    ENTITY_TYPE.SPAWN_POINT,
+]);
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -414,6 +419,34 @@ function drawEntity({
     context.restore();
 }
 
+function drawStaticMapEntities({
+    context,
+    gameMap,
+    camera,
+}) {
+    if (!Array.isArray(gameMap?.entities))
+        return;
+    gameMap.entities.forEach(entity => {
+        if (
+            !entity ||
+            !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) ||
+            typeof entity.posX !== 'number' ||
+            typeof entity.posY !== 'number'
+        ) {
+            return;
+        }
+        drawEntity({
+            context,
+            entity,
+            position: {
+                x: entity.posX,
+                y: entity.posY,
+            },
+            camera,
+        });
+    });
+}
+
 export function GameCanvas({
     currentPlayerId,
     gameMap,
@@ -526,13 +559,10 @@ export function GameCanvas({
 
     useEffect(() => {
         let animationFrameId;
-
         function render(now) {
             const canvas = canvasRef.current;
-
             if (!canvas)
                 return;
-
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
             const focusPosition = getFocusPosition({
@@ -543,20 +573,17 @@ export function GameCanvas({
                 now,
                 gameMap: renderData.gameMap,
             });
-
             const camera = getCamera({
                 canvas,
                 gameMap: renderData.gameMap,
                 focusPosition,
             });
-
             context.clearRect(
                 0,
                 0,
                 canvas.width,
                 canvas.height
             );
-
             context.fillStyle = '#020617';
             context.fillRect(
                 0,
@@ -564,9 +591,12 @@ export function GameCanvas({
                 canvas.width,
                 canvas.height
             );
-
             drawGrid(context, canvas, camera);
-
+            drawStaticMapEntities({
+                context,
+                gameMap: renderData.gameMap,
+                camera,
+            });
             entityTracksRef.current.forEach(track => {
                 drawEntity({
                     context,
@@ -578,13 +608,10 @@ export function GameCanvas({
                     camera,
                 });
             });
-
             animationFrameId =
                 requestAnimationFrame(render);
         }
-
         animationFrameId = requestAnimationFrame(render);
-
         return () => {
             cancelAnimationFrame(animationFrameId);
         };
