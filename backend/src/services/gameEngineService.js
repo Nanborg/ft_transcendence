@@ -370,6 +370,7 @@ class GameEngineService extends EventEmitter {
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
+            entities: mapPayload.entities,
         };
         try {
             session.engineMapFile = await this.writeMapPayload(mapPayload);
