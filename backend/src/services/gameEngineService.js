@@ -1,16 +1,17 @@
 const dgram = require("dgram");
 const EventEmitter = require("events");
+const fs = require("fs/promises");
 const path = require("path");
 const { mapConv } = require("../game/mapConv");
 
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
+const DEFAULT_ENGINE_MAP_DIRECTORY = process.env.GAME_MAP_DIRECTORY || "/tmp/ft-transcendence-game-maps";
 const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_CREATE: 0,
     ROOM_DESTROY: 1,
     ROOM_START: 2,
     ROOM_STOP: 3,
-    ROOM_ENTITIES_ADD: 10,
 
     PING: 100,
     SYNC: 101,
@@ -39,11 +40,13 @@ class GameEngineService extends EventEmitter {
     constructor({
         host = DEFAULT_ENGINE_HOST,
         port = DEFAULT_ENGINE_PORT,
+        mapDirectory = DEFAULT_ENGINE_MAP_DIRECTORY,
     } = {}) {
         super();
 
         this.host = host;
         this.port = port;
+        this.mapDirectory = mapDirectory;
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
@@ -115,6 +118,7 @@ class GameEngineService extends EventEmitter {
             startedAt: null,
             tick: 0,
             map: null,
+            engineMapFile: null,
             entities: new Map(),
             playerData: [],
         };
@@ -290,6 +294,70 @@ class GameEngineService extends EventEmitter {
         });
     }
 
+    async writeMapPayload(mapPayload) {
+        if (
+            !mapPayload ||
+            typeof mapPayload !== "object" ||
+            Array.isArray(mapPayload) ||
+            typeof mapPayload.roomId !== "string" ||
+            !Array.isArray(mapPayload.entities)
+        ) {
+            throw new TypeError("Invalid map payload");
+        }
+        await fs.mkdir(this.mapDirectory, { recursive: true, });
+        const safeRoomId = Buffer.from(
+            mapPayload.roomId,
+            "utf8"
+        ).toString("hex");
+        const filePath = path.join(
+            this.mapDirectory,
+            `${safeRoomId}.json`
+        );
+        const temporaryPath = path.join(
+            this.mapDirectory,
+            `${safeRoomId}.${process.pid}.${Date.now()}.tmp`
+        );
+        const serializedPayload = JSON.stringify({
+            roomId: mapPayload.roomId,
+            width: mapPayload.width,
+            height: mapPayload.height,
+            scale: mapPayload.scale,
+            entities: mapPayload.entities,
+        });
+        try {
+            await fs.writeFile(
+                temporaryPath,
+                serializedPayload,
+                {
+                    encoding: "utf8",
+                    flag: "wx",
+                }
+            );
+            await fs.rename(temporaryPath, filePath);
+        } catch (error) {
+            try {
+                await fs.unlink(temporaryPath);
+            } catch (cleanupError) {
+                if (cleanupError.code !== "ENOENT") {
+                    console.error(`Unable to remove temporary map file ${temporaryPath};`, cleanupError);
+                }
+            }
+            throw error;
+        }
+        return filePath;
+    }
+
+    async removeMapPayload(filePath) {
+        if (typeof filePath !== "string" || filePath.length === 0)
+            return;
+        try {
+            await fs.unlink(filePath);
+        } catch (error) {
+            if (error.code !== "ENOENT")
+                console.error(`Unable to remove engine map file ${filePath}:`, error);
+        }
+    }
+
     async startGame(room) {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
@@ -302,24 +370,20 @@ class GameEngineService extends EventEmitter {
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
+            entities: mapPayload.entities,
         };
         try {
+            session.engineMapFile = await this.writeMapPayload(mapPayload);
             await this.send({
                 type: ENGINE_INPUT_TYPE.ROOM_CREATE,
                 roomId: room.id,
                 scale: mapPayload.scale,
                 entities: [],
+                entitiesFile: session.engineMapFile,
             });
 
-            for (let i = 0; i < mapPayload.entities.length; i += 50) {
-                await this.send({
-                    type: ENGINE_INPUT_TYPE.ROOM_ENTITIES_ADD,
-                    roomId: room.id,
-                    scale: mapPayload.scale,
-                    entities: mapPayload.entities.slice(i, i + 50),
-                });
-            }
             roomCreated = true;
+
             for (const player of session.players) {
                 await this.send({
                     type: ENGINE_INPUT_TYPE.JOIN,
@@ -354,6 +418,7 @@ class GameEngineService extends EventEmitter {
                     console.error(`Unable to rollback engine room ${room.id};`, cleanupError);
                 }
             }
+            await this.removeMapPayload(session.engineMapFile);
             this.removeSession(room.id);
             throw error;
         }
@@ -393,6 +458,7 @@ class GameEngineService extends EventEmitter {
                 firstError = error;
             console.error(`Unable to destroy engine room ${roomId}:`, error);
         } finally {
+            await this.removeMapPayload(session.engineMapFile);
             this.removeSession(roomId);
         }
         if (firstError)
