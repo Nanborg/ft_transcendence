@@ -208,6 +208,16 @@ export function useRoom(socket, currentUser) {
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
         }
+		function pingGameEngine({roomId, clientSentAt, backendReceivedAt}) {
+			if (roomId !== currentRoomIdRef.current) return;
+
+			const roundTrip = Date.now() - clientSentAt;
+
+			console.log({
+				roundTrip,
+				backendReceivedAt,
+			})
+		}
 
         function handleGameEnd(gameEndPayload) {
             if (!gameEndPayload || typeof gameEndPayload.roomId !== 'string' || typeof gameEndPayload.tick !== 'number' ||
@@ -242,6 +252,7 @@ export function useRoom(socket, currentUser) {
         socket.on('game:end', handleGameEnd);
         socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
+		socket.on("debug:latency:result", pingGameEngine);
 
         return () => {
             socket.off('room:created', handleRoomCreated);
@@ -255,8 +266,21 @@ export function useRoom(socket, currentUser) {
             socket.off('game:end', handleGameEnd);
             socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
+			socket.off("debug:latency:result", pingGameEngine);
         };
     }, [socket]);
+
+	useEffect(() => {
+		if (!socket) return;
+		const interval = setInterval(() => {
+			socket.emit("debug:latency:check", {
+			roomId: currentRoomIdRef.current,
+			clientSentAt: Date.now(),
+			});
+		}, 5000);
+
+  return () => clearInterval(interval);
+}, [socket]);
 
     useEffect(() => {
         if (!socket || !currentRoom || currentRoom.status !== 'started')

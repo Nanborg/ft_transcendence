@@ -156,6 +156,18 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		}
 
+		socket.on("debug:latency:check", ({ roomId, clientSentAt }) => {
+			socket.emit("debug:latency:result", {
+				roomId,
+				clientSentAt,
+				backendReceivedAt: Date.now(),
+			});
+		});
+
+
+
+
+
 		socket.on("room:create", async ({ roomName } = {}) => {
 			try {
 				const { room, error } = await createRoom(socket.user.id, roomName);
