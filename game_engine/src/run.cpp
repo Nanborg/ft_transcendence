@@ -82,6 +82,7 @@ void handle_inputs(std::queue<json> &inputs, games_list &games)
 	while (!inputs.empty())
 	{
 		in = inputs.front();
+		std::cout << in.dump() << std::endl;
 		inputs.pop();
 		if (!in["type"].is_number() || !in["roomId"].is_string())
 			continue;

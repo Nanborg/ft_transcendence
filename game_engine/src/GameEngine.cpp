@@ -84,13 +84,21 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 }
 
 void	GameEngine::init( const json& in ) {
-	if (!in["scale"].is_number_integer())
+	json	map;
+	try {
+		std::cout << (std::string) in["entitiesFile"] << std::endl;
+		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
+	} catch(const std::exception&) {
 		return;
-	if (!in["entities"].is_array())
+	}
+
+	if (!map["scale"].is_number_integer())
+		return;
+	if (!map["entities"].is_array())
 		return;
 
-	_scale = in["scale"];
-	json entities = in["entities"];
+	_scale = map["scale"];
+	json entities = map["entities"];
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))
 			continue;

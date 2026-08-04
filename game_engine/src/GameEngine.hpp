@@ -8,6 +8,7 @@
 #include <memory>
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 
 #include <ControllerIO.hpp>
 #include <AbstractEntity.hpp>
