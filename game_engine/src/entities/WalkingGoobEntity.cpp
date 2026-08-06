@@ -22,13 +22,17 @@ bool WalkingGoobEntity::tick( void ) {
 			long dx, dy;
 			int old_vX = _velX, old_vY = _velY;
 			dx = (_target->getPosX() - _posX) * g_game->getScale() * _velCap;
-			dx = (_target->getPosY() - _posY) * g_game->getScale() * _velCap;
-			_velX = dx / dist;
-			_velY = dy / dist;
+			dy = (_target->getPosY() - _posY) * g_game->getScale() * _velCap;
+			if (dist != 0) {
+				_velX = dx / dist;
+				_velY = dy / dist;
+			} else
 			return old_vX != _velX || old_vY != _velY;		// only update if change in trajectory
 		}
 	} else {												// no aggro
 		AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);
+		if (!nearest)
+			return false;
 		if (nearest->distance(_posX, _posY) < g_game->getScale() * _aggroRange)		// found player close enough
 			_target = nearest;
 		return false;

@@ -118,8 +118,6 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 
 AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
 	AbstractEntity* entity;
-	// TODO(neon-05): Support spawning the minimum coop 2D entities:
-	// Enemy, Projectile, and Resource.
 	switch (typeId) {
 	case EntityTypes::PLAYERENTITY:
 		return NULL; // PlayerEntity not spawnable in this context
@@ -173,18 +171,18 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 }
 
 AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
-	entityList_t::iterator	min = _entities.end();
-	unsigned int			dist, distmin = 0xFFFFFFFF;
-	for (entityList_t::iterator it; it != _entities.end(); it++) {
-		if (it->get()->getType() == typeId)
+	AbstractEntity*		min = NULL;
+	unsigned int		dist, distmin = 0xFFFFFFFF;
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
+		if (it->get()->getType() != typeId)
 			continue;
 		dist = it->get()->distance(posX, posY);
 		if (dist < distmin) {
-			min = it;
+			min = it->get();
 			distmin = dist;
 		}
 	}
-	return min->get();
+	return min;
 }
 
 GameEngine::entityList_t::iterator	GameEngine::getEntityIterator(int entityId)
