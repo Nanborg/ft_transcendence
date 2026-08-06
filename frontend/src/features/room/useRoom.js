@@ -277,7 +277,7 @@ export function useRoom(socket, currentUser) {
 			roomId: currentRoomIdRef.current,
 			clientSentAt: Date.now(),
 			});
-		}, 5000);
+		}, 15000); //15 secs
 
   return () => clearInterval(interval);
 }, [socket]);

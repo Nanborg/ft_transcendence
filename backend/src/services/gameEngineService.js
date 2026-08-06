@@ -50,6 +50,7 @@ class GameEngineService extends EventEmitter {
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
+		this.pingInterval = null;
 
         this.socket.on("message", (buffer, remoteInfo) => {
             this.handleMessage(buffer, remoteInfo);
@@ -81,6 +82,18 @@ class GameEngineService extends EventEmitter {
             return;
         this.socket.bind(0);
         this.started = true;
+
+		this.pingInterval = setInterval(() => {
+			for (const roomId of this.sessions.keys()) {
+				this.send({
+					type: ENGINE_INPUT_TYPE.PING,
+					roomId,
+				}).catch((error) => {
+					console.error(`Unable to ping room ${roomId}:`, error);
+				});
+			}
+		}, 30000); // 30 secs
+
     }
     send(command) {
         if (!this.started)
@@ -511,6 +524,13 @@ class GameEngineService extends EventEmitter {
     close() {
         if (!this.started)
             return;
+
+		if (this.pingInterval)
+		{
+			clearInterval(this.pingInterval);
+			this.pingInterval = null;
+		}
+
         this.socket.close();
     }
 }
