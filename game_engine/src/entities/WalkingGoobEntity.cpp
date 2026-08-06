@@ -9,6 +9,9 @@ WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
 
 WalkingGoobEntity::~WalkingGoobEntity( void ) {}
 
+
+
+
 bool WalkingGoobEntity::tick( void ) {
 	unsigned int dist;
 	if (_target) {											// already aggro'ed
@@ -21,8 +24,10 @@ bool WalkingGoobEntity::tick( void ) {
 		} else {											// following logic
 			long dx, dy;
 			int old_vX = _velX, old_vY = _velY;
-			dx = (_target->getPosX() - _posX) * g_game->getScale() * _velCap;
-			dy = (_target->getPosY() - _posY) * g_game->getScale() * _velCap;
+			dx = (_target->getPosX() - _posX);
+			dx *= g_game->getScale() * _velCap;
+			dy = (_target->getPosY() - _posY);
+			dy *= g_game->getScale() * _velCap;
 			if (dist != 0) {
 				_velX = dx / dist;
 				_velY = dy / dist;
@@ -33,8 +38,10 @@ bool WalkingGoobEntity::tick( void ) {
 		AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);
 		if (!nearest)
 			return false;
-		if (nearest->distance(_posX, _posY) < g_game->getScale() * _aggroRange)		// found player close enough
+		if (nearest->distance(_posX, _posY) < g_game->getScale() * _aggroRange) {
 			_target = nearest;
+			std::cout << "aggro: " << _id << ", dist: " << nearest->distance(_posX, _posY) << ", range: " << (int) g_game->getScale() * _aggroRange << ", scale: " << g_game->getScale() << std::endl;
+		}		// found player close enough
 		return false;
 	}
 }

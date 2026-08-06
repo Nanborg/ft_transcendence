@@ -13,19 +13,23 @@ bool	ShootingGoobEntity::tick( void ) {
 	if (!nearest)
 		return false;
 	unsigned int dist = nearest->distance(_posX, _posY);
+	int old_vX = _velX, old_vY = _velY;
 	if (dist < g_game->getScale() * _fleeDist) {		// too close
 		long dx, dy;
-		int old_vX = _velX, old_vY = _velY;
-		dx = (_posX - nearest->getPosX()) * g_game->getScale() * _velCap;
-		dy = (_posY - nearest->getPosY()) * g_game->getScale() * _velCap;
+		dx = (_posX - nearest->getPosX());
+		dx *= g_game->getScale() * _velCap;
+		dy = (_posY - nearest->getPosY());
+		dy *= g_game->getScale() * _velCap;
 		if (dist != 0) {
 			_velX = dx / dist;
 			_velY = dy / dist;
 		}
 		return old_vX != _velX || old_vY != _velY;			// only update if change in trajectory
-	} else if (dist < g_game->getScale() * _range) {	// close enough to shoot
-		return false;
 	} else {
-		return false;
+		_velX = 0;
+		_velY = 0;
 	}
+	if (dist < g_game->getScale() * _range) {	// close enough to shoot
+	}
+	return old_vX != _velX || old_vY != _velY;
 }
