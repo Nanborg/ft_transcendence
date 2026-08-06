@@ -208,7 +208,7 @@ export function useRoom(socket, currentUser) {
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
         }
-		function pingGameEngine({roomId, clientSentAt, backendReceivedAt}) {
+		function pingBackend({roomId, clientSentAt, backendReceivedAt}) {
 			if (roomId !== currentRoomIdRef.current) return;
 
 			const roundTrip = Date.now() - clientSentAt;
@@ -252,7 +252,7 @@ export function useRoom(socket, currentUser) {
         socket.on('game:end', handleGameEnd);
         socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
-		socket.on("debug:latency:result", pingGameEngine);
+		socket.on("debug:latency:result", pingBackend);
 
         return () => {
             socket.off('room:created', handleRoomCreated);
@@ -266,7 +266,7 @@ export function useRoom(socket, currentUser) {
             socket.off('game:end', handleGameEnd);
             socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
-			socket.off("debug:latency:result", pingGameEngine);
+			socket.off("debug:latency:result", pingBackend);
         };
     }, [socket]);
 
