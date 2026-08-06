@@ -376,7 +376,7 @@ class GameEngineService extends EventEmitter {
         const joinedPlayerIds = [];
         let roomCreated = false;
         const mapPayload = mapConv(
-            path.join(__dirname, "../game/maps/aaa.txt"),
+            path.join(__dirname, "../game/maps/1_map_50_50_10_5_54.txt"),
             room.id
         );
         session.map = {
