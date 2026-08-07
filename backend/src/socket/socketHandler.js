@@ -110,14 +110,13 @@ module.exports = (io) => {
             };
             const dbData = adaptPayloadForDB(enginePayload);
             await saveGameResults(dbData);
-			// const room = await resetGameStart(roomId);
 			let roomToUpdate = null;
 			try {
                 roomToUpdate = await resetGameStart(roomId);
             }
 			catch (err) {
                 if (err.code === 'P2025') {
-                    console.log(`La salle ${roomId} a deja ete supprimee.`);
+                    console.log(`Room ${roomId} has already been deleted.`);
                 }
 				else {
                     throw err;
