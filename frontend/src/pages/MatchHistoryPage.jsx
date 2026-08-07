@@ -1,10 +1,8 @@
 import { PageHeading } from "../components/PageHeading";
-//import { mockMatchHistory } from "../features/matchHistory/mockMatchHistory";
 import { useEffect, useState } from 'react';
 import { fetchMatchHistory } from "../api/scores";
 
-export function MatchHistoryPage({ title, description, accessToken, currentUser }) {
-    const currentUserId = currentUser?.id;
+export function MatchHistoryPage({ title, description, accessToken }) {
     const [matches, setMatches] = useState([]);
     const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
     const [error, setError] = useState('');
@@ -21,7 +19,7 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
             try {
                 const data = await fetchMatchHistory(accessToken);
                 if (!cancelled) {
-                    setMatches(data);
+                    setMatches(Array.isArray(data) ? data : []);
                     setStatus('loaded');
                 }
             } catch (loadError) {
@@ -48,10 +46,9 @@ export function MatchHistoryPage({ title, description, accessToken, currentUser 
                 <ul className="match-history-list">
                     {matches.map(match => (
                         <li className="match-history-item" key={match.gameRunId}>
-                            <span>{match.result}</span>
-                            <span>{match.score} pts</span>
-                            <span>#{match.rank}</span>
-                            <span>{new Date(match.endedAt).toLocaleString()}</span>
+                            <span>{match.won ? 'won' : 'lost'}</span>
+                            <span>{match.durationSeconds} seconds</span>
+                            <span>{new Date(match.createdAt).toLocaleString()}</span>
                         </li>
 
                     ))}

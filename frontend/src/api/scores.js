@@ -2,7 +2,7 @@
 export async function fetchMatchHistory(accessToken) {
     const response = await fetch('/api/scores/history', {
         headers: {
-            Authorization: `Bearer $(accessToken)`,
+            Authorization: `Bearer ${accessToken}`,
         },
     });
     if (!response.ok) {

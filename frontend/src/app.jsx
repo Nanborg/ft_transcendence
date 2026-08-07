@@ -293,7 +293,6 @@ function App() {
               title={currentPage.title}
               description={currentPage.description}
               accessToken={authSession?.accessToken}
-              currentUser={currentUser}
             />
           )}
         </section>
