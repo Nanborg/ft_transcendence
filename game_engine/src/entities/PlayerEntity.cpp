@@ -23,4 +23,18 @@ void PlayerEntity::movementInput( int velX, int velY ) {
 	_receivedInput = true;
 	_velX = velX * g_game->getScale();
 	_velY = velY * g_game->getScale();
+
+	int dist = distance(_posX + _velX, _posY + _velY);
+	if (dist > g_game->getScale() * _velCap)
+	{
+		long dx, dy;
+		dx = _velX;
+		dx *= g_game->getScale() * _velCap;
+		dy = _velY;
+		dy *= g_game->getScale() * _velCap;
+		if (dist != 0) {
+			_velX = dx / dist;
+			_velY = dy / dist;
+		}
+	}
 }
