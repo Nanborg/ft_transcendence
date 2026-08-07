@@ -1,29 +1,39 @@
 import { PageHeading } from "../components/PageHeading";
-import { mockMatchHistory } from "../features/matchHistory/mockMatchHistory";
+import { useEffect, useState } from 'react';
+import { fetchMatchHistory } from "../api/scores";
 
-function getCurrentPlayer(match, currentUserId) {
-    return match.players.find(player => player.userId === currentUserId);
-}
-
-function getOtherPlayers(match, currentUserId) {
-    return match.players.filter(player => player.userId !== currentUserId);
-}
-
-function formatOtherPlayers(players) {
-    if (players.length === 0) {
-        return 'No other players';
-    }
-
-    return players
-        .map(player => `${player.username}: ${player.score} pts`)
-        .join(', ');
-}
-
-export function MatchHistoryPage({ title, description }) {
-    const currentUserId = 'user-1';
-    const matches = mockMatchHistory;
-    const status = 'loaded';
-    const error = '';
+export function MatchHistoryPage({ title, description, accessToken }) {
+    const [matches, setMatches] = useState([]);
+    const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
+    const [error, setError] = useState('');
+    useEffect(() => {
+        if (!accessToken) {
+            setStatus('idle');
+            setMatches([]);
+            return undefined;
+        }
+        let cancelled = false;
+        async function loadHistory() {
+            setStatus('loading');
+            setError('');
+            try {
+                const data = await fetchMatchHistory(accessToken);
+                if (!cancelled) {
+                    setMatches(Array.isArray(data) ? data : []);
+                    setStatus('loaded');
+                }
+            } catch (loadError) {
+                if (!cancelled) {
+                    setError(loadError.message);
+                    setStatus('error');
+                }
+            }
+        }
+        loadHistory();
+        return () => {
+            cancelled = true;
+        };
+    }, [accessToken]);
     return (
         <div className="match-history-panel">
             <PageHeading title={title} description={description} />
@@ -34,21 +44,14 @@ export function MatchHistoryPage({ title, description }) {
             )}
             {status === 'loaded' && matches.length > 0 && (
                 <ul className="match-history-list">
-                    {matches.map(match => {
-                        const currentPlayer = getCurrentPlayer(match, currentUserId);
-                        const otherPlayers = getOtherPlayers(match, currentUserId);
-                        const otherPlayersSummary = formatOtherPlayers(otherPlayers);
+                    {matches.map(match => (
+                        <li className="match-history-item" key={match.gameRunId}>
+                            <span>{match.won ? 'won' : 'lost'}</span>
+                            <span>{match.durationSeconds} seconds</span>
+                            <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
+                        </li>
 
-                        return (
-                            <li className="match-history-item" key={match.gameRunId}>
-                                <span>{currentPlayer ? currentPlayer.result : 'unknown'}</span>
-                                <span>{currentPlayer ? `${currentPlayer.score} pts` : '-'}</span>
-                                <span>{currentPlayer ? `#${currentPlayer.rank}` : '-'}</span>
-                                <span>{otherPlayersSummary}</span>
-                                <span>{match.endedAt}</span>
-                            </li>
-                        );
-                    })}
+                    ))}
                 </ul>
             )}
         </div>
