@@ -1,0 +1,24 @@
+export const PLAYER_ACTION = Object.freeze({
+    NONE: 0,
+    MELEE: 1,
+    RANGED: 2,
+    SHIELD: 3,
+});
+
+export const ENTITY_TYPE = Object.freeze({
+    PLAYER: 1,
+    WALL: 2,
+
+    WALKING_ROBOT: 100,
+    SHOOTING_ROBOT: 101,
+    TANK_ROBOT: 102,
+    BOSS: 109,
+
+    LASER_SLASH: 200,
+    LASER_PROJECTILE: 201,
+    LASER_SHIELD: 202,
+    BOSS_PROJECTILE: 203,
+
+    CHECKPOINT: 300,
+    SPAWN_POINT: 301,
+});

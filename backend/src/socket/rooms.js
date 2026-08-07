@@ -1,4 +1,5 @@
 const prisma = require("../db");
+const { gameEngineService } = require("../services/gameEngineService");
 const playerInputs = new Map();
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 4;
@@ -216,6 +217,7 @@ async function leaveRoom(roomId, userId) {
         await prisma.room.delete({
             where: { id: roomId },
         });
+        gameEngineService.removeSession(roomId);
         return null;
     }
     if (room.ownerId === userId) {
@@ -255,6 +257,7 @@ async function leaveAllRooms(userId) {
             await prisma.room.delete({
                 where: { id: roomId }
             });
+            gameEngineService.removeSession(roomId);
             removedRoomIds.push(roomId);
             continue;
         }
@@ -407,7 +410,7 @@ async function setPlayerInput(roomId, userId, input) {
             error: "Game is not started",
         };
     }
-    const player = room.players.find((player) => player.id === userId);
+    const player = room.players.find((roomPlayer) => roomPlayer.id === userId);
     if (!player) {
         return {
             room,
@@ -416,15 +419,22 @@ async function setPlayerInput(roomId, userId, input) {
     }
 
     const inputKey = `${roomId}:${userId}`;
+    const previousInput = playerInputs.get(inputKey) || {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        action: 0,
+    };
 
     playerInputs.set(inputKey, {
         roomId,
         userId,
-        up: input.up === true,
-        down: input.down === true,
-        left: input.left === true,
-        right: input.right === true,
-        action: input.action === true,
+        up: typeof input.up === "boolean" ? input.up : previousInput.up,
+        down: typeof input.down === "boolean" ? input.down : previousInput.down,
+        left: typeof input.left === "boolean" ? input.left : previousInput.left,
+        right: typeof input.right === "boolean" ? input.right : previousInput.right,
+        action: Number.isInteger(input.action) ? input.action : previousInput.action,
         updatedAt: Date.now(),
     });
 
@@ -492,6 +502,14 @@ async function getRoomsByUserId(userId) {
     return players.map((player) => formatRoom(player.room));
 }
 
+async function resetGameStart(roomId) {
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "waiting" },
+    });
+    return getRoom(roomId);
+}
+
 module.exports = {
     createRoom,
     joinRoom,
@@ -503,4 +521,5 @@ module.exports = {
     startGame,
     setPlayerInput,
     getRoomsByUserId,
+    resetGameStart,
 };

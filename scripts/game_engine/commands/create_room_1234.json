@@ -1,0 +1,28 @@
+{
+	"type": 0,
+	"roomId": "room-1234",
+	"scale": 64,
+	"entities": [
+		{
+			"typeId": 2,
+			"posX": 64,
+			"posY": 0,
+			"velX": 0,
+			"velY": 0
+		},
+		{
+			"typeId": 2,
+			"posX": 64,
+			"posY": 64,
+			"velX": 0,
+			"velY": 0
+		},
+		{
+			"typeId": 2,
+			"posX": 0,
+			"posY": 64,
+			"velX": 0,
+			"velY": 0
+		}
+	]
+}
