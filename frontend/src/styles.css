@@ -463,6 +463,65 @@ p {
   border: 1px solid darkblue;
 }
 
+.checkpoint-upgrade {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 760px);
+  padding: 1.25rem;
+  border: 2px solid darkblue;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.checkpoint-upgrade h2,
+.checkpoint-upgrade p {
+  margin: 0;
+}
+
+.checkpoint-upgrade-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.checkpoint-upgrade-list button {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  text-align: left;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+}
+
+.checkpoint-upgrade-list button:hover:not(:disabled),
+.checkpoint-upgrade-list button:focus-visible:not(:disabled) {
+  border-color: darkblue;
+  transform: translateY(-2px);
+}
+
+.checkpoint-upgrade-list button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.checkpoint-upgrade-list strong {
+  font-size: 1.1rem;
+}
+
+.checkpoint-upgrade-list span {
+  color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .checkpoint-upgrade-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 /*remember color can be used like darkred no need #hex_number */
 
 /*friends page*/

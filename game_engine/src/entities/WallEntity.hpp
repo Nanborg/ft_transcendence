@@ -1,7 +1,8 @@
 #ifndef WALLENTITY_HPP
 #define WALLENTITY_HPP
 
-#include "AbstractEntity.hpp"
+#include <AbstractEntity.hpp>
+#include <GameEngine.hpp>
 
 class WallEntity: public AbstractEntity
 {

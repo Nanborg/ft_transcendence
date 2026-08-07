@@ -36,7 +36,7 @@ Base URL: `/api`
 
 ### 3.1 Auth
 
-#### POST /signin
+#### POST /register
 
 Request cible:
 
@@ -55,7 +55,7 @@ Success 201:
 
 ```json
 {
-  "message": "Sign up success",
+  "message": "Register success",
   "userId": 12,
   "username": "alice"
 }
@@ -395,88 +395,84 @@ Auth handshake: Bearer access token valide
 
 ## 5) Backend <-> moteur (JSON)
 
+Reference moteur: `engine_io.md`.
+
+`playerId`, `entityId` et `typeId` sont les trois systemes d'identification pour respectivement:
+- les joueurs uniquement;
+- toutes les entites, y compris batiments, projectiles, joueurs, etc.;
+- le type de ces entites, defini manuellement et commun avec les assets du client.
+
 ### 5.1 Backend -> moteur
 
-`player_input`:
+Le champ `type` est un nombre.
+
+Types d'input attendus:
+
+- ping `"type" = 0`: aucun autre champ n'est attendu.
+- player join `"type" = 1`: id du joueur en question `"playerId" = 8`.
+- player leave `"type" = 2`: id du joueur en question `"playerId" = 8`.
+- player move `"type" = 3`: id du joueur en question `"playerId" = 8`, vecteur direction dans laquelle avancer `"X" = 22, "Y" = 7`.
+- build `"type" = 4`: id du joueur en question `"playerId" = 8`, position de la nouvelle entite `"X" = 22, "Y" = 7`, type de la nouvelle entite `"typeId" = 2`.
+- delete `"type" = 5`: id du joueur en question `"playerId" = 8`, id de l'entite a supprimer `"entityId" = 150`.
+
+Inputs prevus:
+
+- attaque corps-a-corps (`"type" = 6`)
+- attaque a distance (`"type" = 7`)
+- attaque ciblee (`"type" = 8`)
+- game start (`"type" = 9`)
+- game stop (`"type" = 10`)
+
+Input pour construire un batiment de type 6 a la position x,y = (10, -5) en tant que joueur 12:
 
 ```json
 {
-  "type": "player_input",
-  "roomId": "room-123",
-  "enginePlayerId": 1,
-  "tick": 1042,
-  "input": {
-    "up": true,
-    "down": false,
-    "left": false,
-    "right": true,
-    "action": false
-  },
-  "timestamp": 1751556500000
+  "type": 4,
+  "playerId": 12,
+  "X": 10,
+  "Y": -5,
+  "typeId": 6
 }
 ```
 
-`player_join`:
+Input pour deplacer joueur 4 dans la direction x,y = (21, 13):
 
 ```json
 {
-  "type": "player_join",
-  "roomId": "room-123",
-  "enginePlayerId": 1,
-  "timestamp": 1751556500000
-}
-```
-
-`player_leave`:
-
-```json
-{
-  "type": "player_leave",
-  "roomId": "room-123",
-  "enginePlayerId": 1,
-  "timestamp": 1751556500000
+  "type": 3,
+  "playerId": 4,
+  "X": 21,
+  "Y": 13
 }
 ```
 
 ### 5.2 Moteur -> Backend
 
-`game_state`:
+Champs toujours presents:
+
+- `type`: le type de message.
+- `tick`: nombre correspondant au tick ou le message a ete envoye.
+
+Le moteur peut envoyer plusieurs types de messages:
+
+- `"type" = "ping"`: reponse aux inputs ping, envoie un ensemble de donnees de monitoring:
+  - `uspt`: microsecondes par tick.
+  - `entities`: nombre d'entites existantes.
+  - `nextEntityId`: id de la prochaine entite creee.
+- `"type" = "entityUpdate"`: quand une entite change d'etat, aussi utilise a la creation d'une entite. Le nouvel etat de l'entite est stocke dans le champ `entity`.
+- `"type" = "entityDelete"`: quand une entite est supprimee. Le champ `entityId` contient l'id de l'entite en question.
+- `"type" = "gameEnd"`: pour signaler la condition de fin du jeu, pas encore implemente.
+
+Format d'un objet `entity`:
 
 ```json
 {
-  "type": "game_state",
-  "roomId": "room-123",
-  "tick": 1043,
-  "entities": [
-    {
-      "id": 42,
-      "entityType": "player",
-      "x": 120,
-      "y": 180,
-      "velocityX": 1,
-      "velocityY": 0,
-      "size": 28,
-      "teamId": 1,
-      "state": "alive"
-    }
-  ],
-  "timestamp": 1751556500016
-}
-```
-
-`game_end`:
-
-```json
-{
-  "type": "game_end",
-  "roomId": "room-123",
-  "tick": 30000,
-  "reason": "score_limit",
-  "players": [
-    { "enginePlayerId": 1, "score": 12, "rank": 1 },
-    { "enginePlayerId": 2, "score": 7, "rank": 2 }
-  ],
-  "timestamp": 1751556599000
+  "entityId": 2657,
+  "typeId": 9,
+  "posX": 0,
+  "posY": 0,
+  "velX": 0,
+  "velY": 0
 }
 ```
 

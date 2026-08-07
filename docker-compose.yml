@@ -19,14 +19,16 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
+      - engine_map_payloads:/shared/game_maps
     command: sh -c "npm install && npm run prisma"
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
+      GAME_MAP_DIRECTORY: ${GAME_MAP_DIRECTORY:-/shared/game_maps}
       FRONTEND_URL: ${FRONTEND_URL:-https://localhost}
       DATABASE_URL: ${DATABASE_URL:-postgresql://transcendence:transcendence_dev_only@database:5432/transcendence}
-      OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me}
-      OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me}
-      SESSION_SECRET: ${SESSION_SECRET:-replace_me}
+      OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me_a}
+      OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me_b}
+      SESSION_SECRET: ${SESSION_SECRET:-replace_me_c}
       ACCESS_SECRET_TOKEN: ${ACCESS_SECRET_TOKEN}
       REFRESH_SECRET_TOKEN: ${REFRESH_SECRET_TOKEN}
     expose:
@@ -83,11 +85,14 @@ services:
 # TODO(nanborg): Add a gameplay-cpp healthcheck and switch backend depends_on
 #to service_healthy.
       - "${GAMEPLAY_PORT:-7297}:7297/udp"
+    volumes:
+      - engine_map_payloads:/shared/game_maps:ro
     networks:
       - app_net
 
 volumes:
   postgres_data:
+  engine_map_payloads:
 
 networks:
   app_net:

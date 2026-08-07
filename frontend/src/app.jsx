@@ -69,6 +69,48 @@ function App() {
     window.location.hash = '#/login';
   }, []);
 
+  useEffect(() => {
+    const hash = window.location.hash;
+    const queryIndex = hash.indexOf('?');
+
+    if (queryIndex === -1) {
+      return;
+    }
+
+    const params = new URLSearchParams(hash.slice(queryIndex + 1));
+    const isFortyTwoOauth = params.get('oauth') === '42';
+    const accessToken = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
+
+    if (!isFortyTwoOauth || !accessToken || !refreshToken) {
+      return;
+    }
+
+    async function finishFortyTwoLogin() {
+      setAuthStatus('loading');
+      setAuthError('');
+      try {
+        const user = await fetchCurrentUser(accessToken);
+        const session = { user, accessToken, refreshToken };
+
+        setAuthSession(session);
+        storeAuthSession(session);
+        setCurrentUser(user);
+        setAuthStatus('authenticated');
+        window.location.hash = '#/profile';
+      } catch (error) {
+        setCurrentUser(null);
+        setAuthSession(null);
+        clearStoredAuthSession();
+        setAuthStatus('error');
+        setAuthError(error.message);
+        window.location.hash = '#/login';
+      }
+    }
+
+    finishFortyTwoLogin();
+  }, []);
+
   const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
@@ -90,19 +132,37 @@ function App() {
         token: authSession.accessToken,
       },
     });
+    let connectionReplacedMessage = '';
     // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
     window.socket = nextSocket;
     // DEV DEBUG END app.jsx socket console exposure.
     setSocket(nextSocket);
 
+    nextSocket.on('connection:replaced', (payload = {}) => {
+        connectionReplacedMessage =
+            typeof payload.message === 'string'
+                ? payload.message
+                : 'This account was opened in another tab or browser.';
+
+        setSocketStatus(
+            `connection replaced: ${connectionReplacedMessage}`
+        );
+    });
     nextSocket.on('connect', () => {
       setSocketStatus(`connected: ${nextSocket.id}`);
       console.log('socket connected:', nextSocket.id);
     });
 
     nextSocket.on('disconnect', () => {
-      setSocketStatus('disconnected');
-      console.log('socket disconnected');
+        if (connectionReplacedMessage) {
+            setSocketStatus(
+                `connection replaced: ${connectionReplacedMessage}`
+            );
+        } else {
+            setSocketStatus('disconnected');
+        }
+
+        console.log('socket disconnected');
     });
 
     nextSocket.on('connect_error', (error) => {
@@ -241,10 +301,17 @@ function App() {
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
-              gameState={room.latestGameState}
+              currentPlayerId={currentUser?.id}
+              gameMap={room.gameMap}
+              gameEntities={room.gameEntities}
+              gameStartedAt={room.gameStartedAt}
+              gamePlayerData={room.gamePlayerData}
+              gameError={room.gameError}
+              gameResult={room.gameResult}
               socket={socket}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
+              onLeaveGame={room.leaveGame}
             />
           )}
           {currentPage.id === 'login' && (

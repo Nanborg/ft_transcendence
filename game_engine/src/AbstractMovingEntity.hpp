@@ -2,12 +2,12 @@
 #define ABSTRACTMOVINGENTITY_HPP
 
 #include <iostream>
-#include "AbstractEntity.hpp"
+#include <AbstractEntity.hpp>
 
 class AbstractMovingEntity: public AbstractEntity
 {
 public:
-	AbstractMovingEntity( unsigned int type, int size, int posX, int posY, int velX, int velY, int health, int passableHitBox );
+	AbstractMovingEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, bool passableHitBox );
 	virtual ~AbstractMovingEntity( void ) = 0;
 
 	virtual bool	tick( void ) override;
@@ -17,6 +17,8 @@ public:
 
 	protected:
 	virtual bool	_templateTick( void );
+
+	static const float	_velCap;
 };
 
 #endif

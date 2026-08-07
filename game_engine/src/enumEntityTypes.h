@@ -1,0 +1,27 @@
+#ifndef ENUMENTITYTYPES_H
+#define ENUMENTITYTYPES_H
+
+// add entries here for all new entity types
+enum EntityTypes {
+	// not constructible
+	NOENTITY =			0,
+	PLAYERENTITY =		1,
+
+	LASERSLASH =		200,
+	LASERPROJECTILE =	201,
+	LASERSHIELD =		202,
+	BOSSPROJECTILE =	203,
+
+	// constructible
+	WALLENTITY =		2,
+
+	WALKINGGOOB =		100,
+	SHOOTINGGOOB =		101,
+	TANKGOOB =			102,
+	LORDGOOB =			109,
+
+	CHECKPOINT =		300,
+	SPAWNPOINT =		301,
+};
+
+#endif

@@ -1,43 +1,37 @@
 #include "GameEngine.hpp"
 
-const unsigned int GameEngine::_target_uspt = 100000;
-
-GameEngine::GameEngine( int port ):
-	_io(port),
+GameEngine::GameEngine( const std::string& roomId ):
+	_roomId(roomId),
 	_running(false),
+	_tick(0),
 	_nextEntityId(0) {}
 GameEngine::~GameEngine( void ) {}
 
 void	GameEngine::manageInput( const json& in ) {
-	// TODO(neon-05): Strictly validate all incoming commands
-	// (player_input, player_join, player_leave/build/delete) and ignore
-	// invalid payloads without crashing the engine.
-	if (!in["type"].is_number())
-		return;
 	int type = in["type"];
 	switch (type) {
-		case inputTypes_e::PING:
+		case InputTypes::PING:
 			_input_ping(in);
 			break;
 
-		case inputTypes_e::JOIN:
+		case InputTypes::SYNC:
+			_input_sync(in);
+			break;
+
+		case InputTypes::JOIN:
 			_input_join(in);
 			break;
 
-		case inputTypes_e::LEAVE:
+		case InputTypes::LEAVE:
 			_input_leave(in);
 			break;
 
-		case inputTypes_e::MOVE:
+		case InputTypes::MOVE:
 			_input_move(in);
 			break;
 
-		case inputTypes_e::BUILD:
-			_input_build(in);
-			break;
-
-		case inputTypes_e::DELETE:
-			_input_delete(in);
+		case InputTypes::ACTION:
+			_input_action(in);
 			break;
 
 		default:
@@ -45,55 +39,76 @@ void	GameEngine::manageInput( const json& in ) {
 	}
 }
 
-void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
-	json entityJ, out;
-	// TODO(neon-05): Replace or complement entityUpdate/entityDelete with a
-	// full game_state payload compatible with docs/formats_communication_reference.md.
-	// Include players, enemies, projectiles, resources, objective, score, and tick.
+void GameEngine::pushInput( const json& in ) {
+	_playerInputs.push(in);
+}
 
-	entityJ["entityId"] = entity->getId();
-	entityJ["entityTypeId"] = entity->getType();
-	entityJ["posX"] = entity->getPosX();
-	entityJ["posY"] = entity->getPosY();
-	entityJ["velX"] = entity->getVelX();
-	entityJ["velY"] = entity->getVelY();
+void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
+	json out;
 
 	out["type"] = "entityUpdate";
-	out["entity"] = entityJ;
-	_io.sendMsg(out.dump());
+	out["tick"] = _tick;
+	out["roomId"] = _roomId;
+	out["entity"] = entity->toJson();
+	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	json out;
-	// TODO(neon-05): Keep entityDelete compatible with the backend state mapper
-	// until the engine emits full game_state snapshots directly.
 
 	out["type"] = "entityDelete";
+	out["tick"] = _tick;
+	out["roomId"] = _roomId;
 	out["entity"]["entityId"] = entity->getId();
-	_io.sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 int		GameEngine::newId( void ) { return _nextEntityId++; }
 
-void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
-void	GameEngine::init( void ) { std::cout << "init" << std::endl; }
-void	GameEngine::start( void ) {
-	_running = true;
-	while (_running) {
-		// TODO(neon-05): Add a stable engine tick counter and include it in
-		// game_state/game_end messages.
-		auto begin = std::chrono::steady_clock::now();
-		_loop_receiveMessages();
-		_loop_processInputs();
-		_loop_tickEntities();
-		auto end = std::chrono::steady_clock::now();
+bool			GameEngine::isRunning( void ) const { return _running; }
 
-		_uspt = std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
-		int sleep_time = _target_uspt - _uspt;
-		if (sleep_time > 0)
-			usleep(sleep_time);
+unsigned int	GameEngine::getScale( void ) const { return _scale; }
+
+bool	GameEngine::_invalid_entity( const json& in ) {
+	if (!in["typeId"].is_number_integer())
+		return true;
+	if (!in["posX"].is_number_integer())
+		return true;
+	if (!in["posY"].is_number_integer())
+		return true;
+	if (!in["velX"].is_number_integer())
+		return true;
+	if (!in["velY"].is_number_integer())
+		return true;
+	return false;
+}
+
+void	GameEngine::init( const json& in ) {
+	json	map;
+	try {
+		std::cout << (std::string) in["entitiesFile"] << std::endl;
+		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
+	} catch(const std::exception&) {
+		return;
+	}
+
+	if (!map["scale"].is_number_integer())
+		return;
+	if (!map["entities"].is_array())
+		return;
+
+	_scale = map["scale"];
+	json entities = map["entities"];
+	for (size_t i = 0; i < entities.size(); i++) {
+		if (_invalid_entity(entities[i]))
+			continue;
+		std::cout << entities[i].dump() << std::endl;
+		spawnNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
 	}
 }
+
+void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
+void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	// TODO(neon-05): Implement collision checks for solid entities and damage
@@ -103,14 +118,48 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 
 AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
 	AbstractEntity* entity;
-	// TODO(neon-05): Support spawning the minimum coop 2D entities:
-	// Enemy, Projectile, and Resource.
 	switch (typeId) {
 	case EntityTypes::PLAYERENTITY:
 		return NULL; // PlayerEntity not spawnable in this context
 
 	case EntityTypes::WALLENTITY:
 		entity = new WallEntity(posX, posY);
+		break;
+
+	case EntityTypes::WALKINGGOOB:
+		entity = new WalkingGoobEntity(posX, posY);
+		break;
+
+	case EntityTypes::SHOOTINGGOOB:
+		entity = new ShootingGoobEntity(posX, posY);
+		break;
+
+	case EntityTypes::TANKGOOB:
+		entity = new TankGoobEntity(posX, posY);
+		break;
+
+	case EntityTypes::LORDGOOB:
+		entity = new LordGoobEntity(posX, posY);
+		break;
+
+	case EntityTypes::LASERSLASH:
+		return NULL;
+
+	case EntityTypes::LASERPROJECTILE:
+		return NULL;
+
+	case EntityTypes::LASERSHIELD:
+		return NULL;
+
+	case EntityTypes::BOSSPROJECTILE:
+		return NULL;
+
+	case EntityTypes::CHECKPOINT:
+		entity = new CheckpointEntity(posX, posY);
+		break;
+
+	case EntityTypes::SPAWNPOINT:
+		entity = new SpawnPointEntity(posX, posY);
 		break;
 
 	default:
@@ -121,8 +170,27 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 	return entity;
 }
 
-void	GameEngine::deleteEntity( int entityId ) {
-	entityList_t::iterator it = std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
+	AbstractEntity*		min = NULL;
+	unsigned int		dist, distmin = 0xFFFFFFFF;
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
+		if (it->get()->getType() != typeId)
+			continue;
+		dist = it->get()->distance(posX, posY);
+		if (dist < distmin) {
+			min = it->get();
+			distmin = dist;
+		}
+	}
+	return min;
+}
+
+GameEngine::entityList_t::iterator	GameEngine::getEntityIterator(int entityId)
+{
+	return std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
+}
+
+void	GameEngine::deleteEntity( entityList_t::iterator it ) {
 	if (it == _entities.end())
 		return;
 	sendEntityDelete(it->get());
