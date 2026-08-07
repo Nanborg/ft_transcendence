@@ -6,7 +6,6 @@ const CHAR_CONFIG = {
 	'#': { typeId: 2, state: { blocking: true } },
 	B: { typeId: 109, state: { blocking: true } },
 	C: { typeId: 300, state: { blocking: true } },
-	S: { typeId: 301, state: { blocking: false } },
 
 	'1': { typeId: 100, state: { blocking: false } },
 	'2': { typeId: 101, state: { blocking: false } },
@@ -24,6 +23,13 @@ function mapConv(filePath, roomId) {
 	// Everything before the "Seed:" line is the grid. Metadata comes after a blank line at the end of the file.
 	const seedLineIdx = lines.findIndex((l) => l.trim().startsWith('Seed:'));
 	const gridLines = (seedLineIdx === -1 ? lines : lines.slice(0, seedLineIdx)).filter((l) => l.trim().length > 0);
+
+	const spawnMatch = raw.match(/Spawn:\s*\((-?\d+),\s*(-?\d+)\)/);
+	const spawn = spawnMatch ? { x: Number(spawnMatch[1]), y: Number(spawnMatch[2]) } : {x: 1, y: 1};
+
+	if (!spawnMatch)
+		console.log("WARNING: Spawn coordinates not found, setting them to {x: 1, y: 1}")
+
 
 	const entities = [];
 	const unknownChars = new Set();
@@ -65,6 +71,8 @@ function mapConv(filePath, roomId) {
 		width,
 		height,
 		scale: SCALE,
+		spawnX: spawn.x * SCALE,
+		spawnY: spawn.y * SCALE,
 		entities,
 	};
 
