@@ -359,6 +359,7 @@ function App() {
             <MatchHistoryPage
               title={currentPage.title}
               description={currentPage.description}
+              accessToken={authSession?.accessToken}
             />
           )}
         </section>
