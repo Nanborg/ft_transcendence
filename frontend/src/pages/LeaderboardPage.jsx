@@ -1,17 +1,7 @@
 import { PageHeading } from '../components/PageHeading';
-//import { mockLeaderboard } from '../features/leaderboard/mockLeaderboard';
 import { useEffect, useState } from 'react';
 import { fetchLeaderBoard } from '../api/scores';
-// TODO(nanborg): Replace mockLeaderboard with the scores API when leaderboard endpoint is ready.
-function getWinRate(player) {
-  const totalGames = player.wins + player.losses;
-  if (totalGames === 0) {
-    return '0%';
-  }
-  return `${Math.round((player.wins / totalGames) * 100)}%`;
-}
 
-// TODO(nanborg): Replace these temporary fields with the final stats returned by the scores/leaderboard API.
 export function LeaderboardPage({ title, description }) {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
@@ -25,18 +15,20 @@ export function LeaderboardPage({ title, description }) {
       try {
         const data = await fetchLeaderBoard();
         if (!cancelled) {
-          setLeaderboard(data);
+          setLeaderboard(Array.isArray(data) ? data : []);
           setStatus('loaded');
         }
       } catch (loadError) {
         if (!cancelled) {
-        setError(loadError.message);
-        setStatus('error');
+          setError(loadError.message);
+          setStatus('error');
       }
     }
   }
   loadLeaderboard();
-  return () => { cancelled = true; };
+  return () => {
+    cancelled = true;
+  };
 }, []);
 
 return (
@@ -50,18 +42,16 @@ return (
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Player</th>
-            <th>Wins</th>
-            <th>Total score</th>
+            <th>Player ID</th>
+            <th>Best score</th>
           </tr>
         </thead>
         <tbody>
-          {leaderboard.map(player => (
-            <tr key={player.userId}>
-              <td>#{player.rank}</td>
-              <td>{player.username}</td>
-              <td>{player.wins}</td>
-              <td>{player.totalScore}</td>
+          {leaderboard.map((entry, index) => (
+            <tr key={entry.userId}>
+              <td>#{index + 1}</td>
+              <td>{entry.userId}</td>
+              <td>{entry?._max?.score ?? 0}</td>
             </tr>
           ))}
         </tbody>
