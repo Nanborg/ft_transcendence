@@ -47,6 +47,7 @@ class GameEngineService extends EventEmitter {
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
+        this.archivedSessions = new Map();
 
         this.socket.on("message", (buffer, remoteInfo) => {
             this.handleMessage(buffer, remoteInfo);
@@ -123,7 +124,7 @@ class GameEngineService extends EventEmitter {
     }
 
     getSession(roomId) {
-        return this.sessions.get(roomId) || null;
+        return this.sessions.get(roomId) || this.archivedSessions.get(roomId) || null;
     }
 
     cacheEntityUpdate(roomId, entity, tick) {
@@ -400,7 +401,14 @@ class GameEngineService extends EventEmitter {
     }
 
     removeSession(roomId) {
-        this.sessions.delete(roomId);
+        const sessionData = this.sessions.get(roomId);
+        if (sessionData) {
+            this.archivedSessions.set(roomId, sessionData);
+            this.sessions.delete(roomId);
+            setTimeout(() => {
+                this.archivedSessions.delete(roomId);
+            }, 30000);
+        }
     }
 
     ping() {

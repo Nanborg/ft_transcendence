@@ -164,7 +164,7 @@ void	GameEngine::stop( void ) {
     out["type"] = "gameEnd";
     out["roomId"] = _roomId;
     out["tick"] = _tick;
-    out["win"] = false;
+    out["win"] = true;
     out["reason"] = "game_stopped";
     out["playerData"] = getAllPlayerDataAsJson();
     g_io->sendMsg(out.dump());

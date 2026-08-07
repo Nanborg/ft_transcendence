@@ -1,6 +1,7 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
+const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
@@ -93,19 +94,50 @@ module.exports = (io) => {
 		const tick = typeof message.tick === "number" ? message.tick : snapshot?.tick ?? 0;
 		const win = typeof message.win === "boolean" ? message.win : message.victory === true;
 		try{
-			const room = await resetGameStart(roomId);
-			io.to(roomId).emit("game:end", {
-				roomId,
-				tick,
-				durationSeconds,
-				end: true,
-				win,
-				reason: message.reason,
-				entities,
-				playerData,
-			});
-			io.to(roomId).emit("room:update", room);
-		} catch (error) {
+			const session = gameEngineService.getSession(roomId);
+            const enginePayload = {
+                roomId: roomId,
+                win: win,
+                reason: message.reason,
+                durationSeconds: durationSeconds,
+                playerData: playerData.map(p => {
+                    const sessionPlayer = session?.players.find(sp => sp.enginePlayerId === p.playerId);
+                    return {
+                        ...p,
+                        playerId: sessionPlayer ? sessionPlayer.userId : p.playerId
+                    };
+                })
+            };
+            const dbData = adaptPayloadForDB(enginePayload);
+            await saveGameResults(dbData);
+			// const room = await resetGameStart(roomId);
+			let roomToUpdate = null;
+			try {
+                roomToUpdate = await resetGameStart(roomId);
+            }
+			catch (err) {
+                if (err.code === 'P2025') {
+                    console.log(`La salle ${roomId} a deja ete supprimee.`);
+                }
+				else {
+                    throw err;
+                }
+            }
+            io.to(roomId).emit("game:end", {
+                roomId,
+                tick,
+                durationSeconds,
+                end: true,
+                win,
+                reason: message.reason,
+                entities,
+                playerData,
+            });
+            if (roomToUpdate) {
+                io.to(roomId).emit("room:update", roomToUpdate);
+            }
+		}
+		catch (error) {
 			console.error(`Unable to complete game end for room ${roomId};`, error);
 			io.to(roomId).emit("game:error", {
 				roomId,
@@ -479,10 +511,12 @@ module.exports = (io) => {
 				try {
 					if (isLastPlayer) {
 						await gameEngineService.stopGame(roomId);
-					} else {
+					}
+					else {
 						await gameEngineService.removePlayer(roomId, socket.user.id);
 					}
-				} catch (error) {
+				}
+				catch (error) {
 					console.error(`Unable to remove user ${socket.user.id} from engine room ${roomId}:`, error);
 				}
 				const room = await leaveRoom(roomId, socket.user.id);
@@ -490,11 +524,13 @@ module.exports = (io) => {
 				console.log(`socket ${socket.user.id} left room ${roomId}`);
 				if (room) {
 					io.to(roomId).emit("room:update", room);
-				} else {
+				}
+				else {
 					io.to(roomId).emit("room:removed", { roomId });
 					console.log(`room removed: ${roomId}`);
 				}
-			} catch (error) {
+			}
+			catch (error) {
 				socket.emit("room:error", {
 					event: "room:leave",
 					message: error.message,
