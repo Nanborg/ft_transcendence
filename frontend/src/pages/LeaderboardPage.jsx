@@ -42,16 +42,18 @@ return (
         <thead>
           <tr>
             <th>Rank</th>
-            <th>Player ID</th>
-            <th>Best score</th>
+            <th>Players or Room</th>
+            <th>Duration</th>
+            <th>Date</th>
           </tr>
         </thead>
         <tbody>
           {leaderboard.map((entry, index) => (
-            <tr key={entry.userId}>
-              <td>#{index + 1}</td>
-              <td>{entry.userId}</td>
-              <td>{entry?._max?.score ?? 0}</td>
+            <tr key={entry.gameRunId ?? entry.roomId ?? index}>
+              <td>#{entry.rank ?? index + 1}</td>
+              <td>{entry.players?.map((player) => player.userId).join(', ') || entry.roomId}</td>
+              <td>{entry.durationSeconds} seconds</td>
+              <td>{entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '-'}</td>
             </tr>
           ))}
         </tbody>
