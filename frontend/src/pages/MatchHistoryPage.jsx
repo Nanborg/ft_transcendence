@@ -48,7 +48,7 @@ export function MatchHistoryPage({ title, description, accessToken }) {
                         <li className="match-history-item" key={match.gameRunId}>
                             <span>{match.won ? 'won' : 'lost'}</span>
                             <span>{match.durationSeconds} seconds</span>
-                            <span>{new Date(match.createdAt).toLocaleString()}</span>
+                            <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
                         </li>
 
                     ))}

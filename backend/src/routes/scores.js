@@ -20,9 +20,23 @@ router.get('/history', authToken, async (req, res) => {
             orderBy: {
                 createdAt: 'desc'
             },
-            select: { won: true, durationSeconds: true, createdAt: true, stats: true}
+            select: {
+                id: true,
+                roomId: true,
+                won: true,
+                durationSeconds: true,
+                createdAt: true,
+                stats: true
+            }
         })
-        res.json(gamesStats);
+        res.json(gamesStats.map((gameRun) => ({
+            gameRunId: gameRun.id,
+            roomId: gameRun.roomId,
+            won: gameRun.won,
+            durationSeconds: gameRun.durationSeconds,
+            createdAt: gameRun.createdAt,
+            players: gameRun.stats
+        })));
     }
     catch (error) {
         res.status(500).json({ error: "internal error" });
@@ -31,23 +45,31 @@ router.get('/history', authToken, async (req, res) => {
 
 router.get("/leaderboard", async (req, res) => {
     try {
-        const topPlayers = await prisma.playerRunStats.groupBy({
-            by: ['userId'],
-            _max: {
-                score: true
+        const gameRuns = await prisma.gameRun.findMany({
+            where: {
+                won: true
             },
-            orderBy:
-			[{
-				_max: {
-					score: 'desc',
-				}
-			},
-			{
-				userId: 'asc',
-			}],
-            take: 10
+            orderBy: {
+                durationSeconds: 'asc'
+            },
+            take: 10,
+            select: {
+                id: true,
+                roomId: true,
+                durationSeconds: true,
+                createdAt: true,
+                stats: true
+            }
         });
-        res.json(topPlayers);
+
+        res.json(gameRuns.map((gameRun, index) => ({
+            rank: index + 1,
+            gameRunId: gameRun.id,
+            roomId: gameRun.roomId,
+            durationSeconds: gameRun.durationSeconds,
+            createdAt: gameRun.createdAt,
+            players: gameRun.stats
+        })));
     }
 	catch (error) {
         console.error(error);
