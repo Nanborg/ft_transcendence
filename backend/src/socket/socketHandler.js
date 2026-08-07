@@ -156,9 +156,12 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		}
 
-		socket.on("debug:latency:check", ({ roomId, clientSentAt }) => {
+		socket.on("debug:latency:check", ({clientSentAt }) => {
+
+			if (!clientSentAt || typeof clientSentAt !== "number")
+				return ;
+
 			socket.emit("debug:latency:result", {
-				roomId,
 				clientSentAt,
 				backendReceivedAt: Date.now(),
 			});

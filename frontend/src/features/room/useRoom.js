@@ -208,8 +208,7 @@ export function useRoom(socket, currentUser) {
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
         }
-		function pingBackend({roomId, clientSentAt, backendReceivedAt}) {
-			if (roomId !== currentRoomIdRef.current) return;
+		function pingBackend({clientSentAt, backendReceivedAt}) {
 
 			const roundTrip = Date.now() - clientSentAt;
 
@@ -274,7 +273,6 @@ export function useRoom(socket, currentUser) {
 		if (!socket) return;
 		const interval = setInterval(() => {
 			socket.emit("debug:latency:check", {
-			roomId: currentRoomIdRef.current,
 			clientSentAt: Date.now(),
 			});
 		}, 15000); //15 secs
