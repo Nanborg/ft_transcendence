@@ -142,13 +142,21 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 }
 
 void	GameEngine::init( const json& in ) {
-	if (!in["scale"].is_number_integer())
+	json	map;
+	try {
+		std::cout << (std::string) in["entitiesFile"] << std::endl;
+		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
+	} catch(const std::exception&) {
 		return;
-	if (!in["entities"].is_array())
+	}
+
+	if (!map["scale"].is_number_integer())
+		return;
+	if (!map["entities"].is_array())
 		return;
 
-	_scale = in["scale"];
-	json entities = in["entities"];
+	_scale = map["scale"];
+	json entities = map["entities"];
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))
 			continue;
@@ -179,8 +187,6 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 
 AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
 	AbstractEntity* entity;
-	// TODO(neon-05): Support spawning the minimum coop 2D entities:
-	// Enemy, Projectile, and Resource.
 	switch (typeId) {
 	case EntityTypes::PLAYERENTITY:
 		return NULL; // PlayerEntity not spawnable in this context
@@ -234,18 +240,18 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 }
 
 AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
-	entityList_t::iterator	min = _entities.end();
-	unsigned int			dist, distmin = 0xFFFFFFFF;
-	for (entityList_t::iterator it; it != _entities.end(); it++) {
-		if (it->get()->getType() == typeId)
+	AbstractEntity*		min = NULL;
+	unsigned int		dist, distmin = 0xFFFFFFFF;
+	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
+		if (it->get()->getType() != typeId)
 			continue;
 		dist = it->get()->distance(posX, posY);
 		if (dist < distmin) {
-			min = it;
+			min = it->get();
 			distmin = dist;
 		}
 	}
-	return min->get();
+	return min;
 }
 
 GameEngine::entityList_t::iterator	GameEngine::getEntityIterator(int entityId)

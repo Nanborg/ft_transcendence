@@ -63,7 +63,7 @@ void	AbstractEntity::setHealth( int health ) { _health = health; }
 void	AbstractEntity::setPassableHitBox( bool passableHitBox ) { _passableHitBox = passableHitBox; }
 
 unsigned int AbstractEntity::distance( int posX, int posY ) const {
-	int diffX = _posX - posX, diffY = _posY - posY;
+	long diffX = _posX - posX, diffY = _posY - posY;
 	long dist2 = diffX*diffX + diffY*diffY;
 	return (sqrtl(dist2));
 }

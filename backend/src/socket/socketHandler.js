@@ -188,6 +188,21 @@ module.exports = (io) => {
 			io.to(room.id).emit("room:update", room);
 		}
 
+		socket.on("debug:latency:check", ({clientSentAt }) => {
+
+			if (!clientSentAt || typeof clientSentAt !== "number")
+				return ;
+
+			socket.emit("debug:latency:result", {
+				clientSentAt,
+				backendReceivedAt: Date.now(),
+			});
+		});
+
+
+
+
+
 		socket.on("room:create", async ({ roomName } = {}) => {
 			try {
 				const { room, error } = await createRoom(socket.user.id, roomName);
@@ -511,12 +526,10 @@ module.exports = (io) => {
 				try {
 					if (isLastPlayer) {
 						await gameEngineService.stopGame(roomId);
-					}
-					else {
+					} else {
 						await gameEngineService.removePlayer(roomId, socket.user.id);
 					}
-				}
-				catch (error) {
+				} catch (error) {
 					console.error(`Unable to remove user ${socket.user.id} from engine room ${roomId}:`, error);
 				}
 				const room = await leaveRoom(roomId, socket.user.id);
@@ -524,13 +537,11 @@ module.exports = (io) => {
 				console.log(`socket ${socket.user.id} left room ${roomId}`);
 				if (room) {
 					io.to(roomId).emit("room:update", room);
-				}
-				else {
+				} else {
 					io.to(roomId).emit("room:removed", { roomId });
 					console.log(`room removed: ${roomId}`);
 				}
-			}
-			catch (error) {
+			} catch (error) {
 				socket.emit("room:error", {
 					event: "room:leave",
 					message: error.message,
