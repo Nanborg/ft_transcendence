@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ENTITY_TYPE } from './gameProtocol';
+import playerWalkSpriteUrl from '../../assets/game/player/player-walk.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -11,6 +12,11 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
     ENTITY_TYPE.CHECKPOINT,
     ENTITY_TYPE.SPAWN_POINT,
 ]);
+const PLAYER_SPRITE_CELL_SIZE = 256;
+const PLAYER_WALK_FRAME_COUNT = 4;
+const PLAYER_WALK_FRAME_DURATION_MS = 125;
+const playerWalkSprite = new Image();
+playerWalkSprite.src = playerWalkSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -203,11 +209,81 @@ function drawDiamond(context, x, y, radius, color) {
     context.fill();
 }
 
+function getPlayerDirectionRow(entity) {
+    const velocityX =
+        typeof entity.velX === 'number' ? entity.velX : 0;
+    const velocityY =
+        typeof entity.velY === 'number' ? entity.velY : 0;
+
+    if (Math.abs(velocityX) > Math.abs(velocityY))
+        return velocityX < 0 ? 1 : 2;
+
+    if (Math.abs(velocityY) > 0)
+        return velocityY < 0 ? 3 : 0;
+
+    const direction = entity.state?.direction;
+
+    if (typeof direction === 'string') {
+        if (direction.includes('W'))
+            return 1;
+        if (direction.includes('E'))
+            return 2;
+        if (direction.includes('N'))
+            return 3;
+    }
+
+    return 0;
+}
+
+function drawPlayerWalkSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+}) {
+    if (
+        !playerWalkSprite.complete ||
+        playerWalkSprite.naturalWidth === 0
+    ) {
+        return false;
+    }
+
+    const isMoving =
+        entity.velX !== 0 ||
+        entity.velY !== 0;
+
+    const frame = isMoving
+        ? Math.floor(now / PLAYER_WALK_FRAME_DURATION_MS) %
+            PLAYER_WALK_FRAME_COUNT
+        : 0;
+
+    const row = getPlayerDirectionRow(entity);
+    const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
+    const sourceY = row * PLAYER_SPRITE_CELL_SIZE;
+    const spriteSize = tilePixels * 1.8;
+
+    context.drawImage(
+        playerWalkSprite,
+        sourceX,
+        sourceY,
+        PLAYER_SPRITE_CELL_SIZE,
+        PLAYER_SPRITE_CELL_SIZE,
+        screen.x - spriteSize / 2,
+        screen.y - spriteSize / 2,
+        spriteSize,
+        spriteSize
+    );
+
+    return true;
+}
+
 function drawEntity({
     context,
     entity,
     position,
     camera,
+    now,
 }) {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -253,6 +329,15 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.PLAYER:
+            if (
+                drawPlayerWalkSprite({
+                    context,
+                    entity,
+                    screen,
+                    tilePixels,
+                    now,
+                })
+            ) {break;}
             context.shadowColor = '#22c55e';
             context.shadowBlur = 12;
             context.fillStyle = '#22c55e';
@@ -606,6 +691,7 @@ export function GameCanvas({
                         now
                     ),
                     camera,
+                    now,
                 });
             });
             animationFrameId =
