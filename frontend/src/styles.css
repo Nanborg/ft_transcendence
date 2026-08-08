@@ -457,9 +457,10 @@ p {
 }
 
 .game-canvas {
+  display: block;
   width: 100%;
   max-width: 900px;
-  aspect-ratio: 16 / 9;
+  height: auto;
   border: 1px solid darkblue;
 }
 
