@@ -92,3 +92,15 @@ game:end -> validation serveur -> DB -> history / leaderboard
 - structure User / GameRun / PlayerRunStats ;
 - comment un resultat est sauvegarde ;
 - comment history et leaderboard lisent les donnees.
+
+## Mise a jour 2026-08-10
+
+Ce role doit distinguer l'auth/profil des stats de partie sauvegardees apres
+`gameEnd`.
+
+Points deja avances:
+
+- OAuth 42 prepare sans bloquer le mode dev;
+- profils utilisateurs, amis et routes protegees presents;
+- History affiche les parties gagnees/perdues;
+- Leaderboard utilise les stats sauvegardees par le backend.

@@ -224,14 +224,14 @@ Definition of done :
 - le score n'est pas invente par le client ;
 - le score part dans `game:end`.
 
-## 11. Bloc 9 - XP et upgrades
+## 11. Bloc 9 - Gold et upgrades
 
 Objectif : ajouter de la progression pendant une partie.
 
 Commencer simple :
 
-- gagner XP ;
-- atteindre un niveau ;
+- gagner du gold ;
+- atteindre assez de ressource ;
 - choisir une amelioration ;
 - appliquer un bonus.
 

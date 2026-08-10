@@ -2,7 +2,7 @@
 
 Objectif du fichier: garder uniquement les decisions de gameplay et de scope V1.
 Les valeurs chiffrees et les calculs sont dans `valeurs_equilibrage_v1.md`.
-Le planning de travail est dans `planning_v1.md`.
+Le suivi du travail se fait maintenant via les issues GitHub V1.
 
 ## Objectif de partie
 
@@ -53,8 +53,8 @@ Le planning de travail est dans `planning_v1.md`.
 
 ## Progression
 
-- L'XP est partagee par toute l'equipe.
-- Chaque joueur choisit individuellement comment depenser l'XP.
+- La ressource d'upgrade V1 ciblee est le gold partage par toute l'equipe.
+- Chaque joueur choisit individuellement comment depenser la ressource partagee.
 - Les upgrades se font uniquement aux checkpoints.
 - Les checkpoints ne sont pas des points de sauvegarde.
 - Les checkpoints sont des endroits ou ameliorer ses capacites.
@@ -98,14 +98,14 @@ Le planning de travail est dans `planning_v1.md`.
 ## Checkpoints et boss
 
 - La map contient plusieurs checkpoints d'upgrade.
-- Les joueurs explorent la map pour obtenir assez d'XP avant le boss.
+- Les joueurs explorent la map pour obtenir assez de gold avant le boss.
 - Le boss est accessible sans verrou strict.
 - Un joueur peut techniquement arriver au boss en evitant les ennemis.
 - En pratique, le boss doit etre trop difficile sans upgrades.
 - Le chemin naturel est:
   - explorer ;
   - combattre ;
-  - gagner de l'XP ;
+  - gagner du gold ;
   - utiliser les checkpoints ;
   - battre le boss.
 - Le boss donne une stat symbolique en fin de partie, mais la partie se termine

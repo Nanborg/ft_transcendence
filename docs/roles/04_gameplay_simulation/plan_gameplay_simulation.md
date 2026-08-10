@@ -125,3 +125,15 @@ game:end
 - conditions victoire / defaite ;
 - calcul general du score ;
 - lien avec WebSocket et sauvegarde.
+
+## Mise a jour 2026-08-10
+
+Ce role doit expliquer le gameplay reel implemente, meme si certaines valeurs
+ou entites restent temporaires.
+
+Points deja avances:
+
+- spawn gere par position `spawnX` / `spawnY`, plus comme entite;
+- actions melee, ranged, shield branchees depuis le frontend;
+- checkpoints et upgrades presents cote frontend/backend;
+- `playerData` contient morts, upgrades, cooldowns, alive/disconnected.

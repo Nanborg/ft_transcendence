@@ -20,9 +20,9 @@ decisions de gameplay.
 - Cote moteur, les valeurs peuvent etre calculees par formule selon le niveau
   pour eviter de coder chaque niveau a la main.
 - Cout upgrade propose:
-  - niveau 1 vers niveau 2: `100 XP` ;
-  - niveau 2 vers niveau 3: `250 XP`.
-- L'XP est partagee par l'equipe.
+  - niveau 1 vers niveau 2: `100 gold` ;
+  - niveau 2 vers niveau 3: `250 gold`.
+- Le gold est partage par l'equipe.
 - Le choix d'upgrade reste individuel.
 
 ## Epee laser

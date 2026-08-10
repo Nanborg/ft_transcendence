@@ -99,3 +99,15 @@ gameplay -> game:end -> backend/socket -> DB -> history/leaderboard
 - routes importantes ;
 - validation des inputs ;
 - parcours d'un score jusqu'au leaderboard.
+
+## Mise a jour 2026-08-10
+
+Ce role doit maintenant surtout expliquer le flux reel entre fin de partie,
+sauvegarde DB, history et leaderboard.
+
+Points deja avances:
+
+- routes `/scores/history` et `/scores/leaderboard` presentes;
+- sauvegarde des resultats de partie depuis `gameEnd`;
+- mapping entre `enginePlayerId` et user DB;
+- cache court des sessions archivees pour eviter la perte du `gameEnd`.
