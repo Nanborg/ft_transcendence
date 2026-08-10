@@ -33,7 +33,7 @@ void	GameEngine::_input_join( const json& in ) {
 		return;
 
 	if (_playerIds.count(in["playerId"]) == 0) {
-		PlayerEntity *player = new PlayerEntity(in["playerId"], 0, 0, 0, 0);
+		PlayerEntity *player = new PlayerEntity(in["playerId"], _spawnX, _spawnY, 0, 0);
 		_playerIds[in["playerId"]] = player->getId();
 		_entities.push_front(entityPtr_t(player));
 	}

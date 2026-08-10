@@ -67,6 +67,7 @@ private:
 	void	_input_action( const json& in );
 
 	bool				_running;
+	int					_spawnX, _spawnY;
 	unsigned int		_nextEntityId, _tick, _scale;
 	entityList_t		_entities;
 	playerIds_t			_playerIds;

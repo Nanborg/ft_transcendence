@@ -33,16 +33,6 @@ static void input_r_create(games_list &games, const json &in)
 	}
 }
 
-static void input_r_entities_add(games_list &games, const json &in)
-{
-	if (games.count(in["roomId"]) > 0)
-	{
-		g_game = &games.at(in["roomId"]);
-		games.at(in["roomId"]).init(in);
-		g_game = NULL;
-	}
-}
-
 static void input_r_destroy(games_list &games, const json &in)
 {
 	if (games.count(in["roomId"]) > 0)
@@ -91,10 +81,6 @@ void handle_inputs(std::queue<json> &inputs, games_list &games)
 		{
 		case InputTypes::R_CREATE:
 			input_r_create(games, in);
-			break;
-
-		case InputTypes::R_ENTITIES_ADD:
-			input_r_entities_add(games, in);
 			break;
 
 		case InputTypes::R_DESTROY:
