@@ -22,7 +22,7 @@ void	GameEngine::_input_sync( const json& in ) {
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
 		out["entities"][std::distance(_entities.begin(), it)] = it->get()->toJson();
 	}
-	out["players"] = json::array();
+	out["playerData"] = getAllPlayerDataAsJson();
 	g_io->sendMsg(out.dump());
 }
 
@@ -36,6 +36,11 @@ void	GameEngine::_input_join( const json& in ) {
 		PlayerEntity *player = new PlayerEntity(in["playerId"], _spawnX, _spawnY, 0, 0);
 		_playerIds[in["playerId"]] = player->getId();
 		_entities.push_front(entityPtr_t(player));
+		std::string username = "Player";
+        if (in.count("username") > 0 && in["username"].is_string()) {
+            username = in["username"];
+        }
+        addPlayerData(in["playerId"], player->getId(), username);
 	}
 }
 
@@ -48,6 +53,7 @@ void	GameEngine::_input_leave( const json& in ) {
 	if (_playerIds.count(in["playerId"]) > 0) {
 		deleteEntity(getEntityIterator(_playerIds[in["playerId"]]));
 		_playerIds.erase(in["playerId"]);
+		disconnectPlayerData(in["playerId"]);
 	}
 }
 

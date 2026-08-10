@@ -63,6 +63,64 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	g_io->sendMsg(out.dump());
 }
 
+void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::string& username ) {
+	PlayerData newPlayer;
+	newPlayer.playerEntityId = playerEntityId;
+	newPlayer.playerId = playerId;
+	newPlayer.username = username;
+	newPlayer.deaths = 0;
+	newPlayer.alive = true;
+	newPlayer.atACheckpoint = false;
+	newPlayer.upgrades.melee = 0;
+	newPlayer.upgrades.ranged = 0;
+	newPlayer.upgrades.shield = 0;
+	newPlayer.cooldowns.melee = 0;
+	newPlayer.cooldowns.ranged = 0;
+	newPlayer.cooldowns.shield = 0;
+	_playerData.push_back(newPlayer);
+}
+
+GameEngine::PlayerData*	GameEngine::getPlayerData( int playerId ) {
+	for(size_t i = 0; i < _playerData.size(); i++) {
+		if(_playerData[i].playerId == playerId)
+			return (&_playerData[i]);
+	}
+	return nullptr;
+}
+
+void	GameEngine::disconnectPlayerData( int playerId ) {
+    for (size_t i = 0; i < _playerData.size(); i++) {
+        if (_playerData[i].playerId == playerId) {
+            _playerData[i].playerEntityId = -1;
+            _playerData[i].alive = false;
+            return;
+        }
+    }
+}
+
+json GameEngine::getAllPlayerDataAsJson( void )
+{
+    json allPlayers = json::array();
+    for (size_t i = 0; i < _playerData.size(); i++)
+    {
+        json pData;
+        pData["playerId"] = _playerData[i].playerId;
+        pData["playerEntityId"] = _playerData[i].playerEntityId;
+        pData["username"] = _playerData[i].username;
+        pData["deaths"] = _playerData[i].deaths;
+        pData["alive"] = _playerData[i].alive;
+        pData["atACheckpoint"] = _playerData[i].atACheckpoint;
+        pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
+        pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
+        pData["upgrades"]["shield"] = _playerData[i].upgrades.shield;
+        pData["cooldowns"]["melee"] = _playerData[i].cooldowns.melee;
+        pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
+        pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
+        allPlayers.push_back(pData);
+    }
+    return allPlayers;
+}
+
 int		GameEngine::newId( void ) { return _nextEntityId++; }
 
 bool			GameEngine::isRunning( void ) const { return _running; }
@@ -113,7 +171,20 @@ void	GameEngine::init( const json& in ) {
 	}
 }
 
-void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
+void	GameEngine::stop( void ) {
+	std::cout << "\nstop" << std::endl;
+	_running = false;
+	json out;
+    out["type"] = "gameEnd";
+    out["roomId"] = _roomId;
+    out["tick"] = _tick;
+	// TEMP: Forcing win=true for testing. Must be replaced by the actual win/lose contract later.
+    out["win"] = true;
+    out["reason"] = "game_stopped";
+    out["playerData"] = getAllPlayerDataAsJson();
+	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
+    g_io->sendMsg(out.dump());
+}
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {

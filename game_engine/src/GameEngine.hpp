@@ -52,6 +52,35 @@ public:
 	void	stop( void );
 	void	tick( void );
 
+	struct PlayerUpgrades {
+        int melee;
+        int ranged;
+        int shield;
+    };
+
+    struct PlayerCooldowns {
+        int melee;
+        int ranged;
+        int shield;
+    };
+
+	struct PlayerData {
+        int         playerId;
+        int         playerEntityId;
+        std::string username;
+        int         deaths;
+        bool        alive;
+        bool        atACheckpoint;
+
+        PlayerUpgrades  upgrades;
+        PlayerCooldowns cooldowns;
+    };
+
+	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );
+	PlayerData*	getPlayerData( int playerId );
+	void		disconnectPlayerData( int playerId );
+	json		getAllPlayerDataAsJson( void );
+
 private:
 
 	static bool		_invalid_entity( const json& in );
@@ -66,13 +95,13 @@ private:
 	void	_input_move( const json& in );
 	void	_input_action( const json& in );
 
-	bool				_running;
-	int					_spawnX, _spawnY;
-	unsigned int		_nextEntityId, _tick, _scale;
-	entityList_t		_entities;
-	playerIds_t			_playerIds;
-	playerInput_t		_playerInputs;
-	const std::string	_roomId;
+	bool					_running;
+	unsigned int			_nextEntityId, _tick, _scale;
+	entityList_t			_entities;
+	playerIds_t				_playerIds;
+	playerInput_t			_playerInputs;
+	std::vector<PlayerData> _playerData;
+	const std::string		_roomId;
 };
 
 extern int			g_uspt;
