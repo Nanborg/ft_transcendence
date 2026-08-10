@@ -172,9 +172,11 @@ void	GameEngine::stop( void ) {
     out["type"] = "gameEnd";
     out["roomId"] = _roomId;
     out["tick"] = _tick;
+	// TEMP: Forcing win=true for testing. Must be replaced by the actual win/lose contract later.
     out["win"] = true;
     out["reason"] = "game_stopped";
     out["playerData"] = getAllPlayerDataAsJson();
+	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
     g_io->sendMsg(out.dump());
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }

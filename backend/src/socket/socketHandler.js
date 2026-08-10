@@ -109,6 +109,7 @@ module.exports = (io) => {
                 })
             };
             const dbData = adaptPayloadForDB(enginePayload);
+			// TEMP: Saving stats immediately here. Logic might change when real win conditions are implemented.
             await saveGameResults(dbData);
 			let roomToUpdate = null;
 			try {
@@ -145,6 +146,7 @@ module.exports = (io) => {
 			});
 		} finally {
 			try {
+				// TEMP: Forcing engine stop to ensure cleanup for now.
 				await gameEngineService.stopGame(roomId);
 			} catch (cleanupError) {
 				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);

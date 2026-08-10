@@ -482,6 +482,7 @@ class GameEngineService extends EventEmitter {
     removeSession(roomId) {
         const sessionData = this.sessions.get(roomId);
         if (sessionData) {
+            // TEMP: Keeping session for 30s to preserve ID mapping. To be revisited when the gameEnd flow is final.
             this.archivedSessions.set(roomId, sessionData);
             this.sessions.delete(roomId);
             setTimeout(() => {
