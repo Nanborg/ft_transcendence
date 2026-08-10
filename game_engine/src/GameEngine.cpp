@@ -152,10 +152,16 @@ void	GameEngine::init( const json& in ) {
 
 	if (!map["scale"].is_number_integer())
 		return;
+	if (!map["spawnX"].is_number_integer())
+		return;
+	if (!map["spawnY"].is_number_integer())
+		return;
 	if (!map["entities"].is_array())
 		return;
 
 	_scale = map["scale"];
+	_spawnX = map["spawnX"];
+	_spawnY = map["spawnY"];
 	json entities = map["entities"];
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))

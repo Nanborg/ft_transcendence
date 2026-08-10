@@ -7,17 +7,17 @@ enum InputTypes {
 	R_DESTROY =	1,
 	R_START =	2,
 	R_STOP =	3,
-	R_ENTITIES_ADD =	10,
 
 	// inputs to be sent to rooms
 	PING =		100,
 	SYNC =		101,
 
 	// requires playerId
-	JOIN =		110,
-	LEAVE =		111,
-	MOVE =		112,
-	ACTION =	113,
+	JOIN =			110,
+	LEAVE =			111,
+	MOVE =			112,
+	ACTION =		113,
+	PLAYERUPDATE =	114,
 };
 
 enum PlayerActions {
