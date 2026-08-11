@@ -171,17 +171,19 @@ void	GameEngine::init( const json& in ) {
 	}
 }
 
-void	GameEngine::stop( void ) {
+void	GameEngine::stop( const std::string &reason ) {
 	std::cout << "\nstop" << std::endl;
 	_running = false;
 	json out;
     out["type"] = "gameEnd";
     out["roomId"] = _roomId;
     out["tick"] = _tick;
-	// TEMP: Forcing win=true for testing. Must be replaced by the actual win/lose contract later.
     out["win"] = true;
-    out["reason"] = "game_stopped";
+    out["reason"] = reason;
     out["playerData"] = getAllPlayerDataAsJson();
+	if (reason == "game_stopped" || reason == "game_lost" || reason == "game_abandoned") {
+		out["win"] = false;
+	}
 	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
     g_io->sendMsg(out.dump());
 }

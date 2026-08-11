@@ -53,9 +53,13 @@ static void input_r_start(games_list &games, const json &in)
 
 static void input_r_stop(games_list &games, const json &in)
 {
+	std::string reason = "game_stopped";
+	if (in.contains("reason") && in["reason"].is_string()) {
+		reason = in["reason"];
+	}
 	if (games.count(in["roomId"]) > 0)
 	{
-		games.at(in["roomId"]).stop();
+		games.at(in["roomId"]).stop(reason);
 		std::cout << "roomId " << in["roomId"] << " now stopped" << std::endl;
 	}
 }

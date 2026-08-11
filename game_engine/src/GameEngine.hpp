@@ -49,7 +49,7 @@ public:
 
 	int		newId( void );
 	void	start( void );
-	void	stop( void );
+	void	stop( const std::string &reason );
 	void	tick( void );
 
 	struct PlayerUpgrades {
