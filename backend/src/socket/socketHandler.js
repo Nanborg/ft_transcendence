@@ -1,6 +1,6 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
-const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
+const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, ENGINE_INPUT_TYPE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 
 //Princiamf2
@@ -641,10 +641,20 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("disconnect", () => {
+		socket.on("disconnect", async () => {
 			try {
 				// TODO(princiamf2): Define in-game disconnect behavior
 				// (forfeit, end game, or keep room alive during reconnect window).
+				const stopInput = {
+    				up: false,
+    				down: false,
+    				left: false,
+    				right: false
+				};
+				const userRooms = await getRoomsByUserId(socket.user.id);
+				for (const room of userRooms) {
+                	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
+                }
 				scheduleDisconnect(
 					socket.user.id,
 					socket.id,
@@ -652,7 +662,12 @@ module.exports = (io) => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
 						for (const room of userRooms) {
 							try {
-								await gameEngineService.removePlayer(room.id, socket.user.id);
+								if (room.players.length <= 1) {
+									await gameEngineService.stopGame(room.id);
+								}
+								else {
+									await gameEngineService.removePlayer(room.id, socket.user.id);
+								}
 							} catch (error) {
 								console.error(
 									`Unable to remove user ${socket.user.id} from engine room ${room.id}:`,
