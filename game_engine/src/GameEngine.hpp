@@ -97,6 +97,7 @@ private:
 
 	bool					_running;
 	unsigned int			_nextEntityId, _tick, _scale;
+	int						_spawnX, _spawnY;
 	entityList_t			_entities;
 	playerIds_t				_playerIds;
 	playerInput_t			_playerInputs;
