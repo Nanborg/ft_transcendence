@@ -266,7 +266,7 @@ class GameEngineService extends EventEmitter {
         });
     }
 
-    sendPlayerAction(roomId, userId, action) {
+    sendPlayerAction(roomId, userId, action, direction = {}) {
         const enginePlayerId = this.getEnginePlayerId(roomId, userId);
         if (enginePlayerId === null)
             throw new Error("Engine player mapping not found");
@@ -277,6 +277,8 @@ class GameEngineService extends EventEmitter {
             roomId,
             playerId: enginePlayerId,
             action,
+            dirX: direction.dirX,
+            dirY: direction.dirY,
         });
     }
 

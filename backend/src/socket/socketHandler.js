@@ -370,12 +370,19 @@ module.exports = (io) => {
 			try {
 				const { roomId, input } = payload;
 				const movementKeys = ["up", "down", "left", "right"];
-				const validKeys = [...movementKeys, "action"];
+				const validKeys = [...movementKeys, "action", "dirX", "dirY"];
 				const inputKeys = Object.keys(input);
 				const hasMovement = movementKeys.some((key) => Object.hasOwn(input, key));
 				const hasAction = Object.hasOwn(input, "action");
+				const hasDirection = Object.hasOwn(input, "dirX") || Object.hasOwn(input, "dirY");
 				const hasInvalidKey = inputKeys.some((key) => !validKeys.includes(key));
 				const hasInvalidMovement = hasMovement && movementKeys.some((key) => typeof input[key] !== "boolean");
+				const hasInvalidDirection =
+                    hasDirection &&
+                    (
+                        typeof input.dirX !== "number" ||
+                        typeof input.dirY !== "number"
+                    );
 				const normalizedAction =
 					typeof input.action === "boolean"
 						? input.action
@@ -388,6 +395,7 @@ module.exports = (io) => {
 					(!hasMovement && !hasAction) ||
 					hasInvalidKey ||
 					hasInvalidMovement ||
+					hasInvalidDirection ||
 					hasInvalidAction
 				) {
 					socket.emit("room:error", {
@@ -406,6 +414,10 @@ module.exports = (io) => {
 					...(hasAction && {
 						action: normalizedAction,
 					}),
+					...(hasDirection && {
+                        dirX: input.dirX,
+                        dirY: input.dirY,
+                    }),
 				};
 				const { error } = await setPlayerInput(roomId, socket.user.id, normalizedInput);
 				if (error) {
@@ -427,7 +439,11 @@ module.exports = (io) => {
 						await gameEngineService.sendPlayerAction(
 							roomId,
 							socket.user.id,
-							normalizedAction
+							normalizedAction,
+                            {
+                                dirX: normalizedInput.dirX,
+                                dirY: normalizedInput.dirY,
+                            }
 						);
 					}
 				} catch (error) {
