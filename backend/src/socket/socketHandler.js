@@ -1,6 +1,6 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
-const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, ENGINE_INPUT_TYPE, } = require("../services/gameEngineService");
+const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 
 //Princiamf2
