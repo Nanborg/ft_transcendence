@@ -96,7 +96,8 @@ private:
 	void	_input_action( const json& in );
 
 	bool					_running;
-	unsigned int			_nextEntityId, _tick, _scale, _spawnX, _spawnY;
+	unsigned int			_nextEntityId, _tick, _scale;
+	int						_spawnX, _spawnY;
 	entityList_t			_entities;
 	playerIds_t				_playerIds;
 	playerInput_t			_playerInputs;
