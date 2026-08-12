@@ -258,8 +258,8 @@ function drawEntity({
             context.fillStyle = '#22c55e';
             context.beginPath();
             context.arc(
-                screen.x,
-                screen.y,
+                screen.x + tilePixels/2,
+                screen.y + tilePixels/2,
                 tilePixels * 0.34,
                 0,
                 Math.PI * 2
@@ -270,8 +270,8 @@ function drawEntity({
         case ENTITY_TYPE.WALKING_ROBOT:
             context.fillStyle = '#ef4444';
             context.fillRect(
-                screen.x - tilePixels * 0.3,
-                screen.y - tilePixels * 0.3,
+                screen.x + tilePixels*0.2,
+                screen.y + tilePixels*0.2,
                 tilePixels * 0.6,
                 tilePixels * 0.6
             );
@@ -280,8 +280,8 @@ function drawEntity({
         case ENTITY_TYPE.SHOOTING_ROBOT:
             drawDiamond(
                 context,
-                screen.x,
-                screen.y,
+                screen.x + tilePixels/2,
+                screen.y + tilePixels/2,
                 tilePixels * 0.38,
                 '#f97316'
             );
@@ -292,14 +292,14 @@ function drawEntity({
             context.strokeStyle = '#fef08a';
             context.lineWidth = 3;
             context.fillRect(
-                screen.x - tilePixels * 0.42,
-                screen.y - tilePixels * 0.42,
+                screen.x + tilePixels*0.08,
+                screen.y + tilePixels*0.08,
                 tilePixels * 0.84,
                 tilePixels * 0.84
             );
             context.strokeRect(
-                screen.x - tilePixels * 0.42,
-                screen.y - tilePixels * 0.42,
+                screen.x + tilePixels*0.08,
+                screen.y + tilePixels*0.08,
                 tilePixels * 0.84,
                 tilePixels * 0.84
             );
@@ -310,8 +310,8 @@ function drawEntity({
             context.shadowBlur = 18;
             drawDiamond(
                 context,
-                screen.x,
-                screen.y,
+                screen.x + tilePixels/2,
+                screen.y + tilePixels/2,
                 tilePixels * 0.8,
                 '#a855f7'
             );
