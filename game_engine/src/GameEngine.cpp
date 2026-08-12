@@ -172,6 +172,10 @@ void	GameEngine::init( const json& in ) {
 }
 
 void	GameEngine::stop( const std::string &reason ) {
+	if (_running == false)
+	{
+		return;
+	}
 	std::cout << "\nstop" << std::endl;
 	_running = false;
 	json out;
