@@ -103,11 +103,11 @@ bouger -> esquiver -> attaquer -> tuer -> progresser
 Les attaques sont declenchees par le joueur. Le serveur ou le moteur garde le
 moment de derniere utilisation pour refuser une attaque encore en cooldown.
 
-### Couche 5 - XP et upgrades
+### Couche 5 - Gold et upgrades
 
 Objectif : ajouter de la progression pendant la partie.
 
-- experience, or ou points gagnes en combattant ;
+- gold gagne en combattant ;
 - competences separees ;
 - niveau par competence ;
 - choix d'amelioration ;
@@ -125,7 +125,7 @@ Exemples d'upgrades :
 - reduction de cooldown.
 
 ```txt
-tuer -> gagner XP/points -> ameliorer une competence -> survivre plus longtemps
+tuer -> gagner du gold -> ameliorer une competence -> survivre plus longtemps
 ```
 
 ### Couche 6 - Coop 1 a 4 joueurs

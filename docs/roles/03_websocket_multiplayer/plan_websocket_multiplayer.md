@@ -108,3 +108,15 @@ game:end
 - role de chaque event ;
 - comment plusieurs clients restent synchronises ;
 - comment une fin de partie arrive jusqu'au backend.
+
+## Mise a jour 2026-08-10
+
+Ce role doit aussi couvrir le pont actuel entre room Socket.IO, inputs frontend
+et game engine.
+
+Points deja avances:
+
+- rooms, ready, start, leave et deconnexion fonctionnent;
+- inputs de mouvement et actions sont transmis au moteur;
+- `game:state` synchronise les entites et `playerData`;
+- `game:end` alimente la sauvegarde des statistiques.
