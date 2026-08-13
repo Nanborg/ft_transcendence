@@ -8,7 +8,7 @@ void	GameEngine::tick( void ) {
 	g_game = NULL;
 	// TEMP: Simulating a boss defeat after 15 seconds.
 	if (_tick >= 150 && _running) {
-		stop("game_defeat_boss_mock");
+		stop("boss_defeated");
 	}
 }
 
