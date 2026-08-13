@@ -185,7 +185,7 @@ void	GameEngine::stop( const std::string &reason ) {
     out["win"] = true;
     out["reason"] = reason;
     out["playerData"] = getAllPlayerDataAsJson();
-	if (reason == "game_stopped" || reason == "game_lost" || reason == "game_abandoned") {
+	if (reason == "engine_error" || reason == "all_players_dead" || reason == "all_players_left") {
 		out["win"] = false;
 	}
 	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
