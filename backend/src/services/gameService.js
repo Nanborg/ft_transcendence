@@ -3,9 +3,9 @@ const prisma = require('../db');
 function adaptPayloadForDB(enginePayload) {
     return {
         roomId: enginePayload.roomId,
-        won: enginePayload.win === true,
-        lost: enginePayload.win === false && enginePayload.reason !== "abandoned" && enginePayload.reason !== "all_players_left",
-        abandoned: enginePayload.reason === "abandoned" || enginePayload.reason === "all_players_left",
+        won: enginePayload.reason === "boss_defeated",
+        lost: enginePayload.reason === "all_players_dead",
+        abandoned: enginePayload.reason === "all_players_left" || enginePayload.reason === "engine_error",
         durationSeconds: enginePayload.durationSeconds,
         players: (Array.isArray(enginePayload.playerData) ? enginePayload.playerData : []).map(p => {
             const upgrades = p.upgrades || {};
