@@ -445,6 +445,39 @@ p {
   margin-top: 24px;
 }
 
+.game-fullscreen {
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  overflow: hidden;
+  background-color: #000000;
+}
+
+.game-fullscreen-panel {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin-top: 0;
+}
+
+.game-fullscreen .page-heading {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  left: 16px;
+  max-width: 420px;
+  padding: 12px 14px;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 8px;
+  color: #f0f0f0;
+  background: rgba(10, 20, 30, 0.40);
+}
+
+.game-fullscreen .page-heading p
+{
+  margin-bottom: 0;
+}
+
 .game-hud {
   display: flex;
   flex-wrap: wrap;
@@ -456,11 +489,41 @@ p {
   font-weight: 700;
 }
 
+.game-fullscreen .game-hud {
+  position: absolute;
+  z-index: 2;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #000000;
+  background: rgba(10, 20, 30, 0.40);
+}
+
 .game-canvas {
   width: 100%;
   max-width: 900px;
   aspect-ratio: auto;
   border: 1px solid darkblue;
+}
+
+.game-fullscreen .game-canvas {
+  display: block;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  border: 0;
+}
+
+.game-fullscreen .game-leave-button {
+  position: absolute;
+  z-index: 3;
+  right: 16px;
+  bottom: 16px;
 }
 
 .checkpoint-upgrade {

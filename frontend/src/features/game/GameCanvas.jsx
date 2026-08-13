@@ -551,6 +551,14 @@ export function GameCanvas({
             const canvas = canvasRef.current;
             if (!canvas)
                 return;
+            const rect = canvas.getBoundingClientRect();
+            const nextWidth = Math.max(1, Math.round(rect.width));
+            const nextHeight = Math.max(1, Math.round(rect.height));
+            if ( canvas.width !== nextWidth || canvas.height !== nextHeight)
+                {
+                    canvas.width = nextWidth;
+                    canvas.height = nextHeight;
+                }
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
             const focusPosition = getFocusPosition({
