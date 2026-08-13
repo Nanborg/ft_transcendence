@@ -53,7 +53,7 @@ static void input_r_start(games_list &games, const json &in)
 
 static void input_r_stop(games_list &games, const json &in)
 {
-	std::string reason = "game_stopped";
+	std::string reason = "engine_error";
 	if (in.contains("reason") && in["reason"].is_string()) {
 		reason = in["reason"];
 	}
