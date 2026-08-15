@@ -3,6 +3,7 @@ import { ENTITY_TYPE, PLAYER_ACTION } from './gameProtocol';
 import playerWalkSpriteUrl from '../../assets/game/player/player-walk.png';
 import playerMeleeAttackSpriteUrl from '../../assets/game/player/player-melee-attack.png';
 import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-attack.png';
+import walkingRobotSpriteUrl from '../../assets/game/enemies/walking-robot.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -26,6 +27,10 @@ const playerMeleeAttackSprite = new Image();
 playerMeleeAttackSprite.src = playerMeleeAttackSpriteUrl;
 const playerRangedAttackSprite = new Image();
 playerRangedAttackSprite.src = playerRangedAttackSpriteUrl;
+const WALKING_ROBOT_FRAME_COUNT = 4;
+const WALKING_ROBOT_FRAME_DURATION_MS = 140;
+const walkingRobotSprite = new Image();
+walkingRobotSprite.src = walkingRobotSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -371,6 +376,42 @@ function drawPlayerWalkSprite({
     return true;
 }
 
+function drawWalkingRobotSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+}) {
+    if (!walkingRobotSprite.complete || walkingRobotSprite.naturalWidth === 0)
+        return false;
+    const isMoving = entity.velX !== 0 || entity.velY !== 0;
+    const frame = isMoving ? Math.floor(
+        now / WALKING_ROBOT_FRAME_DURATION_MS
+    ) % WALKING_ROBOT_FRAME_COUNT : 0;
+    const cellWidth = walkingRobotSprite.naturalWidth / WALKING_ROBOT_FRAME_COUNT;
+    const cellHeight = walkingRobotSprite.naturalHeight / 4;
+    const sourceX = frame * cellWidth;
+    const sourceY = directionRow * cellHeight;
+    const spriteSize = tilePixels * 1.7;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
+
+    context.drawImage(
+        walkingRobotSprite,
+        sourceX,
+        sourceY,
+        cellWidth,
+        cellHeight,
+        centerX - spriteSize / 2,
+        centerY - spriteSize / 2,
+        spriteSize,
+        spriteSize,
+    );
+    return true;
+}
+
 function drawEntity({
     context,
     entity,
@@ -459,6 +500,18 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.WALKING_ROBOT:
+            if (
+                drawWalkingRobotSprite({
+                    context,
+                    entity,
+                    screen,
+                    tilePixels,
+                    now,
+                    directionRow,
+                })
+            ) {
+                break;
+            }
             context.fillStyle = '#ef4444';
             context.fillRect(
                 screen.x + tilePixels*0.2,
