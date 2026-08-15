@@ -4,6 +4,7 @@ import playerWalkSpriteUrl from '../../assets/game/player/player-walk.png';
 import playerMeleeAttackSpriteUrl from '../../assets/game/player/player-melee-attack.png';
 import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-attack.png';
 import walkingRobotSpriteUrl from '../../assets/game/enemies/walking-robot.png';
+import shootingRobotSpriteUrl from '../../assets/game/enemies/shooting-robot.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -31,6 +32,10 @@ const WALKING_ROBOT_FRAME_COUNT = 4;
 const WALKING_ROBOT_FRAME_DURATION_MS = 140;
 const walkingRobotSprite = new Image();
 walkingRobotSprite.src = walkingRobotSpriteUrl;
+const SHOOTING_ROBOT_FRAME_COUNT = 4;
+const SHOOTING_ROBOT_FRAME_DURATION_MS = 140;
+const shootingRobotSprite = new Image();
+shootingRobotSprite.src = shootingRobotSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -412,6 +417,41 @@ function drawWalkingRobotSprite({
     return true;
 }
 
+function drawShootingRobotSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+}) {
+    if (!shootingRobotSprite.complete || shootingRobotSprite.naturalWidth === 0)
+        return false;
+    const isMoving = entity.velX !== 0 || entity.velY !== 0;
+    const frame = isMoving ? Math.floor(
+        now / SHOOTING_ROBOT_FRAME_DURATION_MS
+    ) % SHOOTING_ROBOT_FRAME_COUNT : 0;
+    const cellWidth = shootingRobotSprite.naturalWidth / SHOOTING_ROBOT_FRAME_COUNT;
+    const cellHeight = shootingRobotSprite.naturalHeight / 4;
+    const sourceX = frame * cellWidth;
+    const sourceY = directionRow * cellHeight;
+    const spriteSize = tilePixels * 1.6;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
+    context.drawImage(
+        shootingRobotSprite,
+        sourceX,
+        sourceY,
+        cellWidth,
+        cellHeight,
+        centerX - spriteSize / 2,
+        centerY - spriteSize / 2,
+        spriteSize,
+        spriteSize,
+    );
+    return true;
+}
+
 function drawEntity({
     context,
     entity,
@@ -522,6 +562,18 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.SHOOTING_ROBOT:
+            if (
+                drawShootingRobotSprite({
+                    context,
+                    entity,
+                    screen,
+                    tilePixels,
+                    now,
+                    directionRow,
+                })
+            ) {
+                break;
+            }
             drawDiamond(
                 context,
                 screen.x + tilePixels/2,
