@@ -218,7 +218,7 @@ function drawDiamond(context, x, y, radius, color) {
     context.fill();
 }
 
-function getPlayerDirectionRow(entity) {
+function getPlayerDirectionRow(entity, fallbackRow = 0) {
     const velocityX =
         typeof entity.velX === 'number' ? entity.velX : 0;
     const velocityY =
@@ -241,7 +241,7 @@ function getPlayerDirectionRow(entity) {
             return 3;
     }
 
-    return 0;
+    return fallbackRow;
 }
 
 function getPlayerAttackDuration(action) {
@@ -264,11 +264,11 @@ function getPlayerAttackDuration(action) {
 
 function drawPlayerAttackSprite({
     context,
-    entity,
     screen,
     tilePixels,
     now,
     attack,
+    directionRow = 0,
 }) {
     if (!attack)
         return false;
@@ -305,10 +305,11 @@ function drawPlayerAttackSprite({
         Math.floor(elapsed / frameDuration)
     );
 
-    const row = getPlayerDirectionRow(entity);
     const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
-    const sourceY = row * PLAYER_SPRITE_CELL_SIZE;
+    const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
     const spriteSize = tilePixels * 1.8;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
 
     context.drawImage(
         sprite,
@@ -316,8 +317,8 @@ function drawPlayerAttackSprite({
         sourceY,
         PLAYER_SPRITE_CELL_SIZE,
         PLAYER_SPRITE_CELL_SIZE,
-        screen.x - spriteSize / 2,
-        screen.y - spriteSize / 2,
+        centerX - spriteSize / 2,
+        centerY - spriteSize / 2,
         spriteSize,
         spriteSize
     );
@@ -331,6 +332,7 @@ function drawPlayerWalkSprite({
     screen,
     tilePixels,
     now,
+    directionRow = 0,
 }) {
     if (
         !playerWalkSprite.complete ||
@@ -348,10 +350,11 @@ function drawPlayerWalkSprite({
             PLAYER_WALK_FRAME_COUNT
         : 0;
 
-    const row = getPlayerDirectionRow(entity);
     const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
-    const sourceY = row * PLAYER_SPRITE_CELL_SIZE;
+    const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
     const spriteSize = tilePixels * 1.8;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
 
     context.drawImage(
         playerWalkSprite,
@@ -359,8 +362,8 @@ function drawPlayerWalkSprite({
         sourceY,
         PLAYER_SPRITE_CELL_SIZE,
         PLAYER_SPRITE_CELL_SIZE,
-        screen.x - spriteSize / 2,
-        screen.y - spriteSize / 2,
+        centerX - spriteSize / 2,
+        centerY - spriteSize / 2,
         spriteSize,
         spriteSize
     );
@@ -375,6 +378,7 @@ function drawEntity({
     camera,
     now,
     attack,
+    directionRow = 0,
 }) {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -423,11 +427,11 @@ function drawEntity({
             if (
                 drawPlayerAttackSprite({
                     context,
-                    entity,
                     screen,
                     tilePixels,
                     now,
                     attack,
+                    directionRow,
                 })
             ) {break;}
             if (
@@ -437,6 +441,7 @@ function drawEntity({
                     screen,
                     tilePixels,
                     now,
+                    directionRow,
                 })
             ) {break;}
             context.shadowColor = '#22c55e';
@@ -725,6 +730,11 @@ export function GameCanvas({
                 previousTrack.targetX === entity.posX &&
                 previousTrack.targetY === entity.posY
             ) {
+                previousTrack.directionRow =
+                    getPlayerDirectionRow(
+                        entity,
+                        previousTrack.directionRow
+                    );
                 previousTrack.entity = entity;
                 return;
             }
@@ -747,6 +757,10 @@ export function GameCanvas({
 
             entityTracksRef.current.set(entity.entityId, {
                 entity,
+                directionRow: getPlayerDirectionRow(
+                    entity,
+                    previousTrack?.directionRow ?? 0
+                ),
                 fromX: mustTeleport
                     ? entity.posX
                     : currentPosition.x,
@@ -826,7 +840,9 @@ export function GameCanvas({
             entityTracksRef.current.forEach(track => {
                 const playerData =
                     renderData.gamePlayerData.find(
-                        player => player.playerEntityId === track.entityId
+                        player =>
+                            String(player.playerEntityId) ===
+                            String(track.entity.entityId)
                     );
                 const playerId = playerData?.playerId ?? (
                     track.entity.entityId === localEntityId
@@ -856,6 +872,7 @@ export function GameCanvas({
                     camera,
                     now,
                     attack,
+                    directionRow: track.directionRow,
                 });
             });
             animationFrameId =
