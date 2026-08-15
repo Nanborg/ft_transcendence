@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
-import { ENTITY_TYPE } from './gameProtocol';
+import { ENTITY_TYPE, PLAYER_ACTION } from './gameProtocol';
 import playerWalkSpriteUrl from '../../assets/game/player/player-walk.png';
+import playerMeleeAttackSpriteUrl from '../../assets/game/player/player-melee-attack.png';
+import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-attack.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -15,8 +17,15 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
 const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
+const PLAYER_ATTACK_FRAME_COUNT = 6;
+const PLAYER_MELEE_FRAME_DURATION_MS = 60;
+const PLAYER_RANGED_FRAME_DURATION_MS = 50;
 const playerWalkSprite = new Image();
 playerWalkSprite.src = playerWalkSpriteUrl;
+const playerMeleeAttackSprite = new Image();
+playerMeleeAttackSprite.src = playerMeleeAttackSpriteUrl;
+const playerRangedAttackSprite = new Image();
+playerRangedAttackSprite.src = playerRangedAttackSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -235,6 +244,87 @@ function getPlayerDirectionRow(entity) {
     return 0;
 }
 
+function getPlayerAttackDuration(action) {
+    if (action === PLAYER_ACTION.MELEE) {
+        return (
+            PLAYER_ATTACK_FRAME_COUNT *
+            PLAYER_MELEE_FRAME_DURATION_MS
+        );
+    }
+
+    if (action === PLAYER_ACTION.RANGED) {
+        return (
+            PLAYER_ATTACK_FRAME_COUNT *
+            PLAYER_RANGED_FRAME_DURATION_MS
+        );
+    }
+
+    return 0;
+}
+
+function drawPlayerAttackSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+    attack,
+}) {
+    if (!attack)
+        return false;
+
+    const isMelee =
+        attack.action === PLAYER_ACTION.MELEE;
+    const isRanged =
+        attack.action === PLAYER_ACTION.RANGED;
+
+    if (!isMelee && !isRanged)
+        return false;
+
+    const sprite = isMelee
+        ? playerMeleeAttackSprite
+        : playerRangedAttackSprite;
+
+    if (!sprite.complete || sprite.naturalWidth === 0)
+        return false;
+
+    const frameDuration = isMelee
+        ? PLAYER_MELEE_FRAME_DURATION_MS
+        : PLAYER_RANGED_FRAME_DURATION_MS;
+
+    const elapsed = now - attack.startedAt;
+    const duration = getPlayerAttackDuration(
+        attack.action
+    );
+
+    if (elapsed < 0 || elapsed >= duration)
+        return false;
+
+    const frame = Math.min(
+        PLAYER_ATTACK_FRAME_COUNT - 1,
+        Math.floor(elapsed / frameDuration)
+    );
+
+    const row = getPlayerDirectionRow(entity);
+    const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
+    const sourceY = row * PLAYER_SPRITE_CELL_SIZE;
+    const spriteSize = tilePixels * 1.8;
+
+    context.drawImage(
+        sprite,
+        sourceX,
+        sourceY,
+        PLAYER_SPRITE_CELL_SIZE,
+        PLAYER_SPRITE_CELL_SIZE,
+        screen.x - spriteSize / 2,
+        screen.y - spriteSize / 2,
+        spriteSize,
+        spriteSize
+    );
+
+    return true;
+}
+
 function drawPlayerWalkSprite({
     context,
     entity,
@@ -284,6 +374,7 @@ function drawEntity({
     position,
     camera,
     now,
+    attack,
 }) {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -329,6 +420,16 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.PLAYER:
+            if (
+                drawPlayerAttackSprite({
+                    context,
+                    entity,
+                    screen,
+                    tilePixels,
+                    now,
+                    attack,
+                })
+            ) {break;}
             if (
                 drawPlayerWalkSprite({
                     context,
@@ -537,9 +638,11 @@ export function GameCanvas({
     gameMap,
     gameEntities,
     gamePlayerData,
+    socket,
 }) {
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
+    const playerAttackRef = useRef(new Map());
     const renderDataRef = useRef({
         currentPlayerId,
         gameMap,
@@ -567,6 +670,29 @@ export function GameCanvas({
             ? gamePlayerData
             : [],
     };
+
+    useEffect(() => {
+        if (!socket)
+            return undefined;
+        function handlePlayerInput(payload) {
+            const action = payload?.input?.action;
+            if (typeof payload?.playerId === 'undefined' ||
+                (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED)
+            ) {return;}
+            playerAttackRef.current.set(
+                String(payload.playerId),
+                {
+                    action,
+                    startedAt: performance.now(),
+                }
+            );
+        }
+        socket.on('player:input', handlePlayerInput);
+        return () => {
+            socket.off('player:input', handlePlayerInput);
+            playerAttackRef.current.clear();
+        };
+    }, [socket]);
 
     useEffect(() => {
         if (!Array.isArray(gameEntities))
@@ -650,6 +776,21 @@ export function GameCanvas({
                 return;
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
+            const localPlayer = renderData.gamePlayerData.find(player =>
+                String(player.playerId) ===
+                String(renderData.currentPlayerId)
+            );
+            let localEntityId = localPlayer?.playerEntityId;
+            if (typeof localEntityId !== 'number') {
+                for (const track of entityTracksRef.current.values())
+                {
+                    if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
+                    {
+                        localEntityId = track.entity.entityId;
+                        break;
+                    }
+                }
+            }
             const focusPosition = getFocusPosition({
                 tracks: entityTracksRef.current,
                 playerData: renderData.gamePlayerData,
@@ -683,6 +824,28 @@ export function GameCanvas({
                 camera,
             });
             entityTracksRef.current.forEach(track => {
+                const playerData =
+                    renderData.gamePlayerData.find(
+                        player => player.playerEntityId === track.entityId
+                    );
+                const playerId = playerData?.playerId ?? (
+                    track.entity.entityId === localEntityId
+                        ? renderData.currentPlayerId
+                        : null
+                );
+                let attack = playerId === null
+                    ? null
+                    : playerAttackRef.current.get(String(playerId));
+                if (
+                    attack &&
+                    now - attack.startedAt >= getPlayerAttackDuration(
+                        attack.action
+                    )
+                )
+                {
+                    playerAttackRef.current.delete(String(playerId));
+                    attack = null;
+                }
                 drawEntity({
                     context,
                     entity: track.entity,
@@ -692,6 +855,7 @@ export function GameCanvas({
                     ),
                     camera,
                     now,
+                    attack,
                 });
             });
             animationFrameId =

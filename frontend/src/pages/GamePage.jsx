@@ -319,6 +319,7 @@ export function GamePage({
                     gameMap={gameMap}
                     gameEntities={gameEntities}
                     gamePlayerData={gamePlayerData}
+                    socket={socket}
                 />
                 {isAtCheckpoint && (
                     <section
