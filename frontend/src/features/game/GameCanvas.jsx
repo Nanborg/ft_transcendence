@@ -200,12 +200,10 @@ function drawEntity({
 }) {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
-    const tilePixels = Math.max(
+    const tilePixels = camera.tileSize * camera.scale;
+    const entityPixels = Math.max(
         8,
-        Math.min(
-            48,
-            camera.tileSize * camera.scale
-        )
+        Math.min(48, tilePixels)
     );
 
     const margin = tilePixels * 2;
@@ -227,14 +225,14 @@ function drawEntity({
             context.strokeStyle = '#64748b';
             context.lineWidth = 1;
             context.fillRect(
-                screen.x,
-                screen.y,
+                screen.x - tilePixels / 2,
+                screen.y - tilePixels / 2,
                 tilePixels,
                 tilePixels
             );
             context.strokeRect(
-                screen.x,
-                screen.y,
+                screen.x - tilePixels / 2,
+                screen.y - tilePixels / 2,
                 tilePixels,
                 tilePixels
             );
@@ -246,9 +244,9 @@ function drawEntity({
             context.fillStyle = '#22c55e';
             context.beginPath();
             context.arc(
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.34,
+                screen.x,
+                screen.y,
+                entityPixels * 0.34,
                 0,
                 Math.PI * 2
             );
@@ -258,19 +256,19 @@ function drawEntity({
         case ENTITY_TYPE.WALKING_ROBOT:
             context.fillStyle = '#ef4444';
             context.fillRect(
-                screen.x + tilePixels*0.2,
-                screen.y + tilePixels*0.2,
-                tilePixels * 0.6,
-                tilePixels * 0.6
+                screen.x - entityPixels * 0.3,
+                screen.y - entityPixels * 0.3,
+                entityPixels * 0.6,
+                entityPixels * 0.6
             );
             break;
 
         case ENTITY_TYPE.SHOOTING_ROBOT:
             drawDiamond(
                 context,
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.38,
+                screen.x,
+                screen.y,
+                entityPixels * 0.38,
                 '#f97316'
             );
             break;
@@ -280,16 +278,16 @@ function drawEntity({
             context.strokeStyle = '#fef08a';
             context.lineWidth = 3;
             context.fillRect(
-                screen.x + tilePixels*0.08,
-                screen.y + tilePixels*0.08,
-                tilePixels * 0.84,
-                tilePixels * 0.84
+                screen.x - entityPixels * 0.42,
+                screen.y - entityPixels * 0.42,
+                entityPixels * 0.84,
+                entityPixels * 0.84
             );
             context.strokeRect(
-                screen.x + tilePixels*0.08,
-                screen.y + tilePixels*0.08,
-                tilePixels * 0.84,
-                tilePixels * 0.84
+                screen.x - entityPixels * 0.42,
+                screen.y - entityPixels * 0.42,
+                entityPixels * 0.84,
+                entityPixels * 0.84
             );
             break;
 
@@ -298,9 +296,9 @@ function drawEntity({
             context.shadowBlur = 18;
             drawDiamond(
                 context,
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.8,
+                screen.x,
+                screen.y,
+                entityPixels * 0.8,
                 '#a855f7'
             );
             break;
@@ -312,7 +310,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.6,
+                entityPixels * 0.6,
                 -Math.PI * 0.75,
                 Math.PI * 0.25
             );
@@ -327,7 +325,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                Math.max(3, tilePixels * 0.12),
+                Math.max(3, entityPixels * 0.12),
                 0,
                 Math.PI * 2
             );
@@ -343,7 +341,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.55,
+                entityPixels * 0.55,
                 0,
                 Math.PI * 2
             );
@@ -358,7 +356,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                Math.max(4, tilePixels * 0.18),
+                Math.max(4, entityPixels * 0.18),
                 0,
                 Math.PI * 2
             );
@@ -370,9 +368,9 @@ function drawEntity({
             context.shadowBlur = 14;
             drawDiamond(
                 context,
-                screen.x + tilePixels / 2,
-                screen.y + tilePixels / 2,
-                tilePixels * 0.35,
+                screen.x,
+                screen.y,
+                entityPixels * 0.35,
                 '#facc15'
             );
             break;
@@ -382,9 +380,9 @@ function drawEntity({
             context.lineWidth = 3;
             context.beginPath();
             context.arc(
-                screen.x + tilePixels / 2,
-                screen.y + tilePixels / 2,
-                tilePixels * 0.3,
+                screen.x,
+                screen.y,
+                entityPixels * 0.3,
                 0,
                 Math.PI * 2
             );
@@ -397,7 +395,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.2,
+                entityPixels * 0.2,
                 0,
                 Math.PI * 2
             );
