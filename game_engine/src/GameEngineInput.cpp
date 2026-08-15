@@ -64,11 +64,21 @@ void	GameEngine::_input_move( const json& in ) {
 	if (_playerIds.count(in["playerId"]) > 0) {
 		int entityId = _playerIds[in["playerId"]];
 		entityList_t::iterator it = getEntityIterator(entityId);
-		AbstractEntity *e = it->get();
-		((PlayerEntity *) e)->movementInput(in["velX"], in["velY"]);
+		PlayerEntity *entity = (PlayerEntity *) it->get();
+		entity->movementInput(in["velX"], in["velY"]);
 	}
 }
 
 void	GameEngine::_input_action( const json& in ) {
+	std::cout << in.dump() << std::endl;
+	if (!in["action"].is_number_integer())
+		return;
+	if (!in["playerId"].is_number_integer())
+		return;
+	if (_playerIds.count(in["playerId"]) == 0)
+		return;
 
+	entityList_t::iterator it = getEntityIterator(_playerIds[in["playerId"]]);
+	PlayerEntity *player = (PlayerEntity *) it->get();
+	player->playerAction(in);
 }

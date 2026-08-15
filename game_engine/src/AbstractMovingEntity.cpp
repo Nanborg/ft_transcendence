@@ -1,4 +1,5 @@
 #include "AbstractMovingEntity.hpp"
+#include <GameEngine.hpp>
 
 const float	AbstractMovingEntity::_velCap = .2f;
 
@@ -21,5 +22,10 @@ bool AbstractMovingEntity::_templateTick( void )
 		return false;
 	_posX += _velX;
 	_posY += _velY;
+	if (g_game->checkCollision(this)) {
+		_posX -= _velX;
+		_posY -= _velY;
+		_velX = _velY = 0;
+	}
 	return true;
 }

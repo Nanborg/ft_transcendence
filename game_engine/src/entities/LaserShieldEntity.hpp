@@ -4,10 +4,9 @@
 #include <AbstractHitboxEntity.hpp>
 #include <GameEngine.hpp>
 
-class LaserShieldEntity: public AbstractHitboxEntity
-{
+class LaserShieldEntity: public AbstractHitboxEntity {
 public:
-	LaserShieldEntity( int posX, int posY, int health, int ownerId );
+	LaserShieldEntity( int posX, int posY, int health, int ownerId, int damage );
 	~LaserShieldEntity();
 
 private:

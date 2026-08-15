@@ -26,7 +26,7 @@ bool AbstractEntity::doTick( void ) {
 }
 
 bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
-	int dist = _size + o._size;
+	int dist = (_size + o._size) / 2;
 	return o.distance(_posX, _posY) < dist;
 }
 

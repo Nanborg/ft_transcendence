@@ -33,7 +33,8 @@ public:
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );
 	entityList_t::iterator	getEntityIterator( int entityId );
-	AbstractEntity*			spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
+	AbstractEntity*			buildNewEntity( int typeId, int posX, int posY, int velX, int velY );
+	void					spawnEntity( AbstractEntity* entity );
 	void					deleteEntity( entityList_t::iterator it );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
@@ -44,6 +45,8 @@ public:
 
 	bool			isRunning( void ) const;
 	unsigned int	getScale( void ) const;
+
+	const entityList_t&	getEntityList( void ) const;
 
 	void	init( const json& in );
 

@@ -71,8 +71,8 @@ function mapConv(filePath, roomId) {
 		width,
 		height,
 		scale: SCALE,
-		spawnX: spawn.x * SCALE,
-		spawnY: spawn.y * SCALE,
+		spawnX: (spawn.x + 1) * SCALE,
+		spawnY: (spawn.y + 1) * SCALE,
 		entities,
 	};
 
