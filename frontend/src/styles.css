@@ -577,14 +577,14 @@ p {
   .game-hud__stat {
     border-right: 0;
   }
-.game-fullscreen .game-hud {
+}
+
+.game-fullscreen .game-hud--live {
   position: absolute;
   z-index: 2;
   top: 16px;
   right: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  display: grid;
   gap: 12px;
   padding: 10px 12px;
   border-radius: 8px;
@@ -614,6 +614,14 @@ p {
   z-index: 3;
   right: 16px;
   bottom: 16px;
+}
+
+.game-fullscreen .checkpoint-upgrade {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 72px;
+  transform: translateX(-50%);
 }
 
 .checkpoint-upgrade {

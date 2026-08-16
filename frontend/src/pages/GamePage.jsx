@@ -260,7 +260,6 @@ export function GamePage({
     return (
         <div className="game-fullscreen">
             <PageHeading title={title} description={description} />
-            <div className="game-panel">
                 <section
                     className="game-hud game-hud--live"
                     aria-label="Game status"
@@ -306,19 +305,14 @@ export function GamePage({
                         <div className="game-hud__stat">
                             <span>Shield · Shift</span>
                             <strong>
-                                Lv {currentPlayer?.upgrades.shield ?? 0}
+                                Lv {currentPlayer?.upgrades?.shield ?? 0}
                                 {' · '}
                                 {currentPlayer?.cooldowns?.shield ?? 0} ticks
                             </strong>
                         </div>
                     </div>
                 </section>
-            <div className="game-panel game-fullscreen-panel">
-                <div className="game-hud">
-                    <p>Live game state</p>
-                    <p>Room: {currentRoom.name || currentRoom.id}</p>
-                    <p>Time: {formatDuration(elapsedSeconds)}</p>
-                </div>
+                <div className="game-fullscreen-panel">
                 <GameCanvas
                     currentPlayerId={currentPlayerId}
                     gameMap={gameMap}
@@ -345,7 +339,7 @@ export function GamePage({
                             >
                                 <strong>Melee</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.melee ?? 0}
+                                    Level {currentPlayer?.upgrades?.melee ?? 0}
                                 </span>
                             </button>
                             <button
@@ -355,7 +349,7 @@ export function GamePage({
                             >
                                 <strong>Ranged</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.ranged ?? 0}
+                                    Level {currentPlayer?.upgrades?.ranged ?? 0}
                                 </span>
                             </button>
                             <button
@@ -365,7 +359,7 @@ export function GamePage({
                             >
                                 <strong>Shield</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.shield ?? 0}
+                                    Level {currentPlayer?.upgrades?.shield ?? 0}
                                 </span>
                             </button>
                         </div>
