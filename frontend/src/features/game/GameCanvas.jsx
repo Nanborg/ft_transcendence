@@ -9,6 +9,7 @@ import tankRobotIdleSpriteUrl from '../../assets/game/enemies/tank-robot-idle.pn
 import playerIdleSpriteUrl from '../../assets/game/player/player-idle.png';
 import walkingRobotIdleSpriteUrl from '../../assets/game/enemies/walking-robot-idle.png';
 import shootingRobotIdleSpriteUrl from '../../assets/game/enemies/shooting-robot-idle.png';
+import lordGoobIdleSpriteUrl from '../../assets/game/enemies/lord-goob-idle.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -120,6 +121,28 @@ const SHOOTING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
 ]);
 const tankRobotIdleSprite = new Image();
 tankRobotIdleSprite.src = tankRobotIdleSpriteUrl;
+const LORD_GOOB_FRAME_COUNT = 4;
+const LORD_GOOB_FRAME_DURATION_MS = 260;
+const LORD_GOOB_SOURCE_COLUMNS = Object.freeze([
+    { x: 0, width: 304 },
+    { x: 304, width: 305 },
+    { x: 609, width: 304 },
+    { x: 913, width: 304 },
+]);
+const LORD_GOOB_SOURCE_ROWS = Object.freeze([
+    { y: 0, height: 323 },
+    { y: 323, height: 324 },
+    { y: 647, height: 323 },
+    { y: 970, height: 323 },
+]);
+const LORD_GOOB_IDLE_ANCHOR_X = Object.freeze([
+    [0.5801, 0.5434, 0.5186, 0.4848],
+    [0.5904, 0.5442, 0.5028, 0.4833],
+    [0.5759, 0.5372, 0.4996, 0.4740],
+    [0.5715, 0.5393, 0.5078, 0.4808],
+]);
+const lordGoobIdleSprite = new Image();
+lordGoobIdleSprite.src = lordGoobIdleSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -611,6 +634,42 @@ function drawTankRobotSprite({
     return true;
 }
 
+function drawLordGoobSprite({
+    context,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+}) {
+    if (!lordGoobIdleSprite.complete || lordGoobIdleSprite.naturalWidth === 0)
+        return false;
+    const frame = Math.floor(
+        now / LORD_GOOB_FRAME_DURATION_MS
+    ) % LORD_GOOB_FRAME_COUNT;
+    const source = getSpriteSource({
+        columns: LORD_GOOB_SOURCE_COLUMNS,
+        rows: LORD_GOOB_SOURCE_ROWS,
+        frame,
+        directionRow,
+        anchorXs: LORD_GOOB_IDLE_ANCHOR_X,
+    });
+    const spriteSize = tilePixels * 2.8;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
+    context.drawImage(
+        lordGoobIdleSprite,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        centerX - source.anchorX * spriteSize,
+        centerY - spriteSize / 2,
+        spriteSize,
+        spriteSize
+    );
+    return true;
+}
+
 function drawEntity({
     context,
     entity,
@@ -631,7 +690,7 @@ function drawEntity({
         )
     );
 
-    const margin = tilePixels * 2;
+    const margin = tilePixels * 3;
 
     if (
         screen.x < -margin ||
@@ -772,6 +831,17 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.BOSS:
+            if (
+                drawLordGoobSprite({
+                    context,
+                    screen,
+                    tilePixels,
+                    now,
+                    directionRow,
+                })
+            ) {
+                break;
+            }
             context.shadowColor = '#d946ef';
             context.shadowBlur = 18;
             drawDiamond(
@@ -1138,15 +1208,15 @@ export function GameCanvas({
                     attack = null;
                 }
                 const position = getInterpolatedPosition(track, now);
-                const renderDirectionRow =
-                    getEntityType(track.entity) ===
-                    ENTITY_TYPE.TANK_ROBOT
-                        ? getDirectionRowToward(
-                            position,
-                            focusPosition,
-                            track.directionRow
-                        )
-                        : track.directionRow;
+                const entityType = getEntityType(track.entity);
+                const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
+                const renderDirectionRow = facesPlayer
+                    ? getDirectionRowToward(
+                        position,
+                        focusPosition,
+                        track.directionRow
+                    )
+                    : track.directionRow;
                 drawEntity({
                     context,
                     entity: track.entity,
