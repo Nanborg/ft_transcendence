@@ -224,28 +224,19 @@ function getCamera({
             ? gameMap.scale
             : Math.max(1, worldWidth / 50);
 
-    let viewWidth = Math.min(
-        worldWidth,
-        tileSize * VIEW_WIDTH_IN_TILES
-    );
-
-    let viewHeight =
-        viewWidth * (canvas.height / canvas.width);
-
-    if (viewHeight > worldHeight) {
-        viewHeight = worldHeight;
-        viewWidth =
-            viewHeight * (canvas.width / canvas.height);
-    }
-
-    const maxLeft = Math.max(0, worldWidth - viewWidth);
-    const maxTop = Math.max(0, worldHeight - viewHeight);
+    const wantedViewWidth = Math.min( worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
+    const wantedViewHeight = wantedViewWidth * (canvas.height / canvas.width);
+    const scale = Math.min( canvas.width / wantedViewWidth, canvas.height / wantedViewHeight);
+    const viewportWidth = canvas.width / scale;
+    const viewportHeight = canvas.height / scale;
+    const maxLeft = Math.max(0, worldWidth - viewportWidth);
+    const maxTop = Math.max(0, worldHeight - viewportHeight);
 
     const left = Math.max(
         0,
         Math.min(
             maxLeft,
-            focusPosition.x - viewWidth / 2
+            focusPosition.x - viewportWidth / 2
         )
     );
 
@@ -253,33 +244,33 @@ function getCamera({
         0,
         Math.min(
             maxTop,
-            focusPosition.y - viewHeight / 2
+            focusPosition.y - viewportHeight / 2
         )
     );
 
     return {
         left,
         top,
-        right: left + viewWidth,
-        bottom: top + viewHeight,
-        scaleX: canvas.width / viewWidth,
-        scaleY: canvas.height / viewHeight,
+        right: left + viewportWidth,
+        bottom: top + viewportHeight,
+        scale,
+        offsetX: (canvas.width - viewportWidth * scale) / 2,
+        offsetY: (canvas.height - viewportHeight * scale) / 2,
         tileSize,
     };
 }
 
 function worldToScreen(position, camera) {
     return {
-        x: (position.x - camera.left) * camera.scaleX,
-        y: (position.y - camera.top) * camera.scaleY,
+        x: camera.offsetX + (position.x - camera.left) * camera.scale,
+        y: camera.offsetY + (position.y - camera.top) * camera.scale,
     };
 }
 
 function drawGrid(context, canvas, camera) {
-    const tileWidth = camera.tileSize * camera.scaleX;
-    const tileHeight = camera.tileSize * camera.scaleY;
+    const tilePixels = camera.tileSize * camera.scale;
 
-    if (tileWidth < 4 || tileHeight < 4)
+    if (tilePixels < 4)
         return;
 
     const firstColumn =
@@ -301,8 +292,7 @@ function drawGrid(context, canvas, camera) {
         column += 1
     ) {
         const x =
-            (column * camera.tileSize - camera.left) *
-            camera.scaleX;
+            camera.offsetX + (column * camera.tileSize - camera.left) * camera.scale;
 
         context.moveTo(x, 0);
         context.lineTo(x, canvas.height);
@@ -314,8 +304,7 @@ function drawGrid(context, canvas, camera) {
         row += 1
     ) {
         const y =
-            (row * camera.tileSize - camera.top) *
-            camera.scaleY;
+            camera.offsetY + (row * camera.tileSize - camera.top) * camera.scale;
 
         context.moveTo(0, y);
         context.lineTo(canvas.width, y);
@@ -681,13 +670,10 @@ function drawEntity({
 }) {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
-    const tilePixels = Math.max(
+    const tilePixels = camera.tileSize * camera.scale;
+    const entityPixels = Math.max(
         8,
-        Math.min(
-            48,
-            camera.tileSize *
-                Math.min(camera.scaleX, camera.scaleY)
-        )
+        Math.min(48, tilePixels)
     );
 
     const margin = tilePixels * 3;
@@ -709,14 +695,14 @@ function drawEntity({
             context.strokeStyle = '#64748b';
             context.lineWidth = 1;
             context.fillRect(
-                screen.x,
-                screen.y,
+                screen.x - tilePixels / 2,
+                screen.y - tilePixels / 2,
                 tilePixels,
                 tilePixels
             );
             context.strokeRect(
-                screen.x,
-                screen.y,
+                screen.x - tilePixels / 2,
+                screen.y - tilePixels / 2,
                 tilePixels,
                 tilePixels
             );
@@ -748,9 +734,9 @@ function drawEntity({
             context.fillStyle = '#22c55e';
             context.beginPath();
             context.arc(
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.34,
+                screen.x,
+                screen.y,
+                entityPixels * 0.34,
                 0,
                 Math.PI * 2
             );
@@ -772,10 +758,10 @@ function drawEntity({
             }
             context.fillStyle = '#ef4444';
             context.fillRect(
-                screen.x + tilePixels*0.2,
-                screen.y + tilePixels*0.2,
-                tilePixels * 0.6,
-                tilePixels * 0.6
+                screen.x - entityPixels * 0.3,
+                screen.y - entityPixels * 0.3,
+                entityPixels * 0.6,
+                entityPixels * 0.6
             );
             break;
 
@@ -794,9 +780,9 @@ function drawEntity({
             }
             drawDiamond(
                 context,
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.38,
+                screen.x,
+                screen.y,
+                entityPixels * 0.38,
                 '#f97316'
             );
             break;
@@ -817,16 +803,16 @@ function drawEntity({
             context.strokeStyle = '#fef08a';
             context.lineWidth = 3;
             context.fillRect(
-                screen.x + tilePixels*0.08,
-                screen.y + tilePixels*0.08,
-                tilePixels * 0.84,
-                tilePixels * 0.84
+                screen.x - entityPixels * 0.42,
+                screen.y - entityPixels * 0.42,
+                entityPixels * 0.84,
+                entityPixels * 0.84
             );
             context.strokeRect(
-                screen.x + tilePixels*0.08,
-                screen.y + tilePixels*0.08,
-                tilePixels * 0.84,
-                tilePixels * 0.84
+                screen.x - entityPixels * 0.42,
+                screen.y - entityPixels * 0.42,
+                entityPixels * 0.84,
+                entityPixels * 0.84
             );
             break;
 
@@ -846,9 +832,9 @@ function drawEntity({
             context.shadowBlur = 18;
             drawDiamond(
                 context,
-                screen.x + tilePixels/2,
-                screen.y + tilePixels/2,
-                tilePixels * 0.8,
+                screen.x,
+                screen.y,
+                entityPixels * 0.8,
                 '#a855f7'
             );
             break;
@@ -860,7 +846,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.6,
+                entityPixels * 0.6,
                 -Math.PI * 0.75,
                 Math.PI * 0.25
             );
@@ -875,7 +861,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                Math.max(3, tilePixels * 0.12),
+                Math.max(3, entityPixels * 0.12),
                 0,
                 Math.PI * 2
             );
@@ -891,7 +877,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.55,
+                entityPixels * 0.55,
                 0,
                 Math.PI * 2
             );
@@ -906,7 +892,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                Math.max(4, tilePixels * 0.18),
+                Math.max(4, entityPixels * 0.18),
                 0,
                 Math.PI * 2
             );
@@ -918,9 +904,9 @@ function drawEntity({
             context.shadowBlur = 14;
             drawDiamond(
                 context,
-                screen.x + tilePixels / 2,
-                screen.y + tilePixels / 2,
-                tilePixels * 0.35,
+                screen.x,
+                screen.y,
+                entityPixels * 0.35,
                 '#facc15'
             );
             break;
@@ -930,9 +916,9 @@ function drawEntity({
             context.lineWidth = 3;
             context.beginPath();
             context.arc(
-                screen.x + tilePixels / 2,
-                screen.y + tilePixels / 2,
-                tilePixels * 0.3,
+                screen.x,
+                screen.y,
+                entityPixels * 0.3,
                 0,
                 Math.PI * 2
             );
@@ -945,7 +931,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                tilePixels * 0.2,
+                entityPixels * 0.2,
                 0,
                 Math.PI * 2
             );
@@ -1133,6 +1119,14 @@ export function GameCanvas({
             const canvas = canvasRef.current;
             if (!canvas)
                 return;
+            const rect = canvas.getBoundingClientRect();
+            const nextWidth = Math.max(1, Math.round(rect.width));
+            const nextHeight = Math.max(1, Math.round(rect.height));
+            if ( canvas.width !== nextWidth || canvas.height !== nextHeight)
+                {
+                    canvas.width = nextWidth;
+                    canvas.height = nextHeight;
+                }
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
             const localPlayer = renderData.gamePlayerData.find(player =>
