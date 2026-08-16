@@ -5,6 +5,10 @@ import playerMeleeAttackSpriteUrl from '../../assets/game/player/player-melee-at
 import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-attack.png';
 import walkingRobotSpriteUrl from '../../assets/game/enemies/walking-robot.png';
 import shootingRobotSpriteUrl from '../../assets/game/enemies/shooting-robot.png';
+import tankRobotIdleSpriteUrl from '../../assets/game/enemies/tank-robot-idle.png';
+import playerIdleSpriteUrl from '../../assets/game/player/player-idle.png';
+import walkingRobotIdleSpriteUrl from '../../assets/game/enemies/walking-robot-idle.png';
+import shootingRobotIdleSpriteUrl from '../../assets/game/enemies/shooting-robot-idle.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -19,6 +23,10 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
 const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
+const PLAYER_IDLE_FRAME_COUNT = 4;
+const PLAYER_IDLE_FRAME_DURATION_MS = 240;
+const playerIdleSprite = new Image();
+playerIdleSprite.src = playerIdleSpriteUrl;
 const PLAYER_ATTACK_FRAME_COUNT = 6;
 const PLAYER_MELEE_FRAME_DURATION_MS = 60;
 const PLAYER_RANGED_FRAME_DURATION_MS = 50;
@@ -32,10 +40,86 @@ const WALKING_ROBOT_FRAME_COUNT = 4;
 const WALKING_ROBOT_FRAME_DURATION_MS = 140;
 const walkingRobotSprite = new Image();
 walkingRobotSprite.src = walkingRobotSpriteUrl;
+const WALKING_ROBOT_IDLE_FRAME_DURATION_MS = 260;
+const walkingRobotIdleSprite = new Image();
+walkingRobotIdleSprite.src = walkingRobotIdleSpriteUrl;
 const SHOOTING_ROBOT_FRAME_COUNT = 4;
 const SHOOTING_ROBOT_FRAME_DURATION_MS = 140;
 const shootingRobotSprite = new Image();
 shootingRobotSprite.src = shootingRobotSpriteUrl;
+const SHOOTING_ROBOT_IDLE_FRAME_DURATION_MS = 260;
+const shootingRobotIdleSprite = new Image();
+shootingRobotIdleSprite.src = shootingRobotIdleSpriteUrl;
+const TANK_ROBOT_FRAME_COUNT = 4;
+const TANK_ROBOT_FRAME_DURATION_MS = 220;
+const TANK_ROBOT_SOURCE_ROWS = Object.freeze([
+    {y: 0, height: 308},
+    {y: 308, height: 313},
+    {y: 621, height: 308},
+    {y: 929, height: 349},
+]);
+const TANK_ROBOT_SOURCE_COLUMNS = Object.freeze([
+    { x: 0, width: 320 },
+    { x: 320, width: 308 },
+    { x: 628, width: 299 },
+    { x: 927, width: 303 },
+]);
+const SOURCE_GRID_1254_COLUMNS = Object.freeze([
+    {x: 0, width: 314},
+    {x: 314, width: 313},
+    {x: 627, width: 314},
+    {x: 941, width: 313},
+]);
+const SOURCE_GRID_1254_ROWS = Object.freeze([
+    {y: 0, height: 314},
+    {y: 314, height: 313},
+    {y: 627, height: 314},
+    {y: 941, height: 313},
+]);
+const WALKING_ROBOT_IDLE_COLUMNS = Object.freeze([
+    {x: 0, width: 315},
+    {x: 315, width: 316},
+    {x: 631, width: 315},
+    {x: 946, width: 315},
+]);
+const WALKING_ROBOT_IDLE_ROWS = Object.freeze([
+    {y: 0, height: 312},
+    {y: 312, height: 312},
+    {y: 624, height: 311},
+    {y: 935, height: 312},
+]);
+const SHOOTING_ROBOT_IDLE_COLUMNS = Object.freeze([
+    {x: 0, width: 309},
+    {x: 309, width: 309},
+    {x: 618, width: 309},
+    {x: 927, width: 309},
+]);
+const SHOOTING_ROBOT_IDLE_ROWS = Object.freeze([
+    {y: 0, height: 318},
+    {y: 318, height: 319},
+    {y: 637, height: 318},
+    {y: 955, height: 318},
+]);
+const PLAYER_IDLE_ANCHOR_X = Object.freeze([
+    [0.6566, 0.5694, 0.4580, 0.3677],
+    [0.6645, 0.5781, 0.4773, 0.3883],
+    [0.6359, 0.5455, 0.4469, 0.3471],
+    [0.6565, 0.5696, 0.4583, 0.3674],
+]);
+const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
+    [0.6059, 0.5500, 0.4853, 0.3886],
+    [0.6114, 0.5658, 0.4994, 0.4390],
+    [0.5802, 0.5498, 0.4711, 0.4088],
+    [0.6024, 0.5529, 0.4590, 0.3916],
+]);
+const SHOOTING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
+    [0.5524, 0.5436, 0.5287, 0.4513],
+    [0.5501, 0.5381, 0.5253, 0.4749],
+    [0.5796, 0.5552, 0.5272, 0.4758],
+    [0.5724, 0.5551, 0.5190, 0.4672],
+]);
+const tankRobotIdleSprite = new Image();
+tankRobotIdleSprite.src = tankRobotIdleSpriteUrl;
 
 function getInterpolatedPosition(track, now) {
     if (track.duration === 0) {
@@ -254,6 +338,41 @@ function getPlayerDirectionRow(entity, fallbackRow = 0) {
     return fallbackRow;
 }
 
+function getDirectionRowToward(
+    sourcePosition,
+    targetPosition,
+    fallbackRow = 0
+) {
+    if (!sourcePosition || !targetPosition)
+        return fallbackRow;
+    const deltaX = targetPosition.x - sourcePosition.x;
+    const deltaY = targetPosition.y - sourcePosition.y;
+    if (deltaX === 0 && deltaY === 0)
+        return fallbackRow;
+    if (Math.abs(deltaX) > Math.abs(deltaY))
+        return deltaX < 0 ? 1 : 2;
+    return deltaY < 0 ? 3 : 0;
+}
+
+function getSpriteSource({
+    columns,
+    rows,
+    frame,
+    directionRow,
+    anchorXs = null,
+}) {
+    const column = columns[frame] ?? columns[0];
+    const row = rows[directionRow] ?? rows[0];
+    const anchorX = anchorXs?.[directionRow]?.[frame] ?? 0.5;
+    return {
+        x: column.x,
+        y: row.y,
+        width: column.width,
+        height: row.height,
+        anchorX,
+    };
+}
+
 function getPlayerAttackDuration(action) {
     if (action === PLAYER_ACTION.MELEE) {
         return (
@@ -344,35 +463,32 @@ function drawPlayerWalkSprite({
     now,
     directionRow = 0,
 }) {
-    if (
-        !playerWalkSprite.complete ||
-        playerWalkSprite.naturalWidth === 0
-    ) {
+    const isMoving = entity.velX !== 0 || entity.velY !== 0;
+    const sprite = isMoving ? playerWalkSprite : playerIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
-    }
+    const frameDuration = isMoving ? PLAYER_WALK_FRAME_DURATION_MS : PLAYER_IDLE_FRAME_DURATION_MS;
+    const frameCount = isMoving ? PLAYER_WALK_FRAME_COUNT : PLAYER_IDLE_FRAME_COUNT;
+    const frame = Math.floor(now / frameDuration) % frameCount;
 
-    const isMoving =
-        entity.velX !== 0 ||
-        entity.velY !== 0;
-
-    const frame = isMoving
-        ? Math.floor(now / PLAYER_WALK_FRAME_DURATION_MS) %
-            PLAYER_WALK_FRAME_COUNT
-        : 0;
-
-    const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
-    const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
+    const source = getSpriteSource({
+        columns: SOURCE_GRID_1254_COLUMNS,
+        rows: SOURCE_GRID_1254_ROWS,
+        frame,
+        directionRow,
+        anchorXs: isMoving ? null : PLAYER_IDLE_ANCHOR_X,
+    });
     const spriteSize = tilePixels * 1.8;
     const centerX = screen.x + tilePixels / 2;
     const centerY = screen.y + tilePixels / 2;
 
     context.drawImage(
-        playerWalkSprite,
-        sourceX,
-        sourceY,
-        PLAYER_SPRITE_CELL_SIZE,
-        PLAYER_SPRITE_CELL_SIZE,
-        centerX - spriteSize / 2,
+        sprite,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        centerX - source.anchorX * spriteSize,
         centerY - spriteSize / 2,
         spriteSize,
         spriteSize
@@ -389,27 +505,32 @@ function drawWalkingRobotSprite({
     now,
     directionRow,
 }) {
-    if (!walkingRobotSprite.complete || walkingRobotSprite.naturalWidth === 0)
-        return false;
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
-    const frame = isMoving ? Math.floor(
-        now / WALKING_ROBOT_FRAME_DURATION_MS
-    ) % WALKING_ROBOT_FRAME_COUNT : 0;
-    const cellWidth = walkingRobotSprite.naturalWidth / WALKING_ROBOT_FRAME_COUNT;
-    const cellHeight = walkingRobotSprite.naturalHeight / 4;
-    const sourceX = frame * cellWidth;
-    const sourceY = directionRow * cellHeight;
+    const sprite = isMoving ? walkingRobotSprite : walkingRobotIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
+        return false;
+    const frameDuration = isMoving ? WALKING_ROBOT_FRAME_DURATION_MS : WALKING_ROBOT_IDLE_FRAME_DURATION_MS;
+    const frame = Math.floor(
+        now / frameDuration
+    ) % WALKING_ROBOT_FRAME_COUNT;
+    const source = getSpriteSource({
+        columns: isMoving ? SOURCE_GRID_1254_COLUMNS : WALKING_ROBOT_IDLE_COLUMNS,
+        rows: isMoving ? SOURCE_GRID_1254_ROWS : WALKING_ROBOT_IDLE_ROWS,
+        frame,
+        directionRow,
+        anchorXs: isMoving ? null : WALKING_ROBOT_IDLE_ANCHOR_X,
+    });
     const spriteSize = tilePixels * 1.7;
     const centerX = screen.x + tilePixels / 2;
     const centerY = screen.y + tilePixels / 2;
 
     context.drawImage(
-        walkingRobotSprite,
-        sourceX,
-        sourceY,
-        cellWidth,
-        cellHeight,
-        centerX - spriteSize / 2,
+        sprite,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        centerX - source.anchorX * spriteSize,
         centerY - spriteSize / 2,
         spriteSize,
         spriteSize,
@@ -425,29 +546,67 @@ function drawShootingRobotSprite({
     now,
     directionRow,
 }) {
-    if (!shootingRobotSprite.complete || shootingRobotSprite.naturalWidth === 0)
-        return false;
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
-    const frame = isMoving ? Math.floor(
-        now / SHOOTING_ROBOT_FRAME_DURATION_MS
-    ) % SHOOTING_ROBOT_FRAME_COUNT : 0;
-    const cellWidth = shootingRobotSprite.naturalWidth / SHOOTING_ROBOT_FRAME_COUNT;
-    const cellHeight = shootingRobotSprite.naturalHeight / 4;
-    const sourceX = frame * cellWidth;
-    const sourceY = directionRow * cellHeight;
+    const sprite = isMoving ? shootingRobotSprite : shootingRobotIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
+        return false;
+    const frameDuration = isMoving ? SHOOTING_ROBOT_FRAME_DURATION_MS : SHOOTING_ROBOT_IDLE_FRAME_DURATION_MS;
+    const frame = Math.floor(now / frameDuration) % SHOOTING_ROBOT_FRAME_COUNT;
+    const source = getSpriteSource({
+        columns: isMoving ? SOURCE_GRID_1254_COLUMNS : SHOOTING_ROBOT_IDLE_COLUMNS,
+        rows: isMoving ? SOURCE_GRID_1254_ROWS : SHOOTING_ROBOT_IDLE_ROWS,
+        frame,
+        directionRow,
+        anchorXs: isMoving ? null : SHOOTING_ROBOT_IDLE_ANCHOR_X,
+    });
     const spriteSize = tilePixels * 1.6;
     const centerX = screen.x + tilePixels / 2;
     const centerY = screen.y + tilePixels / 2;
     context.drawImage(
-        shootingRobotSprite,
-        sourceX,
-        sourceY,
-        cellWidth,
-        cellHeight,
-        centerX - spriteSize / 2,
+        sprite,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        centerX - source.anchorX * spriteSize,
         centerY - spriteSize / 2,
         spriteSize,
         spriteSize,
+    );
+    return true;
+}
+
+function drawTankRobotSprite({
+    context,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+}) {
+    if (!tankRobotIdleSprite.complete || tankRobotIdleSprite.naturalWidth === 0)
+        return false;
+    const frame = Math.floor(
+        now / TANK_ROBOT_FRAME_DURATION_MS
+    ) % TANK_ROBOT_FRAME_COUNT;
+    const sourceColumn = TANK_ROBOT_SOURCE_COLUMNS[frame] ?? TANK_ROBOT_SOURCE_COLUMNS[0];
+    const sourceRow = TANK_ROBOT_SOURCE_ROWS[directionRow] ?? TANK_ROBOT_SOURCE_ROWS[0];
+    const sourceX = sourceColumn.x;
+    const sourceY = sourceRow.y;
+    const sourceWidth = sourceColumn.width;
+    const sourceHeight = sourceRow.height;
+    const spriteSize = tilePixels * 2.1;
+    const centerX = screen.x + tilePixels / 2;
+    const centerY = screen.y + tilePixels / 2;
+    context.drawImage(
+        tankRobotIdleSprite,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        centerX - spriteSize / 2,
+        centerY - spriteSize / 2,
+        spriteSize,
+        spriteSize
     );
     return true;
 }
@@ -584,6 +743,17 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.TANK_ROBOT:
+            if (
+                drawTankRobotSprite({
+                    context,
+                    screen,
+                    tilePixels,
+                    now,
+                    directionRow
+                })
+            ) {
+                break;
+            }
             context.fillStyle = '#eab308';
             context.strokeStyle = '#fef08a';
             context.lineWidth = 3;
@@ -967,17 +1137,24 @@ export function GameCanvas({
                     playerAttackRef.current.delete(String(playerId));
                     attack = null;
                 }
+                const position = getInterpolatedPosition(track, now);
+                const renderDirectionRow =
+                    getEntityType(track.entity) ===
+                    ENTITY_TYPE.TANK_ROBOT
+                        ? getDirectionRowToward(
+                            position,
+                            focusPosition,
+                            track.directionRow
+                        )
+                        : track.directionRow;
                 drawEntity({
                     context,
                     entity: track.entity,
-                    position: getInterpolatedPosition(
-                        track,
-                        now
-                    ),
+                    position,
                     camera,
                     now,
                     attack,
-                    directionRow: track.directionRow,
+                    directionRow: renderDirectionRow,
                 });
             });
             animationFrameId =
