@@ -80,7 +80,7 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	g_io->sendMsg(out.dump());
 }
 
-//TEMP for mock death
+//TEMP for test mock death
 void	GameEngine::suffer_damage( void ) {
 	PlayerData &victim_player = _playerData[0];
 	if (victim_player.alive == false)

@@ -73,9 +73,8 @@ function getFocusPosition({
             return getInterpolatedPosition(localTrack, now);
     }
     for (const track of tracks.values()) {
-        if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER) {
+        if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
             return getInterpolatedPosition(track, now);
-        }
     }
     return {
         x: (gameMap?.width ?? 0) / 2,
