@@ -27,8 +27,11 @@ function useGameTimer(startedAt, enabled) {
 }
 
 function SkillSlot({ hotkey, lvl, cooldown }) {
-    const onCooldown = cooldown > 0;
-    const cooldownText = cooldown.toFixed(2);
+    const safeCooldown = Number.isFinite(cooldown)
+        ? Math.max(0, cooldown)
+        : 0;
+    const onCooldown = safeCooldown > 0;
+    const cooldownText = safeCooldown.toFixed(2);
     return (
         <div
             className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
@@ -84,14 +87,6 @@ export function GamePage({
     const playerHealth = Number.isFinite(currentPlayerEntity?.health)
         ? Math.max(0, currentPlayerEntity.health)
         : null;
-    // temp cooldown preview
-    const mockTimer = (Date.now() / 1000);
-    const mockCooldowns = {
-        melee: Math.max(0, 8 - (mockTimer % 12)),
-        ranged: Math.max(0, 5 - (mockTimer % 9)),
-        shield: Math.max(0, 3 - (mockTimer % 7)),
-    };
-    // end cooldown preview
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
@@ -324,17 +319,17 @@ export function GamePage({
                     <SkillSlot
                         hotkey="J"
                         lvl={currentPlayer?.upgrades?.melee ?? 0}
-                        cooldown={mockCooldowns.melee}
+                        cooldown={currentPlayer?.cooldowns?.melee ?? 0}
                     />
                     <SkillSlot
                         hotkey="K"
                         lvl={currentPlayer?.upgrades?.ranged ?? 0}
-                        cooldown={mockCooldowns.ranged}
+                        cooldown={currentPlayer?.cooldowns?.ranged ?? 0}
                     />
                     <SkillSlot
                         hotkey="L"
                         lvl={currentPlayer?.upgrades?.shield ?? 0}
-                        cooldown={mockCooldowns.shield}
+                        cooldown={currentPlayer?.cooldowns?.shield ?? 0}
                     />
                 </section>
                 <div className="game-fullscreen-panel">
