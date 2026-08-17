@@ -1,6 +1,8 @@
 #include "PlayerEntity.hpp"
 
 const float	PlayerEntity::_slashDist = 0.5f;
+const int	PlayerEntity::_meleeCooldownTicks = 10;
+const int	PlayerEntity::_rangedCooldownTicks = 20;
 
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
 	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
@@ -73,9 +75,11 @@ void	PlayerEntity::_action_melee( const json& in ) {
 		return;
 	if (!in["dirY"].is_number_integer())
 		return;
-		_curAction = PlayerActions::MELEEATT;
+	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
+	if (!playerData || playerData->cooldowns.melee > 0)
+		return;
+	_curAction = PlayerActions::MELEEATT;
 
-	// add cooldown
 	int dirX = in["dirX"], dirY = in["dirY"];
 	int dist = distance(_posX + dirX, _posY + dirY);
 	long posX = dirX * _slashDist, posY = dirY * _slashDist;
@@ -88,6 +92,8 @@ void	PlayerEntity::_action_melee( const json& in ) {
 	posX += _posX;
 	posY += _posY;
 	g_game->spawnEntity(new LaserSlashEntity(posX, posY, _id, 100));
+	playerData->cooldowns.melee = _meleeCooldownTicks;
+	g_game->sendPlayerStateUpdate(*playerData);
 	_curAction = PlayerActions::NOACTION;
 }
 
@@ -98,8 +104,10 @@ void	PlayerEntity::_action_range( const json& in ) {
 		return;
 	if (!in["dirY"].is_number_integer())
 		return;
+	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
+	if (!playerData || playerData->cooldowns.ranged > 0)
+		return;
 	_curAction = PlayerActions::RANGEATT;
-	// add cooldown
 	int dirX = in["dirX"], dirY = in["dirY"];
 	int dist = distance(_posX + dirX, _posY + dirY);
 	long velX = dirX, velY = dirY;
@@ -110,6 +118,8 @@ void	PlayerEntity::_action_range( const json& in ) {
 		velY /= dist;
 	}
 	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, 100));
+	playerData->cooldowns.ranged = _rangedCooldownTicks;
+	g_game->sendPlayerStateUpdate(*playerData);
 	_curAction = PlayerActions::NOACTION;
 }
 

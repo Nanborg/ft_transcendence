@@ -2,6 +2,7 @@
 
 void	GameEngine::tick( void ) {
 	g_game = this;
+	_loop_tickPlayerCooldowns();
 	_loop_processInputs();
 	_loop_tickEntities();
 	_tick++;
@@ -35,6 +36,34 @@ void	GameEngine::tick( void ) {
 		stop("boss_defeated");
 	}
 	g_game = NULL;
+}
+
+void GameEngine::_loop_tickPlayerCooldowns(void)
+{
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		PlayerData& player = _playerData[i];
+		if (player.alive == false)
+			continue;
+		bool changed = false;
+		if (player.cooldowns.melee > 0)
+		{
+			player.cooldowns.melee--;
+			changed = true;
+		}
+		if (player.cooldowns.ranged > 0)
+		{
+			player.cooldowns.ranged--;
+			changed = true;
+		}
+		if (player.cooldowns.shield > 0)
+		{
+			player.cooldowns.shield--;
+			changed = true;
+		}
+		if (changed)
+			sendPlayerStateUpdate(player);
+	}
 }
 
 void GameEngine::_loop_processInputs(void)

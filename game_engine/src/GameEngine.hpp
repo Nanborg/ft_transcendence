@@ -99,6 +99,7 @@ private:
 	static bool		_invalid_entity( const json& in );
 
 	void	_loop_processInputs( void );
+	void	_loop_tickPlayerCooldowns( void );
 	void	_loop_tickEntities( void );
 
 	void	_input_ping( const json& in );

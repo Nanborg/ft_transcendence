@@ -26,6 +26,8 @@ private:
 	PlayerActions		_curAction;
 
 	static const float	_slashDist;
+	static const int	_meleeCooldownTicks;
+	static const int	_rangedCooldownTicks;
 };
 
 #endif
