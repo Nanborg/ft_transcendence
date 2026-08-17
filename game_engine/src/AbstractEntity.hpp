@@ -4,6 +4,8 @@
 #include <enumEntityTypes.h>
 #include <json.hpp>
 
+#define INVINCIBLE_HEALTH (0x7FFFFFFF)
+
 using namespace nlohmann;
 
 class AbstractEntity

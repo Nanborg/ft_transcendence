@@ -176,6 +176,10 @@ bool			GameEngine::isRunning( void ) const { return _running; }
 
 unsigned int	GameEngine::getScale( void ) const { return _scale; }
 
+const GameEngine::entityList_t&	GameEngine::getEntityList(void) const {
+	return _entities;
+}
+
 bool	GameEngine::_invalid_entity( const json& in ) {
 	if (!in["typeId"].is_number_integer())
 		return true;
@@ -216,7 +220,7 @@ void	GameEngine::init( const json& in ) {
 		if (_invalid_entity(entities[i]))
 			continue;
 		std::cout << entities[i].dump() << std::endl;
-		spawnNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
+		buildNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
 	}
 }
 
@@ -245,10 +249,20 @@ void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running =
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	// TODO(neon-05): Implement collision checks for solid entities and damage
 	// interactions before enabling Enemy/Projectile gameplay.
+	for (entityList_t::const_iterator it = _entities.begin(); it != _entities.end(); it++) {
+		AbstractEntity* other = it->get();
+		if (other->getId() == entity->getId())
+			continue;
+		if (other->getPassableHitBox())
+			continue;
+		if (other->checkCollision(*entity))
+			return true;
+	}
+
 	return false;
 }
 
-AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
+AbstractEntity*	GameEngine::buildNewEntity( int typeId, int posX, int posY, int velX, int velY ) {
 	AbstractEntity* entity;
 	switch (typeId) {
 	case EntityTypes::PLAYERENTITY:
@@ -297,9 +311,13 @@ AbstractEntity*	GameEngine::spawnNewEntity( int typeId, int posX, int posY, int 
 	default:
 		return NULL;
 	}
+	spawnEntity(entity);
+	return entity;
+}
+
+void	GameEngine::spawnEntity( AbstractEntity *entity ) {
 	_entities.push_front(entityPtr_t(entity));
 	sendEntityUpdate(entity);
-	return entity;
 }
 
 AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {

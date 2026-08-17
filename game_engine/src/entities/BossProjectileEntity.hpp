@@ -4,10 +4,9 @@
 #include <AbstractHitboxEntity.hpp>
 #include <GameEngine.hpp>
 
-class BossProjectileEntity: public AbstractHitboxEntity
-{
+class BossProjectileEntity: public AbstractHitboxEntity {
 public:
-	BossProjectileEntity( int posX, int posY, int velX, int velY, int ownerId );
+	BossProjectileEntity( int posX, int posY, int velX, int velY, int ownerId, int damage );
 	~BossProjectileEntity( void );
 };
 

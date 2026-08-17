@@ -3,6 +3,7 @@
 
 #include <AbstractMovingEntity.hpp>
 #include <GameEngine.hpp>
+#include <json.hpp>
 
 class PlayerEntity: public AbstractMovingEntity
 {
@@ -12,10 +13,19 @@ public:
 
 	bool	tick( void );
 	void	movementInput( int velX, int velY );
+	void	playerAction( const json& in );
 
 private:
-	const int		_playerId;
-	bool			_receivedInput;
+
+	void	_action_melee( const json& in );
+	void	_action_range( const json& in );
+	void	_action_shield( const json& in );
+
+	const int			_playerId;
+	bool				_receivedInput;
+	PlayerActions		_curAction;
+
+	static const float	_slashDist;
 };
 
 #endif

@@ -52,12 +52,24 @@ function areMovementsEqual(left, right) {
 export function usePlayerInput({ socket, roomId, enabled }) {
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
+    const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
 
     useEffect(() => {
         if (!socket || !roomId || !enabled) {
             movementRef.current = INITIAL_MOVEMENT;
             actionRef.current = PLAYER_ACTION.NONE;
             return undefined;
+        }
+
+        function updateLastDirection(movementKey) {
+            if (movementKey === 'up')
+                lastDirectionRef.current = { dirX: 0, dirY: -1 };
+            else if (movementKey === 'down')
+                lastDirectionRef.current = { dirX: 0, dirY: 1 };
+            else if (movementKey === 'left')
+                lastDirectionRef.current = { dirX: -1, dirY: 0 };
+            else if (movementKey === 'right')
+                lastDirectionRef.current = { dirX: 1, dirY: 0 };
         }
 
         function emitMovement(nextMovement) {
@@ -80,6 +92,7 @@ export function usePlayerInput({ socket, roomId, enabled }) {
                 roomId,
                 input: {
                     action: nextAction,
+                    ...lastDirectionRef.current,
                 },
             });
         }
@@ -89,6 +102,7 @@ export function usePlayerInput({ socket, roomId, enabled }) {
 
             if (movementKey) {
                 event.preventDefault();
+                updateLastDirection(movementKey);
                 emitMovement({
                     ...movementRef.current,
                     [movementKey]: true,

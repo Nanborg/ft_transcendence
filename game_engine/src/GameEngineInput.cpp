@@ -79,8 +79,10 @@ void	GameEngine::_input_move( const json& in ) {
 }
 
 void	GameEngine::_input_action( const json& in ) {
+	if (!in["playerId"].is_number_integer())
+		return;
 	PlayerData *player_data = getPlayerData(in["playerId"]);
-	if (in.count("upgrade") > 0) {
+	if (player_data && in.count("upgrade") > 0) {
         if (in["upgrade"]["melee"] == true)
             player_data->upgrades.melee++;
         else if (in["upgrade"]["ranged"] == true)
@@ -88,4 +90,13 @@ void	GameEngine::_input_action( const json& in ) {
         else if (in["upgrade"]["shield"] == true)
             player_data->upgrades.shield++;
     }
+	if (!in["action"].is_number_integer())
+		return;
+	if (_playerIds.count(in["playerId"]) == 0)
+		return;
+	entityList_t::iterator it = getEntityIterator(_playerIds[in["playerId"]]);
+	if (it == _entities.end())
+		return;
+	PlayerEntity *player = (PlayerEntity *) it->get();
+	player->playerAction(in);
 }
