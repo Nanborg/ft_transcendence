@@ -1043,6 +1043,7 @@ export function GameCanvas({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [currentPlayerId]);
+    useEffect(() => {
         if (!socket)
             return undefined;
         function handlePlayerInput(payload) {
