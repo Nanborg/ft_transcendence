@@ -82,12 +82,12 @@ void	GameEngine::_input_action( const json& in ) {
 	if (!in["playerId"].is_number_integer())
 		return;
 	PlayerData *player_data = getPlayerData(in["playerId"]);
-	if (player_data && in.count("upgrade") > 0) {
-        if (in["upgrade"]["melee"] == true)
+	if (player_data && in.count("upgrade") > 0 && in["upgrade"].is_object()) {
+        if (in["upgrade"].count("melee") > 0 && in["upgrade"]["melee"] == true)
             player_data->upgrades.melee++;
-        else if (in["upgrade"]["ranged"] == true)
+        else if (in["upgrade"].count("ranged") > 0 && in["upgrade"]["ranged"] == true)
             player_data->upgrades.ranged++;
-        else if (in["upgrade"]["shield"] == true)
+        else if (in["upgrade"].count("shield") > 0 && in["upgrade"]["shield"] == true)
             player_data->upgrades.shield++;
     }
 	if (!in["action"].is_number_integer())

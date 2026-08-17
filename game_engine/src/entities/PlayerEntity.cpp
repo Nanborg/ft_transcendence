@@ -5,9 +5,10 @@ const float	PlayerEntity::_slashDist = 0.5f;
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
 	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
 	_playerId(playerId),
-	_receivedInput(true) {
-		std::cout << "new player (id " << _playerId << ")\n";
-	}
+	_receivedInput(true),
+	_curAction(PlayerActions::NOACTION) {
+			std::cout << "new player (id " << _playerId << ")\n";
+		}
 
 PlayerEntity::~PlayerEntity( void ) {}
 
@@ -87,6 +88,7 @@ void	PlayerEntity::_action_melee( const json& in ) {
 	posX += _posX;
 	posY += _posY;
 	g_game->spawnEntity(new LaserSlashEntity(posX, posY, _id, 100));
+	_curAction = PlayerActions::NOACTION;
 }
 
 void	PlayerEntity::_action_range( const json& in ) {
@@ -108,6 +110,7 @@ void	PlayerEntity::_action_range( const json& in ) {
 		velY /= dist;
 	}
 	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, 100));
+	_curAction = PlayerActions::NOACTION;
 }
 
 void	PlayerEntity::_action_shield( const json& in ) {
