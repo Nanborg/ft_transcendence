@@ -9,8 +9,17 @@ AbstractHitboxEntity::AbstractHitboxEntity( EntityTypes type, int size, int posX
 
 AbstractHitboxEntity::~AbstractHitboxEntity( void ) {}
 
+int AbstractHitboxEntity::getOwnerId(void) const { return _ownerId; }
+
 bool	AbstractHitboxEntity::_templateTick( void ) {
-	bool ret = AbstractMovingEntity::_templateTick();
+	bool ret = false;
+
+	if (_velX != 0 || _velY != 0)
+	{
+		_posX += _velX;
+		_posY += _velY;
+		ret = true;
+	}
 
 	_health--;
 
@@ -19,14 +28,21 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 		AbstractEntity*	entity = it->get();
 		if (entity->getId() == _ownerId)				// do not hit owner
 			continue;
+		if (entity->getType() == EntityTypes::LASERSHIELD)
+		{
+			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(entity);
+			if (shield->getOwnerId() == _ownerId)
+				continue;
+		}
 		if (entity->getPassableHitBox())				// check if entity ignores hitboxes
 			continue;
 		if (!entity->checkCollision(*this))				// check for collision with entity
 			continue;
 
 		_health = -1;
-		if (entity->getHealth() != INVINCIBLE_HEALTH)	// check if entity is invincible
-			entity->setHealth(entity->getHealth() - _damage);
+		g_game->applyDamage(entity, _damage);
+		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE)
+			break;
 	}
 	return ret;
 }

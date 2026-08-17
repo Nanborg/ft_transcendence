@@ -9,6 +9,7 @@ public:
 	AbstractHitboxEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, int ownerId, int damage );
 	virtual ~AbstractHitboxEntity() = 0;
 
+	int getOwnerId( void ) const;
 	virtual bool	tick( void ) override;
 
 protected:
