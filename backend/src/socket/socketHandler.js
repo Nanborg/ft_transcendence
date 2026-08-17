@@ -147,7 +147,7 @@ module.exports = (io) => {
 		} finally {
 			try {
 				// TEMP: Forcing engine stop to ensure cleanup for now.
-				await gameEngineService.stopGame(roomId);
+				await gameEngineService.stopGame(roomId, "engine_error");
 			} catch (cleanupError) {
 				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
 			}
@@ -542,7 +542,7 @@ module.exports = (io) => {
 						String(socket.user.id);
 				try {
 					if (isLastPlayer) {
-						await gameEngineService.stopGame(roomId);
+						await gameEngineService.stopGame(roomId, "all_players_left");
 					} else {
 						await gameEngineService.removePlayer(roomId, socket.user.id);
 					}
@@ -657,10 +657,20 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("disconnect", () => {
+		socket.on("disconnect", async () => {
 			try {
 				// TODO(princiamf2): Define in-game disconnect behavior
 				// (forfeit, end game, or keep room alive during reconnect window).
+				const stopInput = {
+    				up: false,
+    				down: false,
+    				left: false,
+    				right: false
+				};
+				const userRooms = await getRoomsByUserId(socket.user.id);
+				for (const room of userRooms) {
+                	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
+                }
 				scheduleDisconnect(
 					socket.user.id,
 					socket.id,
@@ -668,7 +678,12 @@ module.exports = (io) => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
 						for (const room of userRooms) {
 							try {
-								await gameEngineService.removePlayer(room.id, socket.user.id);
+								if (room.players.length <= 1) {
+									await gameEngineService.stopGame(room.id, "all_players_left");
+								}
+								else {
+									await gameEngineService.removePlayer(room.id, socket.user.id);
+								}
 							} catch (error) {
 								console.error(
 									`Unable to remove user ${socket.user.id} from engine room ${room.id}:`,

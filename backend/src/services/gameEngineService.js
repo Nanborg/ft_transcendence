@@ -458,13 +458,13 @@ class GameEngineService extends EventEmitter {
         session.players.splice(playerIndex, 1);
     }
 
-    async stopGame(roomId) {
+    async stopGame(roomId, reason) {
         const session = this.getSession(roomId);
         if (!session)
             return;
         let firstError = null;
         try {
-            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, roomId });
+            await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, roomId, reason });
         } catch (error) {
             firstError = error;
             console.log(`Unable to stop room ${roomId}:`, error);

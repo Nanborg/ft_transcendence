@@ -36,6 +36,7 @@ public:
 	AbstractEntity*			buildNewEntity( int typeId, int posX, int posY, int velX, int velY );
 	void					spawnEntity( AbstractEntity* entity );
 	void					deleteEntity( entityList_t::iterator it );
+	void					suffer_damage( void );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
@@ -52,8 +53,46 @@ public:
 
 	int		newId( void );
 	void	start( void );
-	void	stop( void );
+	void	stop( const std::string &reason );
 	void	tick( void );
+
+	struct PlayerUpgrades {
+        int melee;
+        int ranged;
+        int shield;
+    };
+
+    struct PlayerCooldowns {
+        int melee;
+        int ranged;
+        int shield;
+    };
+
+	struct PlayerData {
+		//TEMP for test mock death
+		int			temp_count;
+        int         playerId;
+        int         playerEntityId;
+        std::string username;
+        int         deaths;
+		int			death_posX;
+		int			death_posY;
+        bool        alive;
+        bool        atACheckpoint;
+		int			death_cooldowns;
+		int			invulnerability_cooldowns;
+
+        PlayerUpgrades  upgrades;
+        PlayerCooldowns cooldowns;
+    };
+
+	int temp_count;
+
+	void		sendPlayerStateUpdate( const PlayerData& playerData );
+	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );
+	PlayerData*	getPlayerData( int playerId );
+	void		disconnectPlayerData( int playerId );
+	json		getAllPlayerDataAsJson( void );
 
 private:
 
@@ -69,13 +108,14 @@ private:
 	void	_input_move( const json& in );
 	void	_input_action( const json& in );
 
-	bool				_running;
-	int					_spawnX, _spawnY;
-	unsigned int		_nextEntityId, _tick, _scale;
-	entityList_t		_entities;
-	playerIds_t			_playerIds;
-	playerInput_t		_playerInputs;
-	const std::string	_roomId;
+	bool					_running;
+	unsigned int			_nextEntityId, _tick, _scale;
+	int						_spawnX, _spawnY;
+	entityList_t			_entities;
+	playerIds_t				_playerIds;
+	playerInput_t			_playerInputs;
+	std::vector<PlayerData> _playerData;
+	const std::string		_roomId;
 };
 
 extern int			g_uspt;

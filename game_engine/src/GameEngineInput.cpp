@@ -22,7 +22,7 @@ void	GameEngine::_input_sync( const json& in ) {
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
 		out["entities"][std::distance(_entities.begin(), it)] = it->get()->toJson();
 	}
-	out["players"] = json::array();
+	out["playerData"] = getAllPlayerDataAsJson();
 	g_io->sendMsg(out.dump());
 }
 
@@ -36,6 +36,11 @@ void	GameEngine::_input_join( const json& in ) {
 		PlayerEntity *player = new PlayerEntity(in["playerId"], _spawnX, _spawnY, 0, 0);
 		_playerIds[in["playerId"]] = player->getId();
 		_entities.push_front(entityPtr_t(player));
+		std::string username = "Player";
+        if (in.count("username") > 0 && in["username"].is_string()) {
+            username = in["username"];
+        }
+        addPlayerData(in["playerId"], player->getId(), username);
 	}
 }
 
@@ -48,6 +53,7 @@ void	GameEngine::_input_leave( const json& in ) {
 	if (_playerIds.count(in["playerId"]) > 0) {
 		deleteEntity(getEntityIterator(_playerIds[in["playerId"]]));
 		_playerIds.erase(in["playerId"]);
+		disconnectPlayerData(in["playerId"]);
 	}
 }
 
@@ -64,21 +70,22 @@ void	GameEngine::_input_move( const json& in ) {
 	if (_playerIds.count(in["playerId"]) > 0) {
 		int entityId = _playerIds[in["playerId"]];
 		entityList_t::iterator it = getEntityIterator(entityId);
-		PlayerEntity *entity = (PlayerEntity *) it->get();
-		entity->movementInput(in["velX"], in["velY"]);
+		if (it != _entities.end())
+		{
+			AbstractEntity *e = it->get();
+			((PlayerEntity *) e)->movementInput(in["velX"], in["velY"]);
+		}
 	}
 }
 
 void	GameEngine::_input_action( const json& in ) {
-	std::cout << in.dump() << std::endl;
-	if (!in["action"].is_number_integer())
-		return;
-	if (!in["playerId"].is_number_integer())
-		return;
-	if (_playerIds.count(in["playerId"]) == 0)
-		return;
-
-	entityList_t::iterator it = getEntityIterator(_playerIds[in["playerId"]]);
-	PlayerEntity *player = (PlayerEntity *) it->get();
-	player->playerAction(in);
+	PlayerData *player_data = getPlayerData(in["playerId"]);
+	if (in.count("upgrade") > 0) {
+        if (in["upgrade"]["melee"] == true)
+            player_data->upgrades.melee++;
+        else if (in["upgrade"]["ranged"] == true)
+            player_data->upgrades.ranged++;
+        else if (in["upgrade"]["shield"] == true)
+            player_data->upgrades.shield++;
+    }
 }

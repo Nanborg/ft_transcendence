@@ -29,12 +29,11 @@ function mapKeyToMovement(code) {
 
 function mapKeyToAction(code) {
     switch (code) {
-        case 'Space':
+        case 'KeyJ':
             return PLAYER_ACTION.MELEE;
-        case 'KeyF':
+        case 'KeyK':
             return PLAYER_ACTION.RANGED;
-        case 'ShiftLeft':
-        case 'ShiftRight':
+        case 'KeyL':
             return PLAYER_ACTION.SHIELD;
         default:
             return null;

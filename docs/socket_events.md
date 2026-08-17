@@ -12,16 +12,13 @@ Le système permet actuellement :
 * le système Ready / Not Ready ;
 * le chat entre joueurs ;
 * le démarrage d'une partie ;
+* les inputs de gameplay ;
+* les mises à jour `game:state` / `game:end` ;
 * la suppression automatique des rooms vides ;
 * le retrait automatique des joueurs lors d'une déconnexion.
 
 L'objectif de cette documentation est de servir de référence entre le frontend et le backend afin de garantir que les événements, les payloads et les réponses restent cohérents tout au long du projet.
 
----
-<!-- Princiamf2
-TODO -> update this document to use authenticated user ids instead of socket ids.
-The current backend stores room owners and players with user.id, so the contract should not mention socket-id as the stable player identity.
--->
 # Structure d'une room
 
 Une room possède la structure suivante :
@@ -29,11 +26,11 @@ Une room possède la structure suivante :
 ```json
 {
   "id": "room-123",
-  "ownerId": "socket-id",
+  "ownerId": 12,
   "players": [
     {
-      "id": "socket-id",
-      "name": "Michel",
+      "id": 12,
+      "username": "Michel",
       "ready": false
     }
   ],
@@ -47,7 +44,7 @@ Une room possède la structure suivante :
 | Champ     | Description                             |
 | --------- | --------------------------------------- |
 | id        | Identifiant unique de la room           |
-| ownerId   | Socket ID du propriétaire de la room    |
+| ownerId   | User ID du propriétaire de la room      |
 | players   | Liste des joueurs présents dans la room |
 | status    | État actuel de la room                  |
 | createdAt | Date de création de la room (timestamp) |
@@ -64,13 +61,13 @@ Permet de créer une nouvelle room.
 
 ```json
 {
-  "playerName": "Michel"
+  "roomName": "room-alpha"
 }
 ```
 
 ### Validation
 
-* `playerName` doit être une chaîne de caractères.
+* `roomName` doit être une chaîne de caractères.
 
 ### Effets
 
@@ -93,15 +90,13 @@ Permet de rejoindre une room existante.
 
 ```json
 {
-  "roomId": "room-123",
-  "playerName": "Bob"
+  "roomId": "room-123"
 }
 ```
 
 ### Validation
 
 * `roomId` doit être une chaîne de caractères.
-* `playerName` doit être une chaîne de caractères.
 
 ### Erreurs possibles
 
@@ -234,6 +229,51 @@ Permet de démarrer une partie.
 
 ---
 
+## player:input
+
+Permet d'envoyer les inputs de déplacement et d'action pendant une partie.
+
+### Payload
+
+```json
+{
+  "roomId": "room-123",
+  "input": {
+    "up": false,
+    "down": false,
+    "left": false,
+    "right": true,
+    "action": 0
+  }
+}
+```
+
+Actions:
+
+* `0`: aucune action
+* `1`: melee
+* `2`: ranged
+* `3`: shield
+
+---
+
+## checkpoint:upgrade
+
+Permet d'acheter une amélioration depuis un checkpoint.
+
+### Payload
+
+```json
+{
+  "roomId": "room-123",
+  "upgrade": "melee"
+}
+```
+
+Valeurs possibles: `melee`, `ranged`, `shield`.
+
+---
+
 # Événements Serveur → Client
 
 ## room:created
@@ -245,11 +285,11 @@ Envoyé uniquement au créateur de la room.
 ```json
 {
   "id": "room-123",
-  "ownerId": "socket-id",
+  "ownerId": 12,
   "players": [
     {
-      "id": "socket-id",
-      "name": "Michel",
+      "id": 12,
+      "username": "Michel",
       "ready": false
     }
   ],
@@ -277,16 +317,16 @@ Déclenché lors :
 ```json
 {
   "id": "room-123",
-  "ownerId": "socket-id",
+  "ownerId": 12,
   "players": [
     {
-      "id": "socket-id",
-      "name": "Michel",
+      "id": 12,
+      "username": "Michel",
       "ready": true
     },
     {
-      "id": "socket-id-2",
-      "name": "Bob",
+      "id": 13,
+      "username": "Bob",
       "ready": false
     }
   ],
@@ -306,8 +346,8 @@ Envoyé à tous les joueurs de la room.
 ```json
 {
   "author": {
-    "id": "socket-id",
-    "name": "Michel"
+    "id": 12,
+    "username": "Michel"
   },
   "message": "Salut Bob",
   "timestamp": 1780875004797
@@ -328,12 +368,82 @@ Envoyé à tous les joueurs lorsque la partie démarre.
   "status": "starting",
   "players": [
     {
-      "id": "socket-id",
-      "name": "Michel",
+      "id": 12,
+      "username": "Michel",
       "ready": true
     }
   ],
   "timestamp": 1780875004797
+}
+```
+
+---
+
+## game:state
+
+Envoyé pendant la partie pour synchroniser les entités et les données joueurs.
+
+### Exemple
+
+```json
+{
+  "roomId": "room-123",
+  "tick": 42,
+  "entityUpdate": [
+    {
+      "entityId": 42,
+      "typeId": 6,
+      "posX": 140,
+      "posY": 300,
+      "velX": 20,
+      "velY": 0,
+      "health": 360,
+      "state": 1
+    }
+  ],
+  "entityDelete": [
+    {
+      "entityId": 99
+    }
+  ],
+  "playerData": [
+    {
+      "playerId": 12,
+      "playerEntityId": 42,
+      "deaths": 0,
+      "alive": true,
+      "disconnected": false
+    }
+  ]
+}
+```
+
+---
+
+## game:end
+
+Envoyé quand la partie est terminée.
+
+### Exemple
+
+```json
+{
+  "roomId": "room-123",
+  "tick": 8540,
+  "durationSeconds": 420,
+  "end": true,
+  "win": true,
+  "reason": "boss_defeated",
+  "playerData": [
+    {
+      "playerId": 12,
+      "deaths": 1,
+      "damageDealt": 4200,
+      "damageReceived": 300,
+      "alive": true,
+      "disconnected": false
+    }
+  ]
 }
 ```
 
@@ -384,7 +494,8 @@ Envoyé lorsqu'une action ne peut pas être exécutée.
 4. Lorsque tous les joueurs sont Ready, un joueur peut envoyer `game:start`.
 5. Le statut de la room passe de `waiting` à `starting`.
 6. Tous les joueurs reçoivent `game:start`.
-7. La logique de gameplay sera implémentée lors d'une étape ultérieure du projet.
+7. Le backend diffuse les mises à jour `game:state`.
+8. Le backend diffuse `game:end` quand la partie est terminée.
 
 ---
 
@@ -404,6 +515,8 @@ socket.on("room:update", console.log);
 socket.on("room:error", console.log);
 socket.on("chat:message", console.log);
 socket.on("game:start", console.log);
+socket.on("game:state", console.log);
+socket.on("game:end", console.log);
 ```
 
 Les commandes suivantes peuvent ensuite être exécutées directement dans la console du navigateur.
@@ -412,7 +525,7 @@ Les commandes suivantes peuvent ensuite être exécutées directement dans la co
 
 ```javascript
 window.socket.emit("room:create", {
-  playerName: "Michel"
+  roomName: "room-alpha"
 });
 ```
 
@@ -420,8 +533,7 @@ window.socket.emit("room:create", {
 
 ```javascript
 window.socket.emit("room:join", {
-  roomId: "room-123",
-  playerName: "Bob"
+  roomId: "room-123"
 });
 ```
 
@@ -455,5 +567,20 @@ window.socket.emit("chat:message", {
 ```javascript
 window.socket.emit("game:start", {
   roomId: "room-123"
+});
+```
+
+## Envoyer un input
+
+```javascript
+window.socket.emit("player:input", {
+  roomId: "room-123",
+  input: {
+    up: false,
+    down: false,
+    left: false,
+    right: true,
+    action: 0
+  }
 });
 ```

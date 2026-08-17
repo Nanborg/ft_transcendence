@@ -53,6 +53,23 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	g_io->sendMsg(out.dump());
 }
 
+void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
+    json out;
+    out["type"] = "playerUpdate";
+    out["roomId"] = _roomId;
+    out["tick"] = _tick;
+    json pData;
+    pData["playerId"] = playerData.playerId;
+	pData["playerEntityId"] = playerData.playerEntityId;
+    pData["alive"] = playerData.alive;
+    pData["death_cooldowns"] = playerData.death_cooldowns;
+    pData["deaths"] = playerData.deaths;
+	pData["death_posX"] = playerData.death_posX;
+    pData["death_posY"] = playerData.death_posY;
+    out["playerData"] = pData;
+    g_io->sendMsg(out.dump());
+}
+
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	json out;
 
@@ -61,6 +78,96 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	out["roomId"] = _roomId;
 	out["entity"]["entityId"] = entity->getId();
 	g_io->sendMsg(out.dump());
+}
+
+//TEMP for test mock death
+void	GameEngine::suffer_damage( void ) {
+	PlayerData &victim_player = _playerData[0];
+	if (victim_player.alive == false)
+		return;
+	int entitieId = _playerData[0].playerEntityId;
+	entityList_t::iterator it = getEntityIterator(entitieId);
+	if (it != _entities.end())
+	{
+		AbstractEntity *entity_victim = it->get();
+		victim_player.temp_count++;
+		if (victim_player.temp_count % 10 == 0)
+			entity_victim->setHealth(entity_victim->getHealth() - 1);
+		if (entity_victim->getHealth() <= 0)
+		{
+			victim_player.alive = false;
+			victim_player.deaths++;
+			victim_player.death_posX = entity_victim->getPosX();
+			victim_player.death_posY = entity_victim->getPosY();
+			victim_player.death_cooldowns = 100;
+			sendPlayerStateUpdate(victim_player);
+			deleteEntity(it);
+		}
+	}
+}
+
+void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::string& username ) {
+	PlayerData newPlayer;
+	newPlayer.playerEntityId = playerEntityId;
+	newPlayer.playerId = playerId;
+	newPlayer.username = username;
+	newPlayer.deaths = 0;
+	newPlayer.alive = true;
+	newPlayer.atACheckpoint = false;
+	newPlayer.upgrades.melee = 0;
+	newPlayer.upgrades.ranged = 0;
+	newPlayer.upgrades.shield = 0;
+	newPlayer.cooldowns.melee = 0;
+	newPlayer.cooldowns.ranged = 0;
+	newPlayer.cooldowns.shield = 0;
+	newPlayer.death_cooldowns = 100;
+	newPlayer.invulnerability_cooldowns = 0;
+	newPlayer.death_posX = 0;
+	newPlayer.death_posY = 0;
+	//TEMP for test mock death
+	newPlayer.temp_count = 0;
+	_playerData.push_back(newPlayer);
+}
+
+GameEngine::PlayerData*	GameEngine::getPlayerData( int playerId ) {
+	for(size_t i = 0; i < _playerData.size(); i++) {
+		if(_playerData[i].playerId == playerId)
+			return (&_playerData[i]);
+	}
+	return nullptr;
+}
+
+void	GameEngine::disconnectPlayerData( int playerId ) {
+    for (size_t i = 0; i < _playerData.size(); i++) {
+        if (_playerData[i].playerId == playerId) {
+            _playerData[i].playerEntityId = -1;
+            _playerData[i].alive = false;
+            return;
+        }
+    }
+}
+
+json GameEngine::getAllPlayerDataAsJson( void )
+{
+    json allPlayers = json::array();
+    for (size_t i = 0; i < _playerData.size(); i++)
+    {
+        json pData;
+        pData["playerId"] = _playerData[i].playerId;
+        pData["playerEntityId"] = _playerData[i].playerEntityId;
+        pData["username"] = _playerData[i].username;
+        pData["deaths"] = _playerData[i].deaths;
+        pData["alive"] = _playerData[i].alive;
+        pData["atACheckpoint"] = _playerData[i].atACheckpoint;
+        pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
+        pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
+        pData["upgrades"]["shield"] = _playerData[i].upgrades.shield;
+        pData["cooldowns"]["melee"] = _playerData[i].cooldowns.melee;
+        pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
+        pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
+        allPlayers.push_back(pData);
+    }
+    return allPlayers;
 }
 
 int		GameEngine::newId( void ) { return _nextEntityId++; }
@@ -117,7 +224,26 @@ void	GameEngine::init( const json& in ) {
 	}
 }
 
-void	GameEngine::stop( void ) { std::cout << "\nstop" << std::endl; _running = false; }
+void	GameEngine::stop( const std::string &reason ) {
+	if (_running == false)
+	{
+		return;
+	}
+	std::cout << "\nstop" << std::endl;
+	_running = false;
+	json out;
+    out["type"] = "gameEnd";
+    out["roomId"] = _roomId;
+    out["tick"] = _tick;
+    out["win"] = true;
+    out["reason"] = reason;
+    out["playerData"] = getAllPlayerDataAsJson();
+	if (reason == "engine_error" || reason == "all_players_dead" || reason == "all_players_left") {
+		out["win"] = false;
+	}
+	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
+    g_io->sendMsg(out.dump());
+}
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {

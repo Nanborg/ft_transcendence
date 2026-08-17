@@ -1,6 +1,6 @@
 # Reference unique des formats de communication (LEAN)
 
-Date de mise a jour: 2026-07-10
+Date de mise a jour: 2026-08-10
 Statut: source de verite equipe
 
 Objectif:
@@ -171,10 +171,24 @@ Request:
 [
   {
     "gameRunId": 101,
-    "endedAt": 1751556599000,
+    "roomId": "room-123",
     "result": "win",
-    "score": 12,
-    "rank": 1
+    "durationSeconds": 249,
+    "createdAt": "2026-08-10T12:00:00.000Z",
+    "players": [
+      {
+        "playerId": 12,
+        "username": "alice",
+        "deaths": 1,
+        "damageDealt": 3200,
+        "damageReceived": 600,
+        "upgrades": {
+          "melee": 1,
+          "ranged": 0,
+          "shield": 2
+        }
+      }
+    ]
   }
 ]
 ```
@@ -184,11 +198,17 @@ Request:
 ```json
 [
   {
-    "userId": 12,
-    "username": "alice",
-    "wins": 10,
-    "totalScore": 230,
-    "rank": 1
+    "rank": 1,
+    "gameRunId": 101,
+    "roomId": "room-123",
+    "durationSeconds": 249,
+    "createdAt": "2026-08-10T12:00:00.000Z",
+    "players": [
+      {
+        "playerId": 12,
+        "username": "alice"
+      }
+    ]
   }
 ]
 ```
@@ -217,10 +237,27 @@ Auth handshake: Bearer access token valide
     "down": false,
     "left": false,
     "right": true,
-    "action": false
+    "action": 0
   }
 }
 ```
+
+Actions:
+- `0`: none
+- `1`: melee
+- `2`: ranged
+- `3`: shield
+
+`checkpoint:upgrade`:
+
+```json
+{
+  "roomId": "room-123",
+  "upgrade": "melee"
+}
+```
+
+Upgrades possibles: `melee`, `ranged`, `shield`.
 
 ### 4.2 Server -> Client
 
@@ -266,70 +303,18 @@ Auth handshake: Bearer access token valide
   "roomId": "room-123",
   "status": "running",
   "tick": 1043,
-  "map": {
-    "width": 1600,
-    "height": 900
-  },
-  "players": [
+  "entities": [
     {
-      "id": 12,
-      "enginePlayerId": 1,
-      "username": "alice",
-      "x": 120,
-      "y": 180,
-      "velocityX": 1,
-      "velocityY": 0,
-      "hp": 80,
-      "maxHp": 100,
-      "xp": 15,
-      "level": 1,
-      "score": 120,
-      "state": "alive"
+      "entityId": 2657,
+      "typeId": 9,
+      "posX": 120,
+      "posY": 180,
+      "velX": 1,
+      "velY": 0,
+      "health": 80,
+      "state": 1
     }
   ],
-  "enemies": [
-    {
-      "id": 42,
-      "enemyType": "basic",
-      "x": 500,
-      "y": 300,
-      "velocityX": -1,
-      "velocityY": 0,
-      "hp": 20,
-      "state": "alive"
-    }
-  ],
-  "projectiles": [
-    {
-      "id": 99,
-      "ownerId": 12,
-      "x": 220,
-      "y": 180,
-      "velocityX": 5,
-      "velocityY": 0,
-      "damage": 10
-    }
-  ],
-  "resources": [
-    {
-      "id": 7,
-      "resourceType": "xp",
-      "x": 640,
-      "y": 420,
-      "amount": 5
-    }
-  ],
-  "objective": {
-    "type": "survive",
-    "status": "running",
-    "progress": 45,
-    "target": 100
-  },
-  "score": {
-    "team": 230,
-    "kills": 8,
-    "resources": 12
-  },
   "timestamp": 1751556500016
 }
 ```
@@ -341,48 +326,23 @@ Auth handshake: Bearer access token valide
   "roomId": "room-123",
   "status": "ended",
   "tick": 30000,
-  "durationMs": 249000,
   "victory": true,
   "reason": "objective_complete",
-  "score": {
-    "team": 1200,
-    "kills": 42,
-    "resources": 31
-  },
+  "durationSeconds": 249,
   "players": [
     {
-      "id": 12,
       "enginePlayerId": 1,
-      "username": "alice",
-      "score": 650,
-      "kills": 24,
       "deaths": 1,
-      "damageDone": 3200,
-      "resourcesCollected": 18,
-      "rank": 1,
-      "state": "alive"
-    },
-    {
-      "id": 18,
-      "enginePlayerId": 2,
-      "username": "bob",
-      "score": 550,
-      "kills": 18,
-      "deaths": 2,
-      "damageDone": 2600,
-      "resourcesCollected": 13,
-      "rank": 2,
-      "state": "dead"
+      "damageDealt": 3200,
+      "damageReceived": 600,
+      "upgrades": {
+        "melee": 1,
+        "ranged": 0,
+        "shield": 2
+      },
+      "alive": true
     }
   ],
-  "finalState": {
-    "objective": {
-      "type": "survive",
-      "status": "completed",
-      "progress": 100,
-      "target": 100
-    }
-  },
   "timestamp": 1751556599000
 }
 ```
@@ -395,7 +355,7 @@ Auth handshake: Bearer access token valide
 
 ## 5) Backend <-> moteur (JSON)
 
-Reference moteur: `engine_io.md`.
+Reference moteur: `docs/V_1/formats_json_v1_game.md`.
 
 `playerId`, `entityId` et `typeId` sont les trois systemes d'identification pour respectivement:
 - les joueurs uniquement;
@@ -408,41 +368,45 @@ Le champ `type` est un nombre.
 
 Types d'input attendus:
 
-- ping `"type" = 0`: aucun autre champ n'est attendu.
-- player join `"type" = 1`: id du joueur en question `"playerId" = 8`.
-- player leave `"type" = 2`: id du joueur en question `"playerId" = 8`.
-- player move `"type" = 3`: id du joueur en question `"playerId" = 8`, vecteur direction dans laquelle avancer `"X" = 22, "Y" = 7`.
-- build `"type" = 4`: id du joueur en question `"playerId" = 8`, position de la nouvelle entite `"X" = 22, "Y" = 7`, type de la nouvelle entite `"typeId" = 2`.
-- delete `"type" = 5`: id du joueur en question `"playerId" = 8`, id de l'entite a supprimer `"entityId" = 150`.
+- room create `"type" = 0`: id de room + fichier d'entites.
+- room destroy `"type" = 1`: id de room.
+- room start `"type" = 2`: id de room.
+- room stop `"type" = 3`: id de room.
+- ping `"type" = 100`: aucun autre champ n'est attendu.
+- sync `"type" = 101`: demande d'etat complet.
+- player join `"type" = 110`: id du joueur en question `"playerId" = 8`.
+- player leave `"type" = 111`: id du joueur en question `"playerId" = 8`.
+- player move `"type" = 112`: id du joueur en question `"playerId" = 8`, vecteur `"velX"` / `"velY"`.
+- player action `"type" = 113`: id du joueur en question `"playerId" = 8`, action `"action" = 1`.
 
-Inputs prevus:
-
-- attaque corps-a-corps (`"type" = 6`)
-- attaque a distance (`"type" = 7`)
-- attaque ciblee (`"type" = 8`)
-- game start (`"type" = 9`)
-- game stop (`"type" = 10`)
-
-Input pour construire un batiment de type 6 a la position x,y = (10, -5) en tant que joueur 12:
+Input pour creer une room:
 
 ```json
 {
-  "type": 4,
-  "playerId": 12,
-  "X": 10,
-  "Y": -5,
-  "typeId": 6
+  "type": 0,
+  "roomId": "room-123",
+  "entitiesFile": "assets/maps/level1.entities"
 }
 ```
 
-Input pour deplacer joueur 4 dans la direction x,y = (21, 13):
+Input pour deplacer joueur 4:
 
 ```json
 {
-  "type": 3,
+  "type": 112,
   "playerId": 4,
-  "X": 21,
-  "Y": 13
+  "velX": 1,
+  "velY": 0
+}
+```
+
+Input pour action joueur 4:
+
+```json
+{
+  "type": 113,
+  "playerId": 4,
+  "action": 1
 }
 ```
 
@@ -460,8 +424,9 @@ Le moteur peut envoyer plusieurs types de messages:
   - `entities`: nombre d'entites existantes.
   - `nextEntityId`: id de la prochaine entite creee.
 - `"type" = "entityUpdate"`: quand une entite change d'etat, aussi utilise a la creation d'une entite. Le nouvel etat de l'entite est stocke dans le champ `entity`.
-- `"type" = "entityDelete"`: quand une entite est supprimee. Le champ `entityId` contient l'id de l'entite en question.
-- `"type" = "gameEnd"`: pour signaler la condition de fin du jeu, pas encore implemente.
+- `"type" = "entityDelete"`: quand une entite est supprimee. Le champ `entity.entityId` contient l'id de l'entite en question.
+- `"type" = "playerData"`: stats d'un joueur pendant ou en fin de partie.
+- `"type" = "gameEnd"`: pour signaler la condition de fin du jeu.
 
 Format d'un objet `entity`:
 
@@ -472,7 +437,9 @@ Format d'un objet `entity`:
   "posX": 0,
   "posY": 0,
   "velX": 0,
-  "velY": 0
+  "velY": 0,
+  "health": 100,
+  "state": 1
 }
 ```
 

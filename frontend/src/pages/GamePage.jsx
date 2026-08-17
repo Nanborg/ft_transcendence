@@ -12,8 +12,7 @@ function formatDuration(totalSeconds) {
 function useGameTimer(startedAt, enabled) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     useEffect(() => {
-        if (!enabled || typeof startedAt !== 'number')
-        {
+        if (!enabled || typeof startedAt !== 'number') {
             setElapsedSeconds(0);
             return undefined;
         }
@@ -25,6 +24,30 @@ function useGameTimer(startedAt, enabled) {
         return () => { window.clearInterval(intervalId); };
     }, [startedAt, enabled]);
     return elapsedSeconds;
+}
+
+function SkillSlot({ hotkey, lvl, cooldown }) {
+    const onCooldown = cooldown > 0;
+    const cooldownText = cooldown.toFixed(2);
+    return (
+        <div
+            className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
+        >
+            <div className="skill-icon">
+                <span className="skill-lvl">
+                    Lv {lvl}
+                </span>
+                {onCooldown && (
+                    <strong className="skill-cooldown">
+                        {cooldownText}
+                    </strong>
+                )}
+            </div>
+            <span className="skill-key">
+                {hotkey}
+            </span>
+        </div>
+    );
 }
 
 export function GamePage({
@@ -53,6 +76,22 @@ export function GamePage({
         )
         : null;
     const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
+    const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities)
+        ? gameEntities.find(entity =>
+            entity.entityId === currentPlayer.playerEntityId
+        )
+        : null;
+    const playerHealth = Number.isFinite(currentPlayerEntity?.health)
+        ? Math.max(0, currentPlayerEntity.health)
+        : null;
+    // temp cooldown preview
+    const mockTimer = (Date.now() / 1000);
+    const mockCooldowns = {
+        melee: Math.max(0, 8 - (mockTimer % 12)),
+        ranged: Math.max(0, 5 - (mockTimer % 9)),
+        shield: Math.max(0, 3 - (mockTimer % 7)),
+    };
+    // end cooldown preview
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
@@ -175,7 +214,7 @@ export function GamePage({
                             </thead>
 
                             <tbody>
-                                 {playerStats.map((player) => (
+                                {playerStats.map((player) => (
                                     <tr key={player.playerId}>
                                         <td>{player.username ?? `Player ${player.playerId}`}</td>
                                         <td>{player.deaths ?? 0}</td>
@@ -251,19 +290,60 @@ export function GamePage({
         );
     }
     return (
-        <>
+        <div className="game-fullscreen">
             <PageHeading title={title} description={description} />
-            <div className="game-panel">
-                <div className="game-hud">
-                    <p>Live game state</p>
-                    <p>Room: {currentRoom.name || currentRoom.id}</p>
-                    <p>Time: {formatDuration(elapsedSeconds)}</p>
-                </div>
+                <section
+                    className="game-hud game-hud--live"
+                    aria-label="Game status"
+                >
+                    <div className="game-hud__summary">
+                        <span className="game-hud__status">
+                            <span
+                                className="game-hud__status-dot"
+                                aria-hidden="true"
+                            />
+                            Live
+                        </span>
+                        <span>
+                            Room: {currentRoom.name || currentRoom.id}
+                        </span>
+                        <strong>
+                            {formatDuration(elapsedSeconds)}
+                        </strong>
+                    </div>
+                    <div className="game-hud__stats">
+                        <div className="game-hud__stat">
+                            <span>Health</span>
+                            <strong>
+                                {playerHealth ?? '—'}
+                            </strong>
+                        </div>
+                    </div>
+                </section>
+                <section className="skill-bar" aria-label="Abilities">
+                    <SkillSlot
+                        hotkey="J"
+                        lvl={currentPlayer?.upgrades?.melee ?? 0}
+                        cooldown={mockCooldowns.melee}
+                    />
+                    <SkillSlot
+                        hotkey="K"
+                        lvl={currentPlayer?.upgrades?.ranged ?? 0}
+                        cooldown={mockCooldowns.ranged}
+                    />
+                    <SkillSlot
+                        hotkey="L"
+                        lvl={currentPlayer?.upgrades?.shield ?? 0}
+                        cooldown={mockCooldowns.shield}
+                    />
+                </section>
+                <div className="game-fullscreen-panel">
                 <GameCanvas
                     currentPlayerId={currentPlayerId}
                     gameMap={gameMap}
                     gameEntities={gameEntities}
                     gamePlayerData={gamePlayerData}
+                    socket={socket}
                 />
                 {isAtCheckpoint && (
                     <section
@@ -284,7 +364,7 @@ export function GamePage({
                             >
                                 <strong>Melee</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.melee ?? 0}
+                                    Level {currentPlayer?.upgrades?.melee ?? 0}
                                 </span>
                             </button>
                             <button
@@ -294,7 +374,7 @@ export function GamePage({
                             >
                                 <strong>Ranged</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.ranged ?? 0}
+                                    Level {currentPlayer?.upgrades?.ranged ?? 0}
                                 </span>
                             </button>
                             <button
@@ -304,7 +384,7 @@ export function GamePage({
                             >
                                 <strong>Shield</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.shield ?? 0}
+                                    Level {currentPlayer?.upgrades?.shield ?? 0}
                                 </span>
                             </button>
                         </div>
@@ -330,6 +410,6 @@ export function GamePage({
                     Leave game
                 </button>
             </div>
-        </>
+        </div>
     );
 }

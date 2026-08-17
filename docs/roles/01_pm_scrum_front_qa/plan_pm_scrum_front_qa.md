@@ -84,3 +84,15 @@ les blocages, les priorites et la coordination.
 - comment tester une feature ;
 - quels modules sont vises et pourquoi ;
 - qui a travaille sur quoi.
+
+## Mise a jour 2026-08-10
+
+Ce role reste utile pour expliquer la coordination, les tests manuels et la
+mise a jour des issues.
+
+Points deja avances:
+
+- pages Leaderboard et Match History integrees;
+- tests manuels PR 143 et PR 144 faits en local;
+- documentation locale de reunion nettoyee;
+- issues a fermer/garder/supprimer revues selon l'etat actuel.
