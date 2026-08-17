@@ -45,27 +45,38 @@ function getFocusPosition({
     currentPlayerId,
     now,
     gameMap,
+    spectatorIndex,
 }) {
     const localPlayer = playerData.find(
-        player =>
-            String(player.playerId) ===
-            String(currentPlayerId)
+        player => String(player.playerId) === String(currentPlayerId)
     );
-
+    if (localPlayer && localPlayer.alive === false) {
+        const playerTracks = [];
+        for (const track of tracks.values()) {
+            if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER) {
+                playerTracks.push(track);
+            }
+        }
+        if (playerTracks.length > 0) {
+            const safeIndex = Math.max(0, spectatorIndex) % playerTracks.length;
+            return getInterpolatedPosition(playerTracks[safeIndex], now);
+        }
+        return {
+            x: localPlayer.death_posX || (gameMap?.width ?? 0) / 2,
+            y: localPlayer.death_posY || (gameMap?.height ?? 0) / 2,
+        };
+    }
     const localEntityId = localPlayer?.playerEntityId;
-
-    if (typeof localEntityId === 'number') {
+    if (localEntityId != null) {
         const localTrack = tracks.get(localEntityId);
-
         if (localTrack)
             return getInterpolatedPosition(localTrack, now);
     }
-
     for (const track of tracks.values()) {
-        if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
+        if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER) {
             return getInterpolatedPosition(track, now);
+        }
     }
-
     return {
         x: (gameMap?.width ?? 0) / 2,
         y: (gameMap?.height ?? 0) / 2,
@@ -460,6 +471,7 @@ export function GameCanvas({
         gameMap,
         gamePlayerData,
     });
+    const spectatorIndexRef = useRef(0);
 
     const width = CANVAS_WIDTH;
     const mapAspectRatio =
@@ -482,6 +494,32 @@ export function GameCanvas({
             ? gamePlayerData
             : [],
     };
+
+    useEffect(() => {
+        function handleKeyDown(event) {
+            const players = renderDataRef.current.gamePlayerData;
+            const myPlayer = players.find(p => String(p.playerId) === String(currentPlayerId));
+            if (myPlayer && myPlayer.alive === false) {
+                const alivePlayers = players.filter(p => p.alive === true);
+
+                if (alivePlayers.length > 0) {
+                    if (event.key === 'd' || event.key === 'D') {
+                        spectatorIndexRef.current += 1;
+                        if (alivePlayers.length <= spectatorIndexRef.current)
+                            spectatorIndexRef.current = 0;
+                    }
+                    if (event.key === 'a' || event.key === 'A') {
+                        spectatorIndexRef.current -= 1;
+                        if (spectatorIndexRef.current < 0)
+                            spectatorIndexRef.current = alivePlayers.length - 1;
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentPlayerId]);
 
     useEffect(() => {
         if (!Array.isArray(gameEntities))
@@ -550,7 +588,6 @@ export function GameCanvas({
                     : INTERPOLATION_DURATION_MS,
             });
         });
-
         entityTracksRef.current.forEach((track, entityId) => {
             if (!receivedEntityIds.has(entityId))
                 entityTracksRef.current.delete(entityId);
@@ -572,6 +609,7 @@ export function GameCanvas({
                     renderData.currentPlayerId,
                 now,
                 gameMap: renderData.gameMap,
+                spectatorIndex: spectatorIndexRef.current
             });
             const camera = getCamera({
                 canvas,
@@ -608,8 +646,15 @@ export function GameCanvas({
                     camera,
                 });
             });
-            animationFrameId =
-                requestAnimationFrame(render);
+            const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));
+            if (myPlayer && myPlayer.alive === false)
+            {
+                context.fillStyle = 'red';
+                context.font = '30px Arial';
+                context.textAlign = 'center';
+                context.fillText("Death alive in: " + myPlayer.death_cooldowns, canvas.width/2, canvas.height/2);
+            }
+            animationFrameId = requestAnimationFrame(render);
         }
         animationFrameId = requestAnimationFrame(render);
         return () => {

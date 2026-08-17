@@ -70,11 +70,22 @@ void	GameEngine::_input_move( const json& in ) {
 	if (_playerIds.count(in["playerId"]) > 0) {
 		int entityId = _playerIds[in["playerId"]];
 		entityList_t::iterator it = getEntityIterator(entityId);
-		AbstractEntity *e = it->get();
-		((PlayerEntity *) e)->movementInput(in["velX"], in["velY"]);
+		if (it != _entities.end())
+		{
+			AbstractEntity *e = it->get();
+			((PlayerEntity *) e)->movementInput(in["velX"], in["velY"]);
+		}
 	}
 }
 
 void	GameEngine::_input_action( const json& in ) {
-
+	PlayerData *player_data = getPlayerData(in["playerId"]);
+	if (in.count("upgrade") > 0) {
+        if (in["upgrade"]["melee"] == true)
+            player_data->upgrades.melee++;
+        else if (in["upgrade"]["ranged"] == true)
+            player_data->upgrades.ranged++;
+        else if (in["upgrade"]["shield"] == true)
+            player_data->upgrades.shield++;
+    }
 }
