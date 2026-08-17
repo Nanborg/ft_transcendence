@@ -1,4 +1,5 @@
 #include "GameEngine.hpp"
+#include "AbstractHitboxEntity.hpp"
 
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
@@ -284,6 +285,15 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+		if (other->getType() == EntityTypes::LASERSHIELD)
+		{
+			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
+			if (shield->getOwnerId() == static_cast<int>(entity->getId()))
+				continue;
+			AbstractHitboxEntity* movingHitbox = dynamic_cast<AbstractHitboxEntity*>(entity);
+			if (movingHitbox && movingHitbox->getOwnerId() == shield->getOwnerId())
+				continue;
+		}
 		if (other->getPassableHitBox())
 			continue;
 		if (other->checkCollision(*entity))

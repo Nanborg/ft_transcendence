@@ -28,6 +28,12 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 		AbstractEntity*	entity = it->get();
 		if (entity->getId() == _ownerId)				// do not hit owner
 			continue;
+		if (entity->getType() == EntityTypes::LASERSHIELD)
+		{
+			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(entity);
+			if (shield->getOwnerId() == _ownerId)
+				continue;
+		}
 		if (entity->getPassableHitBox())				// check if entity ignores hitboxes
 			continue;
 		if (!entity->checkCollision(*this))				// check for collision with entity
