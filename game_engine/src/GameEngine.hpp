@@ -30,6 +30,7 @@ public:
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
+	void	applyDamage(AbstractEntity* entity, int damage);
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );
 	entityList_t::iterator	getEntityIterator( int entityId );

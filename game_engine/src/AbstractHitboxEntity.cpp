@@ -25,8 +25,7 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 			continue;
 
 		_health = -1;
-		if (entity->getHealth() != INVINCIBLE_HEALTH)	// check if entity is invincible
-			entity->setHealth(entity->getHealth() - _damage);
+		g_game->applyDamage(entity, _damage);
 	}
 	return ret;
 }

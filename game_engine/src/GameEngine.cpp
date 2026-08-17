@@ -255,6 +255,25 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
+void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
+{
+	if (!entity || damage <= 0)
+		return;
+	if (entity->getHealth() == INVINCIBLE_HEALTH)
+		return;
+	if (entity->getType() == EntityTypes::PLAYERENTITY)
+	{
+		PlayerData* player = getPlayerDataByEntityId(entity->getId());
+		if (!player || player->alive == false || player->invulnerability_cooldowns > 0)
+			return;
+	}
+	int nextHealth = entity->getHealth() - damage;
+	if (nextHealth < 0)
+		nextHealth = 0;
+	entity->setHealth(nextHealth);
+	sendEntityUpdate(entity);
+}
+
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	// TODO(neon-05): Implement collision checks for solid entities and damage
 	// interactions before enabling Enemy/Projectile gameplay.
