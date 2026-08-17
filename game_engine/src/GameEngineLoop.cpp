@@ -8,13 +8,14 @@ void	GameEngine::tick( void ) {
 	for(int i = 0; i < _playerData.size(); i++)
 	{
 		PlayerData &cur_player = _playerData[i];
-		if (cur_player.alive == false)
+		if (cur_player.alive == false && cur_player.respawnPending == true)
 		{
 			cur_player.death_cooldowns--;
 			sendPlayerStateUpdate(cur_player);
-			if (cur_player.death_cooldowns == 0)
+			if (cur_player.death_cooldowns <= 0)
 			{
 				cur_player.alive = true;
+				cur_player.respawnPending = false;
 				PlayerEntity *player = new PlayerEntity(cur_player.playerId, cur_player.death_posX, cur_player.death_posY, 0, 0);
 				sendEntityUpdate(player);
 				_entities.push_front(entityPtr_t(player));
@@ -56,6 +57,7 @@ void	GameEngine::_loop_tickEntities( void ) {
 			sendEntityUpdate(it->get());
 		}
 		if (it->get()->getHealth() <= 0) {
+			markPlayerDead(it->get());
 			sendEntityDelete(it->get());
 			it = _entities.erase(it);
 		} else {

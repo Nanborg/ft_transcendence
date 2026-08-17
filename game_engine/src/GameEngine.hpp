@@ -75,6 +75,7 @@ public:
 		int			death_posX;
 		int			death_posY;
         bool        alive;
+		bool		respawnPending;
         bool        atACheckpoint;
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
@@ -87,6 +88,8 @@ public:
 	void		sendPlayerStateUpdate( const PlayerData& playerData );
 	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );
 	PlayerData*	getPlayerData( int playerId );
+	PlayerData* getPlayerDataByEntityId( int entityId );
+	void		markPlayerDead( AbstractEntity* entity );
 	void		disconnectPlayerData( int playerId );
 	json		getAllPlayerDataAsJson( void );
 

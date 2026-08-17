@@ -66,6 +66,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
     pData["deaths"] = playerData.deaths;
 	pData["death_posX"] = playerData.death_posX;
     pData["death_posY"] = playerData.death_posY;
+	pData["invulnerability_cooldowns"] = playerData.invulnerability_cooldowns;
     out["playerData"] = pData;
     g_io->sendMsg(out.dump());
 }
@@ -87,6 +88,7 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.username = username;
 	newPlayer.deaths = 0;
 	newPlayer.alive = true;
+	newPlayer.respawnPending = false;
 	newPlayer.atACheckpoint = false;
 	newPlayer.upgrades.melee = 0;
 	newPlayer.upgrades.ranged = 0;
@@ -109,11 +111,42 @@ GameEngine::PlayerData*	GameEngine::getPlayerData( int playerId ) {
 	return nullptr;
 }
 
+GameEngine::PlayerData* GameEngine::getPlayerDataByEntityId(int entityId)
+{
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		if (_playerData[i].playerEntityId == entityId)
+			return &_playerData[i];
+	}
+	return nullptr;
+}
+
+void GameEngine::markPlayerDead(AbstractEntity* entity)
+{
+	if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
+		return;
+	PlayerData* player = getPlayerDataByEntityId(entity->getId());
+	if (!player || player->alive == false)
+		return;
+	player->alive = false;
+	player->respawnPending = true;
+	player->deaths++;
+	player->death_posX = entity->getPosX();
+	player->death_posY = entity->getPosY();
+	player->death_cooldowns = 100;
+	player->invulnerability_cooldowns = 0;
+
+	_playerIds.erase(player->playerId);
+	player->playerEntityId = -1;
+	sendPlayerStateUpdate(*player);
+}
+
 void	GameEngine::disconnectPlayerData( int playerId ) {
     for (size_t i = 0; i < _playerData.size(); i++) {
         if (_playerData[i].playerId == playerId) {
             _playerData[i].playerEntityId = -1;
             _playerData[i].alive = false;
+			_playerData[i].respawnPending = false;
             return;
         }
     }
@@ -130,6 +163,10 @@ json GameEngine::getAllPlayerDataAsJson( void )
         pData["username"] = _playerData[i].username;
         pData["deaths"] = _playerData[i].deaths;
         pData["alive"] = _playerData[i].alive;
+		pData["death_cooldowns"] = _playerData[i].death_cooldowns;
+		pData["death_posX"] = _playerData[i].death_posX;
+		pData["death_posY"] = _playerData[i].death_posY;
+		pData["invulnerability_cooldowns"] = _playerData[i].invulnerability_cooldowns;
         pData["atACheckpoint"] = _playerData[i].atACheckpoint;
         pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
         pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
