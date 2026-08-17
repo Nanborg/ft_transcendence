@@ -21,18 +21,18 @@ bool WalkingGoobEntity::tick( void ) {
 			_velX = 0;
 			_velY = 0;
 			return true;
-		} else {											// following logic
-			long dx, dy;
-			int old_vX = _velX, old_vY = _velY;
-			dx = (_target->getPosX() - _posX);
+		} else {
+			const int oldVelX = _velX;
+			const int oldVelY = _velY;										// following logic
+			long dx = _target->getPosX() - _posX;
+			long dy = _target->getPosY() - _posY;
 			dx *= g_game->getScale() * _velCap;
-			dy = (_target->getPosY() - _posY);
 			dy *= g_game->getScale() * _velCap;
 			if (dist != 0) {
 				_velX = dx / dist;
 				_velY = dy / dist;
-			} else
-			return old_vX != _velX || old_vY != _velY;		// only update if change in trajectory
+			}
+			return oldVelX != _velX || oldVelY != _velY;		// only update if change in trajectory
 		}
 	} else {												// no aggro
 		AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);

@@ -101,11 +101,29 @@ const SHOOTING_ROBOT_IDLE_ROWS = Object.freeze([
     {y: 637, height: 318},
     {y: 955, height: 318},
 ]);
+const PLAYER_WALK_ANCHOR_X = Object.freeze([
+    [0.6499, 0.5378, 0.4552, 0.3688],
+    [0.6463, 0.5391, 0.4398, 0.3738],
+    [0.6302, 0.5247, 0.4322, 0.3585],
+    [0.6253, 0.5207, 0.4148, 0.3671],
+]);
+const PLAYER_WALK_ANCHOR_Y = Object.freeze([
+    [0.6074, 0.6059, 0.6099, 0.6070],
+    [0.4883, 0.5090, 0.5099, 0.5107],
+    [0.4227, 0.4383, 0.4345, 0.4337],
+    [0.3048, 0.3099, 0.3130, 0.3027],
+]);
 const PLAYER_IDLE_ANCHOR_X = Object.freeze([
     [0.6566, 0.5694, 0.4580, 0.3677],
     [0.6645, 0.5781, 0.4773, 0.3883],
     [0.6359, 0.5455, 0.4469, 0.3471],
     [0.6565, 0.5696, 0.4583, 0.3674],
+]);
+const PLAYER_IDLE_ANCHOR_Y = Object.freeze([
+    [0.5946, 0.5953, 0.5953, 0.5950],
+    [0.4779, 0.4783, 0.4774, 0.4766],
+    [0.4024, 0.4026, 0.4022, 0.4021],
+    [0.2929, 0.2935, 0.2938, 0.2934],
 ]);
 const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.6059, 0.5500, 0.4853, 0.3886],
@@ -382,16 +400,19 @@ function getSpriteSource({
     frame,
     directionRow,
     anchorXs = null,
+    anchorYs = null,
 }) {
     const column = columns[frame] ?? columns[0];
     const row = rows[directionRow] ?? rows[0];
     const anchorX = anchorXs?.[directionRow]?.[frame] ?? 0.5;
+    const anchorY = anchorYs?.[directionRow]?.[frame] ?? 0.5;
     return {
         x: column.x,
         y: row.y,
         width: column.width,
         height: row.height,
         anchorX,
+        anchorY,
     };
 }
 
@@ -459,8 +480,8 @@ function drawPlayerAttackSprite({
     const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
     const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
     const spriteSize = tilePixels * 1.8;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
 
     context.drawImage(
         sprite,
@@ -498,11 +519,12 @@ function drawPlayerWalkSprite({
         rows: SOURCE_GRID_1254_ROWS,
         frame,
         directionRow,
-        anchorXs: isMoving ? null : PLAYER_IDLE_ANCHOR_X,
+        anchorXs: isMoving ? PLAYER_WALK_ANCHOR_X : PLAYER_IDLE_ANCHOR_X,
+        anchorYs: isMoving ? PLAYER_WALK_ANCHOR_Y : PLAYER_IDLE_ANCHOR_Y,
     });
     const spriteSize = tilePixels * 1.8;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
 
     context.drawImage(
         sprite,
@@ -511,7 +533,7 @@ function drawPlayerWalkSprite({
         source.width,
         source.height,
         centerX - source.anchorX * spriteSize,
-        centerY - spriteSize / 2,
+        centerY - source.anchorY * spriteSize,
         spriteSize,
         spriteSize
     );
@@ -543,8 +565,8 @@ function drawWalkingRobotSprite({
         anchorXs: isMoving ? null : WALKING_ROBOT_IDLE_ANCHOR_X,
     });
     const spriteSize = tilePixels * 1.7;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
 
     context.drawImage(
         sprite,
@@ -582,8 +604,8 @@ function drawShootingRobotSprite({
         anchorXs: isMoving ? null : SHOOTING_ROBOT_IDLE_ANCHOR_X,
     });
     const spriteSize = tilePixels * 1.6;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
     context.drawImage(
         sprite,
         source.x,
@@ -617,8 +639,8 @@ function drawTankRobotSprite({
     const sourceWidth = sourceColumn.width;
     const sourceHeight = sourceRow.height;
     const spriteSize = tilePixels * 2.1;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
     context.drawImage(
         tankRobotIdleSprite,
         sourceX,
@@ -653,8 +675,8 @@ function drawLordGoobSprite({
         anchorXs: LORD_GOOB_IDLE_ANCHOR_X,
     });
     const spriteSize = tilePixels * 2.8;
-    const centerX = screen.x + tilePixels / 2;
-    const centerY = screen.y + tilePixels / 2;
+    const centerX = screen.x;
+    const centerY = screen.y;
     context.drawImage(
         lordGoobIdleSprite,
         source.x,
@@ -887,7 +909,7 @@ function drawEntity({
             context.arc(
                 screen.x,
                 screen.y,
-                entityPixels * 0.55,
+                entityPixels * 0.85,
                 0,
                 Math.PI * 2
             );

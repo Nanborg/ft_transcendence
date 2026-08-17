@@ -2,20 +2,21 @@
 
 void	GameEngine::tick( void ) {
 	g_game = this;
+	_loop_tickPlayerCooldowns();
 	_loop_processInputs();
 	_loop_tickEntities();
 	_tick++;
-	suffer_damage();
 	for(int i = 0; i < _playerData.size(); i++)
 	{
 		PlayerData &cur_player = _playerData[i];
-		if (cur_player.alive == false)
+		if (cur_player.alive == false && cur_player.respawnPending == true)
 		{
 			cur_player.death_cooldowns--;
 			sendPlayerStateUpdate(cur_player);
-			if (cur_player.death_cooldowns == 0)
+			if (cur_player.death_cooldowns <= 0)
 			{
 				cur_player.alive = true;
+				cur_player.respawnPending = false;
 				PlayerEntity *player = new PlayerEntity(cur_player.playerId, cur_player.death_posX, cur_player.death_posY, 0, 0);
 				sendEntityUpdate(player);
 				_entities.push_front(entityPtr_t(player));
@@ -35,6 +36,34 @@ void	GameEngine::tick( void ) {
 		stop("boss_defeated");
 	}
 	g_game = NULL;
+}
+
+void GameEngine::_loop_tickPlayerCooldowns(void)
+{
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		PlayerData& player = _playerData[i];
+		if (player.alive == false)
+			continue;
+		bool changed = false;
+		if (player.cooldowns.melee > 0)
+		{
+			player.cooldowns.melee--;
+			changed = true;
+		}
+		if (player.cooldowns.ranged > 0)
+		{
+			player.cooldowns.ranged--;
+			changed = true;
+		}
+		if (player.cooldowns.shield > 0)
+		{
+			player.cooldowns.shield--;
+			changed = true;
+		}
+		if (changed)
+			sendPlayerStateUpdate(player);
+	}
 }
 
 void GameEngine::_loop_processInputs(void)
@@ -57,6 +86,7 @@ void	GameEngine::_loop_tickEntities( void ) {
 			sendEntityUpdate(it->get());
 		}
 		if (it->get()->getHealth() <= 0) {
+			markPlayerDead(it->get());
 			sendEntityDelete(it->get());
 			it = _entities.erase(it);
 		} else {

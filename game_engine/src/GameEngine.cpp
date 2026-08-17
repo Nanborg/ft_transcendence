@@ -1,4 +1,5 @@
 #include "GameEngine.hpp"
+#include "AbstractHitboxEntity.hpp"
 
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
@@ -66,6 +67,10 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
     pData["deaths"] = playerData.deaths;
 	pData["death_posX"] = playerData.death_posX;
     pData["death_posY"] = playerData.death_posY;
+	pData["invulnerability_cooldowns"] = playerData.invulnerability_cooldowns;
+	pData["cooldowns"]["melee"] = playerData.cooldowns.melee;
+	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;
+	pData["cooldowns"]["shield"] = playerData.cooldowns.shield;
     out["playerData"] = pData;
     g_io->sendMsg(out.dump());
 }
@@ -80,32 +85,6 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	g_io->sendMsg(out.dump());
 }
 
-//TEMP for test mock death
-void	GameEngine::suffer_damage( void ) {
-	PlayerData &victim_player = _playerData[0];
-	if (victim_player.alive == false)
-		return;
-	int entitieId = _playerData[0].playerEntityId;
-	entityList_t::iterator it = getEntityIterator(entitieId);
-	if (it != _entities.end())
-	{
-		AbstractEntity *entity_victim = it->get();
-		victim_player.temp_count++;
-		if (victim_player.temp_count % 10 == 0)
-			entity_victim->setHealth(entity_victim->getHealth() - 1);
-		if (entity_victim->getHealth() <= 0)
-		{
-			victim_player.alive = false;
-			victim_player.deaths++;
-			victim_player.death_posX = entity_victim->getPosX();
-			victim_player.death_posY = entity_victim->getPosY();
-			victim_player.death_cooldowns = 100;
-			sendPlayerStateUpdate(victim_player);
-			deleteEntity(it);
-		}
-	}
-}
-
 void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::string& username ) {
 	PlayerData newPlayer;
 	newPlayer.playerEntityId = playerEntityId;
@@ -113,6 +92,7 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.username = username;
 	newPlayer.deaths = 0;
 	newPlayer.alive = true;
+	newPlayer.respawnPending = false;
 	newPlayer.atACheckpoint = false;
 	newPlayer.upgrades.melee = 0;
 	newPlayer.upgrades.ranged = 0;
@@ -124,8 +104,6 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.invulnerability_cooldowns = 0;
 	newPlayer.death_posX = 0;
 	newPlayer.death_posY = 0;
-	//TEMP for test mock death
-	newPlayer.temp_count = 0;
 	_playerData.push_back(newPlayer);
 }
 
@@ -137,11 +115,42 @@ GameEngine::PlayerData*	GameEngine::getPlayerData( int playerId ) {
 	return nullptr;
 }
 
+GameEngine::PlayerData* GameEngine::getPlayerDataByEntityId(int entityId)
+{
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		if (_playerData[i].playerEntityId == entityId)
+			return &_playerData[i];
+	}
+	return nullptr;
+}
+
+void GameEngine::markPlayerDead(AbstractEntity* entity)
+{
+	if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
+		return;
+	PlayerData* player = getPlayerDataByEntityId(entity->getId());
+	if (!player || player->alive == false)
+		return;
+	player->alive = false;
+	player->respawnPending = true;
+	player->deaths++;
+	player->death_posX = entity->getPosX();
+	player->death_posY = entity->getPosY();
+	player->death_cooldowns = 100;
+	player->invulnerability_cooldowns = 0;
+
+	_playerIds.erase(player->playerId);
+	player->playerEntityId = -1;
+	sendPlayerStateUpdate(*player);
+}
+
 void	GameEngine::disconnectPlayerData( int playerId ) {
     for (size_t i = 0; i < _playerData.size(); i++) {
         if (_playerData[i].playerId == playerId) {
             _playerData[i].playerEntityId = -1;
             _playerData[i].alive = false;
+			_playerData[i].respawnPending = false;
             return;
         }
     }
@@ -158,6 +167,10 @@ json GameEngine::getAllPlayerDataAsJson( void )
         pData["username"] = _playerData[i].username;
         pData["deaths"] = _playerData[i].deaths;
         pData["alive"] = _playerData[i].alive;
+		pData["death_cooldowns"] = _playerData[i].death_cooldowns;
+		pData["death_posX"] = _playerData[i].death_posX;
+		pData["death_posY"] = _playerData[i].death_posY;
+		pData["invulnerability_cooldowns"] = _playerData[i].invulnerability_cooldowns;
         pData["atACheckpoint"] = _playerData[i].atACheckpoint;
         pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
         pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
@@ -246,6 +259,25 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
+void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
+{
+	if (!entity || damage <= 0)
+		return;
+	if (entity->getHealth() == INVINCIBLE_HEALTH)
+		return;
+	if (entity->getType() == EntityTypes::PLAYERENTITY)
+	{
+		PlayerData* player = getPlayerDataByEntityId(entity->getId());
+		if (!player || player->alive == false || player->invulnerability_cooldowns > 0)
+			return;
+	}
+	int nextHealth = entity->getHealth() - damage;
+	if (nextHealth < 0)
+		nextHealth = 0;
+	entity->setHealth(nextHealth);
+	sendEntityUpdate(entity);
+}
+
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 	// TODO(neon-05): Implement collision checks for solid entities and damage
 	// interactions before enabling Enemy/Projectile gameplay.
@@ -253,6 +285,15 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+		if (other->getType() == EntityTypes::LASERSHIELD)
+		{
+			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
+			if (shield->getOwnerId() == static_cast<int>(entity->getId()))
+				continue;
+			AbstractHitboxEntity* movingHitbox = dynamic_cast<AbstractHitboxEntity*>(entity);
+			if (movingHitbox && movingHitbox->getOwnerId() == shield->getOwnerId())
+				continue;
+		}
 		if (other->getPassableHitBox())
 			continue;
 		if (other->checkCollision(*entity))
