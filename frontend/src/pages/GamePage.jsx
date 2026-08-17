@@ -35,8 +35,11 @@ const SKILL_COLUMNS = {
 
 function SkillSlot({ skill, hotkey, lvl, cooldown }) {
     const safeLvl = Math.max(0, Math.min(3, lvl));
-    const onCooldown = cooldown > 0;
-    const cooldownText = cooldown.toFixed(2);
+    const safeCooldown = Number.isFinite(cooldown)
+        ? Math.max(0, cooldown)
+        : 0;
+    const onCooldown = safeCooldown > 0;
+    const cooldownText = safeCooldown.toFixed(2);
     const iconStyle = {
         backgroundImage: `url(${skillSprites})`,
         backgroundPosition: `${SKILL_COLUMNS[skill] * 50}% ${safeLvl * (100 / 3)}%`,
@@ -107,18 +110,8 @@ export function GamePage({
         ranged: currentPlayer?.upgrades?.ranged ?? 0,
         shield: currentPlayer?.upgrades?.shield ?? 0,
     };
-    const realCooldowns = {
-        melee: currentPlayer?.cooldowns?.melee ?? 0,
-        ranged: currentPlayer?.cooldowns?.ranged ?? 0,
-        shield: currentPlayer?.cooldowns?.shield ?? 0,
-    };
     // temp mock variable debut
     const mockTimer = (Date.now() / 1000);
-    const mockCooldowns = {
-        melee: Math.max(0, 2 - (mockTimer % 4)),
-        ranged: Math.max(0, 1.5 - (mockTimer % 3)),
-        shield: Math.max(0, 1 - (mockTimer % 2)),
-    };
     const mockSkillLevel = Math.floor(mockTimer / 2) % 4;
     const mockSkillLevels = {
         melee: mockSkillLevel,
@@ -127,10 +120,8 @@ export function GamePage({
     };
     // temp mock variable fin
     let skillLevels = realSkillLevels;
-    let skillCooldowns = realCooldowns;
     // temp mock debut
     skillLevels = mockSkillLevels;
-    skillCooldowns = mockCooldowns;
     // temp mock fin
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
@@ -365,24 +356,33 @@ export function GamePage({
                         skill="melee"
                         hotkey="J"
                         lvl={skillLevels.melee}
+<<<<<<< Updated upstream
                         cooldown={skillCooldowns.melee}
                         lvl={currentPlayer?.upgrades?.melee ?? 0}
+=======
+>>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.melee ?? 0}
                     />
                     <SkillSlot
                         skill="ranged"
                         hotkey="K"
                         lvl={skillLevels.ranged}
+<<<<<<< Updated upstream
                         cooldown={skillCooldowns.ranged}
                         lvl={currentPlayer?.upgrades?.ranged ?? 0}
+=======
+>>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.ranged ?? 0}
                     />
                     <SkillSlot
                         skill="shield"
                         hotkey="L"
                         lvl={skillLevels.shield}
+<<<<<<< Updated upstream
                         cooldown={skillCooldowns.shield}
                         lvl={currentPlayer?.upgrades?.shield ?? 0}
+=======
+>>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.shield ?? 0}
                     />
                 </section>
