@@ -159,7 +159,7 @@ json GameEngine::getAllPlayerDataAsJson( void )
         pData["deaths"] = _playerData[i].deaths;
         pData["alive"] = _playerData[i].alive;
         pData["atACheckpoint"] = _playerData[i].atACheckpoint;
-        pData["upgrades"]["melee"] = _playerData[i]..melee;
+        pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
         pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
         pData["upgrades"]["shield"] = _playerData[i].upgrades.shield;
         pData["cooldowns"]["melee"] = _playerData[i].cooldowns.melee;
@@ -234,7 +234,7 @@ void	GameEngine::stop( const std::string &reason ) {
     out["win"] = true;
     out["reason"] = reason;
     out["playerData"] = getAllPlayerDataAsJson();
-	if (reason == "game_stopped" || reason == "game_lost" || reason == "game_abandoned") {
+	if (reason == "engine_error" || reason == "all_players_dead" || reason == "all_players_left") {
 		out["win"] = false;
 	}
 	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.

@@ -54,8 +54,8 @@ function mapConv(filePath, roomId) {
 
 			entities.push({
 				typeId: config.typeId,
-				posX: col * SCALE,
-				posY: row * SCALE,
+				posX: col * SCALE + SCALE / 2,
+				posY: row * SCALE + SCALE / 2,
 				velX: 0,
 				velY: 0,
 				state: { ...config.state },
@@ -71,8 +71,8 @@ function mapConv(filePath, roomId) {
 		width,
 		height,
 		scale: SCALE,
-		spawnX: spawn.x * SCALE,
-		spawnY: spawn.y * SCALE,
+		spawnX: spawn.x * SCALE + SCALE / 2,
+		spawnY: spawn.y * SCALE + SCALE / 2,
 		entities,
 	};
 

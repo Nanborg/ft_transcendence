@@ -147,7 +147,7 @@ module.exports = (io) => {
 		} finally {
 			try {
 				// TEMP: Forcing engine stop to ensure cleanup for now.
-				await gameEngineService.stopGame(roomId, "game_stopped");
+				await gameEngineService.stopGame(roomId, "engine_error");
 			} catch (cleanupError) {
 				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
 			}
@@ -526,7 +526,7 @@ module.exports = (io) => {
 						String(socket.user.id);
 				try {
 					if (isLastPlayer) {
-						await gameEngineService.stopGame(roomId, "game_abandoned");
+						await gameEngineService.stopGame(roomId, "all_players_left");
 					} else {
 						await gameEngineService.removePlayer(roomId, socket.user.id);
 					}
@@ -663,7 +663,7 @@ module.exports = (io) => {
 						for (const room of userRooms) {
 							try {
 								if (room.players.length <= 1) {
-									await gameEngineService.stopGame(room.id, "game_abandoned");
+									await gameEngineService.stopGame(room.id, "all_players_left");
 								}
 								else {
 									await gameEngineService.removePlayer(room.id, socket.user.id);

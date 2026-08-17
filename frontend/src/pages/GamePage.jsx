@@ -12,8 +12,7 @@ function formatDuration(totalSeconds) {
 function useGameTimer(startedAt, enabled) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     useEffect(() => {
-        if (!enabled || typeof startedAt !== 'number')
-        {
+        if (!enabled || typeof startedAt !== 'number') {
             setElapsedSeconds(0);
             return undefined;
         }
@@ -175,7 +174,7 @@ export function GamePage({
                             </thead>
 
                             <tbody>
-                                 {playerStats.map((player) => (
+                                {playerStats.map((player) => (
                                     <tr key={player.playerId}>
                                         <td>{player.username ?? `Player ${player.playerId}`}</td>
                                         <td>{player.deaths ?? 0}</td>
@@ -251,9 +250,9 @@ export function GamePage({
         );
     }
     return (
-        <>
+        <div className="game-fullscreen">
             <PageHeading title={title} description={description} />
-            <div className="game-panel">
+            <div className="game-panel game-fullscreen-panel">
                 <div className="game-hud">
                     <p>Live game state</p>
                     <p>Room: {currentRoom.name || currentRoom.id}</p>
@@ -330,6 +329,6 @@ export function GamePage({
                     Leave game
                 </button>
             </div>
-        </>
+        </div>
     );
 }
