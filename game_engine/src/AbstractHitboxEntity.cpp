@@ -9,8 +9,17 @@ AbstractHitboxEntity::AbstractHitboxEntity( EntityTypes type, int size, int posX
 
 AbstractHitboxEntity::~AbstractHitboxEntity( void ) {}
 
+int AbstractHitboxEntity::getOwnerId(void) const { return _ownerId; }
+
 bool	AbstractHitboxEntity::_templateTick( void ) {
-	bool ret = AbstractMovingEntity::_templateTick();
+	bool ret = false;
+
+	if (_velX != 0 || _velY != 0)
+	{
+		_posX += _velX;
+		_posY += _velY;
+		ret = true;
+	}
 
 	_health--;
 
@@ -26,6 +35,8 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 
 		_health = -1;
 		g_game->applyDamage(entity, _damage);
+		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE)
+			break;
 	}
 	return ret;
 }
