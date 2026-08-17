@@ -52,6 +52,14 @@ export function GamePage({
         )
         : null;
     const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
+    const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities)
+        ? gameEntities.find(entity =>
+            entity.entityId === currentPlayer.playerEntityId
+        )
+        : null;
+    const playerHealth = Number.isFinite(currentPlayerEntity?.health)
+        ? Math.max(0, currentPlayerEntity.health)
+        : null;
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
@@ -252,17 +260,65 @@ export function GamePage({
     return (
         <div className="game-fullscreen">
             <PageHeading title={title} description={description} />
-            <div className="game-panel game-fullscreen-panel">
-                <div className="game-hud">
-                    <p>Live game state</p>
-                    <p>Room: {currentRoom.name || currentRoom.id}</p>
-                    <p>Time: {formatDuration(elapsedSeconds)}</p>
-                </div>
+                <section
+                    className="game-hud game-hud--live"
+                    aria-label="Game status"
+                >
+                    <div className="game-hud__summary">
+                        <span className="game-hud__status">
+                            <span
+                                className="game-hud__status-dot"
+                                aria-hidden="true"
+                            />
+                            Live
+                        </span>
+                        <span>
+                            Room: {currentRoom.name || currentRoom.id}
+                        </span>
+                        <strong>
+                            {formatDuration(elapsedSeconds)}
+                        </strong>
+                    </div>
+                    <div className="game-hud__stats">
+                        <div className="game-hud__stat">
+                            <span>Health</span>
+                            <strong>
+                                {playerHealth ?? '—'}
+                            </strong>
+                        </div>
+                        <div className="game-hud__stat">
+                            <span>Melee · Space</span>
+                            <strong>
+                                Lv {currentPlayer?.upgrades?.melee ?? 0}
+                                {' · '}
+                                {currentPlayer?.cooldowns?.melee ?? 0} ticks
+                            </strong>
+                        </div>
+                        <div className="game-hud__stat">
+                            <span>Ranged · F</span>
+                            <strong>
+                                Lv {currentPlayer?.upgrades?.ranged ?? 0}
+                                {' · '}
+                                {currentPlayer?.cooldowns?.ranged ?? 0} ticks
+                            </strong>
+                        </div>
+                        <div className="game-hud__stat">
+                            <span>Shield · Shift</span>
+                            <strong>
+                                Lv {currentPlayer?.upgrades?.shield ?? 0}
+                                {' · '}
+                                {currentPlayer?.cooldowns?.shield ?? 0} ticks
+                            </strong>
+                        </div>
+                    </div>
+                </section>
+                <div className="game-fullscreen-panel">
                 <GameCanvas
                     currentPlayerId={currentPlayerId}
                     gameMap={gameMap}
                     gameEntities={gameEntities}
                     gamePlayerData={gamePlayerData}
+                    socket={socket}
                 />
                 {isAtCheckpoint && (
                     <section
@@ -283,7 +339,7 @@ export function GamePage({
                             >
                                 <strong>Melee</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.melee ?? 0}
+                                    Level {currentPlayer?.upgrades?.melee ?? 0}
                                 </span>
                             </button>
                             <button
@@ -293,7 +349,7 @@ export function GamePage({
                             >
                                 <strong>Ranged</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.ranged ?? 0}
+                                    Level {currentPlayer?.upgrades?.ranged ?? 0}
                                 </span>
                             </button>
                             <button
@@ -303,7 +359,7 @@ export function GamePage({
                             >
                                 <strong>Shield</strong>
                                 <span>
-                                    Level {currentPlayer.upgrades?.shield ?? 0}
+                                    Level {currentPlayer?.upgrades?.shield ?? 0}
                                 </span>
                             </button>
                         </div>
