@@ -5,7 +5,6 @@ void	GameEngine::tick( void ) {
 	_loop_processInputs();
 	_loop_tickEntities();
 	_tick++;
-	suffer_damage();
 	for(int i = 0; i < _playerData.size(); i++)
 	{
 		PlayerData &cur_player = _playerData[i];

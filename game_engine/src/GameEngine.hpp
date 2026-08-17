@@ -36,7 +36,6 @@ public:
 	AbstractEntity*			buildNewEntity( int typeId, int posX, int posY, int velX, int velY );
 	void					spawnEntity( AbstractEntity* entity );
 	void					deleteEntity( entityList_t::iterator it );
-	void					suffer_damage( void );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
@@ -69,8 +68,6 @@ public:
     };
 
 	struct PlayerData {
-		//TEMP for test mock death
-		int			temp_count;
         int         playerId;
         int         playerEntityId;
         std::string username;
@@ -86,7 +83,6 @@ public:
         PlayerCooldowns cooldowns;
     };
 
-	int temp_count;
 
 	void		sendPlayerStateUpdate( const PlayerData& playerData );
 	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );

@@ -80,32 +80,6 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	g_io->sendMsg(out.dump());
 }
 
-//TEMP for test mock death
-void	GameEngine::suffer_damage( void ) {
-	PlayerData &victim_player = _playerData[0];
-	if (victim_player.alive == false)
-		return;
-	int entitieId = _playerData[0].playerEntityId;
-	entityList_t::iterator it = getEntityIterator(entitieId);
-	if (it != _entities.end())
-	{
-		AbstractEntity *entity_victim = it->get();
-		victim_player.temp_count++;
-		if (victim_player.temp_count % 10 == 0)
-			entity_victim->setHealth(entity_victim->getHealth() - 1);
-		if (entity_victim->getHealth() <= 0)
-		{
-			victim_player.alive = false;
-			victim_player.deaths++;
-			victim_player.death_posX = entity_victim->getPosX();
-			victim_player.death_posY = entity_victim->getPosY();
-			victim_player.death_cooldowns = 100;
-			sendPlayerStateUpdate(victim_player);
-			deleteEntity(it);
-		}
-	}
-}
-
 void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::string& username ) {
 	PlayerData newPlayer;
 	newPlayer.playerEntityId = playerEntityId;
@@ -124,8 +98,6 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.invulnerability_cooldowns = 0;
 	newPlayer.death_posX = 0;
 	newPlayer.death_posY = 0;
-	//TEMP for test mock death
-	newPlayer.temp_count = 0;
 	_playerData.push_back(newPlayer);
 }
 
