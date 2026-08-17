@@ -2,7 +2,6 @@
 all:
 	sh scripts/generate-dev-cert.sh
 	docker compose up -d --build
-	spd-say done
 
 up:
 	docker compose up

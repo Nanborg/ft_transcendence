@@ -15,8 +15,6 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 	_health--;
 
 	const GameEngine::entityList_t&	entities = g_game->getEntityList();
-	bool hit = false;
-	std::cout << "hhh" << std::endl;
 	for (GameEngine::entityList_t::const_iterator it = entities.begin(); it != entities.end(); it++) {
 		AbstractEntity*	entity = it->get();
 		if (entity->getId() == _ownerId)				// do not hit owner
@@ -29,7 +27,6 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 		_health = -1;
 		if (entity->getHealth() != INVINCIBLE_HEALTH)	// check if entity is invincible
 			entity->setHealth(entity->getHealth() - _damage);
-		std::cout << "hhh" << entity->getHealth() << std::endl;
 	}
 	return ret;
 }
