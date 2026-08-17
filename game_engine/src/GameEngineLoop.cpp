@@ -4,6 +4,7 @@ void	GameEngine::tick( void ) {
 	g_game = this;
 	_loop_processInputs();
 	_loop_tickEntities();
+	_updateCheckpointProximity();
 	_tick++;
 	suffer_damage();
 	for(int i = 0; i < _playerData.size(); i++)
@@ -42,6 +43,44 @@ void GameEngine::_loop_processInputs(void)
 	while (!_playerInputs.empty()) {
 		manageInput(_playerInputs.front());
 		_playerInputs.pop();
+	}
+}
+
+void GameEngine::_updateCheckpointProximity(void)
+{
+	unsigned int checkpointRange = getScale() * CHECKPOINT_RANGE;
+	
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		PlayerData& player = _playerData[i];
+		
+		if (!player.alive)
+			continue;
+		
+		if (_playerIds.count(player.playerId) == 0)
+			continue;
+		
+		int entityId = _playerIds[player.playerId];
+		entityList_t::iterator playerIt = getEntityIterator(entityId);
+		
+		if (playerIt == _entities.end())
+			continue;
+		
+		AbstractEntity* playerEntity = playerIt->get();
+		
+		AbstractEntity* nearestCheckpoint = getNearestEntityOfType(
+			EntityTypes::CHECKPOINT, playerEntity->getPosX(), playerEntity->getPosY());
+		
+		if (nearestCheckpoint)
+		{
+			unsigned int distToCheckpoint = nearestCheckpoint->distance(
+				playerEntity->getPosX(), playerEntity->getPosY());
+			
+			player.atACheckpoint = (distToCheckpoint < checkpointRange);
+			std::cout << "Is pthe player at a Checkpoint: " << player.atACheckpoint << std::endl;
+		}
+		else
+			player.atACheckpoint = false;
 	}
 }
 
