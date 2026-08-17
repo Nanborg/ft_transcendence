@@ -35,6 +35,7 @@ public:
 	entityList_t::iterator	getEntityIterator( int entityId );
 	AbstractEntity*			spawnNewEntity( int typeId, int posX, int posY, int velX, int velY );
 	void					deleteEntity( entityList_t::iterator it );
+	void					suffer_damage( void );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
@@ -65,17 +66,26 @@ public:
     };
 
 	struct PlayerData {
+		//TEMP for test mock death
+		int			temp_count;
         int         playerId;
         int         playerEntityId;
         std::string username;
         int         deaths;
+		int			death_posX;
+		int			death_posY;
         bool        alive;
         bool        atACheckpoint;
+		int			death_cooldowns;
+		int			invulnerability_cooldowns;
 
         PlayerUpgrades  upgrades;
         PlayerCooldowns cooldowns;
     };
 
+	int temp_count;
+
+	void		sendPlayerStateUpdate( const PlayerData& playerData );
 	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );
 	PlayerData*	getPlayerData( int playerId );
 	void		disconnectPlayerData( int playerId );
