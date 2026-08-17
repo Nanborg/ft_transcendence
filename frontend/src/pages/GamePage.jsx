@@ -26,6 +26,30 @@ function useGameTimer(startedAt, enabled) {
     return elapsedSeconds;
 }
 
+function SkillSlot({ hotkey, lvl, cooldown }) {
+    const onCooldown = cooldown > 0;
+    const cooldownText = cooldown.toFixed(2);
+    return (
+        <div
+            className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
+        >
+            <div className="skill-icon">
+                <span className="skill-lvl">
+                    Lv {lvl}
+                </span>
+                {onCooldown && (
+                    <strong className="skill-cooldown">
+                        {cooldownText}
+                    </strong>
+                )}
+            </div>
+            <span className="skill-key">
+                {hotkey}
+            </span>
+        </div>
+    );
+}
+
 export function GamePage({
     title,
     description,
@@ -60,6 +84,14 @@ export function GamePage({
     const playerHealth = Number.isFinite(currentPlayerEntity?.health)
         ? Math.max(0, currentPlayerEntity.health)
         : null;
+    // temp cooldown preview
+    const mockTimer = (Date.now() / 1000);
+    const mockCooldowns = {
+        melee: Math.max(0, 8 - (mockTimer % 12)),
+        ranged: Math.max(0, 5 - (mockTimer % 9)),
+        shield: Math.max(0, 3 - (mockTimer % 7)),
+    };
+    // end cooldown preview
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
@@ -286,31 +318,24 @@ export function GamePage({
                                 {playerHealth ?? '—'}
                             </strong>
                         </div>
-                        <div className="game-hud__stat">
-                            <span>Melee · Space</span>
-                            <strong>
-                                Lv {currentPlayer?.upgrades?.melee ?? 0}
-                                {' · '}
-                                {currentPlayer?.cooldowns?.melee ?? 0} ticks
-                            </strong>
-                        </div>
-                        <div className="game-hud__stat">
-                            <span>Ranged · F</span>
-                            <strong>
-                                Lv {currentPlayer?.upgrades?.ranged ?? 0}
-                                {' · '}
-                                {currentPlayer?.cooldowns?.ranged ?? 0} ticks
-                            </strong>
-                        </div>
-                        <div className="game-hud__stat">
-                            <span>Shield · Shift</span>
-                            <strong>
-                                Lv {currentPlayer?.upgrades?.shield ?? 0}
-                                {' · '}
-                                {currentPlayer?.cooldowns?.shield ?? 0} ticks
-                            </strong>
-                        </div>
                     </div>
+                </section>
+                <section className="skill-bar" aria-label="Abilities">
+                    <SkillSlot
+                        hotkey="J"
+                        lvl={currentPlayer?.upgrades?.melee ?? 0}
+                        cooldown={mockCooldowns.melee}
+                    />
+                    <SkillSlot
+                        hotkey="K"
+                        lvl={currentPlayer?.upgrades?.ranged ?? 0}
+                        cooldown={mockCooldowns.ranged}
+                    />
+                    <SkillSlot
+                        hotkey="L"
+                        lvl={currentPlayer?.upgrades?.shield ?? 0}
+                        cooldown={mockCooldowns.shield}
+                    />
                 </section>
                 <div className="game-fullscreen-panel">
                 <GameCanvas
