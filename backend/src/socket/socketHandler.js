@@ -685,7 +685,8 @@ module.exports = (io) => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
 						for (const room of userRooms) {
 							try {
-								if (room.players.length <= 1) {
+								const engineSession = gameEngineService.getSession(room.id);
+								if (!engineSession || room.players.length <= 1) {
 									await gameEngineService.stopGame(room.id, "all_players_left");
 								}
 								else {
