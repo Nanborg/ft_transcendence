@@ -66,6 +66,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
     pData["deaths"] = playerData.deaths;
 	pData["death_posX"] = playerData.death_posX;
     pData["death_posY"] = playerData.death_posY;
+    pData["atACheckpoint"] = playerData.atACheckpoint;
     out["playerData"] = pData;
     g_io->sendMsg(out.dump());
 }
