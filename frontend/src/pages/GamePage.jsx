@@ -44,12 +44,6 @@ function SkillSlot({ skill, hotkey, lvl, cooldown }) {
         backgroundImage: `url(${skillSprites})`,
         backgroundPosition: `${SKILL_COLUMNS[skill] * 50}% ${safeLvl * (100 / 3)}%`,
     };
-function SkillSlot({ hotkey, lvl, cooldown }) {
-    const safeCooldown = Number.isFinite(cooldown)
-        ? Math.max(0, cooldown)
-        : 0;
-    const onCooldown = safeCooldown > 0;
-    const cooldownText = safeCooldown.toFixed(2);
     return (
         <div
             className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
@@ -356,33 +350,18 @@ export function GamePage({
                         skill="melee"
                         hotkey="J"
                         lvl={skillLevels.melee}
-<<<<<<< Updated upstream
-                        cooldown={skillCooldowns.melee}
-                        lvl={currentPlayer?.upgrades?.melee ?? 0}
-=======
->>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.melee ?? 0}
                     />
                     <SkillSlot
                         skill="ranged"
                         hotkey="K"
                         lvl={skillLevels.ranged}
-<<<<<<< Updated upstream
-                        cooldown={skillCooldowns.ranged}
-                        lvl={currentPlayer?.upgrades?.ranged ?? 0}
-=======
->>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.ranged ?? 0}
                     />
                     <SkillSlot
                         skill="shield"
                         hotkey="L"
                         lvl={skillLevels.shield}
-<<<<<<< Updated upstream
-                        cooldown={skillCooldowns.shield}
-                        lvl={currentPlayer?.upgrades?.shield ?? 0}
-=======
->>>>>>> Stashed changes
                         cooldown={currentPlayer?.cooldowns?.shield ?? 0}
                     />
                 </section>
