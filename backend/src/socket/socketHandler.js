@@ -344,6 +344,13 @@ module.exports = (io) => {
 				}
 				const room = await getRoom(roomId);
 				const engineSession = gameEngineService.getSession(room.id);
+				const connection = getConnection(socket.user.id);
+				if (connection?.reconnectTimer && connection.keepOnReconnect) {
+					clearTimeout(connection.reconnectTimer);
+					connection.reconnectTimer = null;
+					connection.keepOnReconnect = false;
+					connection.disconnectedAt = null;
+				}
 				socket.emit("game:start", {
 					roomId: room.id,
 					status: room.status,
@@ -675,6 +682,7 @@ module.exports = (io) => {
     				right: false
 				};
 				const userRooms = await getRoomsByUserId(socket.user.id);
+				const keepOnReconnect = userRooms.some((room) => gameEngineService.getSession(room.id));
 				for (const room of userRooms) {
                 	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
                 }
@@ -712,7 +720,8 @@ module.exports = (io) => {
 						console.log(
 							`user ${socket.user.id} removed after reconnect timeout`
 						);
-					}
+					},
+					keepOnReconnect
 				);
 			} catch (error) {
 				socket.emit("room:error", {
