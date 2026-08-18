@@ -342,6 +342,15 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				const room = await getRoom(roomId);
+				const engineSession = gameEngineService.getSession(room.id);
+				socket.emit("game:start", {
+					roomId: room.id,
+					status: room.status,
+					players: room.players,
+					enginePlayers: engineSession.players,
+					timestamp: Date.now(),
+				});
 				socket.emit("game:state:init", snapshot);
 			} catch (error) {
 				console.error(`Unable to resync game state for room ${roomId}:`, error);
@@ -659,8 +668,6 @@ module.exports = (io) => {
 
 		socket.on("disconnect", async () => {
 			try {
-				// TODO(princiamf2): Define in-game disconnect behavior
-				// (forfeit, end game, or keep room alive during reconnect window).
 				const stopInput = {
     				up: false,
     				down: false,
