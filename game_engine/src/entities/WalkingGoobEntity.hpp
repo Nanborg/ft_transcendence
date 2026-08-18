@@ -12,7 +12,7 @@ public:
 
 	bool	tick( void ) override;
 private:
-	AbstractEntity*				_target;
+	int					_targetEntityId;
 
 	static const float	_aggroRange;
 	static const float	_aggroLose;
