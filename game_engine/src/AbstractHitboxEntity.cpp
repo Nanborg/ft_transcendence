@@ -28,19 +28,18 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 		AbstractEntity*	entity = it->get();
 		if (entity->getId() == _ownerId)				// do not hit owner
 			continue;
-		if (entity->getType() == EntityTypes::LASERSHIELD)
-		{
-			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(entity);
-			if (shield->getOwnerId() == _ownerId)
-				continue;
-		}
+		const EntityFactions hitboxFaction = getFaction();
+		const EntityFactions targetFaction = entity->getFaction();
+		if (hitboxFaction != EntityFactions::NEUTRAL_FACTION && hitboxFaction == targetFaction)
+			continue;
 		if (entity->getPassableHitBox())				// check if entity ignores hitboxes
 			continue;
 		if (!entity->checkCollision(*this))				// check for collision with entity
 			continue;
 
 		_health = -1;
-		g_game->applyDamage(entity, _damage);
+		if (g_game->canDamage(this, entity))
+			g_game->applyDamage(entity, _damage);
 		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE)
 			break;
 	}

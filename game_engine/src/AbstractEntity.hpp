@@ -28,6 +28,7 @@ public:
 
 	unsigned int getId( void ) const;
 	unsigned int getType( void ) const;
+	EntityFactions getFaction( void ) const;
 	int 	getSize( void ) const;
 	int 	getPosX( void ) const;
 	int 	getPosY( void ) const;

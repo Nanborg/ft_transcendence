@@ -33,6 +33,7 @@ public:
 
 	bool	checkCollision( AbstractEntity* entity ) const;
 	void	applyDamage(AbstractEntity* entity, int damage);
+	bool	canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const;
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );
 	entityList_t::iterator	getEntityIterator( int entityId );

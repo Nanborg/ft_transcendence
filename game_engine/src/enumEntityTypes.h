@@ -1,6 +1,11 @@
 #ifndef ENUMENTITYTYPES_H
 #define ENUMENTITYTYPES_H
 
+enum EntityFactions {
+	NEUTRAL_FACTION =	0,
+	PLAYER_FACTION =	1,
+	ENEMY_FACTION =		2,
+};
 // add entries here for all new entity types
 enum EntityTypes {
 	// not constructible

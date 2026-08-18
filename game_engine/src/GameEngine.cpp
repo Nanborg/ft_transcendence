@@ -263,6 +263,17 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
+bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const
+{
+	if (!attacker || !target)
+		return false;
+	const EntityFactions attackerFaction = attacker->getFaction();
+	const EntityFactions targetFaction = target->getFaction();
+	if (attackerFaction == EntityFactions::NEUTRAL_FACTION || targetFaction == EntityFactions::NEUTRAL_FACTION)
+		return false;
+	return attackerFaction != targetFaction;
+}
+
 void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
 {
 	if (!entity || damage <= 0)
