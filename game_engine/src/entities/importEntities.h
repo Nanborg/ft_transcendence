@@ -12,7 +12,8 @@
 #include <entities/LaserSlashEntity.hpp>			//
 #include <entities/LaserProjectileEntity.hpp>		//
 #include <entities/LaserShieldEntity.hpp>			//
-#include <entities/BossProjectileEntity.hpp>		//
+#include <entities/BossProjectileEntity.hpp>
+#include <entities/EnemyProjectileEntity.hpp>		//
 													//
 #include <entities/CheckpointEntity.hpp>			//
 #include <entities/SpawnPointEntity.hpp>			//

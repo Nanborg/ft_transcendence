@@ -1,5 +1,6 @@
 #include "AbstractEntity.hpp"
 #include "GameEngine.hpp"
+#include "enumEntityTypes.h"
 #include <iostream>
 
 AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox ):
@@ -61,6 +62,7 @@ EntityFactions AbstractEntity::getFaction( void ) const
 		case EntityTypes::TANKGOOB:
 		case EntityTypes::LORDGOOB:
 		case EntityTypes::BOSSPROJECTILE:
+		case EntityTypes::ENEMYPROJECTILE:
 			return EntityFactions::ENEMY_FACTION;
 		default:
 			return EntityFactions::NEUTRAL_FACTION;

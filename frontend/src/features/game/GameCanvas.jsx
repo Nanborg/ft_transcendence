@@ -900,6 +900,21 @@ function drawEntity({
             context.fill();
             break;
 
+        case ENTITY_TYPE.ENEMY_PROJECTILE:
+            context.shadowColor = '#ef4444';
+            context.shadowBlur = 10;
+            context.fillStyle = '#fb923c';
+            context.beginPath();
+            context.arc(
+                screen.x,
+                screen.y,
+                Math.max(3, entityPixels * 0.14),
+                0,
+                Math.PI * 2
+            );
+            context.fill();
+            break;
+
         case ENTITY_TYPE.LASER_SHIELD:
             context.shadowColor = '#60a5fa';
             context.shadowBlur = 12;

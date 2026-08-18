@@ -16,6 +16,7 @@ enum EntityTypes {
 	LASERPROJECTILE =	201,
 	LASERSHIELD =		202,
 	BOSSPROJECTILE =	203,
+	ENEMYPROJECTILE =	204,
 
 	// constructible
 	WALLENTITY =		2,

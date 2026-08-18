@@ -1,5 +1,6 @@
 #include "GameEngine.hpp"
 #include "AbstractHitboxEntity.hpp"
+#include "enumEntityTypes.h"
 
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
@@ -354,6 +355,9 @@ AbstractEntity*	GameEngine::buildNewEntity( int typeId, int posX, int posY, int 
 		return NULL;
 
 	case EntityTypes::BOSSPROJECTILE:
+		return NULL;
+
+	case EntityTypes::ENEMYPROJECTILE:
 		return NULL;
 
 	case EntityTypes::CHECKPOINT:

@@ -1,4 +1,5 @@
 #include "AbstractHitboxEntity.hpp"
+#include "enumEntityTypes.h"
 #include <GameEngine.hpp>
 
 AbstractHitboxEntity::AbstractHitboxEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, int ownerId, int damage):
@@ -40,7 +41,7 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 		_health = -1;
 		if (g_game->canDamage(this, entity))
 			g_game->applyDamage(entity, _damage);
-		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE)
+		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE || _typeId == EntityTypes::ENEMYPROJECTILE)
 			break;
 	}
 	return ret;
