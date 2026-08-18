@@ -32,13 +32,13 @@ public:
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
+	void	applyDamage(AbstractEntity* entity, int damage);
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );
 	entityList_t::iterator	getEntityIterator( int entityId );
 	AbstractEntity*			buildNewEntity( int typeId, int posX, int posY, int velX, int velY );
 	void					spawnEntity( AbstractEntity* entity );
 	void					deleteEntity( entityList_t::iterator it );
-	void					suffer_damage( void );
 
 	void	sendEntityUpdate( const AbstractEntity* entity );
 	void	sendEntityDelete( const AbstractEntity* entity );
@@ -71,8 +71,6 @@ public:
     };
 
 	struct PlayerData {
-		//TEMP for test mock death
-		int			temp_count;
         int         playerId;
         int         playerEntityId;
         std::string username;
@@ -80,6 +78,7 @@ public:
 		int			death_posX;
 		int			death_posY;
         bool        alive;
+		bool		respawnPending;
         bool        atACheckpoint;
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
@@ -88,11 +87,12 @@ public:
         PlayerCooldowns cooldowns;
     };
 
-	int temp_count;
 
 	void		sendPlayerStateUpdate( const PlayerData& playerData );
 	void 		addPlayerData( int playerId, int playerEntityId, const std::string& username );
 	PlayerData*	getPlayerData( int playerId );
+	PlayerData* getPlayerDataByEntityId( int entityId );
+	void		markPlayerDead( AbstractEntity* entity );
 	void		disconnectPlayerData( int playerId );
 	json		getAllPlayerDataAsJson( void );
 
@@ -101,6 +101,7 @@ private:
 	static bool		_invalid_entity( const json& in );
 
 	void	_loop_processInputs( void );
+	void	_loop_tickPlayerCooldowns( void );
 	void	_loop_tickEntities( void );
 
 	void	_input_ping( const json& in );

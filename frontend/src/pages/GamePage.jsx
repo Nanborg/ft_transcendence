@@ -2,6 +2,7 @@ import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 import { useEffect, useState } from 'react';
+import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
 
 function formatDuration(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
@@ -26,17 +27,31 @@ function useGameTimer(startedAt, enabled) {
     return elapsedSeconds;
 }
 
-function SkillSlot({ hotkey, lvl, cooldown }) {
-    const onCooldown = cooldown > 0;
-    const cooldownText = cooldown.toFixed(2);
+const SKILL_COLUMNS = {
+    melee: 0,
+    ranged: 1,
+    shield: 2,
+};
+
+function SkillSlot({ skill, hotkey, lvl, cooldown }) {
+    const safeLvl = Math.max(0, Math.min(3, lvl));
+    const safeCooldown = Number.isFinite(cooldown)
+        ? Math.max(0, cooldown)
+        : 0;
+    const onCooldown = safeCooldown > 0;
+    const cooldownText = safeCooldown.toFixed(2);
+    const iconStyle = {
+        backgroundImage: `url(${skillSprites})`,
+        backgroundPosition: `${SKILL_COLUMNS[skill] * 50}% ${safeLvl * (100 / 3)}%`,
+    };
     return (
         <div
             className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
         >
-            <div className="skill-icon">
-                <span className="skill-lvl">
-                    Lv {lvl}
-                </span>
+            <span className="skill-lvl">
+                Lv {safeLvl}
+            </span>
+            <div className="skill-icon" style={iconStyle}>
                 {onCooldown && (
                     <strong className="skill-cooldown">
                         {cooldownText}
@@ -84,14 +99,24 @@ export function GamePage({
     const playerHealth = Number.isFinite(currentPlayerEntity?.health)
         ? Math.max(0, currentPlayerEntity.health)
         : null;
-    // temp cooldown preview
-    const mockTimer = (Date.now() / 1000);
-    const mockCooldowns = {
-        melee: Math.max(0, 8 - (mockTimer % 12)),
-        ranged: Math.max(0, 5 - (mockTimer % 9)),
-        shield: Math.max(0, 3 - (mockTimer % 7)),
+    const realSkillLevels = {
+        melee: currentPlayer?.upgrades?.melee ?? 0,
+        ranged: currentPlayer?.upgrades?.ranged ?? 0,
+        shield: currentPlayer?.upgrades?.shield ?? 0,
     };
-    // end cooldown preview
+    // temp mock variable debut
+    const mockTimer = (Date.now() / 1000);
+    const mockSkillLevel = Math.floor(mockTimer / 2) % 4;
+    const mockSkillLevels = {
+        melee: mockSkillLevel,
+        ranged: (mockSkillLevel + 1) % 4,
+        shield: (mockSkillLevel + 2) % 4,
+    };
+    // temp mock variable fin
+    let skillLevels = realSkillLevels;
+    // temp mock debut
+    skillLevels = mockSkillLevels;
+    // temp mock fin
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
@@ -322,19 +347,22 @@ export function GamePage({
                 </section>
                 <section className="skill-bar" aria-label="Abilities">
                     <SkillSlot
+                        skill="melee"
                         hotkey="J"
-                        lvl={currentPlayer?.upgrades?.melee ?? 0}
-                        cooldown={mockCooldowns.melee}
+                        lvl={skillLevels.melee}
+                        cooldown={currentPlayer?.cooldowns?.melee ?? 0}
                     />
                     <SkillSlot
+                        skill="ranged"
                         hotkey="K"
-                        lvl={currentPlayer?.upgrades?.ranged ?? 0}
-                        cooldown={mockCooldowns.ranged}
+                        lvl={skillLevels.ranged}
+                        cooldown={currentPlayer?.cooldowns?.ranged ?? 0}
                     />
                     <SkillSlot
+                        skill="shield"
                         hotkey="L"
-                        lvl={currentPlayer?.upgrades?.shield ?? 0}
-                        cooldown={mockCooldowns.shield}
+                        lvl={skillLevels.shield}
+                        cooldown={currentPlayer?.cooldowns?.shield ?? 0}
                     />
                 </section>
                 <div className="game-fullscreen-panel">

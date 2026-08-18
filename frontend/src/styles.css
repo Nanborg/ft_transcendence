@@ -578,14 +578,17 @@ p {
   height: 48px;
   border: 2px solid rgba(248, 250, 252, 0.65);
   border-radius: 6px;
+  overflow: hidden;
+  background-color: rgba(15, 23, 42, 0.8);
+  background-repeat: no-repeat;
+  background-size: 300% 400%;
 }
 
 .skill-ready .skill-icon {
-  background: #16a34a;
+  filter: none;
 }
 
 .skill-cooldown-state .skill-icon {
-  background: #991b1b;
   filter: grayscale(1);
 }
 
@@ -593,6 +596,8 @@ p {
   color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .skill-cooldown {
@@ -602,7 +607,7 @@ p {
   place-items: center;
   color: #ffffff;
   font-size: 1rem;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0, 0, 0, 0.55);
 }
 
 .skill-key {
