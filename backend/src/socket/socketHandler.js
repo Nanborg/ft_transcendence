@@ -342,6 +342,22 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				const room = await getRoom(roomId);
+				const engineSession = gameEngineService.getSession(room.id);
+				const connection = getConnection(socket.user.id);
+				if (connection?.reconnectTimer && connection.keepOnReconnect) {
+					clearTimeout(connection.reconnectTimer);
+					connection.reconnectTimer = null;
+					connection.keepOnReconnect = false;
+					connection.disconnectedAt = null;
+				}
+				socket.emit("game:start", {
+					roomId: room.id,
+					status: room.status,
+					players: room.players,
+					enginePlayers: engineSession.players,
+					timestamp: Date.now(),
+				});
 				socket.emit("game:state:init", snapshot);
 			} catch (error) {
 				console.error(`Unable to resync game state for room ${roomId}:`, error);
@@ -659,8 +675,6 @@ module.exports = (io) => {
 
 		socket.on("disconnect", async () => {
 			try {
-				// TODO(princiamf2): Define in-game disconnect behavior
-				// (forfeit, end game, or keep room alive during reconnect window).
 				const stopInput = {
     				up: false,
     				down: false,
@@ -668,6 +682,7 @@ module.exports = (io) => {
     				right: false
 				};
 				const userRooms = await getRoomsByUserId(socket.user.id);
+				const keepOnReconnect = userRooms.some((room) => gameEngineService.getSession(room.id));
 				for (const room of userRooms) {
                 	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
                 }
@@ -678,7 +693,8 @@ module.exports = (io) => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
 						for (const room of userRooms) {
 							try {
-								if (room.players.length <= 1) {
+								const engineSession = gameEngineService.getSession(room.id);
+								if (!engineSession || room.players.length <= 1) {
 									await gameEngineService.stopGame(room.id, "all_players_left");
 								}
 								else {
@@ -704,7 +720,8 @@ module.exports = (io) => {
 						console.log(
 							`user ${socket.user.id} removed after reconnect timeout`
 						);
-					}
+					},
+					keepOnReconnect
 				);
 			} catch (error) {
 				socket.emit("room:error", {
