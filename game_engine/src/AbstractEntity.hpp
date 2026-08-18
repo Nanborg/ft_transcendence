@@ -11,7 +11,7 @@ using namespace nlohmann;
 class AbstractEntity
 {
 public:
-	AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox );
+	AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold = 0);
 	virtual ~AbstractEntity( void ) = 0;
 
 	// write override tick behavior here
@@ -34,12 +34,14 @@ public:
 	int		getVelX( void ) const;
 	int		getVelY( void ) const;
 	int		getHealth( void ) const;
+	int		getGold( void ) const;
 	bool	getPassableHitBox( void ) const;
 
 	void	setSize( int size );
 	void	setPosX( int posX );
 	void	setPosY( int posY );
-	void	setHealth( int posY );
+	void	setHealth( int health );
+	void	setGold( int gold );
 	void	setPassableHitBox( bool passableHitBox );
 
 	unsigned int	distance( int posX, int posY ) const;
@@ -49,7 +51,7 @@ public:
 
 	json				_state;
 	const unsigned int	_id, _typeId;
-	int					_size, _posX, _posY, _velX, _velY, _health;
+	int					_size, _posX, _posY, _velX, _velY, _health, _gold;
 	bool				_passableHitBox;
 };
 

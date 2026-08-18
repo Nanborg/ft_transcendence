@@ -55,25 +55,26 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 }
 
 void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
-    json out;
-    out["type"] = "playerUpdate";
-    out["roomId"] = _roomId;
-    out["tick"] = _tick;
-    json pData;
-    pData["playerId"] = playerData.playerId;
+	json out;
+	out["type"] = "playerUpdate";
+	out["roomId"] = _roomId;
+	out["tick"] = _tick;
+	json pData;
+	pData["playerId"] = playerData.playerId;
 	pData["playerEntityId"] = playerData.playerEntityId;
-    pData["alive"] = playerData.alive;
-    pData["death_cooldowns"] = playerData.death_cooldowns;
-    pData["deaths"] = playerData.deaths;
+	pData["alive"] = playerData.alive;
+	pData["death_cooldowns"] = playerData.death_cooldowns;
+	pData["deaths"] = playerData.deaths;
 	pData["death_posX"] = playerData.death_posX;
-    pData["death_posY"] = playerData.death_posY;
-    pData["atACheckpoint"] = playerData.atACheckpoint;
+	pData["death_posY"] = playerData.death_posY;
+	pData["atACheckpoint"] = playerData.atACheckpoint;
 	pData["invulnerability_cooldowns"] = playerData.invulnerability_cooldowns;
 	pData["cooldowns"]["melee"] = playerData.cooldowns.melee;
 	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;
 	pData["cooldowns"]["shield"] = playerData.cooldowns.shield;
-    out["playerData"] = pData;
-    g_io->sendMsg(out.dump());
+	pData["gold"] = playerData.gold;
+	out["playerData"] = pData;
+	g_io->sendMsg(out.dump());
 }
 
 void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
@@ -103,6 +104,7 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.cooldowns.shield = 0;
 	newPlayer.death_cooldowns = 100;
 	newPlayer.invulnerability_cooldowns = 0;
+	newPlayer.gold = 0;
 	newPlayer.death_posX = 0;
 	newPlayer.death_posY = 0;
 	_playerData.push_back(newPlayer);
@@ -147,41 +149,42 @@ void GameEngine::markPlayerDead(AbstractEntity* entity)
 }
 
 void	GameEngine::disconnectPlayerData( int playerId ) {
-    for (size_t i = 0; i < _playerData.size(); i++) {
-        if (_playerData[i].playerId == playerId) {
-            _playerData[i].playerEntityId = -1;
-            _playerData[i].alive = false;
+	for (size_t i = 0; i < _playerData.size(); i++) {
+		if (_playerData[i].playerId == playerId) {
+			_playerData[i].playerEntityId = -1;
+			_playerData[i].alive = false;
 			_playerData[i].respawnPending = false;
-            return;
-        }
-    }
+			return;
+		}
+	}
 }
 
 json GameEngine::getAllPlayerDataAsJson( void )
 {
-    json allPlayers = json::array();
-    for (size_t i = 0; i < _playerData.size(); i++)
-    {
-        json pData;
-        pData["playerId"] = _playerData[i].playerId;
-        pData["playerEntityId"] = _playerData[i].playerEntityId;
-        pData["username"] = _playerData[i].username;
-        pData["deaths"] = _playerData[i].deaths;
-        pData["alive"] = _playerData[i].alive;
+	json allPlayers = json::array();
+	for (size_t i = 0; i < _playerData.size(); i++)
+	{
+		json pData;
+		pData["playerId"] = _playerData[i].playerId;
+		pData["playerEntityId"] = _playerData[i].playerEntityId;
+		pData["username"] = _playerData[i].username;
+		pData["deaths"] = _playerData[i].deaths;
+		pData["alive"] = _playerData[i].alive;
 		pData["death_cooldowns"] = _playerData[i].death_cooldowns;
 		pData["death_posX"] = _playerData[i].death_posX;
 		pData["death_posY"] = _playerData[i].death_posY;
 		pData["invulnerability_cooldowns"] = _playerData[i].invulnerability_cooldowns;
-        pData["atACheckpoint"] = _playerData[i].atACheckpoint;
-        pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
-        pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
-        pData["upgrades"]["shield"] = _playerData[i].upgrades.shield;
-        pData["cooldowns"]["melee"] = _playerData[i].cooldowns.melee;
-        pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
-        pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
-        allPlayers.push_back(pData);
-    }
-    return allPlayers;
+		pData["atACheckpoint"] = _playerData[i].atACheckpoint;
+		pData["upgrades"]["melee"] = _playerData[i].upgrades.melee;
+		pData["upgrades"]["ranged"] = _playerData[i].upgrades.ranged;
+		pData["upgrades"]["shield"] = _playerData[i].upgrades.shield;
+		pData["cooldowns"]["melee"] = _playerData[i].cooldowns.melee;
+		pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
+		pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
+		pData["gold"] = _playerData[i].gold;
+		allPlayers.push_back(pData);
+	}
+	return allPlayers;
 }
 
 int		GameEngine::newId( void ) { return _nextEntityId++; }
@@ -246,17 +249,17 @@ void	GameEngine::stop( const std::string &reason ) {
 	std::cout << "\nstop" << std::endl;
 	_running = false;
 	json out;
-    out["type"] = "gameEnd";
-    out["roomId"] = _roomId;
-    out["tick"] = _tick;
-    out["win"] = true;
-    out["reason"] = reason;
-    out["playerData"] = getAllPlayerDataAsJson();
+	out["type"] = "gameEnd";
+	out["roomId"] = _roomId;
+	out["tick"] = _tick;
+	out["win"] = true;
+	out["reason"] = reason;
+	out["playerData"] = getAllPlayerDataAsJson();
 	if (reason == "engine_error" || reason == "all_players_dead" || reason == "all_players_left") {
 		out["win"] = false;
 	}
 	// TEMP: Emitting gameEnd on stop is temporary scaffolding for the V1 pipeline.
-    g_io->sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
@@ -273,8 +276,36 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
 			return;
 	}
 	int nextHealth = entity->getHealth() - damage;
-	if (nextHealth < 0)
+	if (nextHealth <= 0)
+	{
 		nextHealth = 0;
+		if (entity->getType() != EntityTypes::PLAYERENTITY)
+		{
+			int reward = entity->getGold();
+			if (reward > 0)
+			{
+				for (size_t i = 0; i < _playerData.size(); i++)
+				{
+					PlayerData& player = _playerData[i];
+					if (player.alive == false)
+						continue;
+					if (player.playerEntityId != -1)
+					{
+
+						auto entIt = getEntityIterator(player.playerEntityId);
+						if (entIt != _entities.end()) {
+							entIt->get()->setGold(entIt->get()->getGold() + reward);
+							sendEntityUpdate(entIt->get());
+						}
+
+					}
+					player.gold += reward;
+					sendPlayerStateUpdate(player); // inform clients of the change
+				}
+			}
+			entity->setGold(0); //dans le doute de la dupli
+		}
+	}
 	entity->setHealth(nextHealth);
 	sendEntityUpdate(entity);
 }

@@ -4,7 +4,7 @@ const float	ShootingGoobEntity::_fleeDist = 5.f;
 const float	ShootingGoobEntity::_range = 15.f;
 
 ShootingGoobEntity::ShootingGoobEntity( int posX, int posY ):
-	AbstractMovingEntity(EntityTypes::SHOOTINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false) {}
+	AbstractMovingEntity(EntityTypes::SHOOTINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false) {setGold(15);}
 
 ShootingGoobEntity::~ShootingGoobEntity( void ) {}
 

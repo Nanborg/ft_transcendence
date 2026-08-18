@@ -20,6 +20,7 @@ void	GameEngine::tick( void ) {
 				cur_player.respawnPending = false;
 				PlayerEntity *player = new PlayerEntity(cur_player.playerId, cur_player.death_posX, cur_player.death_posY, 0, 0);
 				sendEntityUpdate(player);
+				player->setGold(cur_player.gold);
 				_entities.push_front(entityPtr_t(player));
 				cur_player.invulnerability_cooldowns = 50;
 				cur_player.playerEntityId = player->getId();

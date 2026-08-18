@@ -41,6 +41,9 @@ void	GameEngine::_input_join( const json& in ) {
             username = in["username"];
         }
         addPlayerData(in["playerId"], player->getId(), username);
+		GameEngine::PlayerData* pd = getPlayerData(in["playerId"]);
+		if (pd)
+			player->setGold(pd->gold);
 	}
 }
 
