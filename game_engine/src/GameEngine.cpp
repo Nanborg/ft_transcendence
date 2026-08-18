@@ -67,6 +67,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
     pData["deaths"] = playerData.deaths;
 	pData["death_posX"] = playerData.death_posX;
     pData["death_posY"] = playerData.death_posY;
+    pData["atACheckpoint"] = playerData.atACheckpoint;
 	pData["invulnerability_cooldowns"] = playerData.invulnerability_cooldowns;
 	pData["cooldowns"]["melee"] = playerData.cooldowns.melee;
 	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;

@@ -161,7 +161,8 @@ export function GamePage({
     usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady && !isAtCheckpoint,
+        enabled: isGameReady,
+        actionsEnabled: !isAtCheckpoint,
     });
     if (!hasRoom) {
         return (

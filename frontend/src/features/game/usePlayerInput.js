@@ -49,7 +49,7 @@ function areMovementsEqual(left, right) {
     );
 }
 
-export function usePlayerInput({ socket, roomId, enabled }) {
+export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true }) {
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
     const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
@@ -112,7 +112,7 @@ export function usePlayerInput({ socket, roomId, enabled }) {
 
             const action = mapKeyToAction(event.code);
 
-            if (action === null)
+            if (action === null || !actionsEnabled)
                 return;
 
             event.preventDefault();
@@ -159,5 +159,5 @@ export function usePlayerInput({ socket, roomId, enabled }) {
             window.removeEventListener('blur', releaseAllInputs);
             releaseAllInputs();
         };
-    }, [socket, roomId, enabled]);
+    }, [socket, roomId, enabled, actionsEnabled]);
 }

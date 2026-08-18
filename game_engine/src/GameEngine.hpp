@@ -17,6 +17,8 @@
 
 #include <entities/importEntities.h>
 
+#define CHECKPOINT_RANGE 2
+
 class GameEngine
 {
 public:
@@ -108,6 +110,7 @@ private:
 	void	_input_leave( const json& in );
 	void	_input_move( const json& in );
 	void	_input_action( const json& in );
+	void	_updateCheckpointProximity(void);
 
 	bool					_running;
 	unsigned int			_nextEntityId, _tick, _scale;
