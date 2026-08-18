@@ -99,24 +99,12 @@ export function GamePage({
     const playerHealth = Number.isFinite(currentPlayerEntity?.health)
         ? Math.max(0, currentPlayerEntity.health)
         : null;
-    const realSkillLevels = {
+    const skillLevels = {
         melee: currentPlayer?.upgrades?.melee ?? 0,
         ranged: currentPlayer?.upgrades?.ranged ?? 0,
         shield: currentPlayer?.upgrades?.shield ?? 0,
     };
-    // temp mock variable debut
-    const mockTimer = (Date.now() / 1000);
-    const mockSkillLevel = Math.floor(mockTimer / 2) % 4;
-    const mockSkillLevels = {
-        melee: mockSkillLevel,
-        ranged: (mockSkillLevel + 1) % 4,
-        shield: (mockSkillLevel + 2) % 4,
-    };
-    // temp mock variable fin
-    let skillLevels = realSkillLevels;
-    // temp mock debut
-    skillLevels = mockSkillLevels;
-    // temp mock fin
+
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 

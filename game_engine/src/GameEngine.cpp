@@ -69,6 +69,9 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
     pData["death_posY"] = playerData.death_posY;
     pData["atACheckpoint"] = playerData.atACheckpoint;
 	pData["invulnerability_cooldowns"] = playerData.invulnerability_cooldowns;
+	pData["upgrades"]["melee"] = playerData.upgrades.melee;
+	pData["upgrades"]["ranged"] = playerData.upgrades.ranged;
+	pData["upgrades"]["shield"] = playerData.upgrades.shield;
 	pData["cooldowns"]["melee"] = playerData.cooldowns.melee;
 	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;
 	pData["cooldowns"]["shield"] = playerData.cooldowns.shield;
