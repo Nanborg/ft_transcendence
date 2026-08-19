@@ -7,13 +7,13 @@ void	GameEngine::tick( void ) {
 	_loop_tickEntities();
 	_updateCheckpointProximity();
 	_tick++;
-	int compt_player_death = 0;
+	int deadPlayers = 0;
     for(size_t i = 0; i < _playerData.size(); i++)
 	{
         if (_playerData[i].alive == false)
-            compt_player_death++;
+            deadPlayers++;
     }
-	if (_playerData.size() > 0 && compt_player_death == _playerData.size()) {
+	if (_playerData.size() > 0 && deadPlayers == _playerData.size()) {
         stop("all_players_dead");
         g_game = NULL;
         return;
@@ -46,7 +46,7 @@ void	GameEngine::tick( void ) {
 	// Prepare game win condition: stop the game when the boss is defeated
 	bool boss_is_alive = false;
     for (auto it = _entities.begin(); it != _entities.end(); ++it) {
-        if ((*it)->getType() == 109) {
+        if ((*it)->getType() == EntityTypes::LORDGOOB) {
             boss_is_alive = true;
             break;
         }
@@ -56,16 +56,6 @@ void	GameEngine::tick( void ) {
         g_game = NULL;
         return;
     }
-	// TEMP: Simulating a boss defeat after 15 seconds.
-	// if (_tick >= 150 && _running) {
-	// 	stop("boss_defeated");
-	// }
-	// TEMP: Simulating all players death after 15 seconds.
-	// if (_tick == 150) {
-    //     for(size_t i = 0; i < _playerData.size(); i++) {
-    //         _playerData[i].alive = false;
-    //     }
-    // }
 	g_game = NULL;
 }
 
