@@ -162,52 +162,34 @@ const LORD_GOOB_IDLE_ANCHOR_X = Object.freeze([
 const lordGoobIdleSprite = new Image();
 lordGoobIdleSprite.src = lordGoobIdleSpriteUrl;
 
-function getInterpolatedPosition(track, now) {
-    if (track.duration === 0) {
-        return {
-            x: track.targetX,
-            y: track.targetY,
-        };
-    }
+function getInterpolatedPosition(track, now)
+{
+    if (track.duration === 0)
+        return {x: track.targetX, y: track.targetY};
 
-    const progress = Math.min(
-        1,
-        (now - track.startedAt) / track.duration
-    );
+    const progress = Math.min(1, (now - track.startedAt) / track.duration);
 
     return {
-        x:
-            track.fromX +
-            (track.targetX - track.fromX) * progress,
-        y:
-            track.fromY +
-            (track.targetY - track.fromY) * progress,
+        x: track.fromX + (track.targetX - track.fromX) * progress,
+        y: track.fromY + (track.targetY - track.fromY) * progress,
     };
 }
 
-function getEntityType(entity) {
-    return entity.typeId ?? entity.entityTypeId;
-}
+function getEntityType(entity) { return entity.typeId ?? entity.entityTypeId; }
 
-function getFocusPosition({
-    tracks,
-    playerData,
-    currentPlayerId,
-    now,
-    gameMap,
-    spectatorIndex,
-}) {
-    const localPlayer = playerData.find(
-        player => String(player.playerId) === String(currentPlayerId)
-    );
-    if (localPlayer && localPlayer.alive === false) {
+function getFocusPosition({tracks, playerData, currentPlayerId, now, gameMap, spectatorIndex})
+{
+    const localPlayer = playerData.find(player => String(player.playerId) === String(currentPlayerId));
+    if (localPlayer && localPlayer.alive === false)
+    {
         const playerTracks = [];
-        for (const track of tracks.values()) {
-            if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER) {
+        for (const track of tracks.values())
+        {
+            if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
                 playerTracks.push(track);
-            }
         }
-        if (playerTracks.length > 0) {
+        if (playerTracks.length > 0)
+        {
             const safeIndex = Math.max(0, spectatorIndex) % playerTracks.length;
             return getInterpolatedPosition(playerTracks[safeIndex], now);
         }
@@ -217,65 +199,34 @@ function getFocusPosition({
         };
     }
     const localEntityId = localPlayer?.playerEntityId;
-    if (localEntityId != null) {
+    if (localEntityId != null)
+    {
         const localTrack = tracks.get(localEntityId);
         if (localTrack)
             return getInterpolatedPosition(localTrack, now);
     }
-    for (const track of tracks.values()) {
+    for (const track of tracks.values())
+    {
         if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
             return getInterpolatedPosition(track, now);
     }
-    return {
-        x: (gameMap?.width ?? 0) / 2,
-        y: (gameMap?.height ?? 0) / 2,
-    };
+    return {x: (gameMap?.width ?? 0) / 2, y: (gameMap?.height ?? 0) / 2};
 }
 
-function getCamera({
-    canvas,
-    gameMap,
-    focusPosition,
-}) {
-    const worldWidth =
-        gameMap?.width > 0
-            ? gameMap.width
-            : canvas.width;
-
-    const worldHeight =
-        gameMap?.height > 0
-            ? gameMap.height
-            : canvas.height;
-
-    const tileSize =
-        gameMap?.scale > 0
-            ? gameMap.scale
-            : Math.max(1, worldWidth / 50);
-
-    const wantedViewWidth = Math.min( worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
+function getCamera({canvas, gameMap, focusPosition})
+{
+    const worldWidth = gameMap?.width > 0 ? gameMap.width : canvas.width;
+    const worldHeight = gameMap?.height > 0 ? gameMap.height : canvas.height;
+    const tileSize = gameMap?.scale > 0 ? gameMap.scale : Math.max(1, worldWidth / 50);
+    const wantedViewWidth = Math.min(worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
     const wantedViewHeight = wantedViewWidth * (canvas.height / canvas.width);
-    const scale = Math.min( canvas.width / wantedViewWidth, canvas.height / wantedViewHeight);
+    const scale = Math.min(canvas.width / wantedViewWidth, canvas.height / wantedViewHeight);
     const viewportWidth = canvas.width / scale;
     const viewportHeight = canvas.height / scale;
     const maxLeft = Math.max(0, worldWidth - viewportWidth);
     const maxTop = Math.max(0, worldHeight - viewportHeight);
-
-    const left = Math.max(
-        0,
-        Math.min(
-            maxLeft,
-            focusPosition.x - viewportWidth / 2
-        )
-    );
-
-    const top = Math.max(
-        0,
-        Math.min(
-            maxTop,
-            focusPosition.y - viewportHeight / 2
-        )
-    );
-
+    const left = Math.max(0, Math.min(maxLeft, focusPosition.x - viewportWidth / 2));
+    const top = Math.max(0, Math.min(maxTop, focusPosition.y - viewportHeight / 2));
     return {
         left,
         top,
@@ -288,60 +239,80 @@ function getCamera({
     };
 }
 
-function worldToScreen(position, camera) {
+function worldToScreen(position, camera)
+{
     return {
         x: camera.offsetX + (position.x - camera.left) * camera.scale,
         y: camera.offsetY + (position.y - camera.top) * camera.scale,
     };
 }
 
-function drawGrid(context, canvas, camera) {
+function drawGoldFeedbacks({context, tracks, feedbacks, camera, now})
+{
+    if (!Array.isArray(feedbacks) || feedbacks.length === 0)
+        return;
+
+    context.save();
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = '700 18px Arial';
+    feedbacks.forEach(feedback =>
+    {
+        const track = tracks.get(feedback.playerEntityId);
+        if (!track)
+            return;
+        const age = now - feedback.createdAt;
+        const progress = Math.min(1, Math.max(0, age / 1000));
+        const position = getInterpolatedPosition(track, now);
+        const screen = worldToScreen(position, camera);
+        const sign = feedback.type === 'gain' ? '+' : '-';
+        const color = feedback.type === 'gain' ? '#facc15' : '#ef4444';
+        const y = screen.y - 35 - progress * 25;
+
+        context.globalAlpha = 1 - progress;
+        context.lineWidth = 4;
+        context.strokeStyle = 'rgba(2, 6, 23, 0.85)';
+        context.fillStyle = color;
+        context.strokeText(`${sign}${feedback.amount}`, screen.x, y);
+        context.fillText(`${sign}${feedback.amount}`, screen.x, y);
+    });
+    context.restore();
+}
+
+function drawGrid(context, canvas, camera)
+{
     const tilePixels = camera.tileSize * camera.scale;
 
     if (tilePixels < 4)
         return;
 
-    const firstColumn =
-        Math.ceil(camera.left / camera.tileSize);
-    const lastColumn =
-        Math.floor(camera.right / camera.tileSize);
-    const firstRow =
-        Math.ceil(camera.top / camera.tileSize);
-    const lastRow =
-        Math.floor(camera.bottom / camera.tileSize);
+    const firstColumn = Math.ceil(camera.left / camera.tileSize);
+    const lastColumn = Math.floor(camera.right / camera.tileSize);
+    const firstRow = Math.ceil(camera.top / camera.tileSize);
+    const lastRow = Math.floor(camera.bottom / camera.tileSize);
 
     context.strokeStyle = 'rgba(56, 189, 248, 0.08)';
     context.lineWidth = 1;
     context.beginPath();
 
-    for (
-        let column = firstColumn;
-        column <= lastColumn;
-        column += 1
-    ) {
-        const x =
-            camera.offsetX + (column * camera.tileSize - camera.left) * camera.scale;
-
+    for (let column = firstColumn; column <= lastColumn; column += 1)
+    {
+        const x = camera.offsetX + (column * camera.tileSize - camera.left) * camera.scale;
         context.moveTo(x, 0);
         context.lineTo(x, canvas.height);
     }
 
-    for (
-        let row = firstRow;
-        row <= lastRow;
-        row += 1
-    ) {
-        const y =
-            camera.offsetY + (row * camera.tileSize - camera.top) * camera.scale;
-
+    for (let row = firstRow; row <= lastRow; row += 1)
+    {
+        const y = camera.offsetY + (row * camera.tileSize - camera.top) * camera.scale;
         context.moveTo(0, y);
         context.lineTo(canvas.width, y);
     }
-
     context.stroke();
 }
 
-function drawDiamond(context, x, y, radius, color) {
+function drawDiamond(context, x, y, radius, color)
+{
     context.fillStyle = color;
     context.beginPath();
     context.moveTo(x, y - radius);
@@ -352,11 +323,10 @@ function drawDiamond(context, x, y, radius, color) {
     context.fill();
 }
 
-function getPlayerDirectionRow(entity, fallbackRow = 0) {
-    const velocityX =
-        typeof entity.velX === 'number' ? entity.velX : 0;
-    const velocityY =
-        typeof entity.velY === 'number' ? entity.velY : 0;
+function getPlayerDirectionRow(entity, fallbackRow = 0)
+{
+    const velocityX = typeof entity.velX === 'number' ? entity.velX : 0;
+    const velocityY = typeof entity.velY === 'number' ? entity.velY : 0;
 
     if (Math.abs(velocityX) > Math.abs(velocityY))
         return velocityX < 0 ? 1 : 2;
@@ -366,7 +336,8 @@ function getPlayerDirectionRow(entity, fallbackRow = 0) {
 
     const direction = entity.state?.direction;
 
-    if (typeof direction === 'string') {
+    if (typeof direction === 'string')
+    {
         if (direction.includes('W'))
             return 1;
         if (direction.includes('E'))
@@ -374,15 +345,11 @@ function getPlayerDirectionRow(entity, fallbackRow = 0) {
         if (direction.includes('N'))
             return 3;
     }
-
     return fallbackRow;
 }
 
-function getDirectionRowToward(
-    sourcePosition,
-    targetPosition,
-    fallbackRow = 0
-) {
+function getDirectionRowToward(sourcePosition, targetPosition, fallbackRow = 0)
+{
     if (!sourcePosition || !targetPosition)
         return fallbackRow;
     const deltaX = targetPosition.x - sourcePosition.x;
@@ -394,14 +361,8 @@ function getDirectionRowToward(
     return deltaY < 0 ? 3 : 0;
 }
 
-function getSpriteSource({
-    columns,
-    rows,
-    frame,
-    directionRow,
-    anchorXs = null,
-    anchorYs = null,
-}) {
+function getSpriteSource({columns, rows, frame, directionRow, anchorXs = null, anchorYs = null})
+{
     const column = columns[frame] ?? columns[0];
     const row = rows[directionRow] ?? rows[0];
     const anchorX = anchorXs?.[directionRow]?.[frame] ?? 0.5;
@@ -416,67 +377,36 @@ function getSpriteSource({
     };
 }
 
-function getPlayerAttackDuration(action) {
-    if (action === PLAYER_ACTION.MELEE) {
-        return (
-            PLAYER_ATTACK_FRAME_COUNT *
-            PLAYER_MELEE_FRAME_DURATION_MS
-        );
-    }
-
-    if (action === PLAYER_ACTION.RANGED) {
-        return (
-            PLAYER_ATTACK_FRAME_COUNT *
-            PLAYER_RANGED_FRAME_DURATION_MS
-        );
-    }
-
+function getPlayerAttackDuration(action)
+{
+    if (action === PLAYER_ACTION.MELEE)
+        return PLAYER_ATTACK_FRAME_COUNT * PLAYER_MELEE_FRAME_DURATION_MS;
+    if (action === PLAYER_ACTION.RANGED)
+        return PLAYER_ATTACK_FRAME_COUNT * PLAYER_RANGED_FRAME_DURATION_MS;
     return 0;
 }
 
-function drawPlayerAttackSprite({
-    context,
-    screen,
-    tilePixels,
-    now,
-    attack,
-    directionRow = 0,
-}) {
+function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0})
+{
     if (!attack)
         return false;
 
-    const isMelee =
-        attack.action === PLAYER_ACTION.MELEE;
-    const isRanged =
-        attack.action === PLAYER_ACTION.RANGED;
-
+    const isMelee = attack.action === PLAYER_ACTION.MELEE;
+    const isRanged = attack.action === PLAYER_ACTION.RANGED;
     if (!isMelee && !isRanged)
         return false;
 
-    const sprite = isMelee
-        ? playerMeleeAttackSprite
-        : playerRangedAttackSprite;
-
+    const sprite = isMelee ? playerMeleeAttackSprite : playerRangedAttackSprite;
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
 
-    const frameDuration = isMelee
-        ? PLAYER_MELEE_FRAME_DURATION_MS
-        : PLAYER_RANGED_FRAME_DURATION_MS;
-
+    const frameDuration = isMelee ? PLAYER_MELEE_FRAME_DURATION_MS : PLAYER_RANGED_FRAME_DURATION_MS;
     const elapsed = now - attack.startedAt;
-    const duration = getPlayerAttackDuration(
-        attack.action
-    );
-
+    const duration = getPlayerAttackDuration(attack.action);
     if (elapsed < 0 || elapsed >= duration)
         return false;
 
-    const frame = Math.min(
-        PLAYER_ATTACK_FRAME_COUNT - 1,
-        Math.floor(elapsed / frameDuration)
-    );
-
+    const frame = Math.min(PLAYER_ATTACK_FRAME_COUNT - 1, Math.floor(elapsed / frameDuration));
     const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
     const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
     const spriteSize = tilePixels * 1.8;
@@ -494,18 +424,11 @@ function drawPlayerAttackSprite({
         spriteSize,
         spriteSize
     );
-
     return true;
 }
 
-function drawPlayerWalkSprite({
-    context,
-    entity,
-    screen,
-    tilePixels,
-    now,
-    directionRow = 0,
-}) {
+function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0})
+{
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     const sprite = isMoving ? playerWalkSprite : playerIdleSprite;
     if (!sprite.complete || sprite.naturalWidth === 0)
@@ -541,22 +464,14 @@ function drawPlayerWalkSprite({
     return true;
 }
 
-function drawWalkingRobotSprite({
-    context,
-    entity,
-    screen,
-    tilePixels,
-    now,
-    directionRow,
-}) {
+function drawWalkingRobotSprite({context, entity, screen, tilePixels, now, directionRow})
+{
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     const sprite = isMoving ? walkingRobotSprite : walkingRobotIdleSprite;
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
     const frameDuration = isMoving ? WALKING_ROBOT_FRAME_DURATION_MS : WALKING_ROBOT_IDLE_FRAME_DURATION_MS;
-    const frame = Math.floor(
-        now / frameDuration
-    ) % WALKING_ROBOT_FRAME_COUNT;
+    const frame = Math.floor(now / frameDuration) % WALKING_ROBOT_FRAME_COUNT;
     const source = getSpriteSource({
         columns: isMoving ? SOURCE_GRID_1254_COLUMNS : WALKING_ROBOT_IDLE_COLUMNS,
         rows: isMoving ? SOURCE_GRID_1254_ROWS : WALKING_ROBOT_IDLE_ROWS,
@@ -582,14 +497,8 @@ function drawWalkingRobotSprite({
     return true;
 }
 
-function drawShootingRobotSprite({
-    context,
-    entity,
-    screen,
-    tilePixels,
-    now,
-    directionRow,
-}) {
+function drawShootingRobotSprite({context, entity, screen, tilePixels, now, directionRow})
+{
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     const sprite = isMoving ? shootingRobotSprite : shootingRobotIdleSprite;
     if (!sprite.complete || sprite.naturalWidth === 0)
@@ -620,18 +529,11 @@ function drawShootingRobotSprite({
     return true;
 }
 
-function drawTankRobotSprite({
-    context,
-    screen,
-    tilePixels,
-    now,
-    directionRow,
-}) {
+function drawTankRobotSprite({context, screen, tilePixels, now, directionRow})
+{
     if (!tankRobotIdleSprite.complete || tankRobotIdleSprite.naturalWidth === 0)
         return false;
-    const frame = Math.floor(
-        now / TANK_ROBOT_FRAME_DURATION_MS
-    ) % TANK_ROBOT_FRAME_COUNT;
+    const frame = Math.floor(now / TANK_ROBOT_FRAME_DURATION_MS) % TANK_ROBOT_FRAME_COUNT;
     const sourceColumn = TANK_ROBOT_SOURCE_COLUMNS[frame] ?? TANK_ROBOT_SOURCE_COLUMNS[0];
     const sourceRow = TANK_ROBOT_SOURCE_ROWS[directionRow] ?? TANK_ROBOT_SOURCE_ROWS[0];
     const sourceX = sourceColumn.x;
@@ -655,18 +557,11 @@ function drawTankRobotSprite({
     return true;
 }
 
-function drawLordGoobSprite({
-    context,
-    screen,
-    tilePixels,
-    now,
-    directionRow,
-}) {
+function drawLordGoobSprite({context, screen, tilePixels, now, directionRow})
+{
     if (!lordGoobIdleSprite.complete || lordGoobIdleSprite.naturalWidth === 0)
         return false;
-    const frame = Math.floor(
-        now / LORD_GOOB_FRAME_DURATION_MS
-    ) % LORD_GOOB_FRAME_COUNT;
+    const frame = Math.floor(now / LORD_GOOB_FRAME_DURATION_MS) % LORD_GOOB_FRAME_COUNT;
     const source = getSpriteSource({
         columns: LORD_GOOB_SOURCE_COLUMNS,
         rows: LORD_GOOB_SOURCE_ROWS,
@@ -691,33 +586,17 @@ function drawLordGoobSprite({
     return true;
 }
 
-function drawEntity({
-    context,
-    entity,
-    position,
-    camera,
-    now,
-    attack,
-    directionRow = 0,
-}) {
+function drawEntity({context, entity, position, camera, now, attack, directionRow = 0})
+{
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
     const tilePixels = camera.tileSize * camera.scale;
-    const entityPixels = Math.max(
-        8,
-        Math.min(48, tilePixels)
-    );
+    const entityPixels = Math.max(8, Math.min(48, tilePixels));
 
     const margin = tilePixels * 3;
 
-    if (
-        screen.x < -margin ||
-        screen.y < -margin ||
-        screen.x > context.canvas.width + margin ||
-        screen.y > context.canvas.height + margin
-    ) {
+    if (screen.x < -margin || screen.y < -margin || screen.x > context.canvas.width + margin || screen.y > context.canvas.height + margin)
         return;
-    }
 
     context.save();
 
@@ -741,26 +620,10 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.PLAYER:
-            if (
-                drawPlayerAttackSprite({
-                    context,
-                    screen,
-                    tilePixels,
-                    now,
-                    attack,
-                    directionRow,
-                })
-            ) {break;}
-            if (
-                drawPlayerWalkSprite({
-                    context,
-                    entity,
-                    screen,
-                    tilePixels,
-                    now,
-                    directionRow,
-                })
-            ) {break;}
+            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow}))
+                break;
+            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow}))
+                break;
             context.shadowColor = '#22c55e';
             context.shadowBlur = 12;
             context.fillStyle = '#22c55e';
@@ -776,16 +639,8 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.WALKING_ROBOT:
-            if (
-                drawWalkingRobotSprite({
-                    context,
-                    entity,
-                    screen,
-                    tilePixels,
-                    now,
-                    directionRow,
-                })
-            ) {
+            if (drawWalkingRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
+            {
                 break;
             }
             context.fillStyle = '#ef4444';
@@ -798,16 +653,8 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.SHOOTING_ROBOT:
-            if (
-                drawShootingRobotSprite({
-                    context,
-                    entity,
-                    screen,
-                    tilePixels,
-                    now,
-                    directionRow,
-                })
-            ) {
+            if (drawShootingRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
+            {
                 break;
             }
             drawDiamond(
@@ -820,15 +667,8 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.TANK_ROBOT:
-            if (
-                drawTankRobotSprite({
-                    context,
-                    screen,
-                    tilePixels,
-                    now,
-                    directionRow
-                })
-            ) {
+            if (drawTankRobotSprite({context, screen, tilePixels, now, directionRow}))
+            {
                 break;
             }
             context.fillStyle = '#eab308';
@@ -849,15 +689,8 @@ function drawEntity({
             break;
 
         case ENTITY_TYPE.BOSS:
-            if (
-                drawLordGoobSprite({
-                    context,
-                    screen,
-                    tilePixels,
-                    now,
-                    directionRow,
-                })
-            ) {
+            if (drawLordGoobSprite({context, screen, tilePixels, now, directionRow}))
+            {
                 break;
             }
             context.shadowColor = '#d946ef';
@@ -973,41 +806,25 @@ function drawEntity({
     context.restore();
 }
 
-function drawStaticMapEntities({
-    context,
-    gameMap,
-    camera,
-}) {
+function drawStaticMapEntities({context, gameMap, camera})
+{
     if (!Array.isArray(gameMap?.entities))
         return;
-    gameMap.entities.forEach(entity => {
-        if (
-            !entity ||
-            !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) ||
-            typeof entity.posX !== 'number' ||
-            typeof entity.posY !== 'number'
-        ) {
+    gameMap.entities.forEach(entity =>
+    {
+        if (!entity || !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
             return;
-        }
         drawEntity({
             context,
             entity,
-            position: {
-                x: entity.posX,
-                y: entity.posY,
-            },
+            position: {x: entity.posX, y: entity.posY},
             camera,
         });
     });
 }
 
-export function GameCanvas({
-    currentPlayerId,
-    gameMap,
-    gameEntities,
-    gamePlayerData,
-    socket,
-}) {
+export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerData, goldFeedbacks = [], socket})
+{
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
@@ -1019,41 +836,37 @@ export function GameCanvas({
     const spectatorIndexRef = useRef(0);
 
     const width = CANVAS_WIDTH;
-    const mapAspectRatio =
-        gameMap?.width > 0 && gameMap?.height > 0
-            ? gameMap.height / gameMap.width
-            : 0.5625;
+    const mapAspectRatio = gameMap?.width > 0 && gameMap?.height > 0 ? gameMap.height / gameMap.width : 0.5625;
 
-    const height = Math.max(
-        MIN_CANVAS_HEIGHT,
-        Math.min(
-            MAX_CANVAS_HEIGHT,
-            Math.round(width * mapAspectRatio)
-        )
-    );
+    const height = Math.max(MIN_CANVAS_HEIGHT, Math.min(MAX_CANVAS_HEIGHT, Math.round(width * mapAspectRatio)));
 
     renderDataRef.current = {
         currentPlayerId,
         gameMap,
-        gamePlayerData: Array.isArray(gamePlayerData)
-            ? gamePlayerData
-            : [],
+        gamePlayerData: Array.isArray(gamePlayerData) ? gamePlayerData : [],
+        goldFeedbacks: Array.isArray(goldFeedbacks) ? goldFeedbacks : [],
     };
 
-    useEffect(() => {
-        function handleKeyDown(event) {
+    useEffect(() =>
+    {
+        function handleKeyDown(event)
+        {
             const players = renderDataRef.current.gamePlayerData;
             const myPlayer = players.find(p => String(p.playerId) === String(currentPlayerId));
-            if (myPlayer && myPlayer.alive === false) {
+            if (myPlayer && myPlayer.alive === false)
+            {
                 const alivePlayers = players.filter(p => p.alive === true);
 
-                if (alivePlayers.length > 0) {
-                    if (event.key === 'd' || event.key === 'D') {
+                if (alivePlayers.length > 0)
+                {
+                    if (event.key === 'd' || event.key === 'D')
+                    {
                         spectatorIndexRef.current += 1;
                         if (alivePlayers.length <= spectatorIndexRef.current)
                             spectatorIndexRef.current = 0;
                     }
-                    if (event.key === 'a' || event.key === 'A') {
+                    if (event.key === 'a' || event.key === 'A')
+                    {
                         spectatorIndexRef.current -= 1;
                         if (spectatorIndexRef.current < 0)
                             spectatorIndexRef.current = alivePlayers.length - 1;
@@ -1063,135 +876,103 @@ export function GameCanvas({
         }
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () =>
+        {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, [currentPlayerId]);
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (!socket)
             return undefined;
-        function handlePlayerInput(payload) {
+        function handlePlayerInput(payload)
+        {
             const action = payload?.input?.action;
-            if (typeof payload?.playerId === 'undefined' ||
-                (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED)
-            ) {return;}
-            playerAttackRef.current.set(
-                String(payload.playerId),
-                {
-                    action,
-                    startedAt: performance.now(),
-                }
-            );
+            if (typeof payload?.playerId === 'undefined' || (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED))
+                return;
+            playerAttackRef.current.set(String(payload.playerId), {action, startedAt: performance.now()});
         }
         socket.on('player:input', handlePlayerInput);
-        return () => {
+        return () =>
+        {
             socket.off('player:input', handlePlayerInput);
             playerAttackRef.current.clear();
         };
     }, [socket]);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         if (!Array.isArray(gameEntities))
             return;
 
         const now = performance.now();
         const receivedEntityIds = new Set();
-        const teleportDistance =
-            gameMap?.scale > 0
-                ? gameMap.scale * 3
-                : 150;
+        const teleportDistance = gameMap?.scale > 0 ? gameMap.scale * 3 : 150;
 
-        gameEntities.forEach(entity => {
-            if (
-                !entity ||
-                typeof entity.entityId !== 'number' ||
-                typeof entity.posX !== 'number' ||
-                typeof entity.posY !== 'number'
-            ) {
+        gameEntities.forEach(entity =>
+        {
+            if (!entity || typeof entity.entityId !== 'number' || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
                 return;
-            }
 
             receivedEntityIds.add(entity.entityId);
 
-            const previousTrack =
-                entityTracksRef.current.get(entity.entityId);
+            const previousTrack = entityTracksRef.current.get(entity.entityId);
 
-            if (
-                previousTrack &&
-                previousTrack.targetX === entity.posX &&
-                previousTrack.targetY === entity.posY
-            ) {
-                previousTrack.directionRow =
-                    getPlayerDirectionRow(
-                        entity,
-                        previousTrack.directionRow
-                    );
+            if (previousTrack && previousTrack.targetX === entity.posX && previousTrack.targetY === entity.posY)
+            {
+                previousTrack.directionRow = getPlayerDirectionRow(entity, previousTrack.directionRow);
                 previousTrack.entity = entity;
                 return;
             }
 
-            const currentPosition = previousTrack
-                ? getInterpolatedPosition(previousTrack, now)
-                : {
-                    x: entity.posX,
-                    y: entity.posY,
-                };
+            const currentPosition = previousTrack ? getInterpolatedPosition(previousTrack, now) : {x: entity.posX, y: entity.posY};
 
-            const distance = Math.hypot(
-                entity.posX - currentPosition.x,
-                entity.posY - currentPosition.y
-            );
+            const distance = Math.hypot(entity.posX - currentPosition.x, entity.posY - currentPosition.y);
 
-            const mustTeleport =
-                !previousTrack ||
-                distance >= teleportDistance;
+            const mustTeleport = !previousTrack || distance >= teleportDistance;
+            const directionRow = getPlayerDirectionRow(entity, previousTrack?.directionRow ?? 0);
+            const duration = mustTeleport ? 0 : INTERPOLATION_DURATION_MS;
 
             entityTracksRef.current.set(entity.entityId, {
                 entity,
-                directionRow: getPlayerDirectionRow(
-                    entity,
-                    previousTrack?.directionRow ?? 0
-                ),
-                fromX: mustTeleport
-                    ? entity.posX
-                    : currentPosition.x,
-                fromY: mustTeleport
-                    ? entity.posY
-                    : currentPosition.y,
+                directionRow,
+                fromX: mustTeleport ? entity.posX : currentPosition.x,
+                fromY: mustTeleport ? entity.posY : currentPosition.y,
                 targetX: entity.posX,
                 targetY: entity.posY,
                 startedAt: now,
-                duration: mustTeleport
-                    ? 0
-                    : INTERPOLATION_DURATION_MS,
+                duration,
             });
         });
-        entityTracksRef.current.forEach((track, entityId) => {
+        entityTracksRef.current.forEach((track, entityId) =>
+        {
             if (!receivedEntityIds.has(entityId))
                 entityTracksRef.current.delete(entityId);
         });
     }, [gameEntities, gameMap?.scale]);
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         let animationFrameId;
-        function render(now) {
+        function render(now)
+        {
             const canvas = canvasRef.current;
             if (!canvas)
                 return;
             const rect = canvas.getBoundingClientRect();
             const nextWidth = Math.max(1, Math.round(rect.width));
             const nextHeight = Math.max(1, Math.round(rect.height));
-            if ( canvas.width !== nextWidth || canvas.height !== nextHeight)
-                {
-                    canvas.width = nextWidth;
-                    canvas.height = nextHeight;
-                }
+            if (canvas.width !== nextWidth || canvas.height !== nextHeight)
+            {
+                canvas.width = nextWidth;
+                canvas.height = nextHeight;
+            }
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
-            const localPlayer = renderData.gamePlayerData.find(player =>
-                String(player.playerId) ===
-                String(renderData.currentPlayerId)
-            );
+            const localPlayer = renderData.gamePlayerData.find(player => String(player.playerId) === String(renderData.currentPlayerId));
             let localEntityId = localPlayer?.playerEntityId;
-            if (typeof localEntityId !== 'number') {
+            if (typeof localEntityId !== 'number')
+            {
                 for (const track of entityTracksRef.current.values())
                 {
                     if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
@@ -1204,57 +985,31 @@ export function GameCanvas({
             const focusPosition = getFocusPosition({
                 tracks: entityTracksRef.current,
                 playerData: renderData.gamePlayerData,
-                currentPlayerId:
-                    renderData.currentPlayerId,
+                currentPlayerId: renderData.currentPlayerId,
                 now,
                 gameMap: renderData.gameMap,
-                spectatorIndex: spectatorIndexRef.current
+                spectatorIndex: spectatorIndexRef.current,
             });
             const camera = getCamera({
                 canvas,
                 gameMap: renderData.gameMap,
                 focusPosition,
             });
-            context.clearRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
+            context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#020617';
-            context.fillRect(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-            );
+            context.fillRect(0, 0, canvas.width, canvas.height);
             drawGrid(context, canvas, camera);
             drawStaticMapEntities({
                 context,
                 gameMap: renderData.gameMap,
                 camera,
             });
-            entityTracksRef.current.forEach(track => {
-                const playerData =
-                    renderData.gamePlayerData.find(
-                        player =>
-                            String(player.playerEntityId) ===
-                            String(track.entity.entityId)
-                    );
-                const playerId = playerData?.playerId ?? (
-                    track.entity.entityId === localEntityId
-                        ? renderData.currentPlayerId
-                        : null
-                );
-                let attack = playerId === null
-                    ? null
-                    : playerAttackRef.current.get(String(playerId));
-                if (
-                    attack &&
-                    now - attack.startedAt >= getPlayerAttackDuration(
-                        attack.action
-                    )
-                )
+            entityTracksRef.current.forEach(track =>
+            {
+                const playerData = renderData.gamePlayerData.find(player => String(player.playerEntityId) === String(track.entity.entityId));
+                const playerId = playerData?.playerId ?? (track.entity.entityId === localEntityId ? renderData.currentPlayerId : null);
+                let attack = playerId === null ? null : playerAttackRef.current.get(String(playerId));
+                if (attack && now - attack.startedAt >= getPlayerAttackDuration(attack.action))
                 {
                     playerAttackRef.current.delete(String(playerId));
                     attack = null;
@@ -1262,13 +1017,7 @@ export function GameCanvas({
                 const position = getInterpolatedPosition(track, now);
                 const entityType = getEntityType(track.entity);
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
-                const renderDirectionRow = facesPlayer
-                    ? getDirectionRowToward(
-                        position,
-                        focusPosition,
-                        track.directionRow
-                    )
-                    : track.directionRow;
+                const renderDirectionRow = facesPlayer ? getDirectionRowToward(position, focusPosition, track.directionRow) : track.directionRow;
                 drawEntity({
                     context,
                     entity: track.entity,
@@ -1279,18 +1028,20 @@ export function GameCanvas({
                     directionRow: renderDirectionRow,
                 });
             });
+            drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
             const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
                 context.fillStyle = 'red';
                 context.font = '30px Arial';
                 context.textAlign = 'center';
-                context.fillText("Death alive in: " + myPlayer.death_cooldowns, canvas.width/2, canvas.height/2);
+                context.fillText("Death alive in: " + myPlayer.death_cooldowns, canvas.width / 2, canvas.height / 2);
             }
             animationFrameId = requestAnimationFrame(render);
         }
         animationFrameId = requestAnimationFrame(render);
-        return () => {
+        return () =>
+        {
             cancelAnimationFrame(animationFrameId);
         };
     }, []);
