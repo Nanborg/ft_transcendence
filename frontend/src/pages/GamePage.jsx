@@ -3,6 +3,7 @@ import { usePlayerInput } from '../features/game/usePlayerInput';
 import { PageHeading } from '../components/PageHeading';
 import { useEffect, useState } from 'react';
 import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
+import goldIcon from '../assets/game/gold/gold_icon.png';
 
 function formatDuration(totalSeconds) {
     const minutes = Math.floor(totalSeconds / 60);
@@ -104,19 +105,7 @@ export function GamePage({
         ranged: currentPlayer?.upgrades?.ranged ?? 0,
         shield: currentPlayer?.upgrades?.shield ?? 0,
     };
-    // temp mock variable debut
-    const mockTimer = (Date.now() / 1000);
-    const mockSkillLevel = Math.floor(mockTimer / 2) % 4;
-    const mockSkillLevels = {
-        melee: mockSkillLevel,
-        ranged: (mockSkillLevel + 1) % 4,
-        shield: (mockSkillLevel + 2) % 4,
-    };
-    // temp mock variable fin
-    let skillLevels = realSkillLevels;
-    // temp mock debut
-    skillLevels = mockSkillLevels;
-    // temp mock fin
+    const skillLevels = realSkillLevels;
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
 
