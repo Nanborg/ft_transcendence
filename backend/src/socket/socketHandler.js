@@ -3,6 +3,8 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 
+const processingGameEnds = new Set();
+
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
 // invalid payloads, disconnects, and multi-room isolation.
@@ -85,6 +87,12 @@ module.exports = (io) => {
 			console.error("Invalid gameEnd received from game engine:", message);
 			return;
 		}
+		if (processingGameEnds.has(roomId))
+		{
+            console.log(`[GameEnd] Duplicate event ignored for room: ${roomId}`);
+            return;
+        }
+		processingGameEnds.add(roomId);
 		const snapshot = gameEngineService.getStateSnapshot(roomId);
 		const endedAt = Date.now();
 		const serverStartedAt = snapshot?.serverStartedAt;
@@ -151,6 +159,8 @@ module.exports = (io) => {
 			} catch (cleanupError) {
 				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
 			}
+			processingGameEnds.delete(roomId);
+            console.log(`[GameEnd] Lock released for room: ${roomId}`);
 		}
 	});
 	gameEngineService.on("entityDelete", (message) => {
