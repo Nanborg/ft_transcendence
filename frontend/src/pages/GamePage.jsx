@@ -41,6 +41,8 @@ const SKILL_COLUMNS = {
     ranged: 1,
     shield: 2,
 };
+const MAX_SKILL_LEVEL = 3;
+function getUpgradeCost(level){return 100 + level * 150;}
 
 function SkillSlot({ skill, hotkey, lvl, cooldown })
 {
@@ -104,6 +106,31 @@ export function GamePage({
     const [checkpointError, setCheckpointError] = useState('');
     const previousGoldRef = useRef(null);
     const [goldFeedbacks, setGoldFeedbacks] = useState([]);
+
+    function renderUpgradeButton(skill, label)
+    {
+        const level = skillLevels[skill] ?? 0;
+        const nextLevel = Math.min(MAX_SKILL_LEVEL, level + 1);
+        const cost = getUpgradeCost(level);
+        const canBuy = level < MAX_SKILL_LEVEL && currentGold >= cost;
+        const buttonClass = canBuy ? '' : 'upgrade-unavailable';
+        const iconPosition = `${SKILL_COLUMNS[skill] * 50}% ${nextLevel * (100 / 3)}%`;
+        const iconStyle = { backgroundImage: `url(${skillSprites})`, backgroundPosition: iconPosition, };
+
+        return (
+            <button
+                type="button"
+                className={buttonClass}
+                disabled={pendingUpgrade !== null || !canBuy}
+                onClick={() => selectCheckpointUpgrade(skill)}
+            >
+                <strong>{label}</strong>
+                <div className="upgrade-preview-icon" style={iconStyle} />
+                <span>Level {level} -&gt; {nextLevel}</span>
+                <span>{cost} gold</span>
+            </button>
+        );
+    }
 
     useEffect(() =>
     {
@@ -339,18 +366,9 @@ export function GamePage({
                         <h2 id="checkpoint-upgrade-title">Choose an upgrade</h2>
                         <p>Select one ability to improve before continuing.</p>
                         <div className="checkpoint-upgrade-list">
-                            <button type="button" disabled={pendingUpgrade !== null} onClick={() => selectCheckpointUpgrade('melee')}>
-                                <strong>Melee</strong>
-                                <span>Level {currentPlayer?.upgrades?.melee ?? 0}</span>
-                            </button>
-                            <button type="button" disabled={pendingUpgrade !== null} onClick={() => selectCheckpointUpgrade('ranged')}>
-                                <strong>Ranged</strong>
-                                <span>Level {currentPlayer?.upgrades?.ranged ?? 0}</span>
-                            </button>
-                            <button type="button" disabled={pendingUpgrade !== null} onClick={() => selectCheckpointUpgrade('shield')}>
-                                <strong>Shield</strong>
-                                <span>Level {currentPlayer?.upgrades?.shield ?? 0}</span>
-                            </button>
+                            {renderUpgradeButton('melee', 'Melee')}
+                            {renderUpgradeButton('ranged', 'Ranged')}
+                            {renderUpgradeButton('shield', 'Shield')}
                         </div>
                         {pendingUpgrade && <p>Applying {pendingUpgrade} upgrade…</p>}
                         {checkpointError && <p className="room-error">{checkpointError}</p>}
