@@ -51,7 +51,7 @@ return (
           {leaderboard.map((entry, index) => (
             <tr key={entry.gameRunId ?? entry.roomId ?? index}>
               <td>#{entry.rank ?? index + 1}</td>
-              <td>{entry.players?.map((player) => player.userId).join(', ') || entry.roomId}</td>
+              <td>{entry.players?.map((player) => player.username).join(', ') || entry.roomId}</td>
               <td>{entry.durationSeconds} seconds</td>
               <td>{entry.createdAt ? new Date(entry.createdAt).toLocaleString() : '-'}</td>
             </tr>

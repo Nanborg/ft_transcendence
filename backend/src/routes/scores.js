@@ -13,7 +13,7 @@ function formatHistoryData(rawGames) {
       createdAt: new Date(game.createdAt).getTime(),
       players: game.stats.map(stat => {
         return {
-          playerId: stat.userId,
+          userId: stat.userId,
           username: stat.user.username,
           deaths: stat.deaths,
           damageDealt: stat.damageDealt,
@@ -39,7 +39,7 @@ function formatLeaderboardData(rawGames) {
       createdAt: new Date(game.createdAt).getTime(),
       players: game.stats.map(stat => {
         return {
-          playerId: stat.userId,
+          userId: stat.userId,
           username: stat.user.username
         };
       })
