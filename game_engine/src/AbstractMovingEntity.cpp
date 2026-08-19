@@ -3,7 +3,7 @@
 
 const float	AbstractMovingEntity::_velCap = .2f;
 
-AbstractMovingEntity::AbstractMovingEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, bool passableHitBox ):
+AbstractMovingEntity::AbstractMovingEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, bool passableHitBox):
 	AbstractEntity(type, size, posX, posY, health, passableHitBox)
 {
 	_velX = velX;

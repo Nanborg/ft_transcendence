@@ -5,7 +5,7 @@ const float	WalkingGoobEntity::_aggroLose = 10.f;
 
 WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
 	AbstractMovingEntity(EntityTypes::WALKINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false),
-	_target(NULL) {}
+	_target(NULL) {setGold(10);}
 
 WalkingGoobEntity::~WalkingGoobEntity( void ) {}
 

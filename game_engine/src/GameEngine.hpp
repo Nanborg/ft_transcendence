@@ -82,6 +82,7 @@ public:
         bool        atACheckpoint;
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
+		int			gold;
 
         PlayerUpgrades  upgrades;
         PlayerCooldowns cooldowns;
