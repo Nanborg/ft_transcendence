@@ -237,20 +237,11 @@ function getCamera({
     gameMap,
     focusPosition,
 }) {
-    const worldWidth =
-        gameMap?.width > 0
-            ? gameMap.width
-            : canvas.width;
+    const worldWidth = gameMap?.width > 0 ? gameMap.width : canvas.width;
 
-    const worldHeight =
-        gameMap?.height > 0
-            ? gameMap.height
-            : canvas.height;
+    const worldHeight = gameMap?.height > 0 ? gameMap.height : canvas.height;
 
-    const tileSize =
-        gameMap?.scale > 0
-            ? gameMap.scale
-            : Math.max(1, worldWidth / 50);
+    const tileSize = gameMap?.scale > 0 ? gameMap.scale : Math.max(1, worldWidth / 50);
 
     const wantedViewWidth = Math.min( worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
     const wantedViewHeight = wantedViewWidth * (canvas.height / canvas.width);
@@ -352,11 +343,10 @@ function drawDiamond(context, x, y, radius, color) {
     context.fill();
 }
 
-function getPlayerDirectionRow(entity, fallbackRow = 0) {
-    const velocityX =
-        typeof entity.velX === 'number' ? entity.velX : 0;
-    const velocityY =
-        typeof entity.velY === 'number' ? entity.velY : 0;
+function getPlayerDirectionRow(entity, fallbackRow = 0)
+{
+    const velocityX = typeof entity.velX === 'number' ? entity.velX : 0;
+    const velocityY = typeof entity.velY === 'number' ? entity.velY : 0;
 
     if (Math.abs(velocityX) > Math.abs(velocityY))
         return velocityX < 0 ? 1 : 2;
@@ -445,24 +435,18 @@ function drawPlayerAttackSprite({
     if (!attack)
         return false;
 
-    const isMelee =
-        attack.action === PLAYER_ACTION.MELEE;
-    const isRanged =
-        attack.action === PLAYER_ACTION.RANGED;
+    const isMelee = attack.action === PLAYER_ACTION.MELEE;
+    const isRanged = attack.action === PLAYER_ACTION.RANGED;
 
     if (!isMelee && !isRanged)
         return false;
 
-    const sprite = isMelee
-        ? playerMeleeAttackSprite
-        : playerRangedAttackSprite;
+    const sprite = isMelee ? playerMeleeAttackSprite : playerRangedAttackSprite;
 
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
 
-    const frameDuration = isMelee
-        ? PLAYER_MELEE_FRAME_DURATION_MS
-        : PLAYER_RANGED_FRAME_DURATION_MS;
+    const frameDuration = isMelee ? PLAYER_MELEE_FRAME_DURATION_MS : PLAYER_RANGED_FRAME_DURATION_MS;
 
     const elapsed = now - attack.startedAt;
     const duration = getPlayerAttackDuration(
@@ -1006,8 +990,10 @@ export function GameCanvas({
     gameMap,
     gameEntities,
     gamePlayerData,
+    goldFeedbacks = [],
     socket,
-}) {
+})
+{
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
@@ -1019,41 +1005,37 @@ export function GameCanvas({
     const spectatorIndexRef = useRef(0);
 
     const width = CANVAS_WIDTH;
-    const mapAspectRatio =
-        gameMap?.width > 0 && gameMap?.height > 0
-            ? gameMap.height / gameMap.width
-            : 0.5625;
+    const mapAspectRatio = gameMap?.width > 0 && gameMap?.height > 0 ? gameMap.height / gameMap.width : 0.5625;
 
-    const height = Math.max(
-        MIN_CANVAS_HEIGHT,
-        Math.min(
-            MAX_CANVAS_HEIGHT,
-            Math.round(width * mapAspectRatio)
-        )
-    );
+    const height = Math.max(MIN_CANVAS_HEIGHT, Math.min(MAX_CANVAS_HEIGHT, Math.round(width * mapAspectRatio)));
 
     renderDataRef.current = {
         currentPlayerId,
         gameMap,
-        gamePlayerData: Array.isArray(gamePlayerData)
-            ? gamePlayerData
-            : [],
+        gamePlayerData: Array.isArray(gamePlayerData) ? gamePlayerData : [],
+        goldFeedbacks: Array.isArray(goldFeedbacks) ? goldFeedbacks : [],
     };
 
-    useEffect(() => {
-        function handleKeyDown(event) {
+    useEffect(() =>
+    {
+        function handleKeyDown(event)
+        {
             const players = renderDataRef.current.gamePlayerData;
             const myPlayer = players.find(p => String(p.playerId) === String(currentPlayerId));
-            if (myPlayer && myPlayer.alive === false) {
+            if (myPlayer && myPlayer.alive === false)
+            {
                 const alivePlayers = players.filter(p => p.alive === true);
 
-                if (alivePlayers.length > 0) {
-                    if (event.key === 'd' || event.key === 'D') {
+                if (alivePlayers.length > 0)
+                {
+                    if (event.key === 'd' || event.key === 'D')
+                    {
                         spectatorIndexRef.current += 1;
                         if (alivePlayers.length <= spectatorIndexRef.current)
                             spectatorIndexRef.current = 0;
                     }
-                    if (event.key === 'a' || event.key === 'A') {
+                    if (event.key === 'a' || event.key === 'A')
+                    {
                         spectatorIndexRef.current -= 1;
                         if (spectatorIndexRef.current < 0)
                             spectatorIndexRef.current = alivePlayers.length - 1;
@@ -1063,7 +1045,10 @@ export function GameCanvas({
         }
 
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        return () =>
+        {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
     }, [currentPlayerId]);
     useEffect(() => {
         if (!socket)
@@ -1094,10 +1079,7 @@ export function GameCanvas({
 
         const now = performance.now();
         const receivedEntityIds = new Set();
-        const teleportDistance =
-            gameMap?.scale > 0
-                ? gameMap.scale * 3
-                : 150;
+        const teleportDistance = gameMap?.scale > 0 ? gameMap.scale * 3 : 150;
 
         gameEntities.forEach(entity => {
             if (
@@ -1128,40 +1110,29 @@ export function GameCanvas({
                 return;
             }
 
-            const currentPosition = previousTrack
-                ? getInterpolatedPosition(previousTrack, now)
-                : {
-                    x: entity.posX,
-                    y: entity.posY,
-                };
+            const currentPosition = previousTrack ? getInterpolatedPosition(previousTrack, now) : {
+                x: entity.posX,
+                y: entity.posY,
+            };
 
             const distance = Math.hypot(
                 entity.posX - currentPosition.x,
                 entity.posY - currentPosition.y
             );
 
-            const mustTeleport =
-                !previousTrack ||
-                distance >= teleportDistance;
+            const mustTeleport = !previousTrack || distance >= teleportDistance;
+            const directionRow = getPlayerDirectionRow(entity, previousTrack?.directionRow ?? 0);
+            const duration = mustTeleport ? 0 : INTERPOLATION_DURATION_MS;
 
             entityTracksRef.current.set(entity.entityId, {
                 entity,
-                directionRow: getPlayerDirectionRow(
-                    entity,
-                    previousTrack?.directionRow ?? 0
-                ),
-                fromX: mustTeleport
-                    ? entity.posX
-                    : currentPosition.x,
-                fromY: mustTeleport
-                    ? entity.posY
-                    : currentPosition.y,
+                directionRow,
+                fromX: mustTeleport ? entity.posX : currentPosition.x,
+                fromY: mustTeleport ? entity.posY : currentPosition.y,
                 targetX: entity.posX,
                 targetY: entity.posY,
                 startedAt: now,
-                duration: mustTeleport
-                    ? 0
-                    : INTERPOLATION_DURATION_MS,
+                duration,
             });
         });
         entityTracksRef.current.forEach((track, entityId) => {
@@ -1241,14 +1212,8 @@ export function GameCanvas({
                             String(player.playerEntityId) ===
                             String(track.entity.entityId)
                     );
-                const playerId = playerData?.playerId ?? (
-                    track.entity.entityId === localEntityId
-                        ? renderData.currentPlayerId
-                        : null
-                );
-                let attack = playerId === null
-                    ? null
-                    : playerAttackRef.current.get(String(playerId));
+                const playerId = playerData?.playerId ?? (track.entity.entityId === localEntityId ? renderData.currentPlayerId : null);
+                let attack = playerId === null ? null : playerAttackRef.current.get(String(playerId));
                 if (
                     attack &&
                     now - attack.startedAt >= getPlayerAttackDuration(
@@ -1262,13 +1227,7 @@ export function GameCanvas({
                 const position = getInterpolatedPosition(track, now);
                 const entityType = getEntityType(track.entity);
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
-                const renderDirectionRow = facesPlayer
-                    ? getDirectionRowToward(
-                        position,
-                        focusPosition,
-                        track.directionRow
-                    )
-                    : track.directionRow;
+                const renderDirectionRow = facesPlayer ? getDirectionRowToward(position, focusPosition, track.directionRow) : track.directionRow;
                 drawEntity({
                     context,
                     entity: track.entity,
