@@ -25,4 +25,5 @@ nginx/certs/*.crt
 
 # cpp compiled files
 game_engine/src/*.o
+game_engine/src/entities/*.o
 game_engine/src/gameEngineRuntime

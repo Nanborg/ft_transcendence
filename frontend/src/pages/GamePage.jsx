@@ -91,6 +91,7 @@ export function GamePage({
             String(player.playerId) === String(currentPlayerId)
         )
         : null;
+    const currentGold = currentPlayer?.gold ?? 0;
     const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
     const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities)
         ? gameEntities.find(entity =>
@@ -308,13 +309,13 @@ export function GamePage({
         <div className="game-fullscreen">
             <PageHeading title={title} description={description} />
                 <section
-                    className="game-hud game-hud--live"
+                    className="game-hud game-hud-live"
                     aria-label="Game status"
                 >
-                    <div className="game-hud__summary">
-                        <span className="game-hud__status">
+                    <div className="game-hud-summary">
+                        <span className="game-hud-status">
                             <span
-                                className="game-hud__status-dot"
+                                className="game-hud-status-dot"
                                 aria-hidden="true"
                             />
                             Live
@@ -326,11 +327,18 @@ export function GamePage({
                             {formatDuration(elapsedSeconds)}
                         </strong>
                     </div>
-                    <div className="game-hud__stats">
-                        <div className="game-hud__stat">
+                    <div className="game-hud-stats">
+                        <div className="game-hud-stat">
                             <span>Health</span>
                             <strong>
                                 {playerHealth ?? '—'}
+                            </strong>
+                        </div>
+                        <div className="game-hud-stat game-hud-stat-gold">
+                            <span>Gold</span>
+                            <strong className="game-hud-gold">
+                                <img src={goldIcon} alt="" aria-hidden="true" />
+                                {currentGold}
                             </strong>
                         </div>
                     </div>
