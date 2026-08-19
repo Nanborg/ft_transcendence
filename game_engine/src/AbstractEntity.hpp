@@ -11,7 +11,7 @@ using namespace nlohmann;
 class AbstractEntity
 {
 public:
-	AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold = 0);
+	AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold = 100);
 	virtual ~AbstractEntity( void ) = 0;
 
 	// write override tick behavior here
