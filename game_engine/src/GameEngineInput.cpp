@@ -90,39 +90,46 @@ void	GameEngine::_input_action( const json& in ) {
 		return;
 	PlayerData *player_data = getPlayerData(in["playerId"]);
 	if (player_data && in.count("upgrade") > 0 && in["upgrade"].is_object()) {
-		if (in["upgrade"].count("melee") > 0 && in["upgrade"]["melee"] == true && player_data->gold >= UPGRADE_COST_MELEE + player_data->upgrades.melee * 150) // upgrade lvl2 will be 250 as in the doc
+		int cost_m = (UPGRADE_COST_MELEE + player_data->upgrades.melee * 150); // upgrade lvl2 will be 250 as in the doc
+		int cost_r = (UPGRADE_COST_RANGED + player_data->upgrades.ranged * 150);
+		int cost_s = (UPGRADE_COST_SHIELD + player_data->upgrades.shield * 150);
+
+		if (in["upgrade"].count("melee") > 0 && in["upgrade"]["melee"] == true && player_data->gold >= cost_m)
 		{
 			player_data->upgrades.melee++;
-
 			if (player_data->playerEntityId != -1) {
 				auto entIt = getEntityIterator(player_data->playerEntityId);
 				if (entIt != _entities.end()) {
-					entIt->get()->setGold(entIt->get()->getGold() - (UPGRADE_COST_MELEE + player_data->upgrades.melee * 150));
+					player_data->gold -= cost_m;
+					entIt->get()->setGold(player_data->gold);
 					sendEntityUpdate(entIt->get());
+					sendPlayerStateUpdate(*player_data);
 				}
 			}
 		}
-		else if (in["upgrade"].count("ranged") > 0 && in["upgrade"]["ranged"] == true && player_data->gold >= UPGRADE_COST_RANGED + player_data->upgrades.ranged * 150)
+		else if (in["upgrade"].count("ranged") > 0 && in["upgrade"]["ranged"] == true && player_data->gold >= cost_r)
 		{
 			player_data->upgrades.ranged++;
-
 			if (player_data->playerEntityId != -1) {
 				auto entIt = getEntityIterator(player_data->playerEntityId);
 				if (entIt != _entities.end()) {
-					entIt->get()->setGold(entIt->get()->getGold() - (UPGRADE_COST_RANGED + player_data->upgrades.ranged * 150));
+					player_data->gold -= cost_r;
+					entIt->get()->setGold(player_data->gold);
 					sendEntityUpdate(entIt->get());
+					sendPlayerStateUpdate(*player_data);
 				}
 			}
 		}
-		else if (in["upgrade"].count("shield") > 0 && in["upgrade"]["shield"] == true && player_data->gold >= UPGRADE_COST_SHIELD + player_data->upgrades.shield * 150)
+		else if (in["upgrade"].count("shield") > 0 && in["upgrade"]["shield"] == true && player_data->gold >= cost_s)
 		{
 			player_data->upgrades.shield++;
-
 			if (player_data->playerEntityId != -1) {
 				auto entIt = getEntityIterator(player_data->playerEntityId);
 				if (entIt != _entities.end()) {
-					entIt->get()->setGold(entIt->get()->getGold() - (UPGRADE_COST_SHIELD + player_data->upgrades.shield * 150));
+					player_data->gold -= cost_s;
+					entIt->get()->setGold(player_data->gold);
 					sendEntityUpdate(entIt->get());
+					sendPlayerStateUpdate(*player_data);
 				}
 			}
 		}

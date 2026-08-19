@@ -508,7 +508,6 @@ module.exports = (io) => {
 					});
 					return;
 				}
-				//BOOKMARK sendCheckpointUpgrade
 				await gameEngineService.sendCheckpointUpgrade(
 					roomId,
 					socket.user.id,
