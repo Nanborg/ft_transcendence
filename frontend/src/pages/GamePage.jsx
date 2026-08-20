@@ -293,7 +293,7 @@ export function GamePage({
             </>
         );
     }
-    if (!hasLiveGameState)
+    if (false && !hasLiveGameState)
     {
         return (
             <>
