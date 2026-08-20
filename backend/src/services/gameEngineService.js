@@ -7,6 +7,7 @@ const { mapConv } = require("../game/mapConv");
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
 const DEFAULT_ENGINE_MAP_DIRECTORY = process.env.GAME_MAP_DIRECTORY || "/tmp/ft-transcendence-game-maps";
+const DEFAULT_ROOM_READY_TIMEOUT_MS = Number(process.env.GAME_ROOM_READY_TIMEOUT_MS || 180000);
 const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_CREATE: 0,
     ROOM_DESTROY: 1,
@@ -41,15 +42,18 @@ class GameEngineService extends EventEmitter {
         host = DEFAULT_ENGINE_HOST,
         port = DEFAULT_ENGINE_PORT,
         mapDirectory = DEFAULT_ENGINE_MAP_DIRECTORY,
+        roomReadyTimeoutMs = DEFAULT_ROOM_READY_TIMEOUT_MS,
     } = {}) {
         super();
 
         this.host = host;
         this.port = port;
         this.mapDirectory = mapDirectory;
+        this.roomReadyTimeoutMs = roomReadyTimeoutMs;
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
+		this.pendingRoomReady = new Map();
 		this.pingInterval = null;
 
         this.socket.on("message", (buffer, remoteInfo) => {
@@ -379,6 +383,8 @@ class GameEngineService extends EventEmitter {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
         let roomCreated = false;
+        const roomCreateStartedAt = Date.now();
+        const roomReadyPromise = this.waitForRoomReady(room.id);
         const mapPayload = mapConv(
             path.join(__dirname, "../game/maps/1_map_50_50_10_5_54.txt"),
             room.id
@@ -400,6 +406,10 @@ class GameEngineService extends EventEmitter {
             });
 
             roomCreated = true;
+            await roomReadyPromise;
+            console.log(
+                `Game engine roomReady acknowledged for room ${room.id} after ${Date.now() - roomCreateStartedAt}ms`
+            );
 
             for (const player of session.players) {
                 await this.send({
@@ -437,8 +447,55 @@ class GameEngineService extends EventEmitter {
             }
             await this.removeMapPayload(session.engineMapFile);
             this.removeSession(room.id);
+            this.rejectRoomReady(room.id, error);
             throw error;
         }
+    }
+
+    waitForRoomReady(roomId) {
+        if (typeof roomId !== "string" || roomId.length === 0)
+            throw new TypeError("roomId must be a non-empty string");
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (pendingEntry)
+            return pendingEntry.promise;
+        let resolveRoomReady;
+        let rejectRoomReady;
+        const promise = new Promise((resolve, reject) => {
+            resolveRoomReady = resolve;
+            rejectRoomReady = reject;
+        });
+        this.pendingRoomReady.set(roomId, {
+            promise,
+            resolve: resolveRoomReady,
+            reject: rejectRoomReady,
+        });
+        if (Number.isFinite(this.roomReadyTimeoutMs) && this.roomReadyTimeoutMs > 0) {
+            setTimeout(() => {
+                const timeoutError = new Error(`Timed out waiting for roomReady for room ${roomId}`);
+                timeoutError.code = "ROOM_READY_TIMEOUT";
+                timeoutError.timeoutMs = this.roomReadyTimeoutMs;
+                this.rejectRoomReady(roomId, timeoutError);
+            }, this.roomReadyTimeoutMs);
+        }
+        return promise;
+    }
+
+    resolveRoomReady(roomId, message) {
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (!pendingEntry)
+            return false;
+        this.pendingRoomReady.delete(roomId);
+        pendingEntry.resolve(message);
+        return true;
+    }
+
+    rejectRoomReady(roomId, error) {
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (!pendingEntry)
+            return false;
+        this.pendingRoomReady.delete(roomId);
+        pendingEntry.reject(error);
+        return true;
     }
 
     async removePlayer(roomId, userId) {
@@ -488,6 +545,7 @@ class GameEngineService extends EventEmitter {
     }
 
     removeSession(roomId) {
+        this.rejectRoomReady(roomId, new Error(`Room ${roomId} removed before roomReady`));
         this.sessions.delete(roomId);
     }
 
@@ -526,6 +584,16 @@ class GameEngineService extends EventEmitter {
             return;
         }
         this.emit("message", message, remoteInfo);
+		if (message.type === "roomReady" && typeof message.roomId === "string") {
+			console.log(`Game engine roomReady received for room ${message.roomId}`);
+			this.resolveRoomReady(message.roomId, message);
+		}
+        if (message.type === "roomInitFailed" && typeof message.roomId === "string") {
+            const initError = new Error(`Game engine init failed for room ${message.roomId}`);
+            initError.code = "ROOM_INIT_FAILED";
+            console.error(`Game engine roomInitFailed received for room ${message.roomId}`);
+            this.rejectRoomReady(message.roomId, initError);
+        }
         if (typeof message.type === "string")
             this.emit(message.type, message, remoteInfo);
     }

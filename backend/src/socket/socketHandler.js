@@ -291,10 +291,22 @@ module.exports = (io) => {
 					console.error("Unable to start game engine session:", error);
 					const restoredRoom = await resetGameStart(roomId);
 					io.to(roomId).emit("room:update", restoredRoom);
+					const errorCode =
+						error?.code === "ROOM_READY_TIMEOUT"
+							? "GAME_ENGINE_ROOM_READY_TIMEOUT"
+							: error?.code === "ROOM_INIT_FAILED"
+								? "GAME_ENGINE_INIT_FAILED"
+								: "GAME_ENGINE_START_FAILED";
+					const errorMessage =
+						errorCode === "GAME_ENGINE_ROOM_READY_TIMEOUT"
+							? "Game engine did not confirm room readiness in time"
+							: errorCode === "GAME_ENGINE_INIT_FAILED"
+								? "Game engine failed while loading the map"
+								: "Unable to start the game engine";
 					socket.emit("room:error", {
 						event: "game:start",
-						code: "GAME_ENGINE_START_FAILED",
-						message: "Unable to start the game engine",
+						code: errorCode,
+						message: errorMessage,
 					});
 					return;
 				}

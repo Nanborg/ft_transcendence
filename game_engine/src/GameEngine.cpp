@@ -220,23 +220,23 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 	return false;
 }
 
-void	GameEngine::init( const json& in ) {
+bool	GameEngine::init( const json& in ) {
 	json	map;
 	try {
 		std::cout << (std::string) in["entitiesFile"] << std::endl;
 		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
 	} catch(const std::exception&) {
-		return;
+		return false;
 	}
 
 	if (!map["scale"].is_number_integer())
-		return;
+		return false;
 	if (!map["spawnX"].is_number_integer())
-		return;
+		return false;
 	if (!map["spawnY"].is_number_integer())
-		return;
+		return false;
 	if (!map["entities"].is_array())
-		return;
+		return false;
 
 	_scale = map["scale"];
 	_spawnX = map["spawnX"];
@@ -248,6 +248,7 @@ void	GameEngine::init( const json& in ) {
 		std::cout << entities[i].dump() << std::endl;
 		buildNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
 	}
+	return true;
 }
 
 void	GameEngine::stop( const std::string &reason ) {
