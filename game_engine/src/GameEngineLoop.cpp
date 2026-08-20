@@ -44,7 +44,6 @@ void	GameEngine::tick( void ) {
 			cur_player.invulnerability_cooldowns--;
 		}
 	}
-	// Prepare game win condition: stop the game when the boss is defeated
 	bool boss_is_alive = false;
     for (auto it = _entities.begin(); it != _entities.end(); ++it) {
         if ((*it)->getType() == EntityTypes::LORDGOOB) {

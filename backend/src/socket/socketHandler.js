@@ -152,16 +152,12 @@ module.exports = (io) => {
 				code: "GAME_END_PROCESSING_FAILED",
 				message: "Unable to complete the game end",
 			});
-		} finally {
-			try {
-				// TEMP: Forcing engine stop to ensure cleanup for now.
-				await gameEngineService.stopGame(roomId, "engine_error");
-			} catch (cleanupError) {
-				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
-			}
+		}
+		finally {
 			processingGameEnds.delete(roomId);
             console.log(`[GameEnd] Lock released for room: ${roomId}`);
 		}
+		await gameEngineService.destroyGame(roomId);
 	});
 	gameEngineService.on("entityDelete", (message) => {
 		const roomId = message?.roomId ?? message?.room;

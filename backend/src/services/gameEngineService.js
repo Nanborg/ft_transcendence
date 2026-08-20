@@ -50,7 +50,6 @@ class GameEngineService extends EventEmitter {
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
-        this.archivedSessions = new Map();
 		this.pingInterval = null;
 
         this.socket.on("message", (buffer, remoteInfo) => {
@@ -141,7 +140,7 @@ class GameEngineService extends EventEmitter {
     }
 
     getSession(roomId) {
-        return this.sessions.get(roomId) || this.archivedSessions.get(roomId) || null;
+        return this.sessions.get(roomId) || null;
     }
 
     cacheEntityUpdate(roomId, entity, tick) {
@@ -455,20 +454,25 @@ class GameEngineService extends EventEmitter {
             roomId,
             playerId: player.enginePlayerId,
         });
-        session.players.splice(playerIndex, 1);
     }
 
     async stopGame(roomId, reason) {
         const session = this.getSession(roomId);
         if (!session)
             return;
-        let firstError = null;
         try {
             await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, roomId, reason });
         } catch (error) {
-            firstError = error;
             console.log(`Unable to stop room ${roomId}:`, error);
+            throw error;
         }
+    }
+
+    async destroyGame(roomId){
+        const session = this.getSession(roomId);
+        if (!session)
+            return;
+        let firstError = null;
         try {
             await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, roomId });
         } catch (error) {
@@ -484,15 +488,7 @@ class GameEngineService extends EventEmitter {
     }
 
     removeSession(roomId) {
-        const sessionData = this.sessions.get(roomId);
-        if (sessionData) {
-            // TEMP: Keeping session for 30s to preserve ID mapping. To be revisited when the gameEnd flow is final.
-            this.archivedSessions.set(roomId, sessionData);
-            this.sessions.delete(roomId);
-            setTimeout(() => {
-                this.archivedSessions.delete(roomId);
-            }, 30000);
-        }
+        this.sessions.delete(roomId);
     }
 
     ping() {
