@@ -1,5 +1,4 @@
 const prisma = require("../db");
-const { gameEngineService } = require("../services/gameEngineService");
 const playerInputs = new Map();
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 4;
@@ -385,12 +384,20 @@ async function startGame(roomId, userId) {
     }
     await prisma.room.update({
         where: { id: roomId },
-        data: { status: "starting" },
+        data: { status: "preparing" },
     });
     return {
         room: await getRoom(roomId),
         error: null,
     };
+}
+
+async function markGamePlaying(roomId) {
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "playing" },
+    });
+    return getRoom(roomId);
 }
 
 async function setPlayerInput(roomId, userId, input) {
@@ -402,7 +409,7 @@ async function setPlayerInput(roomId, userId, input) {
             error: "Room not found",
         };
     }
-    if (room.status !== "starting" && room.status !== "playing") {
+    if (room.status !== "playing") {
         return {
             room,
             error: "Game is not started",
@@ -517,6 +524,7 @@ module.exports = {
     getPlayerInRoom,
     setPlayerReady,
     startGame,
+    markGamePlaying,
     setPlayerInput,
     getRoomsByUserId,
     resetGameStart,

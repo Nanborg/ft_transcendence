@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, markGamePlaying, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
@@ -283,6 +283,7 @@ module.exports = (io) => {
 					return;
 				}
 				let engineSession;
+				io.to(roomId).emit("room:update", room);
 
 				try {
 					engineSession = await gameEngineService.startGame(room);
@@ -297,19 +298,20 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				const playingRoom = await markGamePlaying(roomId);
 
-				io.to(roomId).emit("room:update", room);
+				io.to(roomId).emit("room:update", playingRoom);
 				io.to(roomId).emit("game:start", {
-					roomId: room.id,
-					status: room.status,
-					players: room.players,
+					roomId: playingRoom.id,
+					status: playingRoom.status,
+					players: playingRoom.players,
 					enginePlayers: engineSession.players,
 					timestamp: Date.now(),
 				});
 				const initialState = gameEngineService.getStateSnapshot(roomId);
 				if (initialState)
 					io.to(roomId).emit("game:state:init", initialState);
-				console.log(`game starting in room ${room.id}`);
+				console.log(`game starting in room ${playingRoom.id}`);
 			} catch (error) {
 				socket.emit("room:error", {
 					event: "game:start",
