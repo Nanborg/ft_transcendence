@@ -2,8 +2,8 @@ const connections = new Map();
 const RECONNECT_GRACE_PERIOD_MS = 30_000;
 function addConnection(userId, socket) {
     const existingConnection = getConnection(userId);
-
-    if (existingConnection?.reconnectTimer) {
+    const keepReconnectTimer = existingConnection?.keepOnReconnect === true;
+    if (existingConnection?.reconnectTimer && !keepReconnectTimer) {
         clearTimeout(existingConnection.reconnectTimer);
     }
     if (existingConnection?.socket && existingConnection.socket.id !== socket.id) {
@@ -15,8 +15,9 @@ function addConnection(userId, socket) {
     connections.set(userId, {
         socket,
         connectedAt: Date.now(),
-        disconnectedAt: null,
-        reconnectTimer: null,
+        disconnectedAt: keepReconnectTimer ? existingConnection.disconnectedAt : null,
+        reconnectTimer: keepReconnectTimer ? existingConnection.reconnectTimer : null,
+        keepOnReconnect: keepReconnectTimer,
     });
 }
 
@@ -37,7 +38,7 @@ function getConnection(userId) {
     return connections.get(userId);
 }
 
-function scheduleDisconnect(userId, socketId, callback) {
+function scheduleDisconnect(userId, socketId, callback, keepOnReconnect = false) {
     const connection = getConnection(userId);
 
     if (!connection || connection.socket.id !== socketId) {
@@ -47,9 +48,10 @@ function scheduleDisconnect(userId, socketId, callback) {
         clearTimeout(connection.reconnectTimer);
     }
     connection.disconnectedAt = Date.now();
+    connection.keepOnReconnect = keepOnReconnect;
     connection.reconnectTimer = setTimeout(async () => {
         const latestConnection = getConnection(userId);
-        if (!latestConnection || latestConnection.socket.id !== socketId) {
+        if (!latestConnection || (!latestConnection.keepOnReconnect && latestConnection.socket.id !== socketId)) {
             return;
         }
         try {
@@ -61,6 +63,8 @@ function scheduleDisconnect(userId, socketId, callback) {
             );
         } finally {
             latestConnection.reconnectTimer = null;
+            latestConnection.keepOnReconnect = false;
+            latestConnection.disconnectedAt = null;
         }
     }, RECONNECT_GRACE_PERIOD_MS);
 }

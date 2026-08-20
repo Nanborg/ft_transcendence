@@ -275,7 +275,7 @@ export function useRoom(socket, currentUser) {
 			socket.emit("debug:latency:check", {
 			clientSentAt: Date.now(),
 			});
-		}, 15000); //15 secs
+		}, 15000); // 15 secs
 
   return () => clearInterval(interval);
 }, [socket]);

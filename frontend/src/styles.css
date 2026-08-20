@@ -489,7 +489,7 @@ p {
   font-weight: 700;
 }
 
-.game-hud--live {
+.game-hud-live {
   display: grid;
   width: min(100%, 900px);
   overflow: hidden;
@@ -500,7 +500,7 @@ p {
   box-shadow: 0 12px 30px rgba(2, 6, 23, 0.25);
 }
 
-.game-hud__summary {
+.game-hud-summary {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -511,7 +511,7 @@ p {
   background: #0f1d2e;
 }
 
-.game-hud__status {
+.game-hud-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -519,7 +519,7 @@ p {
   color: #86efac;
 }
 
-.game-hud__status-dot {
+.game-hud-status-dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -527,12 +527,12 @@ p {
   box-shadow: 0 0 10px #22c55e;
 }
 
-.game-hud__stats {
+.game-hud-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.game-hud__stat {
+.game-hud-stat {
   display: grid;
   gap: 4px;
   min-width: 0;
@@ -540,18 +540,30 @@ p {
   border-right: 1px solid #1e3a5f;
 }
 
-.game-hud__stat:last-child {
+.game-hud-stat:last-child {
   border-right: 0;
 }
 
-.game-hud__stat span {
+.game-hud-stat span {
   color: #94a3b8;
   font-size: 0.8rem;
 }
 
-.game-hud__stat strong {
+.game-hud-stat strong {
   overflow-wrap: anywhere;
   color: #f8fafc;
+}
+
+.game-hud-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.game-hud-gold img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .skill-slot {
@@ -617,31 +629,31 @@ p {
 }
 
 @media (max-width: 760px) {
-  .game-hud__stats {
+  .game-hud-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .game-hud__stat {
+  .game-hud-stat {
     border-bottom: 1px solid #1e3a5f;
   }
 }
 
 @media (max-width: 480px) {
-  .game-hud__stats {
+  .game-hud-stats {
     grid-template-columns: 1fr;
   }
 
-  .game-hud__summary {
+  .game-hud-summary {
     align-items: flex-start;
     flex-direction: column;
   }
 
-  .game-hud__stat {
+  .game-hud-stat {
     border-right: 0;
   }
 }
 
-.game-fullscreen .game-hud--live {
+.game-fullscreen .game-hud-live {
   position: absolute;
   z-index: 2;
   top: 16px;
@@ -710,6 +722,7 @@ p {
 .checkpoint-upgrade-list button {
   display: grid;
   gap: 0.5rem;
+  justify-items: start;
   width: 100%;
   min-height: 120px;
   padding: 1rem;
@@ -727,8 +740,31 @@ p {
 }
 
 .checkpoint-upgrade-list button:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.6;
+}
+
+.checkpoint-upgrade-list button:disabled:not(.upgrade-unavailable) {
+  cursor: wait;
+}
+
+.checkpoint-upgrade-list button.upgrade-unavailable {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.upgrade-preview-icon {
+  width: 48px;
+  height: 48px;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: rgba(15, 23, 42, 0.8);
+  background-repeat: no-repeat;
+  background-size: 300% 400%;
+}
+
+.upgrade-unavailable .upgrade-preview-icon {
+  filter: grayscale(1);
 }
 
 .checkpoint-upgrade-list strong {

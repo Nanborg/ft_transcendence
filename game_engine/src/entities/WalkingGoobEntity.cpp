@@ -16,6 +16,7 @@ WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
 	_attackDirX(0),
 	_attackDirY(1)
 {
+  setGold(10);
 	_state["action"] = "idle";
 	_state["attackFrame"] = -1;
 	_state["dirX"] = _attackDirX;
@@ -26,7 +27,7 @@ WalkingGoobEntity::~WalkingGoobEntity( void ) {}
 
 bool WalkingGoobEntity::canPassThroughPlayer( void ) const
 {
-        return _attackFrame >= 1 || _attackFrame <= 3;
+        return _attackFrame >= 1 && _attackFrame <= 3;
 }
 
 void WalkingGoobEntity::_start_attack( const AbstractEntity* target )

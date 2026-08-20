@@ -11,6 +11,7 @@ const int	ShootingGoobEntity::_shootAnimationFrames = 4;
 ShootingGoobEntity::ShootingGoobEntity( int posX, int posY ):
 	AbstractMovingEntity(EntityTypes::SHOOTINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false), _shootCooldown(0), _shootFrame(-1), _dirX(0), _dirY(1)
 {
+  setGold(15);
 	_state["action"] = "idle";
 	_state["shootFrame"] = -1;
 	_state["dirX"] = _dirX;

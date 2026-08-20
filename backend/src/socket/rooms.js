@@ -217,7 +217,6 @@ async function leaveRoom(roomId, userId) {
         await prisma.room.delete({
             where: { id: roomId },
         });
-        gameEngineService.removeSession(roomId);
         return null;
     }
     if (room.ownerId === userId) {
@@ -257,7 +256,6 @@ async function leaveAllRooms(userId) {
             await prisma.room.delete({
                 where: { id: roomId }
             });
-            gameEngineService.removeSession(roomId);
             removedRoomIds.push(roomId);
             continue;
         }

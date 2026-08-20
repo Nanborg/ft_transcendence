@@ -32,8 +32,8 @@ public:
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
-	void	applyDamage(AbstractEntity* entity, int damage);
 	bool	canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const;
+	void	applyDamage(AbstractEntity* entity, int damage, int attackerId = -1);
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );
 	entityList_t::iterator	getEntityIterator( int entityId );
@@ -83,6 +83,9 @@ public:
         bool        atACheckpoint;
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
+		int			gold;
+		int			damageDealt;
+		int			damageReceived;
 
         PlayerUpgrades  upgrades;
         PlayerCooldowns cooldowns;

@@ -3,7 +3,7 @@
 #include "enumEntityTypes.h"
 #include <iostream>
 
-AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox ):
+AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold ):
 	_typeId(type),
 	_id(g_game->newId()),
 	_size(size),
@@ -12,7 +12,8 @@ AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, 
 	_velX(0),
 	_velY(0),
 	_health(health),
-	_passableHitBox(passableHitBox) {}
+	_passableHitBox(passableHitBox),
+	_gold(gold) {}
 
 AbstractEntity::~AbstractEntity( void ) {}
 
@@ -41,6 +42,7 @@ json AbstractEntity::toJson( void ) const {
 	entityJson["velX"] = _velX;
 	entityJson["velY"] = _velY;
 	entityJson["health"] = _health;
+	entityJson["gold"] = _gold;
 	entityJson["state"] = _state;
 
 	return entityJson;
@@ -76,12 +78,14 @@ int		AbstractEntity::getPosY( void ) const { return _posY; }
 int		AbstractEntity::getVelX( void ) const { return _velX; }
 int		AbstractEntity::getVelY( void ) const { return _velY; }
 int		AbstractEntity::getHealth( void ) const { return _health; }
+int		AbstractEntity::getGold( void ) const { return _gold; }
 bool	AbstractEntity::getPassableHitBox( void ) const { return _passableHitBox; }
 
 void	AbstractEntity::setSize( int size ) { _size = size; }
 void	AbstractEntity::setPosX( int posX ) { _posX = posX; }
 void	AbstractEntity::setPosY( int posY ) { _posY = posY; }
 void	AbstractEntity::setHealth( int health ) { _health = health; }
+void	AbstractEntity::setGold( int gold ) { _gold = gold; }
 void	AbstractEntity::setPassableHitBox( bool passableHitBox ) { _passableHitBox = passableHitBox; }
 
 unsigned int AbstractEntity::distance( int posX, int posY ) const {

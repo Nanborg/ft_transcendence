@@ -71,14 +71,26 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
               >
                 {currentPlayer?.ready ? 'Not ready' : 'Ready'}
               </button>
-              <button
-                type="button"
-                className="room-start-button"
-                onClick={startGame}
-                disabled={!canStartGame}
-              >
-                Start game
-              </button>
+              {currentRoom.status === 'starting' ? (
+                <button
+                  type="button"
+                  className="room-reconnect-button"
+                  onClick={() => socket.emit('game:resync', { roomId: currentRoom.id })}
+                  disabled={isDisabled}
+                  style={{ backgroundColor: 'orange', color: 'white' }}
+                >
+                  Reconnect
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="room-start-button"
+                  onClick={startGame}
+                  disabled={!canStartGame}
+                >
+                  Start game
+                </button>
+              )}
               <button type="button" onClick={leaveRoom}>
                 Leave room
               </button>

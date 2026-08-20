@@ -5,8 +5,20 @@ void	GameEngine::tick( void ) {
 	_loop_tickPlayerCooldowns();
 	_loop_processInputs();
 	_loop_tickEntities();
-	_updateCheckpointProximity();
+	if (_tick % 10 == 0) _updateCheckpointProximity();
+
 	_tick++;
+	int deadPlayers = 0;
+    for(size_t i = 0; i < _playerData.size(); i++)
+	{
+        if (_playerData[i].alive == false)
+            deadPlayers++;
+    }
+	if (_playerData.size() > 0 && deadPlayers == _playerData.size()) {
+        stop("all_players_dead");
+        g_game = NULL;
+        return;
+    }
 	for(int i = 0; i < _playerData.size(); i++)
 	{
 		PlayerData &cur_player = _playerData[i];
@@ -19,6 +31,7 @@ void	GameEngine::tick( void ) {
 				cur_player.alive = true;
 				cur_player.respawnPending = false;
 				PlayerEntity *player = new PlayerEntity(cur_player.playerId, cur_player.death_posX, cur_player.death_posY, 0, 0);
+				player->setGold(cur_player.gold);
 				sendEntityUpdate(player);
 				_entities.push_front(entityPtr_t(player));
 				cur_player.invulnerability_cooldowns = 50;
@@ -32,10 +45,18 @@ void	GameEngine::tick( void ) {
 			cur_player.invulnerability_cooldowns--;
 		}
 	}
-	// TEMP: Simulating a boss defeat after 15 seconds.
-	if (_tick >= 150000 && _running) {
-		stop("boss_defeated");
-	}
+	bool boss_is_alive = false;
+    for (auto it = _entities.begin(); it != _entities.end(); ++it) {
+        if ((*it)->getType() == EntityTypes::LORDGOOB) {
+            boss_is_alive = true;
+            break;
+        }
+    }
+    if (_tick > 50 && boss_is_alive == false && _running) {
+        stop("boss_defeated");
+        g_game = NULL;
+        return;
+    }
 	g_game = NULL;
 }
 
@@ -78,35 +99,35 @@ void GameEngine::_loop_processInputs(void)
 void GameEngine::_updateCheckpointProximity(void)
 {
 	unsigned int checkpointRange = getScale() * CHECKPOINT_RANGE;
-	
+
 	for (size_t i = 0; i < _playerData.size(); i++)
 	{
 		PlayerData& player = _playerData[i];
-		
+
 		if (!player.alive)
 			continue;
-		
+
 		if (_playerIds.count(player.playerId) == 0)
 			continue;
-		
+
 		int entityId = _playerIds[player.playerId];
 		entityList_t::iterator playerIt = getEntityIterator(entityId);
-		
+
 		if (playerIt == _entities.end())
 			continue;
-		
+
 		AbstractEntity* playerEntity = playerIt->get();
-		
+
 		AbstractEntity* nearestCheckpoint = getNearestEntityOfType(
 			EntityTypes::CHECKPOINT, playerEntity->getPosX(), playerEntity->getPosY());
-		
+
 		bool wasAtCheckpoint = player.atACheckpoint;
 		bool isAtCheckpoint = false;
 		if (nearestCheckpoint)
 		{
 			unsigned int distToCheckpoint = nearestCheckpoint->distance(
 				playerEntity->getPosX(), playerEntity->getPosY());
-			
+
 			isAtCheckpoint = (distToCheckpoint < checkpointRange);
 			// std::cout << "Is pthe player at a Checkpoint: " << isAtCheckpoint << std::endl;
 		}

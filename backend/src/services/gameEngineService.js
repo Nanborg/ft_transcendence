@@ -50,7 +50,6 @@ class GameEngineService extends EventEmitter {
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
-        this.archivedSessions = new Map();
 		this.pingInterval = null;
 
         this.socket.on("message", (buffer, remoteInfo) => {
@@ -141,7 +140,7 @@ class GameEngineService extends EventEmitter {
     }
 
     getSession(roomId) {
-        return this.sessions.get(roomId) || this.archivedSessions.get(roomId) || null;
+        return this.sessions.get(roomId) || null;
     }
 
     cacheEntityUpdate(roomId, entity, tick) {
@@ -389,12 +388,42 @@ class GameEngineService extends EventEmitter {
         }
     }
 
+	/// if n is a natural number (0 included), return the n th map, otherwise it return a random one
+	async randomMap(n)
+	{
+		const mapsDir = path.join(__dirname, "../game/maps");
+		const files = await fs.readdir(mapsDir);
+		const maps = files.filter(file => /^(\d+)_map_.*\.txt$/.test(file))
+			.sort((a, b) => {
+				const na = parseInt(a.match(/^(\d+)_/)[1]);
+				const nb = parseInt(b.match(/^(\d+)_/)[1]);
+				return (na - nb);
+			});
+	
+		if (maps.length === 0)
+			throw new Error(`No map files found in ${mapsDir}`);
+	
+		let mapIndex;
+		if (n >= 0)
+		{
+			if (n >= maps.length)
+				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
+	
+			mapIndex = n;
+		}
+		else
+			mapIndex = Math.floor(Math.random() * maps.length);
+	
+		return path.join(mapsDir, maps[mapIndex]);
+	}
+
+
     async startGame(room) {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
         let roomCreated = false;
         const mapPayload = mapConv(
-            path.join(__dirname, "../game/maps/1_map_50_50_10_5_54.txt"),
+        	await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
             room.id
         );
         session.map = {
@@ -468,20 +497,25 @@ class GameEngineService extends EventEmitter {
             roomId,
             playerId: player.enginePlayerId,
         });
-        session.players.splice(playerIndex, 1);
     }
 
     async stopGame(roomId, reason) {
         const session = this.getSession(roomId);
         if (!session)
             return;
-        let firstError = null;
         try {
             await this.send({ type: ENGINE_INPUT_TYPE.ROOM_STOP, roomId, reason });
         } catch (error) {
-            firstError = error;
             console.log(`Unable to stop room ${roomId}:`, error);
+            throw error;
         }
+    }
+
+    async destroyGame(roomId){
+        const session = this.getSession(roomId);
+        if (!session)
+            return;
+        let firstError = null;
         try {
             await this.send({ type: ENGINE_INPUT_TYPE.ROOM_DESTROY, roomId });
         } catch (error) {
@@ -497,15 +531,7 @@ class GameEngineService extends EventEmitter {
     }
 
     removeSession(roomId) {
-        const sessionData = this.sessions.get(roomId);
-        if (sessionData) {
-            // TEMP: Keeping session for 30s to preserve ID mapping. To be revisited when the gameEnd flow is final.
-            this.archivedSessions.set(roomId, sessionData);
-            this.sessions.delete(roomId);
-            setTimeout(() => {
-                this.archivedSessions.delete(roomId);
-            }, 30000);
-        }
+        this.sessions.delete(roomId);
     }
 
     ping() {

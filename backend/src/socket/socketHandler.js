@@ -3,6 +3,8 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 
+const processingGameEnds = new Set();
+
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
 // invalid payloads, disconnects, and multi-room isolation.
@@ -85,6 +87,12 @@ module.exports = (io) => {
 			console.error("Invalid gameEnd received from game engine:", message);
 			return;
 		}
+		if (processingGameEnds.has(roomId))
+		{
+            console.log(`[GameEnd] Duplicate event ignored for room: ${roomId}`);
+            return;
+        }
+		processingGameEnds.add(roomId);
 		const snapshot = gameEngineService.getStateSnapshot(roomId);
 		const endedAt = Date.now();
 		const serverStartedAt = snapshot?.serverStartedAt;
@@ -144,14 +152,12 @@ module.exports = (io) => {
 				code: "GAME_END_PROCESSING_FAILED",
 				message: "Unable to complete the game end",
 			});
-		} finally {
-			try {
-				// TEMP: Forcing engine stop to ensure cleanup for now.
-				await gameEngineService.stopGame(roomId, "engine_error");
-			} catch (cleanupError) {
-				console.error(`Unable to stop engine room ${roomId}:`, cleanupError);
-			}
 		}
+		finally {
+			processingGameEnds.delete(roomId);
+            console.log(`[GameEnd] Lock released for room: ${roomId}`);
+		}
+		await gameEngineService.destroyGame(roomId);
 	});
 	gameEngineService.on("entityDelete", (message) => {
 		const roomId = message?.roomId ?? message?.room;
@@ -342,6 +348,22 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				const room = await getRoom(roomId);
+				const engineSession = gameEngineService.getSession(room.id);
+				const connection = getConnection(socket.user.id);
+				if (connection?.reconnectTimer && connection.keepOnReconnect) {
+					clearTimeout(connection.reconnectTimer);
+					connection.reconnectTimer = null;
+					connection.keepOnReconnect = false;
+					connection.disconnectedAt = null;
+				}
+				socket.emit("game:start", {
+					roomId: room.id,
+					status: room.status,
+					players: room.players,
+					enginePlayers: engineSession.players,
+					timestamp: Date.now(),
+				});
 				socket.emit("game:state:init", snapshot);
 			} catch (error) {
 				console.error(`Unable to resync game state for room ${roomId}:`, error);
@@ -672,8 +694,6 @@ module.exports = (io) => {
 
 		socket.on("disconnect", async () => {
 			try {
-				// TODO(princiamf2): Define in-game disconnect behavior
-				// (forfeit, end game, or keep room alive during reconnect window).
 				const stopInput = {
     				up: false,
     				down: false,
@@ -681,6 +701,7 @@ module.exports = (io) => {
     				right: false
 				};
 				const userRooms = await getRoomsByUserId(socket.user.id);
+				const keepOnReconnect = userRooms.some((room) => gameEngineService.getSession(room.id));
 				for (const room of userRooms) {
                 	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
                 }
@@ -691,7 +712,8 @@ module.exports = (io) => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
 						for (const room of userRooms) {
 							try {
-								if (room.players.length <= 1) {
+								const engineSession = gameEngineService.getSession(room.id);
+								if (!engineSession || room.players.length <= 1) {
 									await gameEngineService.stopGame(room.id, "all_players_left");
 								}
 								else {
@@ -717,7 +739,8 @@ module.exports = (io) => {
 						console.log(
 							`user ${socket.user.id} removed after reconnect timeout`
 						);
-					}
+					},
+					keepOnReconnect
 				);
 			} catch (error) {
 				socket.emit("room:error", {

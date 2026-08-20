@@ -46,7 +46,7 @@ json ControllerIO::getMsg( void ) {
 
 void ControllerIO::sendMsg( std::string str ) {
 	int bytes = 0;
-	std::cout << "sending:\t\t" << str << std::endl;
+	// std::cout << "sending:\t\t" << str << std::endl; // DEBUG
 	while (!str.empty()) {
 		bytes = sendto(_sockfd, str.c_str(), MIN(str.length(), BUFFER_SIZE), 0, (struct sockaddr*) &_apiAddr, _apiSize);
 		if (bytes < 0)
