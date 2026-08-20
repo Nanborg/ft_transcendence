@@ -403,21 +403,21 @@ class GameEngineService extends EventEmitter {
 				const nb = parseInt(b.match(/^(\d+)_/)[1]);
 				return (na - nb);
 			});
-	
+
 		if (maps.length === 0)
 			throw new Error(`No map files found in ${mapsDir}`);
-	
+
 		let mapIndex;
 		if (n >= 0)
 		{
 			if (n >= maps.length)
 				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
-	
+
 			mapIndex = n;
 		}
 		else
 			mapIndex = Math.floor(Math.random() * maps.length);
-	
+
 		return path.join(mapsDir, maps[mapIndex]);
 	}
 
@@ -433,11 +433,23 @@ class GameEngineService extends EventEmitter {
             room.id
         );
         session.map = {
+            roomId: room.id,
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
-            entities: mapPayload.entities,
+            spawnX: mapPayload.spawnX,
+            spawnY: mapPayload.spawnY,
+            // Large static maps stay server-side until viewport streaming is implemented.
+            entities: [],
         };
+        session.entities.clear();
+        for (let index = 0; index < mapPayload.entities.length; index += 1)
+        {
+            const mapEntity = mapPayload.entities[index];
+            if (!mapEntity || typeof mapEntity !== "object")
+                continue;
+            session.entities.set(index, {...mapEntity, entityId: index, });
+        }
         try {
             session.engineMapFile = await this.writeMapPayload(mapPayload);
             await this.send({
@@ -450,9 +462,7 @@ class GameEngineService extends EventEmitter {
 
             roomCreated = true;
             await roomReadyPromise;
-            console.log(
-                `Game engine roomReady acknowledged for room ${room.id} after ${Date.now() - roomCreateStartedAt}ms`
-            );
+            console.log(`Game engine roomReady acknowledged for room ${room.id} after ${Date.now() - roomCreateStartedAt}ms`);
 
             for (const player of session.players) {
                 await this.send({
