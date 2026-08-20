@@ -51,7 +51,7 @@ void	GameEngine::sendEntityUpdate( const AbstractEntity* entity ) {
 	out["tick"] = _tick;
 	out["roomId"] = _roomId;
 	out["entity"] = entity->toJson();
-	// g_io->sendMsg(out.dump());
+	g_io->sendMsg(out.dump());
 }
 
 void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {

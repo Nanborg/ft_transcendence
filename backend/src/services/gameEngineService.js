@@ -376,21 +376,29 @@ class GameEngineService extends EventEmitter {
         }
     }
 
-/// if n is a natural number (0 included), return the n th map, otherwise it return a random one
+	/// if n is a natural number (0 included), return the n th map, otherwise it return a random one
 	async randomMap(n)
 	{
 		const mapsDir = path.join(__dirname, "../game/maps");
-	
 		const files = await fs.readdir(mapsDir);
-		const maps = files.filter(file => /^map_\d+\.txt$/.test(file));
+		const maps = files.filter(file => /^(\d+)_map_.*\.txt$/.test(file))
+			.sort((a, b) => {
+				const na = parseInt(a.match(/^(\d+)_/)[1]);
+				const nb = parseInt(b.match(/^(\d+)_/)[1]);
+				return (na - nb);
+			});
 	
 		if (maps.length === 0)
-			throw new Error("No map files found.");
+			throw new Error(`No map files found in ${mapsDir}`);
 	
 		let mapIndex;
-	
 		if (n >= 0)
-			mapIndex = n % maps.length;
+		{
+			if (n >= maps.length)
+				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
+	
+			mapIndex = n;
+		}
 		else
 			mapIndex = Math.floor(Math.random() * maps.length);
 	
@@ -403,7 +411,7 @@ class GameEngineService extends EventEmitter {
         const joinedPlayerIds = [];
         let roomCreated = false;
         const mapPayload = mapConv(
-        	// await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
+        	await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
             room.id
         );
         session.map = {
