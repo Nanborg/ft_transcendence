@@ -10,6 +10,7 @@ import playerIdleSpriteUrl from '../../assets/game/player/player-idle.png';
 import walkingRobotIdleSpriteUrl from '../../assets/game/enemies/walking-robot-idle.png';
 import shootingRobotIdleSpriteUrl from '../../assets/game/enemies/shooting-robot-idle.png';
 import lordGoobIdleSpriteUrl from '../../assets/game/enemies/lord-goob-idle.png';
+import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -44,6 +45,8 @@ walkingRobotSprite.src = walkingRobotSpriteUrl;
 const WALKING_ROBOT_IDLE_FRAME_DURATION_MS = 260;
 const walkingRobotIdleSprite = new Image();
 walkingRobotIdleSprite.src = walkingRobotIdleSpriteUrl;
+const walkingRobotChargeSprite = new Image();
+walkingRobotChargeSprite.src = walkingRobotChargeSpriteUrl;
 const SHOOTING_ROBOT_FRAME_COUNT = 4;
 const SHOOTING_ROBOT_FRAME_DURATION_MS = 140;
 const shootingRobotSprite = new Image();
@@ -130,6 +133,47 @@ const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.6114, 0.5658, 0.4994, 0.4390],
     [0.5802, 0.5498, 0.4711, 0.4088],
     [0.6024, 0.5529, 0.4590, 0.3916],
+]);
+const WALKING_ROBOT_WALK_ANCHOR_X = Object.freeze([
+    [0.6306, 0.5399, 0.4506, 0.4952],
+    [0.4777, 0.5272, 0.5207, 0.4760],
+    [0.5000, 0.5064, 0.4873, 0.4776],
+    [0.5000, 0.5000, 0.5016, 0.4712],
+]);
+const WALKING_ROBOT_WALK_ANCHOR_Y = Object.freeze([
+    [0.5924, 0.5987, 0.5876, 0.5462],
+    [0.5096, 0.4649, 0.4744, 0.4744],
+    [0.5239, 0.5350, 0.5318, 0.5048],
+    [0.5000, 0.5000, 0.5000, 0.4617],
+]);
+const WALKING_ROBOT_IDLE_ANCHOR_Y = Object.freeze([
+    [0.5481, 0.5769, 0.5481, 0.5481],
+    [0.5048, 0.4856, 0.5256, 0.4696],
+    [0.5064, 0.5129, 0.5000, 0.5064],
+    [0.5000, 0.4728, 0.4551, 0.5000],
+]);
+const WALKING_ROBOT_CHARGE_ANCHOR_X = Object.freeze([
+    [0.5048, 0.4505, 0.5844, 0.3882],
+    [0.5414, 0.6070, 0.5127, 0.5559],
+    [0.4713, 0.5719, 0.4904, 0.4984],
+    [0.5064, 0.5032, 0.4013, 0.4425],
+]);
+const WALKING_ROBOT_CHARGE_ANCHOR_Y = Object.freeze([
+    [0.5876, 0.7070, 0.5717, 0.7038],
+    [0.4521, 0.4473, 0.4201, 0.4505],
+    [0.5048, 0.5525, 0.5414, 0.5048],
+    [0.4617, 0.4489, 0.5383, 0.4617],
+]);
+const WALKING_ROBOT_CHARGE_OFFSET = Object.freeze([
+    0,
+    0.08,
+    0.28,
+    0.06,
+]);
+const WALKING_ROBOT_AFTERIMAGES = Object.freeze([
+    { distance: 0.25, opacity: 0.28 },
+    { distance: 0.5, opacity: 0.16 },
+    { distance: 0.75, opacity: 0.08 },
 ]);
 const SHOOTING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.5524, 0.5436, 0.5287, 0.4513],
@@ -549,24 +593,94 @@ function drawWalkingRobotSprite({
     now,
     directionRow,
 }) {
-    const isMoving = entity.velX !== 0 || entity.velY !== 0;
-    const sprite = isMoving ? walkingRobotSprite : walkingRobotIdleSprite;
+    const isCharging = entity.state?.action === 'charge';
+    const isMoving = !isCharging && (entity.velX !== 0 || entity.velY !== 0);
+    let sprite = walkingRobotIdleSprite;
+    let columns = WALKING_ROBOT_IDLE_COLUMNS;
+    let rows = WALKING_ROBOT_IDLE_ROWS;
+    let anchorXs = WALKING_ROBOT_IDLE_ANCHOR_X;
+    let anchorYs = WALKING_ROBOT_IDLE_ANCHOR_Y;
+    let frame = Math.floor(now / WALKING_ROBOT_IDLE_FRAME_DURATION_MS) % WALKING_ROBOT_FRAME_COUNT;
+    let renderDirectionRow = directionRow;
+
+    if (isCharging)
+    {
+        sprite = walkingRobotChargeSprite;
+        columns = SOURCE_GRID_1254_COLUMNS;
+        rows = SOURCE_GRID_1254_ROWS;
+        anchorXs = WALKING_ROBOT_CHARGE_ANCHOR_X;
+        anchorYs = WALKING_ROBOT_CHARGE_ANCHOR_Y;
+        const engineFrame = Number(entity.state?.attackFrame);
+        frame = Number.isInteger(engineFrame)
+            ? Math.max(0, Math.min(
+                WALKING_ROBOT_FRAME_COUNT - 1,
+                engineFrame
+            ))
+            : 0;
+        const dirX = Number(entity.state?.dirX);
+        const dirY = Number(entity.state?.dirY);
+        if (dirX < 0)
+            renderDirectionRow = 1;
+        else if (dirX > 0)
+            renderDirectionRow = 2;
+        else if (dirY < 0)
+            renderDirectionRow = 3;
+        else
+            renderDirectionRow = 0;
+    }
+    else if (isMoving)
+    {
+        sprite = walkingRobotSprite;
+        columns = SOURCE_GRID_1254_COLUMNS;
+        rows = SOURCE_GRID_1254_ROWS;
+        anchorXs = WALKING_ROBOT_WALK_ANCHOR_X;
+        anchorYs = WALKING_ROBOT_WALK_ANCHOR_Y;
+        frame = Math.floor(now / WALKING_ROBOT_FRAME_DURATION_MS) %
+            WALKING_ROBOT_FRAME_COUNT;
+    }
+
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
-    const frameDuration = isMoving ? WALKING_ROBOT_FRAME_DURATION_MS : WALKING_ROBOT_IDLE_FRAME_DURATION_MS;
-    const frame = Math.floor(
-        now / frameDuration
-    ) % WALKING_ROBOT_FRAME_COUNT;
     const source = getSpriteSource({
-        columns: isMoving ? SOURCE_GRID_1254_COLUMNS : WALKING_ROBOT_IDLE_COLUMNS,
-        rows: isMoving ? SOURCE_GRID_1254_ROWS : WALKING_ROBOT_IDLE_ROWS,
+        columns,
+        rows,
         frame,
-        directionRow,
-        anchorXs: isMoving ? null : WALKING_ROBOT_IDLE_ANCHOR_X,
+        directionRow: renderDirectionRow,
+        anchorXs,
+        anchorYs,
     });
     const spriteSize = tilePixels * 1.7;
     const centerX = screen.x;
     const centerY = screen.y;
+
+    if (isCharging && frame >= 1 && frame <= 2)
+    {
+        const dirX = Number(entity.state?.dirX) || 0;
+        const dirY = Number(entity.state?.dirY) || 0;
+
+        for (const afterimage of WALKING_ROBOT_AFTERIMAGES)
+        {
+            const ghostCenterX =
+                centerX - dirX * tilePixels * afterimage.distance;
+            const ghostCenterY =
+                centerY - dirY * tilePixels * afterimage.distance;
+
+            context.save();
+            context.globalAlpha = afterimage.opacity;
+            context.drawImage(
+                sprite,
+                source.x,
+                source.y,
+                source.width,
+                source.height,
+                ghostCenterX - source.anchorX * spriteSize,
+                ghostCenterY - source.anchorY * spriteSize,
+                spriteSize,
+                spriteSize,
+            );
+            context.restore();
+        }
+    }
 
     context.drawImage(
         sprite,
@@ -575,7 +689,7 @@ function drawWalkingRobotSprite({
         source.width,
         source.height,
         centerX - source.anchorX * spriteSize,
-        centerY - spriteSize / 2,
+        centerY - source.anchorY * spriteSize,
         spriteSize,
         spriteSize,
     );
@@ -944,6 +1058,9 @@ function drawEntity({
                 Math.PI * 2
             );
             context.fill();
+            break;
+
+        case ENTITY_TYPE.ENEMY_MELEE:
             break;
 
         case ENTITY_TYPE.CHECKPOINT:

@@ -1,5 +1,6 @@
 #include "GameEngine.hpp"
 #include "AbstractHitboxEntity.hpp"
+#include "entities/WalkingGoobEntity.hpp"
 #include "enumEntityTypes.h"
 
 GameEngine::GameEngine( const std::string& roomId ):
@@ -301,6 +302,26 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+		if (
+			entity->getType() == EntityTypes::WALKINGGOOB &&
+			other->getType() == EntityTypes::PLAYERENTITY
+		)
+		{
+			WalkingGoobEntity* walkingGoob =
+				static_cast<WalkingGoobEntity*>(entity);
+			if (walkingGoob->canPassThroughPlayer())
+				continue;
+		}
+		if (
+			entity->getType() == EntityTypes::PLAYERENTITY &&
+			other->getType() == EntityTypes::WALKINGGOOB
+		)
+		{
+			WalkingGoobEntity* walkingGoob =
+				static_cast<WalkingGoobEntity*>(other);
+			if (walkingGoob->canPassThroughPlayer())
+				continue;
+		}
 		if (other->getType() == EntityTypes::LASERSHIELD)
 		{
 			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
@@ -358,6 +379,9 @@ AbstractEntity*	GameEngine::buildNewEntity( int typeId, int posX, int posY, int 
 		return NULL;
 
 	case EntityTypes::ENEMYPROJECTILE:
+		return NULL;
+
+	case EntityTypes::ENEMYMELEE:
 		return NULL;
 
 	case EntityTypes::CHECKPOINT:

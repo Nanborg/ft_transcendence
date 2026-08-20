@@ -63,6 +63,7 @@ EntityFactions AbstractEntity::getFaction( void ) const
 		case EntityTypes::LORDGOOB:
 		case EntityTypes::BOSSPROJECTILE:
 		case EntityTypes::ENEMYPROJECTILE:
+		case EntityTypes::ENEMYMELEE:
 			return EntityFactions::ENEMY_FACTION;
 		default:
 			return EntityFactions::NEUTRAL_FACTION;

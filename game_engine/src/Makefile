@@ -16,6 +16,7 @@ ENTITIES = \
 	entities/LaserShieldEntity.cpp \
 	entities/BossProjectileEntity.cpp \
 	entities/EnemyProjectileEntity.cpp \
+	entities/EnemyMeleeEntity.cpp \
 	entities/CheckpointEntity.cpp \
 	entities/SpawnPointEntity.cpp \
 

@@ -19,6 +19,7 @@ export const ENTITY_TYPE = Object.freeze({
     LASER_SHIELD: 202,
     BOSS_PROJECTILE: 203,
     ENEMY_PROJECTILE: 204,
+    ENEMY_MELEE: 205,
 
     CHECKPOINT: 300,
     SPAWN_POINT: 301,
