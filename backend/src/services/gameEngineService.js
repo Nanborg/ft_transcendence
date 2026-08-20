@@ -275,6 +275,19 @@ class GameEngineService extends EventEmitter {
             throw new Error("Engine player mapping not found");
         if (!Object.values(PLAYER_ACTION).includes(action))
             throw new TypeError("Invalid player action");
+        const requiresDirection =
+            action === PLAYER_ACTION.MELEE ||
+            action === PLAYER_ACTION.RANGED;
+        const hasInvalidDirection =
+            !Number.isInteger(direction.dirX) ||
+            !Number.isInteger(direction.dirY) ||
+            direction.dirX < -1 ||
+            direction.dirX > 1 ||
+            direction.dirY < -1 ||
+            direction.dirY > 1 ||
+            (direction.dirX === 0 && direction.dirY === 0);
+        if (requiresDirection && hasInvalidDirection)
+            throw new TypeError("Invalid player attack direction");
         return this.send({
             type: ENGINE_INPUT_TYPE.ACTION,
             roomId,
@@ -379,6 +392,36 @@ class GameEngineService extends EventEmitter {
         }
     }
 
+	/// if n is a natural number (0 included), return the n th map, otherwise it return a random one
+	async randomMap(n)
+	{
+		const mapsDir = path.join(__dirname, "../game/maps");
+		const files = await fs.readdir(mapsDir);
+		const maps = files.filter(file => /^(\d+)_map_.*\.txt$/.test(file))
+			.sort((a, b) => {
+				const na = parseInt(a.match(/^(\d+)_/)[1]);
+				const nb = parseInt(b.match(/^(\d+)_/)[1]);
+				return (na - nb);
+			});
+	
+		if (maps.length === 0)
+			throw new Error(`No map files found in ${mapsDir}`);
+	
+		let mapIndex;
+		if (n >= 0)
+		{
+			if (n >= maps.length)
+				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
+	
+			mapIndex = n;
+		}
+		else
+			mapIndex = Math.floor(Math.random() * maps.length);
+	
+		return path.join(mapsDir, maps[mapIndex]);
+	}
+
+
     async startGame(room) {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
@@ -386,7 +429,7 @@ class GameEngineService extends EventEmitter {
         const roomCreateStartedAt = Date.now();
         const roomReadyPromise = this.waitForRoomReady(room.id);
         const mapPayload = mapConv(
-            path.join(__dirname, "../game/maps/1_map_50_50_10_5_54.txt"),
+        	await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
             room.id
         );
         session.map = {

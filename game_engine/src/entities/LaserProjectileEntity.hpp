@@ -11,6 +11,7 @@ public:
 	~LaserProjectileEntity( void );
 private:
 	static const float	_speed;
+	static const int	_lifetimeTicks;
 };
 
 #endif

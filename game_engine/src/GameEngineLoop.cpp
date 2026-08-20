@@ -5,7 +5,8 @@ void	GameEngine::tick( void ) {
 	_loop_tickPlayerCooldowns();
 	_loop_processInputs();
 	_loop_tickEntities();
-	_updateCheckpointProximity();
+	if (_tick % 10 == 0) _updateCheckpointProximity();
+
 	_tick++;
 	int deadPlayers = 0;
     for(size_t i = 0; i < _playerData.size(); i++)

@@ -32,6 +32,7 @@ public:
 	~GameEngine( void );
 
 	bool	checkCollision( AbstractEntity* entity ) const;
+	bool	canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const;
 	void	applyDamage(AbstractEntity* entity, int damage, int attackerId = -1);
 
 	AbstractEntity*			getNearestEntityOfType( int typeId, int posX, int posY );

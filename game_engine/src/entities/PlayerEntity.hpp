@@ -17,6 +17,7 @@ public:
 
 private:
 
+	bool	_is_valid_attack_direction( const json& in ) const;
 	void	_action_melee( const json& in );
 	void	_action_range( const json& in );
 	void	_action_shield( const json& in );
