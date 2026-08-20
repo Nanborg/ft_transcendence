@@ -1,5 +1,7 @@
 #include "GameEngine.hpp"
 #include "AbstractHitboxEntity.hpp"
+#include "entities/WalkingGoobEntity.hpp"
+#include "enumEntityTypes.h"
 
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
@@ -271,6 +273,17 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
+bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const
+{
+	if (!attacker || !target)
+		return false;
+	const EntityFactions attackerFaction = attacker->getFaction();
+	const EntityFactions targetFaction = target->getFaction();
+	if (attackerFaction == EntityFactions::NEUTRAL_FACTION || targetFaction == EntityFactions::NEUTRAL_FACTION)
+		return false;
+	return attackerFaction != targetFaction;
+}
+
 void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 {
 	if (!entity || damage <= 0)
@@ -333,6 +346,26 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+		if (
+			entity->getType() == EntityTypes::WALKINGGOOB &&
+			other->getType() == EntityTypes::PLAYERENTITY
+		)
+		{
+			WalkingGoobEntity* walkingGoob =
+				static_cast<WalkingGoobEntity*>(entity);
+			if (walkingGoob->canPassThroughPlayer())
+				continue;
+		}
+		if (
+			entity->getType() == EntityTypes::PLAYERENTITY &&
+			other->getType() == EntityTypes::WALKINGGOOB
+		)
+		{
+			WalkingGoobEntity* walkingGoob =
+				static_cast<WalkingGoobEntity*>(other);
+			if (walkingGoob->canPassThroughPlayer())
+				continue;
+		}
 		if (other->getType() == EntityTypes::LASERSHIELD)
 		{
 			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
@@ -387,6 +420,12 @@ AbstractEntity*	GameEngine::buildNewEntity( int typeId, int posX, int posY, int 
 		return NULL;
 
 	case EntityTypes::BOSSPROJECTILE:
+		return NULL;
+
+	case EntityTypes::ENEMYPROJECTILE:
+		return NULL;
+
+	case EntityTypes::ENEMYMELEE:
 		return NULL;
 
 	case EntityTypes::CHECKPOINT:

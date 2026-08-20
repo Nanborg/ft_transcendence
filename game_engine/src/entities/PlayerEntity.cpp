@@ -1,4 +1,5 @@
 #include "PlayerEntity.hpp"
+#include <cmath>
 
 const float	PlayerEntity::_slashDist = 0.5f;
 const int	PlayerEntity::_meleeCooldownTicks = 10;
@@ -86,29 +87,35 @@ void PlayerEntity::playerAction( const json& in ) {
 	}
 }
 
+bool PlayerEntity::_is_valid_attack_direction( const json& in ) const
+{
+	if (in.count("dirX") == 0 || in.count("dirY") == 0)
+		return false;
+	if (!in["dirX"].is_number_integer() || !in["dirY"].is_number_integer())
+		return false;
+	const int dirX = in["dirX"];
+	const int dirY = in["dirY"];
+	if (dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
+		return false;
+	return dirX != 0 || dirY != 0;
+}
+
 void	PlayerEntity::_action_melee( const json& in ) {
 	if (_curAction != PlayerActions::NOACTION)
 		return;
-	if (!in["dirX"].is_number_integer())
-		return;
-	if (!in["dirY"].is_number_integer())
+	if (!_is_valid_attack_direction(in))
 		return;
 	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
 	if (!playerData || playerData->cooldowns.melee > 0)
 		return;
 	_curAction = PlayerActions::MELEEATT;
 
-	int dirX = in["dirX"], dirY = in["dirY"];
-	int dist = distance(_posX + dirX, _posY + dirY);
-	long posX = dirX * _slashDist, posY = dirY * _slashDist;
-	posX *= g_game->getScale();
-	posY *= g_game->getScale();
-	if (dist != 0) {
-		posX /= dist;
-		posY /= dist;
-	}
-	posX += _posX;
-	posY += _posY;
+	const int dirX = in["dirX"];
+	const int dirY = in["dirY"];
+	const double directionLength = std::sqrt(static_cast<double>(dirX * dirX + dirY * dirY));
+	const double slashDistance = static_cast<double>(g_game->getScale()) * _slashDist;
+	const long posX = _posX + static_cast<long>(dirX * slashDistance / directionLength);
+	const long posY = _posY + static_cast<long>(dirY * slashDistance / directionLength);
 	g_game->spawnEntity(new LaserSlashEntity(posX, posY, _id, 100));
 	playerData->cooldowns.melee = _meleeCooldownTicks;
 	g_game->sendPlayerStateUpdate(*playerData);
@@ -118,23 +125,17 @@ void	PlayerEntity::_action_melee( const json& in ) {
 void	PlayerEntity::_action_range( const json& in ) {
 	if (_curAction != PlayerActions::NOACTION)
 		return;
-	if (!in["dirX"].is_number_integer())
-		return;
-	if (!in["dirY"].is_number_integer())
+	if (!_is_valid_attack_direction(in))
 		return;
 	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
 	if (!playerData || playerData->cooldowns.ranged > 0)
 		return;
 	_curAction = PlayerActions::RANGEATT;
-	int dirX = in["dirX"], dirY = in["dirY"];
-	int dist = distance(_posX + dirX, _posY + dirY);
-	long velX = dirX, velY = dirY;
-	velX *= g_game->getScale();
-	velY *= g_game->getScale();
-	if (dist != 0) {
-		velX /= dist;
-		velY /= dist;
-	}
+	const int dirX = in["dirX"];
+	const int dirY = in["dirY"];
+	const double directionLength = std::sqrt(static_cast<double>(dirX * dirX + dirY * dirY));
+	const long velX = static_cast<long>(dirX * g_game->getScale() / directionLength);
+	const long velY = static_cast<long>(dirY * g_game->getScale() / directionLength);
 	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, 100));
 	playerData->cooldowns.ranged = _rangedCooldownTicks;
 	g_game->sendPlayerStateUpdate(*playerData);

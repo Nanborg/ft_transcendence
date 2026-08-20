@@ -399,18 +399,30 @@ module.exports = (io) => {
 				const hasDirection = Object.hasOwn(input, "dirX") || Object.hasOwn(input, "dirY");
 				const hasInvalidKey = inputKeys.some((key) => !validKeys.includes(key));
 				const hasInvalidMovement = hasMovement && movementKeys.some((key) => typeof input[key] !== "boolean");
-				const hasInvalidDirection =
-                    hasDirection &&
-                    (
-                        typeof input.dirX !== "number" ||
-                        typeof input.dirY !== "number"
-                    );
 				const normalizedAction =
 					typeof input.action === "boolean"
 						? input.action
 							? PLAYER_ACTION.MELEE
 							: PLAYER_ACTION.NONE
 						: input.action;
+				const requiresDirection =
+					hasAction &&
+					(
+						normalizedAction === PLAYER_ACTION.MELEE ||
+						normalizedAction === PLAYER_ACTION.RANGED
+					);
+				const hasInvalidDirection =
+                    hasDirection &&
+                    (
+                        !Number.isInteger(input.dirX) ||
+						!Number.isInteger(input.dirY) ||
+						input.dirX < -1 ||
+						input.dirX > 1 ||
+						input.dirY < -1 ||
+						input.dirY > 1 ||
+						(input.dirX === 0 && input.dirY === 0)
+                    );
+				const hasMissingDirection = requiresDirection && !hasDirection;
 				const hasInvalidAction = hasAction && !Object.values(PLAYER_ACTION).includes(normalizedAction);
 				if (
 					inputKeys.length === 0 ||
@@ -418,6 +430,7 @@ module.exports = (io) => {
 					hasInvalidKey ||
 					hasInvalidMovement ||
 					hasInvalidDirection ||
+					hasMissingDirection ||
 					hasInvalidAction
 				) {
 					socket.emit("room:error", {

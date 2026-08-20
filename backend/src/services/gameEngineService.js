@@ -271,6 +271,19 @@ class GameEngineService extends EventEmitter {
             throw new Error("Engine player mapping not found");
         if (!Object.values(PLAYER_ACTION).includes(action))
             throw new TypeError("Invalid player action");
+        const requiresDirection =
+            action === PLAYER_ACTION.MELEE ||
+            action === PLAYER_ACTION.RANGED;
+        const hasInvalidDirection =
+            !Number.isInteger(direction.dirX) ||
+            !Number.isInteger(direction.dirY) ||
+            direction.dirX < -1 ||
+            direction.dirX > 1 ||
+            direction.dirY < -1 ||
+            direction.dirY > 1 ||
+            (direction.dirX === 0 && direction.dirY === 0);
+        if (requiresDirection && hasInvalidDirection)
+            throw new TypeError("Invalid player attack direction");
         return this.send({
             type: ENGINE_INPUT_TYPE.ACTION,
             roomId,

@@ -1,5 +1,6 @@
 #include "AbstractEntity.hpp"
 #include "GameEngine.hpp"
+#include "enumEntityTypes.h"
 #include <iostream>
 
 AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold ):
@@ -49,6 +50,27 @@ json AbstractEntity::toJson( void ) const {
 
 unsigned int AbstractEntity::getId( void ) const { return _id; }
 unsigned int AbstractEntity::getType( void ) const { return _typeId; }
+EntityFactions AbstractEntity::getFaction( void ) const
+{
+	switch (_typeId)
+	{
+		case EntityTypes::PLAYERENTITY:
+		case EntityTypes::LASERSLASH:
+		case EntityTypes::LASERPROJECTILE:
+		case EntityTypes::LASERSHIELD:
+			return EntityFactions::PLAYER_FACTION;
+		case EntityTypes::WALKINGGOOB:
+		case EntityTypes::SHOOTINGGOOB:
+		case EntityTypes::TANKGOOB:
+		case EntityTypes::LORDGOOB:
+		case EntityTypes::BOSSPROJECTILE:
+		case EntityTypes::ENEMYPROJECTILE:
+		case EntityTypes::ENEMYMELEE:
+			return EntityFactions::ENEMY_FACTION;
+		default:
+			return EntityFactions::NEUTRAL_FACTION;
+	}
+}
 
 int		AbstractEntity::getSize( void ) const { return _size; }
 int		AbstractEntity::getPosX( void ) const { return _posX; }

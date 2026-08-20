@@ -94,14 +94,20 @@ export function GamePage({
     const currentGold = currentPlayer?.gold ?? 0;
     const currentPlayerEntityId = currentPlayer?.playerEntityId;
     const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
-    const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities) ? gameEntities.find(entity => entity.entityId === currentPlayerEntityId) : null;
-    const playerHealth = Number.isFinite(currentPlayerEntity?.health) ? Math.max(0, currentPlayerEntity.health) : null;
-    const realSkillLevels = {
+    const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities)
+        ? gameEntities.find(entity =>
+            entity.entityId === currentPlayer.playerEntityId
+        )
+        : null;
+    const playerHealth = Number.isFinite(currentPlayerEntity?.health)
+        ? Math.max(0, currentPlayerEntity.health)
+        : null;
+    const skillLevels = {
         melee: currentPlayer?.upgrades?.melee ?? 0,
         ranged: currentPlayer?.upgrades?.ranged ?? 0,
         shield: currentPlayer?.upgrades?.shield ?? 0,
     };
-    const skillLevels = realSkillLevels;
+
     const [pendingUpgrade, setPendingUpgrade] = useState(null);
     const [checkpointError, setCheckpointError] = useState('');
     const previousGoldRef = useRef(null);
