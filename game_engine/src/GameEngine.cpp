@@ -76,6 +76,8 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
 	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;
 	pData["cooldowns"]["shield"] = playerData.cooldowns.shield;
 	pData["gold"] = playerData.gold;
+	pData["damageDealt"] = playerData.damageDealt;
+	pData["damageReceived"] = playerData.damageReceived;
 	out["playerData"] = pData;
 	g_io->sendMsg(out.dump());
 }
@@ -108,6 +110,8 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.death_cooldowns = 100;
 	newPlayer.invulnerability_cooldowns = 0;
 	newPlayer.gold = 0;
+	newPlayer.damageDealt = 0;
+	newPlayer.damageReceived = 0;
 	newPlayer.death_posX = 0;
 	newPlayer.death_posY = 0;
 	_playerData.push_back(newPlayer);
@@ -185,6 +189,8 @@ json GameEngine::getAllPlayerDataAsJson( void )
 		pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
 		pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
 		pData["gold"] = _playerData[i].gold;
+		pData["damageReceived"] = _playerData[i].damageReceived;
+		pData["damageDealt"] = _playerData[i].damageDealt;
 		allPlayers.push_back(pData);
 	}
 	return allPlayers;
@@ -265,7 +271,7 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
-void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
+void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 {
 	if (!entity || damage <= 0)
 		return;
@@ -276,7 +282,15 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage)
 		PlayerData* player = getPlayerDataByEntityId(entity->getId());
 		if (!player || player->alive == false || player->invulnerability_cooldowns > 0)
 			return;
+		player->damageReceived += damage;
 	}
+	if (attackerId != -1)
+    {
+        PlayerData* attacker = getPlayerDataByEntityId(attackerId);
+        if (attacker) {
+            attacker->damageDealt += damage;
+        }
+    }
 	int nextHealth = entity->getHealth() - damage;
 	if (nextHealth <= 0)
 	{
