@@ -35,6 +35,7 @@ function mapConv(filePath, roomId) {
 	const unknownChars = new Set();
 
 	const SCALE = Math.floor((2 ** 31) / gridLines[0].length);
+	const HALF_SCALE = Math.floor(SCALE / 2);
 	const width = gridLines[0].length * SCALE;
 	const height = gridLines.length * SCALE;
 	// const SCALE = 1;
@@ -54,8 +55,8 @@ function mapConv(filePath, roomId) {
 
 			entities.push({
 				typeId: config.typeId,
-				posX: col * SCALE + SCALE / 2,
-				posY: row * SCALE + SCALE / 2,
+				posX: col * SCALE + HALF_SCALE,
+				posY: row * SCALE + HALF_SCALE,
 				velX: 0,
 				velY: 0,
 				state: { ...config.state },
@@ -71,8 +72,8 @@ function mapConv(filePath, roomId) {
 		width,
 		height,
 		scale: SCALE,
-		spawnX: spawn.x * SCALE + SCALE / 2,
-		spawnY: spawn.y * SCALE + SCALE / 2,
+		spawnX: spawn.x * SCALE + HALF_SCALE,
+		spawnY: spawn.y * SCALE + HALF_SCALE,
 		entities,
 	};
 
