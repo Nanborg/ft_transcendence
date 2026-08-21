@@ -7,6 +7,7 @@ const { mapConv } = require("../game/mapConv");
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || "gameplay-cpp";
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
 const DEFAULT_ENGINE_MAP_DIRECTORY = process.env.GAME_MAP_DIRECTORY || "/tmp/ft-transcendence-game-maps";
+const DEFAULT_ROOM_READY_TIMEOUT_MS = Number(process.env.GAME_ROOM_READY_TIMEOUT_MS || 180000);
 const ENGINE_INPUT_TYPE = Object.freeze({
     ROOM_CREATE: 0,
     ROOM_DESTROY: 1,
@@ -41,15 +42,18 @@ class GameEngineService extends EventEmitter {
         host = DEFAULT_ENGINE_HOST,
         port = DEFAULT_ENGINE_PORT,
         mapDirectory = DEFAULT_ENGINE_MAP_DIRECTORY,
+        roomReadyTimeoutMs = DEFAULT_ROOM_READY_TIMEOUT_MS,
     } = {}) {
         super();
 
         this.host = host;
         this.port = port;
         this.mapDirectory = mapDirectory;
+        this.roomReadyTimeoutMs = roomReadyTimeoutMs;
         this.socket = dgram.createSocket("udp4");
         this.started = false;
         this.sessions = new Map();
+		this.pendingRoomReady = new Map();
 		this.pingInterval = null;
 
         this.socket.on("message", (buffer, remoteInfo) => {
@@ -399,21 +403,21 @@ class GameEngineService extends EventEmitter {
 				const nb = parseInt(b.match(/^(\d+)_/)[1]);
 				return (na - nb);
 			});
-	
+
 		if (maps.length === 0)
 			throw new Error(`No map files found in ${mapsDir}`);
-	
+
 		let mapIndex;
 		if (n >= 0)
 		{
 			if (n >= maps.length)
 				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
-	
+
 			mapIndex = n;
 		}
 		else
 			mapIndex = Math.floor(Math.random() * maps.length);
-	
+
 		return path.join(mapsDir, maps[mapIndex]);
 	}
 
@@ -422,6 +426,7 @@ class GameEngineService extends EventEmitter {
         const session = this.createSession(room);
         const joinedPlayerIds = [];
         let roomCreated = false;
+        const roomReadyPromise = this.waitForRoomReady(room.id);
         const mapPayload = mapConv(
         	await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
             room.id
@@ -443,6 +448,7 @@ class GameEngineService extends EventEmitter {
             });
 
             roomCreated = true;
+            await roomReadyPromise;
 
             for (const player of session.players) {
                 await this.send({
@@ -482,6 +488,49 @@ class GameEngineService extends EventEmitter {
             this.removeSession(room.id);
             throw error;
         }
+    }
+
+    waitForRoomReady(roomId) {
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (pendingEntry)
+            return pendingEntry.promise;
+        let resolveRoomReady;
+        let rejectRoomReady;
+        const promise = new Promise((resolve, reject) => {
+            resolveRoomReady = resolve;
+            rejectRoomReady = reject;
+        });
+        this.pendingRoomReady.set(roomId, {
+            promise,
+            resolve: resolveRoomReady,
+            reject: rejectRoomReady,
+        });
+        setTimeout(() => {
+            const error = new Error(`Timed out waiting for roomReady for room ${roomId}`);
+            error.code = "ROOM_READY_TIMEOUT";
+            this.rejectRoomReady(roomId, error);
+        }, this.roomReadyTimeoutMs);
+        return promise;
+    }
+
+    resolveRoomReady(roomId, message)
+    {
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (!pendingEntry)
+            return false;
+        this.pendingRoomReady.delete(roomId);
+        pendingEntry.resolve(message);
+        return true;
+    }
+
+    rejectRoomReady(roomId, error)
+    {
+        const pendingEntry = this.pendingRoomReady.get(roomId);
+        if (!pendingEntry)
+            return false;
+        this.pendingRoomReady.delete(roomId);
+        pendingEntry.reject(error);
+        return true;
     }
 
     async removePlayer(roomId, userId) {
@@ -531,6 +580,7 @@ class GameEngineService extends EventEmitter {
     }
 
     removeSession(roomId) {
+        this.rejectRoomReady(roomId, new Error(`Room ${roomId} removed before roomReady`));
         this.sessions.delete(roomId);
     }
 
@@ -569,6 +619,14 @@ class GameEngineService extends EventEmitter {
             return;
         }
         this.emit("message", message, remoteInfo);
+		if (message.type === "roomReady" && typeof message.roomId === "string")
+			this.resolveRoomReady(message.roomId, message);
+        if (message.type === "roomInitFailed" && typeof message.roomId === "string")
+        {
+            const error = new Error(`Game engine init failed for room ${message.roomId}`);
+            error.code = "ROOM_INIT_FAILED";
+            this.rejectRoomReady(message.roomId, error);
+        }
         if (typeof message.type === "string")
             this.emit(message.type, message, remoteInfo);
     }

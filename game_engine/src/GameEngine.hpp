@@ -52,8 +52,7 @@ public:
 
 	const entityList_t&	getEntityList( void ) const;
 
-	void	init( const json& in );
-
+	bool	init( const json& in );
 	int		newId( void );
 	void	start( void );
 	void	stop( const std::string &reason );
