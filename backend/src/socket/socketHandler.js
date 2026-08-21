@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, markGamePlaying, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
@@ -274,7 +274,7 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId } = payload;
-				const { room, error } = await startGame(roomId, socket.user.id);
+				let { room, error } = await startGame(roomId, socket.user.id);
 				if (error) {
 					socket.emit("room:error", {
 						event: "game:start",
@@ -283,6 +283,7 @@ module.exports = (io) => {
 					return;
 				}
 				let engineSession;
+				io.to(roomId).emit("room:update", room);
 
 				try {
 					engineSession = await gameEngineService.startGame(room);
@@ -297,6 +298,7 @@ module.exports = (io) => {
 					});
 					return;
 				}
+				room = await markGamePlaying(roomId);
 
 				io.to(roomId).emit("room:update", room);
 				io.to(roomId).emit("game:start", {

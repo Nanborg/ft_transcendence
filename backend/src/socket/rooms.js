@@ -393,6 +393,14 @@ async function startGame(roomId, userId) {
     };
 }
 
+async function markGamePlaying(roomId) {
+    await prisma.room.update({
+        where: { id: roomId },
+        data: { status: "playing" },
+    });
+    return getRoom(roomId);
+}
+
 async function setPlayerInput(roomId, userId, input) {
     const room = await getRoom(roomId);
 
@@ -402,7 +410,7 @@ async function setPlayerInput(roomId, userId, input) {
             error: "Room not found",
         };
     }
-    if (room.status !== "starting" && room.status !== "playing") {
+    if (room.status !== "playing") {
         return {
             room,
             error: "Game is not started",
@@ -517,6 +525,7 @@ module.exports = {
     getPlayerInRoom,
     setPlayerReady,
     startGame,
+    markGamePlaying,
     setPlayerInput,
     getRoomsByUserId,
     resetGameStart,
