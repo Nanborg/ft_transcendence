@@ -258,11 +258,16 @@ function App() {
 
   return (
     <div className="app-shell">
-      <AppHeader pages={pages} currentPageId={currentPage.id} />
-      <main className="page-content">
+      {currentPage.id !== 'home' && (<AppHeader pages={pages} currentPageId={currentPage.id} />)}
+      <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (
-            <HomePage title={currentPage.title} description={currentPage.description} />
+            <HomePage
+              title={currentPage.title}
+              description={currentPage.description}
+              pages={pages}
+              currentPageId={currentPage.id}
+            />
           )}
           {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
@@ -363,7 +368,7 @@ function App() {
             />
           )}
         </section>
-        <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />
+        {currentPage.id !== 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
     </div>
   );
