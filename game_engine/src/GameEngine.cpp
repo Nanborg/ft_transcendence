@@ -222,34 +222,32 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 	return false;
 }
 
-void	GameEngine::init( const json& in ) {
+bool	GameEngine::init( const json& in ) {
 	json	map;
 	try {
 		std::cout << (std::string) in["entitiesFile"] << std::endl;
 		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
-	} catch(const std::exception&) {
-		return;
+	}
+	catch(const std::exception&)
+	{
+		return false;
 	}
 
-	if (!map["scale"].is_number_integer())
-		return;
-	if (!map["spawnX"].is_number_integer())
-		return;
-	if (!map["spawnY"].is_number_integer())
-		return;
-	if (!map["entities"].is_array())
-		return;
+	if ( !map["scale"].is_number_integer() || !map["spawnX"].is_number_integer() || !map["spawnY"].is_number_integer() || !map["entities"].is_array() )
+		return false;
 
 	_scale = map["scale"];
 	_spawnX = map["spawnX"];
 	_spawnY = map["spawnY"];
 	json entities = map["entities"];
-	for (size_t i = 0; i < entities.size(); i++) {
+	for (size_t i = 0; i < entities.size(); i++)
+	{
 		if (_invalid_entity(entities[i]))
 			continue;
 		std::cout << entities[i].dump() << std::endl;
 		buildNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
 	}
+	return true;
 }
 
 void	GameEngine::stop( const std::string &reason ) {

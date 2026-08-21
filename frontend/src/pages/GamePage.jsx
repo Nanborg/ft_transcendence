@@ -86,8 +86,11 @@ export function GamePage({
 })
 {
     const hasRoom = Boolean(currentRoom);
+    const roomStatus = currentRoom?.status;
+    const isStarting = roomStatus === 'starting';
+    const isPlaying = roomStatus === 'playing';
     const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
-    const isGameReady = hasRoom && gameStarted;
+    const isGameReady = hasRoom && isPlaying && gameStarted;
     const elapsedSeconds = useGameTimer(gameStartedAt, isGameReady);
     const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
     const currentPlayer = Array.isArray(gamePlayerData) ? gamePlayerData.find(player => String(player.playerId) === String(currentPlayerId)) : null;
@@ -281,6 +284,19 @@ export function GamePage({
                             </tbody>
                         </table>
                     ) : <p className="game-muted">No player statistics received.</p>}
+                    <button type="button" onClick={() => { window.location.hash = '#/room'; }}>Back to room</button>
+                </div>
+            </>
+        );
+    }
+    if (isStarting)
+    {
+        return (
+            <>
+                <PageHeading title={title} description={description} />
+                <div className="game-panel">
+                    <h2>Game starting...</h2>
+                    <p className="game-muted">Le serveur prepare le moteur de jeu.</p>
                     <button type="button" onClick={() => { window.location.hash = '#/room'; }}>Back to room</button>
                 </div>
             </>

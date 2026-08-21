@@ -1,4 +1,4 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
+const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, markGamePlaying, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
@@ -274,7 +274,7 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId } = payload;
-				const { room, error } = await startGame(roomId, socket.user.id);
+				let { room, error } = await startGame(roomId, socket.user.id);
 				if (error) {
 					socket.emit("room:error", {
 						event: "game:start",
@@ -283,6 +283,7 @@ module.exports = (io) => {
 					return;
 				}
 				let engineSession;
+				io.to(roomId).emit("room:update", room);
 
 				try {
 					engineSession = await gameEngineService.startGame(room);
@@ -290,13 +291,24 @@ module.exports = (io) => {
 					console.error("Unable to start game engine session:", error);
 					const restoredRoom = await resetGameStart(roomId);
 					io.to(roomId).emit("room:update", restoredRoom);
+					const errorCode =
+						error?.code === "ROOM_READY_TIMEOUT"
+							? "GAME_ENGINE_ROOM_READY_TIMEOUT"
+							: error?.code === "ROOM_INIT_FAILED"
+								? "GAME_ENGINE_INIT_FAILED"
+								: "GAME_ENGINE_START_FAILED";
 					socket.emit("room:error", {
 						event: "game:start",
-						code: "GAME_ENGINE_START_FAILED",
-						message: "Unable to start the game engine",
+						code: errorCode,
+						message: errorCode === "GAME_ENGINE_ROOM_READY_TIMEOUT"
+							? "Game engine did not confirm room readiness in time"
+							: errorCode === "GAME_ENGINE_INIT_FAILED"
+								? "Game engine failed while loading the map"
+								: "Unable to start the game engine",
 					});
 					return;
 				}
+				room = await markGamePlaying(roomId);
 
 				io.to(roomId).emit("room:update", room);
 				io.to(roomId).emit("game:start", {

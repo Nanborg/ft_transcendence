@@ -20,7 +20,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
   const currentPlayer = players.find(player => String(player.id) === String(currentUser?.id),);
   const allPlayersReady = players.length > 0 && players.every(player => player.ready);
   const isDisabled = !socket || !currentUser || roomStatus === 'loading';
-  const canStartGame = !isDisabled && allPlayersReady && !gameStarted;
+  const canStartGame = !isDisabled && currentRoom?.status === 'waiting' && allPlayersReady && !gameStarted;
 
   return (
     <>
@@ -71,7 +71,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
               >
                 {currentPlayer?.ready ? 'Not ready' : 'Ready'}
               </button>
-              {currentRoom.status === 'starting' ? (
+              {currentRoom.status === 'playing' ? (
                 <button
                   type="button"
                   className="room-reconnect-button"

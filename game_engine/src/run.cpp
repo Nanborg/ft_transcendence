@@ -15,6 +15,15 @@ bool running = true;
 
 static void sig_stop(int) { running = false; }
 
+static void send_room_status(const std::string &roomId, const std::string &type)
+{
+	json out;
+	out["type"] = type;
+	out["roomId"] = roomId;
+	for (int i = 0; i < 3; i++)
+		g_io->sendMsg(out.dump());
+}
+
 void receive_inputs(ControllerIO &io, std::queue<json> &inputs)
 {
 	while (io.pollApi() > 0)
@@ -27,8 +36,16 @@ static void input_r_create(games_list &games, const json &in)
 	{
 		games_list::iterator it = games.emplace(in["roomId"], in["roomId"]).first;
 		g_game = &it->second;
-		it->second.init(in);
+		bool initialized = it->second.init(in);
 		g_game = NULL;
+		if (!initialized)
+		{
+			games.erase(in["roomId"]);
+			send_room_status(in["roomId"], "roomInitFailed");
+			std::cout << "room " << in["roomId"] << " init failed" << std::endl;
+			return;
+		}
+		send_room_status(in["roomId"], "roomReady");
 		std::cout << "room " << in["roomId"] << " created" << std::endl;
 	}
 }
