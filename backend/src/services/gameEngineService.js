@@ -427,9 +427,12 @@ class GameEngineService extends EventEmitter {
             room.id
         );
         session.map = {
+            roomId: room.id,
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
+            spawnX: mapPayload.spawnX,
+            spawnY: mapPayload.spawnY,
             entities: mapPayload.entities,
         };
         try {
