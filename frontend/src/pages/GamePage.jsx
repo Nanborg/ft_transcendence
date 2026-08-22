@@ -43,6 +43,29 @@ const SKILL_COLUMNS = {
 };
 const MAX_SKILL_LEVEL = 3;
 function getUpgradeCost(level){return 100 + level * 150;}
+const UPGRADE_STATS = {
+    melee: {
+        label: 'Damage',
+        baseValue: 100,
+        valuePerLevel: 10,
+    },
+    ranged: {
+        label: 'Damage',
+        baseValue: 100,
+        valuePerLevel: 10,
+    },
+    shield: {
+        label: 'Shield HP',
+        baseValue: 30,
+        valuePerLevel: 10,
+    },
+};
+
+function getUpgradeValue(skill, level)
+{
+    const stat = UPGRADE_STATS[skill];
+    return stat.baseValue + level * stat.valuePerLevel;
+}
 
 function SkillSlot({ skill, hotkey, lvl, cooldown })
 {
@@ -119,10 +142,19 @@ export function GamePage({
     function renderUpgradeButton(skill, label)
     {
         const level = skillLevels[skill] ?? 0;
+        const isMaxLevel = level >= MAX_SKILL_LEVEL;
         const nextLevel = Math.min(MAX_SKILL_LEVEL, level + 1);
         const cost = getUpgradeCost(level);
-        const canBuy = level < MAX_SKILL_LEVEL && currentGold >= cost;
-        const buttonClass = canBuy ? '' : 'upgrade-unavailable';
+        const canAfford = currentGold >= cost;
+        const canBuy = !isMaxLevel && canAfford;
+        const stat = UPGRADE_STATS[skill];
+        const currentValue = getUpgradeValue(skill, level);
+        const nextValue = getUpgradeValue(skill, nextLevel);
+        const buttonClass = [
+            'checkpoint-upgrade-card',
+            `checkpoint-upgrade-card--${skill}`,
+            !canBuy ? 'upgrade-unavailable' : '',
+        ].filter(Boolean).join(' ');
         const iconPosition = `${SKILL_COLUMNS[skill] * 50}% ${nextLevel * (100 / 3)}%`;
         const iconStyle = { backgroundImage: `url(${skillSprites})`, backgroundPosition: iconPosition, };
 
@@ -133,10 +165,34 @@ export function GamePage({
                 disabled={pendingUpgrade !== null || !canBuy}
                 onClick={() => selectCheckpointUpgrade(skill)}
             >
-                <strong>{label}</strong>
-                <div className="upgrade-preview-icon" style={iconStyle} />
-                <span>Level {level} -&gt; {nextLevel}</span>
-                <span>{cost} gold</span>
+                <div
+                    className="upgrade-preview-icon"
+                    style={iconStyle}
+                    aria-hidden="true"
+                />
+                <strong className="checkpoint-upgrade-card__title">
+                    {label}
+                </strong>
+                <span className="checkpoint-upgrade-card__level">
+                    {isMaxLevel
+                        ? `Level ${level} — MAX`
+                        : `Level ${level} → ${nextLevel}`}
+                </span>
+                <span className="checkpoint-upgrade-card__stat">
+                    <small>{stat.label}</small>
+                    <strong>
+                        {isMaxLevel
+                            ? currentValue
+                            : `${currentValue} → ${nextValue}`}
+                    </strong>
+                </span>
+                <span className="checkpoint-upgrade-card__price">
+                    {isMaxLevel
+                        ? 'Fully upgraded'
+                        : canAfford
+                            ? `${cost} gold`
+                            : `Need ${cost} gold`}
+                </span>
             </button>
         );
     }
@@ -384,16 +440,22 @@ export function GamePage({
                     socket={socket}
                 />
                 {isAtCheckpoint && (
-                    <section className="checkpoint-upgrade" aria-labelledby="checkpoint-upgrade-title">
-                        <h2 id="checkpoint-upgrade-title">Choose an upgrade</h2>
-                        <p>Select one ability to improve before continuing.</p>
+                    <section className="checkpoint-upgrade" aria-label="Choose an upgrade">
                         <div className="checkpoint-upgrade-list">
                             {renderUpgradeButton('melee', 'Melee')}
                             {renderUpgradeButton('ranged', 'Ranged')}
                             {renderUpgradeButton('shield', 'Shield')}
                         </div>
-                        {pendingUpgrade && <p>Applying {pendingUpgrade} upgrade…</p>}
-                        {checkpointError && <p className="room-error">{checkpointError}</p>}
+                        {pendingUpgrade && (
+                            <p className="checkpoint-upgrade-status">
+                                Applying {pendingUpgrade} upgrade...
+                            </p>
+                        )}
+                        {checkpointError && (
+                            <p className="checkpoint-upgrade-status room-error">
+                                {checkpointError}
+                            </p>
+                        )}
                     </section>
                 )}
                 <button type="button" className="game-leave-button" onClick={onLeaveGame}>Leave game</button>
