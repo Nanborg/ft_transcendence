@@ -33,6 +33,9 @@ private:
 	static const int	_meleeCooldownTicks;
 	static const int	_rangedCooldownTicks;
 	static const int	_shieldCooldownTicks;
+	static const int	_meleeBaseDamage;
+	static const int	_rangedBaseDamage;
+	static const int	_damagePerLevel;
 	static const int	_shieldBaseHealth;
 	static const int	_shieldHealthPerLevel;
 };
