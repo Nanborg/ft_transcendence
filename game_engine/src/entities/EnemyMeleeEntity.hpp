@@ -7,7 +7,7 @@
 class EnemyMeleeEntity: public AbstractHitboxEntity
 {
 public:
-        EnemyMeleeEntity(int posX, int posY, int ownerId, int damage);
+        EnemyMeleeEntity(int posX, int posY, int ownerId, int damage, float sizeScale = 0.9f);
         ~EnemyMeleeEntity( void );
 private:
         static const int _lifetimeTicks;

@@ -6,6 +6,8 @@ import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-
 import walkingRobotSpriteUrl from '../../assets/game/enemies/walking-robot.png';
 import shootingRobotSpriteUrl from '../../assets/game/enemies/shooting-robot.png';
 import tankRobotIdleSpriteUrl from '../../assets/game/enemies/tank-robot-idle.png';
+import tankRobotFlySpriteUrl from '../../assets/game/enemies/tank-robot-fly.png';
+import tankRobotSlamSpriteUrl from '../../assets/game/enemies/tank-robot-slam.png';
 import playerIdleSpriteUrl from '../../assets/game/player/player-idle.png';
 import walkingRobotIdleSpriteUrl from '../../assets/game/enemies/walking-robot-idle.png';
 import shootingRobotIdleSpriteUrl from '../../assets/game/enemies/shooting-robot-idle.png';
@@ -95,6 +97,31 @@ const SOURCE_GRID_1254_ROWS = Object.freeze([
     {y: 627, height: 314},
     {y: 941, height: 313},
 ]);
+const TANK_ROBOT_FLY_COLUMNS = Object.freeze([
+    { x: 2, width: 310 },
+    { x: 316, width: 309 },
+    { x: 629, width: 310 },
+    { x: 943, width: 309 },
+]);
+const TANK_ROBOT_FLY_ROWS = Object.freeze([
+    { y: 2, height: 310 },
+    { y: 316, height: 309 },
+    { y: 629, height: 275 },
+    { y: 914, height: 338 },
+]);
+const TANK_ROBOT_SLAM_COLUMNS = Object.freeze([
+    { x: 2, width: 310 },
+    { x: 316, width: 309 },
+    { x: 629, width: 310 },
+    { x: 943, width: 309 },
+]);
+const TANK_ROBOT_SLAM_ROWS = Object.freeze([
+    { y: 2, height: 310 },
+    { y: 316, height: 309 },
+    { y: 629, height: 310 },
+    { y: 943, height: 309 },
+]);
+const TANK_ROBOT_FLY_FRAME_DURATION_MS = 120;
 const WALKING_ROBOT_IDLE_COLUMNS = Object.freeze([
     {x: 0, width: 315},
     {x: 315, width: 316},
@@ -240,6 +267,10 @@ const SHOOTING_ROBOT_ATTACK_ANCHOR_Y = Object.freeze([
 ]);
 const tankRobotIdleSprite = new Image();
 tankRobotIdleSprite.src = tankRobotIdleSpriteUrl;
+const tankRobotFlySprite = new Image();
+tankRobotFlySprite.src = tankRobotFlySpriteUrl;
+const tankRobotSlamSprite = new Image();
+tankRobotSlamSprite.src = tankRobotSlamSpriteUrl;
 const LORD_GOOB_FRAME_COUNT = 4;
 const LORD_GOOB_FRAME_DURATION_MS = 260;
 const LORD_GOOB_SOURCE_COLUMNS = Object.freeze([
@@ -785,30 +816,194 @@ function drawShootingRobotSprite({
     return true;
 }
 
-function drawTankRobotSprite({context, screen, tilePixels, now, directionRow})
+function drawTankSlamWave({
+    context,
+    screen,
+    tilePixels,
+    slamFrame,
+})
 {
-    if (!tankRobotIdleSprite.complete || tankRobotIdleSprite.naturalWidth === 0)
+    const maxRadius = tilePixels * 2;
+    context.save();
+    context.translate(screen.x, screen.y);
+    if (slamFrame === 0)
+    {
+        context.strokeStyle = 'rgba(251, 146, 60, 0.35)';
+        context.lineWidth = 2;
+        context.setLineDash([6, 6]);
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    else if (slamFrame === 1)
+    {
+        context.fillStyle = 'rgba(249, 115, 22, 0.16)';
+        context.strokeStyle = 'rgba(251, 146, 60, 0.65)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.fill();
+        context.stroke();
+    }
+    else if (slamFrame === 2)
+    {
+        context.shadowColor = '#fb923c';
+        context.shadowBlur = 18;
+        context.strokeStyle = '#fdba74';
+        context.lineWidth = 6;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+        context.strokeStyle = 'rgba(239, 68, 68, 0.70)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius * 0.55,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    else if (slamFrame === 3)
+    {
+        context.strokeStyle = 'rgba(251, 146, 60, 0.30)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius * 1.08,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    context.restore();
+}
+
+function drawTankRobotSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+})
+{
+    const isSlamming = entity.state?.action === 'slam';
+    const isFlying =
+        !isSlamming && (
+            entity.velX !== 0 ||
+            entity.velY !== 0
+        );
+    const slamFrameValue = Number(entity.state?.slamFrame);
+    const slamFrame = Number.isInteger(slamFrameValue)
+        ? Math.max(
+            0,
+            Math.min(
+                TANK_ROBOT_FRAME_COUNT -1,
+                slamFrameValue
+            )
+        )
+        : 0;
+    let renderDirectionRow = directionRow;
+    const stateDirX = Number(entity.state?.dirX);
+    const stateDirY = Number(entity.state?.dirY);
+    if (stateDirX < 0)
+        renderDirectionRow = 1;
+    else if (stateDirX > 0)
+        renderDirectionRow = 2;
+    else if (stateDirY < 0)
+        renderDirectionRow = 3;
+    else if (stateDirY > 0)
+        renderDirectionRow = 0;
+    const sprite = isSlamming
+        ? tankRobotSlamSprite
+        : isFlying
+            ? tankRobotFlySprite
+            : tankRobotIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
-    const frame = Math.floor(now / TANK_ROBOT_FRAME_DURATION_MS) % TANK_ROBOT_FRAME_COUNT;
-    const sourceColumn = TANK_ROBOT_SOURCE_COLUMNS[frame] ?? TANK_ROBOT_SOURCE_COLUMNS[0];
-    const sourceRow = TANK_ROBOT_SOURCE_ROWS[directionRow] ?? TANK_ROBOT_SOURCE_ROWS[0];
-    const sourceX = sourceColumn.x;
-    const sourceY = sourceRow.y;
-    const sourceWidth = sourceColumn.width;
-    const sourceHeight = sourceRow.height;
+    const columns = isSlamming
+        ? TANK_ROBOT_SLAM_COLUMNS
+        : isFlying
+            ? TANK_ROBOT_FLY_COLUMNS
+            : TANK_ROBOT_SOURCE_COLUMNS;
+    const rows = isSlamming
+        ? TANK_ROBOT_SLAM_ROWS
+        : isFlying
+            ? TANK_ROBOT_FLY_ROWS
+            : TANK_ROBOT_SOURCE_ROWS;
+    const frameDuration = isFlying
+        ? TANK_ROBOT_FLY_FRAME_DURATION_MS
+        : TANK_ROBOT_FRAME_DURATION_MS;
+    const frame = isSlamming
+        ? slamFrame
+        : Math.floor(now / frameDuration) %
+            TANK_ROBOT_FRAME_COUNT;
+    const sourceColumn =
+        columns[frame] ??
+        columns[0];
+    const sourceRow =
+        rows[renderDirectionRow] ??
+        rows[0];
     const spriteSize = tilePixels * 2.1;
+    const referenceCellSize = 313;
+    const renderWidth = isFlying
+        ? spriteSize *
+            sourceColumn.width /
+            referenceCellSize
+        : spriteSize;
+
+    const renderHeight = isFlying
+        ? spriteSize *
+            sourceRow.height /
+            referenceCellSize
+        : spriteSize;
     const centerX = screen.x;
     const centerY = screen.y;
+    const anchorY = isFlying
+        ? 0.43
+        : 0.5;
+    if (isSlamming)
+    {
+        drawTankSlamWave({
+            context,
+            screen,
+            tilePixels,
+            slamFrame,
+        });
+    }
     context.drawImage(
-        tankRobotIdleSprite,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        centerX - spriteSize / 2,
-        centerY - spriteSize / 2,
-        spriteSize,
-        spriteSize
+        sprite,
+        sourceColumn.x,
+        sourceRow.y,
+        sourceColumn.width,
+        sourceRow.height,
+        centerX - renderWidth / 2,
+        centerY - renderHeight * anchorY,
+        renderWidth,
+        renderHeight
     );
     return true;
 }
@@ -923,7 +1118,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.TANK_ROBOT:
-            if (drawTankRobotSprite({context, screen, tilePixels, now, directionRow}))
+            if (drawTankRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
             {
                 break;
             }
