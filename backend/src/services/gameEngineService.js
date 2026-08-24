@@ -393,9 +393,10 @@ class GameEngineService extends EventEmitter {
         }
     }
 
-	/// if n is a natural number (0 included), return the n th map, otherwise it return a random one
+	// n is the number of players in the room
 	async randomMap(n)
 	{
+		if (n <= 0 || n > 4) return;
 		const mapsDir = path.join(__dirname, "../game/maps");
 		const files = await fs.readdir(mapsDir);
 		const maps = files.filter(file => /^(\d+)_map_.*\.txt$/.test(file))
@@ -409,16 +410,14 @@ class GameEngineService extends EventEmitter {
 			throw new Error(`No map files found in ${mapsDir}`);
 
 		let mapIndex;
-		if (n >= 0)
+		mapIndex = n - 1;
+		if (n > maps.length)
 		{
-			if (n >= maps.length)
-				throw new Error(`Map index ${n} out of range. Only ${maps.length} maps found.`);
-
-			mapIndex = n;
+			console.log(`Map ${n} (designed for ${n} players) isn't there. sending the biggest one (map for ${maps.length} players).`);
+			mapIndex = maps.length - 1;
 		}
-		else
-			mapIndex = Math.floor(Math.random() * maps.length);
-
+		console.log("aaaaaaaaaaaaaaaaaaaaaaa:");
+		console.log(path.join(mapsDir, maps[mapIndex]));
 		return path.join(mapsDir, maps[mapIndex]);
 	}
 
@@ -428,8 +427,11 @@ class GameEngineService extends EventEmitter {
         const joinedPlayerIds = [];
         let roomCreated = false;
         const roomReadyPromise = this.waitForRoomReady(room.id);
+		const playerCount = Math.max(1, session.players?.length ?? socketCount);
+		console.log("there is n players :::::::::::::::::::::::::;");
+		console.log(playerCount);
         const mapPayload = mapConv(
-        	await this.randomMap(-1), // need to be added in the room infos maybe with field user side that is equal to -1 if empty or with non numeric characters ?
+        	await this.randomMap(playerCount),
             room.id
         );
         session.map = {
