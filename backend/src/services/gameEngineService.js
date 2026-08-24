@@ -416,7 +416,6 @@ class GameEngineService extends EventEmitter {
 			console.log(`Map ${n} (designed for ${n} players) isn't there. sending the biggest one (map for ${maps.length} players).`);
 			mapIndex = maps.length - 1;
 		}
-		console.log("aaaaaaaaaaaaaaaaaaaaaaa:");
 		console.log(path.join(mapsDir, maps[mapIndex]));
 		return path.join(mapsDir, maps[mapIndex]);
 	}
@@ -428,8 +427,6 @@ class GameEngineService extends EventEmitter {
         let roomCreated = false;
         const roomReadyPromise = this.waitForRoomReady(room.id);
 		const playerCount = Math.max(1, session.players?.length ?? socketCount);
-		console.log("there is n players :::::::::::::::::::::::::;");
-		console.log(playerCount);
         const mapPayload = mapConv(
         	await this.randomMap(playerCount),
             room.id
