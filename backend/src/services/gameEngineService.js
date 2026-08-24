@@ -398,6 +398,8 @@ class GameEngineService extends EventEmitter {
 	{
 		if (n <= 0 || n > 4) return;
 		const mapsDir = path.join(__dirname, "../game/maps");
+		if (mapsDir)
+			throw new Error(`No such dir found: ${mapsDir}`);
 		const files = await fs.readdir(mapsDir);
 		const maps = files.filter(file => /^(\d+)_map_.*\.txt$/.test(file))
 			.sort((a, b) => {
