@@ -18,6 +18,7 @@ function formatHistoryData(rawGames) {
           deaths: stat.deaths,
           damageDealt: stat.damageDealt,
           damageReceived: stat.damageReceived,
+          goldEarned: stat.goldEarned,
           upgrades: {
             melee: stat.upgrade1,
             ranged: stat.upgrade2,

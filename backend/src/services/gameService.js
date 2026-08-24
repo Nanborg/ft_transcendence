@@ -14,6 +14,7 @@ function adaptPayloadForDB(enginePayload) {
                 deaths: p.deaths || 0,
                 damageDealt: p.damageDealt || 0,
                 damageReceived: p.damageReceived || 0,
+                goldEarned: p.goldEarned || 0,
                 upgrade1: upgrades.melee || 0,
                 upgrade2: upgrades.ranged || 0,
                 upgrade3: upgrades.shield || 0,
@@ -40,6 +41,7 @@ async function saveGameResults(gameData) {
                         deaths: player.deaths,
                         damageDealt: player.damageDealt,
                         damageReceived: player.damageReceived,
+                        goldEarned: player.goldEarned || 0,
                         upgrade1: player.upgrade1,
                         upgrade2: player.upgrade2,
                         upgrade3: player.upgrade3

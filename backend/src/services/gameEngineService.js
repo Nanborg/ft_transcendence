@@ -126,6 +126,7 @@ class GameEngineService extends EventEmitter {
             throw new TypeError("Invalid room");
         const players = room.players.map((player, index) => ({
             userId: player.id,
+            username: player.name || "Player",
             enginePlayerId: index,
         }));
         const session = {
@@ -458,6 +459,7 @@ class GameEngineService extends EventEmitter {
                     type: ENGINE_INPUT_TYPE.JOIN,
                     roomId: room.id,
                     playerId: player.enginePlayerId,
+                    username: player.username,
                 });
                 joinedPlayerIds.push(player.enginePlayerId);
             }

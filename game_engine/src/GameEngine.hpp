@@ -83,6 +83,7 @@ public:
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
 		int			gold;
+		int			goldEarned;
 		int			damageDealt;
 		int			damageReceived;
 
