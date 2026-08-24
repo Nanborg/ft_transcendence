@@ -135,7 +135,7 @@ export function GamePage({
                 <span>{cost} gold</span>
             </button>
         );
-
+    }
     useEffect(() =>
     {
         if (!socket)
