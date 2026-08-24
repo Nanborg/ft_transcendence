@@ -40,7 +40,7 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 
 		_health = -1;
 		if (g_game->canDamage(this, entity))
-			g_game->applyDamage(entity, _damage);
+			g_game->applyDamage(entity, _damage, _ownerId);
 		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE || _typeId == EntityTypes::ENEMYPROJECTILE)
 			break;
 	}
