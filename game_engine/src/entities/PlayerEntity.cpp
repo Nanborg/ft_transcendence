@@ -12,7 +12,7 @@ const int	PlayerEntity::_rangedBaseDamage = 100;
 const int	PlayerEntity::_damagePerLevel = 10;
 
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
-	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
+	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 100, false),
 	_playerId(playerId),
 	_receivedInput(true),
 	_curAction(PlayerActions::NOACTION),
