@@ -64,6 +64,7 @@ EntityFactions AbstractEntity::getFaction( void ) const
 		case EntityTypes::TANKGOOB:
 		case EntityTypes::LORDGOOB:
 		case EntityTypes::BOSSPROJECTILE:
+		case EntityTypes::BOSSLASERPROJECTILE:
 		case EntityTypes::ENEMYPROJECTILE:
 		case EntityTypes::ENEMYMELEE:
 			return EntityFactions::ENEMY_FACTION;

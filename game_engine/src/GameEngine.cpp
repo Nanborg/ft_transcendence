@@ -420,6 +420,9 @@ AbstractEntity*	GameEngine::buildNewEntity( int typeId, int posX, int posY, int 
 	case EntityTypes::BOSSPROJECTILE:
 		return NULL;
 
+	case EntityTypes::BOSSLASERPROJECTILE:
+		return NULL;
+
 	case EntityTypes::ENEMYPROJECTILE:
 		return NULL;
 
