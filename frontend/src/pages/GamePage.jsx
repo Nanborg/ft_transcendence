@@ -419,7 +419,6 @@ export function GamePage({
                         <h2>Press E</h2>
                     </section>
                 )}
-                {!isAtCheckpoint && isCheckpointMenuOpen && setIsCheckpointMenuOpen(false)}
                 {isAtCheckpoint && isCheckpointMenuOpen && (
                     <section className="checkpoint-upgrade" aria-labelledby="checkpoint-upgrade-title">
                         <h2 id="checkpoint-upgrade-title">Choose an upgrade</h2>
