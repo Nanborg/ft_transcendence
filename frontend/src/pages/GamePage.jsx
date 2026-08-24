@@ -128,14 +128,13 @@ export function GamePage({
         const iconStyle = { backgroundImage: `url(${skillSprites})`, backgroundPosition: iconPosition, };
 
         return (
-            <div className={`upgrade-box ${buttonClass}`}>
+            <button type="button" className={buttonClass} disabled={pendingUpgrade !== null || !canBuy} onClick={() => selectCheckpointUpgrade(skill)}>
                 <strong>{label} <span>[ {hotkey} ]</span></strong>
                 <div className="upgrade-preview-icon" style={iconStyle} />
                 <span>Level {level} -&gt; {nextLevel}</span>
                 <span>{cost} gold</span>
-            </div>
+            </button>
         );
-    }
 
     useEffect(() =>
     {
@@ -215,6 +214,8 @@ export function GamePage({
     {
         function handleKeyDown(event)
         {
+            if (!isAtCheckpoint)
+                return;
             if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
                 setIsCheckpointMenuOpen(true);
             else if ((event.key === "e" || event.key === "E") && isCheckpointMenuOpen)
@@ -240,7 +241,7 @@ export function GamePage({
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isAtCheckpoint, isCheckpointMenuOpen, currentGold, skillLevels]);
+    }, [isAtCheckpoint, isCheckpointMenuOpen, currentGold, skillLevels, selectCheckpointUpgrade]);
 
     if (!hasRoom)
     {
