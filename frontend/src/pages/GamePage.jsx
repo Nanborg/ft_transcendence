@@ -138,8 +138,9 @@ export function GamePage({
     const [checkpointError, setCheckpointError] = useState('');
     const previousGoldRef = useRef(null);
     const [goldFeedbacks, setGoldFeedbacks] = useState([]);
+    const [isCheckpointMenuOpen, setIsCheckpointMenuOpen] = useState(false);
 
-    function renderUpgradeButton(skill, label)
+    function renderUpgradeButton(skill, label, hotkey)
     {
         const level = skillLevels[skill] ?? 0;
         const isMaxLevel = level >= MAX_SKILL_LEVEL;
@@ -171,7 +172,7 @@ export function GamePage({
                     aria-hidden="true"
                 />
                 <strong className="checkpoint-upgrade-card__title">
-                    {label}
+                    {label} <span>[ {hotkey} ]</span>
                 </strong>
                 <span className="checkpoint-upgrade-card__level">
                     {isMaxLevel
@@ -196,7 +197,6 @@ export function GamePage({
             </button>
         );
     }
-
     useEffect(() =>
     {
         if (!socket)
@@ -221,6 +221,7 @@ export function GamePage({
         {
             setPendingUpgrade(null);
             setCheckpointError('');
+            setIsCheckpointMenuOpen(false);
         }
     }, [isAtCheckpoint]);
 
@@ -267,8 +268,42 @@ export function GamePage({
         socket,
         roomId: currentRoom?.id,
         enabled: isGameReady,
-        actionsEnabled: !isAtCheckpoint,
+        actionsEnabled: true,
     });
+
+    useEffect(() =>
+    {
+        function handleKeyDown(event)
+        {
+            if (!isAtCheckpoint)
+                return;
+            if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
+                setIsCheckpointMenuOpen(true);
+            else if ((event.key === "e" || event.key === "E") && isCheckpointMenuOpen)
+                setIsCheckpointMenuOpen(false);
+            if (isCheckpointMenuOpen) {
+                const tryBuy = (skill) => {
+                    const level = skillLevels[skill] ?? 0;
+                    const cost = getUpgradeCost(level);
+                    if (level < MAX_SKILL_LEVEL && currentGold >= cost) {
+                        selectCheckpointUpgrade(skill);
+                    }
+                };
+
+                if (event.key === "1")
+                    tryBuy('melee');
+                if (event.key === "2")
+                    tryBuy('ranged');
+                if (event.key === "3")
+                    tryBuy('shield');
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isAtCheckpoint, isCheckpointMenuOpen, currentGold, skillLevels, selectCheckpointUpgrade]);
+
     if (!hasRoom)
     {
         return (
@@ -315,6 +350,7 @@ export function GamePage({
                                     <th>Deaths</th>
                                     <th>Damage dealt</th>
                                     <th>Damage received</th>
+                                    <th>Total gold earned</th>
                                     <th>Life</th>
                                     <th>Connection</th>
                                     <th>Melee</th>
@@ -330,6 +366,7 @@ export function GamePage({
                                         <td>{player.deaths ?? 0}</td>
                                         <td>{player.damageDealt ?? 0}</td>
                                         <td>{player.damageReceived ?? 0}</td>
+                                        <td>{player.goldEarned ?? 0}</td>
                                         <td>{player.alive ? 'Alive' : 'Dead'}</td>
                                         <td>{player.disconnected ? 'Disconnected' : 'Connected'}</td>
                                         <td>Level {player.upgrades?.melee ?? 0} / {player.cooldowns?.melee ?? 0} ticks</td>
@@ -439,18 +476,32 @@ export function GamePage({
                     goldFeedbacks={goldFeedbacks}
                     socket={socket}
                 />
-                {isAtCheckpoint && (
-                    <section className="checkpoint-upgrade" aria-label="Choose an upgrade">
+                {isAtCheckpoint && !isCheckpointMenuOpen && (
+                    <section
+                        className="checkpoint-upgrade"
+                        style={{ textAlign: 'center' }}
+                    >
+                        <h2>Press E</h2>
+                    </section>
+                )}
+
+                {isAtCheckpoint && isCheckpointMenuOpen && (
+                    <section
+                        className="checkpoint-upgrade"
+                        aria-label="Choose an upgrade"
+                    >
                         <div className="checkpoint-upgrade-list">
-                            {renderUpgradeButton('melee', 'Melee')}
-                            {renderUpgradeButton('ranged', 'Ranged')}
-                            {renderUpgradeButton('shield', 'Shield')}
+                            {renderUpgradeButton('melee', 'Melee', '1')}
+                            {renderUpgradeButton('ranged', 'Ranged', '2')}
+                            {renderUpgradeButton('shield', 'Shield', '3')}
                         </div>
+
                         {pendingUpgrade && (
                             <p className="checkpoint-upgrade-status">
                                 Applying {pendingUpgrade} upgrade...
                             </p>
                         )}
+
                         {checkpointError && (
                             <p className="checkpoint-upgrade-status room-error">
                                 {checkpointError}

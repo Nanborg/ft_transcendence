@@ -87,6 +87,7 @@ model PlayerRunStats {
   deaths            Int
   damageDealt       Int
   damageReceived    Int
+  goldEarned        Int @default(0)
   upgrade1          Int
   upgrade2          Int
   upgrade3          Int

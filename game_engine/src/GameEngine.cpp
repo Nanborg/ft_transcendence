@@ -78,6 +78,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
 	pData["cooldowns"]["ranged"] = playerData.cooldowns.ranged;
 	pData["cooldowns"]["shield"] = playerData.cooldowns.shield;
 	pData["gold"] = playerData.gold;
+	pData["goldEarned"] = playerData.goldEarned;
 	pData["damageDealt"] = playerData.damageDealt;
 	pData["damageReceived"] = playerData.damageReceived;
 	out["playerData"] = pData;
@@ -112,6 +113,7 @@ void	GameEngine::addPlayerData( int playerId, int playerEntityId, const std::str
 	newPlayer.death_cooldowns = 100;
 	newPlayer.invulnerability_cooldowns = 0;
 	newPlayer.gold = 0;
+	newPlayer.goldEarned = 0;
 	newPlayer.damageDealt = 0;
 	newPlayer.damageReceived = 0;
 	newPlayer.death_posX = 0;
@@ -191,6 +193,7 @@ json GameEngine::getAllPlayerDataAsJson( void )
 		pData["cooldowns"]["ranged"] = _playerData[i].cooldowns.ranged;
 		pData["cooldowns"]["shield"] = _playerData[i].cooldowns.shield;
 		pData["gold"] = _playerData[i].gold;
+		pData["goldEarned"] = _playerData[i].goldEarned;
 		pData["damageReceived"] = _playerData[i].damageReceived;
 		pData["damageDealt"] = _playerData[i].damageDealt;
 		allPlayers.push_back(pData);
@@ -327,6 +330,7 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 
 					}
 					player.gold += reward;
+					player.goldEarned += reward;
 					sendPlayerStateUpdate(player); // inform clients of the change
 				}
 			}
