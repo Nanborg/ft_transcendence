@@ -17,7 +17,6 @@ import lordGoobPhaseOneSpriteUrl from '../../assets/game/enemies/lord-goob-phase
 import lordGoobPhaseTwoSpriteUrl from '../../assets/game/enemies/lord-goob-phase-2.png';
 import lordGoobPhaseThreeSpriteUrl from '../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
-import { compileFunction } from 'node:vm';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -1164,12 +1163,15 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
     );
     return true;
 }
-function drawHealthBar({context, screen, entity, tilePixels})
+function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
 {
     const health = Number(entity.health);
     if (!Number.isFinite(health))
         return;
-    const maxHealth = Math.max(health, 100);
+    const entityId = entity.entityId ?? entity.id;
+    if (!maxHealthRef.current.has(entityId))
+        maxHealthRef.current.set(entityId, health);
+    const maxHealth = maxHealthRef.current.get(entityId);
     const ratio = Math.max(0, Math.min(1, health / maxHealth));
     const width = tilePixels * 0.9;
     const height = 5;
@@ -1183,7 +1185,7 @@ function drawHealthBar({context, screen, entity, tilePixels})
 }
 
 
-function drawEntity({context, entity, position, camera, now, attack, directionRow = 0})
+function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
 {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -1458,7 +1460,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             context.fill();
     }
     if (type === ENTITY_TYPE.PLAYER || type === ENTITY_TYPE.WALKING_ROBOT  || type === ENTITY_TYPE.SHOOTING_ROBOT || type === ENTITY_TYPE.TANK_ROBOT || type === ENTITY_TYPE.BOSS)
-        drawHealthBar({context, screen, entity, tilePixels});
+        drawHealthBar({context, screen, entity, tilePixels, maxHealthRef});
     context.restore();
 }
 
@@ -1483,6 +1485,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
 {
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
+    const maxHealthRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
     const renderDataRef = useRef({
         currentPlayerId,
@@ -1682,6 +1685,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                     now,
                     attack,
                     directionRow: renderDirectionRow,
+                    maxHealthRef,
                 });
             });
             drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
