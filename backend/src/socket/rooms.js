@@ -509,6 +509,11 @@ async function getRoomsByUserId(userId) {
 }
 
 async function resetGameStart(roomId) {
+    await prisma.roomPlayer.updateMany({
+        where: { roomId },
+        data: { ready: false },
+    });
+
     await prisma.room.update({
         where: { id: roomId },
         data: { status: "waiting" },
