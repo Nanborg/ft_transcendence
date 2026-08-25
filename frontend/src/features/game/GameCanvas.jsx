@@ -17,6 +17,7 @@ import lordGoobPhaseOneSpriteUrl from '../../assets/game/enemies/lord-goob-phase
 import lordGoobPhaseTwoSpriteUrl from '../../assets/game/enemies/lord-goob-phase-2.png';
 import lordGoobPhaseThreeSpriteUrl from '../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
+import { compileFunction } from 'node:vm';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -1163,6 +1164,24 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
     );
     return true;
 }
+function drawHealthBar({context, screen, entity, tilePixels})
+{
+    const health = Number(entity.health);
+    if (!Number.isFinite(health))
+        return;
+    const maxHealth = Math.max(health, 100);
+    const ratio = Math.max(0, Math.min(1, health / maxHealth));
+    const width = tilePixels * 0.9;
+    const height = 5;
+    const x = screen.x - width / 2;
+    const y = screen.y - tilePixels * 0.72;
+
+    context.fillStyle = "rgba(15, 20, 42, 0.9)";
+    context.fillRect(x, y, width, height);
+    context.fillStyle = ratio > 0.4 ? "#22c55e" : "#ef4444";
+    context.fillRect(x, y, width * ratio, height);
+}
+
 
 function drawEntity({context, entity, position, camera, now, attack, directionRow = 0})
 {
@@ -1438,7 +1457,8 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             );
             context.fill();
     }
-
+    if (type === ENTITY_TYPE.PLAYER || type === ENTITY_TYPE.WALKING_ROBOT  || type === ENTITY_TYPE.SHOOTING_ROBOT || type === ENTITY_TYPE.TANK_ROBOT || type === ENTITY_TYPE.BOSS)
+        drawHealthBar({context, screen, entity, tilePixels});
     context.restore();
 }
 
