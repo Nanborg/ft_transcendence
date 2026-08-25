@@ -411,15 +411,18 @@ class GameEngineService extends EventEmitter {
 		if (maps.length === 0)
 			throw new Error(`No map files found in ${mapsDir}`);
 
-		let mapIndex;
-		mapIndex = n - 1;
-		if (n > maps.length)
-		{
-			console.log(`Map ${n} (designed for ${n} players) isn't there. sending the biggest one (map for ${maps.length} players).`);
-			mapIndex = maps.length - 1;
-		}
-		console.log(path.join(mapsDir, maps[mapIndex]));
-		return path.join(mapsDir, maps[mapIndex]);
+		let mapSize;
+		if (n === 1)
+			mapSize = 50;
+		else if (n === 2)
+			mapSize = 100;
+		else
+			mapSize = 200;
+		const selectedMap = maps.find(file => new RegExp(`_${mapSize}_${mapSize}\\.txt$`).test(file));
+		if (!selectedMap)
+			throw new Error(`No ${mapSize}x${mapSize} map file found in ${mapsDir}`);
+		console.log(path.join(mapsDir, selectedMap));
+		return path.join(mapsDir, selectedMap);
 	}
 
 
