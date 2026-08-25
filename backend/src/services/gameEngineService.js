@@ -431,7 +431,7 @@ class GameEngineService extends EventEmitter {
         const joinedPlayerIds = [];
         let roomCreated = false;
         const roomReadyPromise = this.waitForRoomReady(room.id);
-		const playerCount = Math.max(1, session.players?.length ?? socketCount);
+		const playerCount = session.players.length;
         const mapPayload = mapConv(
         	await this.randomMap(playerCount),
             room.id
