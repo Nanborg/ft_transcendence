@@ -115,11 +115,9 @@ router.get("/42/callback", async (req, res) => {
 			}
 		});
 		body = await infos_response.text();
-		if (!infos_response.ok) {
-
-			console.error("Error: ", err);
-
-			console.error(body);
+		if (!infos_response.ok)
+		{
+			console.error("42 profile fetch failed:", body);
 			return res.status(infos_response.status).send(body);
 		}
 
