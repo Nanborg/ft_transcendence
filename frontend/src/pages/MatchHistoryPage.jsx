@@ -47,11 +47,7 @@ export function MatchHistoryPage({ title, description, accessToken }) {
                 <ul className="match-history-list">
                     {matches.map(match => (
                         <li className="match-history-item" key={match.gameRunId}>
-                            <button
-                                className="match-history-summary"
-                                type="button"
-                                onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}
-                            >
+                            <button className="match-history-summary" type="button" onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}>
                                 <span>{match.result}</span>
                                 <span>{match.durationSeconds} seconds</span>
                                 <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
