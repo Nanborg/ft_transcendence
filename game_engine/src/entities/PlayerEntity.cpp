@@ -2,9 +2,9 @@
 #include <cmath>
 
 const float	PlayerEntity::_slashDist = 0.5f;
-const int	PlayerEntity::_meleeCooldownTicks = 10;
-const int	PlayerEntity::_rangedCooldownTicks = 20;
-const int	PlayerEntity::_shieldCooldownTicks = 30;
+const int	PlayerEntity::_meleeCooldownTicks = 7;
+const int	PlayerEntity::_rangedCooldownTicks = 14;
+const int	PlayerEntity::_shieldCooldownTicks = 24;
 const int	PlayerEntity::_shieldBaseHealth = 30;
 const int	PlayerEntity::_shieldHealthPerLevel = 10;
 const int	PlayerEntity::_meleeBaseDamage = 100;

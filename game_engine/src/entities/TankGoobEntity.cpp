@@ -3,7 +3,7 @@
 const float		TankGoobEntity::_aggroRange = 8.f;
 const float		TankGoobEntity::_aggroLoseRange = 14.f;
 const float		TankGoobEntity::_attackRange = 1.8f;
-const float		TankGoobEntity::_moveSpeed = 0.07f;
+const float		TankGoobEntity::_moveSpeed = 0.08f;
 const float		TankGoobEntity::_slamHitboxScale = 3.f;
 const int		TankGoobEntity::_slamDamage = 3;
 const int		TankGoobEntity::_slamCooldownTicks = 25;
@@ -14,7 +14,7 @@ const int		TankGoobEntity::_slamImpactTicks = 2;
 const int		TankGoobEntity::_slamRecoveryTicks = 3;
 
 TankGoobEntity::TankGoobEntity(int posX, int posY):
-	AbstractMovingEntity(EntityTypes::TANKGOOB, g_game->getScale(), posX, posY, 0, 0, 500, false), _targetEntityId(-1), _dirX(0), _dirY(1), _slamFrame(-1), _slamCooldown(0), _slamPhaseTicks(0)
+		AbstractMovingEntity(EntityTypes::TANKGOOB, g_game->getScale(), posX, posY, 0, 0, 900, false), _targetEntityId(-1), _dirX(0), _dirY(1), _slamFrame(-1), _slamCooldown(0), _slamPhaseTicks(0)
 {
 	setGold(20);
 	_state["action"] = "idle";
