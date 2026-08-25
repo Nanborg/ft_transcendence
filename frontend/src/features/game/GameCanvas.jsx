@@ -1180,7 +1180,14 @@ function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
 
     context.fillStyle = "rgba(15, 20, 42, 0.9)";
     context.fillRect(x, y, width, height);
-    context.fillStyle = ratio > 0.4 ? "#22c55e" : "#ef4444";
+    if (ratio > 0.85)
+        context.fillStyle = "#22c55e";
+    else if (ratio > 0.66)
+        context.fillStyle = "#eab308";
+    else if (ratio > 0.33)
+        context.fillStyle = "#f97316";
+    else
+        context.fillStyle = "#ef4444";
     context.fillRect(x, y, width * ratio, height);
 }
 
