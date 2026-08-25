@@ -11,7 +11,7 @@ router.get("/me", authToken, async (req, res) => {
             where: { id: UserId },
             select: {
                 id: true, username: true, email: true, avatar: true,
-                playerStats: { select: { gameRun: { select: { won: true, lost: true } } } },
+                playerStats: { select: { deaths: true, damageDealt: true, damageReceived: true, goldEarned: true, gameRun: { select: { won: true, lost: true } } } },
             }
         })
         if (!userProfile) {
@@ -19,6 +19,14 @@ router.get("/me", authToken, async (req, res) => {
         }
         const wins = userProfile.playerStats.filter(stat => stat.gameRun.won).length;
         const losses = userProfile.playerStats.filter(stat => stat.gameRun.lost).length;
+        const gamesPlayed = userProfile.playerStats.length;
+        const totals = userProfile.playerStats.reduce((sum, stat) => ({
+            deaths: sum.deaths + stat.deaths,
+            damageDealt: sum.damageDealt + stat.damageDealt,
+            damageReceived: sum.damageReceived + stat.damageReceived,
+            goldEarned: sum.goldEarned + stat.goldEarned,
+        }),
+        { deaths: 0, damageDealt: 0, damageReceived: 0, goldEarned: 0 });
         res.json({
             id: userProfile.id,
             username: userProfile.username,
@@ -27,7 +35,12 @@ router.get("/me", authToken, async (req, res) => {
             stats: {
                 wins,
                 losses,
-                gamesPlayed: userProfile.playerStats.length,
+                gamesPlayed,
+                winRate: gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0,
+                totalDeaths: totals.deaths,
+                totalDamageDealt: totals.damageDealt,
+                totalDamageReceived: totals.damageReceived,
+                totalGoldEarned: totals.goldEarned,
             },
         });
     }

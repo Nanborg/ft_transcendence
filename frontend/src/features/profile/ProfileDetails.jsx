@@ -26,6 +26,26 @@ export function ProfileDetails({ profileUser }) {
         <dd>{profileUser.stats?.losses ?? 0}</dd>
       </div>
       <div>
+        <dt>Win rate</dt>
+        <dd>{profileUser.stats?.winRate ?? 0}%</dd>
+      </div>
+      <div>
+        <dt>Total deaths</dt>
+        <dd>{profileUser.stats?.totalDeaths ?? 0}</dd>
+      </div>
+      <div>
+        <dt>Damage dealt</dt>
+        <dd>{profileUser.stats?.totalDamageDealt ?? 0}</dd>
+      </div>
+      <div>
+        <dt>Damage received</dt>
+        <dd>{profileUser.stats?.totalDamageReceived ?? 0}</dd>
+      </div>
+      <div>
+        <dt>Gold earned</dt>
+        <dd>{profileUser.stats?.totalGoldEarned ?? 0}</dd>
+      </div>
+      <div>
         <dt>Role</dt>
         <dd>{profileUser.role || 'Not available'}</dd>
       </div>
