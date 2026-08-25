@@ -65,10 +65,10 @@ export function MatchHistoryPage({ title, description, accessToken }) {
                                 </ul>
                             )}
                         </li>
-
                     ))}
                 </ul>
             )}
         </div>
     );
 }
+//the majority of information are after the click
