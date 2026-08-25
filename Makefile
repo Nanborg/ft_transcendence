@@ -22,6 +22,9 @@ re:
 	make fclean
 	make
 
+ps:
+	docker ps -a
+
 dev:
 	docker compose up backend database --build
 
