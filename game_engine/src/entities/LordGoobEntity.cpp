@@ -226,7 +226,7 @@ void LordGoobEntity::_firePhaseTwoRadial(void)
 		const double directionX = std::cos(angle);
 		const double directionY = std::sin(angle);
 		const int	spawnX = static_cast<int>(static_cast<double>(_posX) + directionX * spawnDistance);
-		const int	spawnY = static_cast<int>(static_cast<double>(_posY) + directionX * spawnDistance);
+		const int	spawnY = static_cast<int>(static_cast<double>(_posY) + directionY * spawnDistance);
 		const int	velocityX = static_cast<int>(directionX * projectileVelocity);
 		const int	velocityY = static_cast<int>(directionY * projectileVelocity);
 		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velocityX, velocityY, _id, _projectileDamage));
