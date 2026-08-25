@@ -6,6 +6,7 @@ export function MatchHistoryPage({ title, description, accessToken }) {
     const [matches, setMatches] = useState([]);
     const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
     const [error, setError] = useState('');
+    const [expandedMatchId, setExpandedMatchId] = useState(null);
     useEffect(() => {
         if (!accessToken) {
             setStatus('idle');
@@ -46,14 +47,19 @@ export function MatchHistoryPage({ title, description, accessToken }) {
                 <ul className="match-history-list">
                     {matches.map(match => (
                         <li className="match-history-item" key={match.gameRunId}>
-                            <span>{match.result}</span>
-                            <span>{match.durationSeconds} seconds</span>
-                            <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
-                            {Array.isArray(match.players) && match.players.length > 0 && (
-                                <ul>
+                            <button
+                                className="match-history-summary"
+                                type="button"
+                                onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}
+                            >
+                                <span>{match.result}</span>
+                                <span>{match.durationSeconds} seconds</span>
+                                <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
+                            </button>
+                            {expandedMatchId === match.gameRunId && Array.isArray(match.players) && match.players.length > 0 && (
+                                <ul className="match-history-players">
                                     {match.players.map(player => (
                                         <li key={player.userId}>
-                                            <span>{player.username}</span>
                                             <span>Deaths: {player.deaths ?? 0}</span>
                                             <span>Damage dealt: {player.damageDealt ?? 0}</span>
                                             <span>Damage received: {player.damageReceived ?? 0}</span>
