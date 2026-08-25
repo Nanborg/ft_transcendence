@@ -828,9 +828,17 @@ p {
 
 .checkpoint-upgrade {
   display: grid;
-  gap: 0.75rem;
-  width: min(calc(100% - 1rem), 900px);
-  pointer-events: none;
+  gap: 1rem;
+  width: min(100%, 760px);
+  padding: 1.25rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.checkpoint-upgrade h2,
+.checkpoint-upgrade p {
+  margin: 0;
 }
 
 .checkpoint-upgrade-list {
