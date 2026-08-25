@@ -49,6 +49,19 @@ export function MatchHistoryPage({ title, description, accessToken }) {
                             <span>{match.result}</span>
                             <span>{match.durationSeconds} seconds</span>
                             <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
+                            {Array.isArray(match.players) && match.players.length > 0 && (
+                                <ul>
+                                    {match.players.map(player => (
+                                        <li key={player.userId}>
+                                            <span>{player.username}</span>
+                                            <span>Deaths: {player.deaths ?? 0}</span>
+                                            <span>Damage dealt: {player.damageDealt ?? 0}</span>
+                                            <span>Damage received: {player.damageReceived ?? 0}</span>
+                                            <span>Gold: {player.goldEarned ?? 0}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </li>
 
                     ))}
