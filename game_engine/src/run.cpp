@@ -48,6 +48,8 @@ static void input_r_create(games_list &games, const json &in)
 		send_room_status(in["roomId"], "roomReady");
 		std::cout << "room " << in["roomId"] << " created" << std::endl;
 	}
+	else
+		send_room_status(in["roomId"], "roomReady");
 }
 
 static void input_r_destroy(games_list &games, const json &in)

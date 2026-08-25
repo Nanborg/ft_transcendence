@@ -445,18 +445,27 @@ class GameEngineService extends EventEmitter {
             spawnY: mapPayload.spawnY,
             entities: mapPayload.entities,
         };
+        let roomReadyRetry = null;
         try {
             session.engineMapFile = await this.writeMapPayload(mapPayload);
-            await this.send({
+            const roomCreateCommand = {
                 type: ENGINE_INPUT_TYPE.ROOM_CREATE,
                 roomId: room.id,
                 scale: mapPayload.scale,
                 entities: [],
                 entitiesFile: session.engineMapFile,
-            });
+            };
+            await this.send(roomCreateCommand);
 
             roomCreated = true;
+            roomReadyRetry = setInterval(() => {
+                this.send(roomCreateCommand).catch((error) => {
+                    console.error(`Unable to retry engine room create for ${room.id}:`, error);
+                });
+            }, 1000);
             await roomReadyPromise;
+            clearInterval(roomReadyRetry);
+            roomReadyRetry = null;
 
             for (const player of session.players) {
                 await this.send({
@@ -471,14 +480,19 @@ class GameEngineService extends EventEmitter {
             session.startedAt = Date.now();
             return session;
         } catch (error) {
-            for (const playerId of joinedPlayerIds) {
+            if (roomReadyRetry)
+                clearInterval(roomReadyRetry);
+            for (const playerId of joinedPlayerIds)
+            {
                 try {
                     await this.send({
                         type: ENGINE_INPUT_TYPE.LEAVE,
                         roomId: room.id,
                         playerId,
                     });
-                } catch (cleanupError) {
+                }
+                catch (cleanupError)
+                {
                     console.error(
                         "Unable to rollback engine player:",
                         playerId,
