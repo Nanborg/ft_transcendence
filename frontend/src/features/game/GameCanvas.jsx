@@ -6,11 +6,16 @@ import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-
 import walkingRobotSpriteUrl from '../../assets/game/enemies/walking-robot.png';
 import shootingRobotSpriteUrl from '../../assets/game/enemies/shooting-robot.png';
 import tankRobotIdleSpriteUrl from '../../assets/game/enemies/tank-robot-idle.png';
+import tankRobotFlySpriteUrl from '../../assets/game/enemies/tank-robot-fly.png';
+import tankRobotSlamSpriteUrl from '../../assets/game/enemies/tank-robot-slam.png';
 import playerIdleSpriteUrl from '../../assets/game/player/player-idle.png';
 import walkingRobotIdleSpriteUrl from '../../assets/game/enemies/walking-robot-idle.png';
 import shootingRobotIdleSpriteUrl from '../../assets/game/enemies/shooting-robot-idle.png';
 import shootingRobotAttackSpriteUrl from '../../assets/game/enemies/shooting-robot-attack.png';
 import lordGoobIdleSpriteUrl from '../../assets/game/enemies/lord-goob-idle.png';
+import lordGoobPhaseOneSpriteUrl from '../../assets/game/enemies/lord-goob-phase-1.png';
+import lordGoobPhaseTwoSpriteUrl from '../../assets/game/enemies/lord-goob-phase-2.png';
+import lordGoobPhaseThreeSpriteUrl from '../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
 
 const CANVAS_WIDTH = 800;
@@ -95,6 +100,31 @@ const SOURCE_GRID_1254_ROWS = Object.freeze([
     {y: 627, height: 314},
     {y: 941, height: 313},
 ]);
+const TANK_ROBOT_FLY_COLUMNS = Object.freeze([
+    { x: 2, width: 310 },
+    { x: 316, width: 309 },
+    { x: 629, width: 310 },
+    { x: 943, width: 309 },
+]);
+const TANK_ROBOT_FLY_ROWS = Object.freeze([
+    { y: 2, height: 310 },
+    { y: 316, height: 309 },
+    { y: 629, height: 275 },
+    { y: 914, height: 338 },
+]);
+const TANK_ROBOT_SLAM_COLUMNS = Object.freeze([
+    { x: 2, width: 310 },
+    { x: 316, width: 309 },
+    { x: 629, width: 310 },
+    { x: 943, width: 309 },
+]);
+const TANK_ROBOT_SLAM_ROWS = Object.freeze([
+    { y: 2, height: 310 },
+    { y: 316, height: 309 },
+    { y: 629, height: 310 },
+    { y: 943, height: 309 },
+]);
+const TANK_ROBOT_FLY_FRAME_DURATION_MS = 120;
 const WALKING_ROBOT_IDLE_COLUMNS = Object.freeze([
     {x: 0, width: 315},
     {x: 315, width: 316},
@@ -240,7 +270,13 @@ const SHOOTING_ROBOT_ATTACK_ANCHOR_Y = Object.freeze([
 ]);
 const tankRobotIdleSprite = new Image();
 tankRobotIdleSprite.src = tankRobotIdleSpriteUrl;
+const tankRobotFlySprite = new Image();
+tankRobotFlySprite.src = tankRobotFlySpriteUrl;
+const tankRobotSlamSprite = new Image();
+tankRobotSlamSprite.src = tankRobotSlamSpriteUrl;
 const LORD_GOOB_FRAME_COUNT = 4;
+const LORD_GOOB_PHASE_TWO_FRAME_COUNT = 6;
+const LORD_GOOB_PHASE_THREE_FRAME_COUNT = 6;
 const LORD_GOOB_FRAME_DURATION_MS = 260;
 const LORD_GOOB_SOURCE_COLUMNS = Object.freeze([
     { x: 0, width: 304 },
@@ -260,8 +296,66 @@ const LORD_GOOB_IDLE_ANCHOR_X = Object.freeze([
     [0.5759, 0.5372, 0.4996, 0.4740],
     [0.5715, 0.5393, 0.5078, 0.4808],
 ]);
+const LORD_GOOB_PHASE_TWO_COLUMNS = Object.freeze([
+    { x: 0, width: 256 },
+    { x: 256, width: 256 },
+    { x: 512, width: 256 },
+    { x: 768, width: 256 },
+    { x: 1024, width: 256 },
+    { x: 1280, width: 256 },
+]);
+const LORD_GOOB_PHASE_TWO_ROWS = Object.freeze([
+    { y: 0, height: 256 },
+    { y: 256, height: 256 },
+    { y: 512, height: 256 },
+    { y: 768, height: 256 },
+]);
+const LORD_GOOB_PHASE_TWO_ANCHOR_Y = Object.freeze([
+    [0.52, 0.52, 0.52, 0.52, 0.52, 0.52],
+    [0.53, 0.53, 0.53, 0.53, 0.53, 0.53],
+    [0.54, 0.54, 0.54, 0.54, 0.54, 0.54],
+    [0.34, 0.34, 0.34, 0.34, 0.34, 0.34],
+]);
+const LORD_GOOB_PHASE_TWO_SIZE_BY_ROW = Object.freeze([
+    4.0,
+    3.8,
+    3.05,
+    4.0,
+]);
+const LORD_GOOB_PHASE_THREE_COLUMNS = Object.freeze([
+    { x: 0, width: 284 },
+    { x: 284, width: 284 },
+    { x: 568, width: 284 },
+    { x: 852, width: 285 },
+    { x: 1137, width: 284 },
+    { x: 1421, width: 284 },
+]);
+const LORD_GOOB_PHASE_THREE_ROWS = Object.freeze([
+    { y: 0, height: 231 },
+    { y: 231, height: 231 },
+    { y: 462, height: 230 },
+    { y: 692, height: 231 },
+]);
+const LORD_GOOB_PHASE_THREE_ANCHOR_Y = Object.freeze([
+    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50],
+    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50],
+    [0.50, 0.50, 0.50, 0.50, 0.50, 0.50],
+    [0.40, 0.40, 0.40, 0.40, 0.40, 0.40],
+]);
+const LORD_GOOB_PHASE_THREE_SIZE_BY_ROW = Object.freeze([
+    4.0,
+    3.7,
+    3.7,
+    4.0,
+]);
 const lordGoobIdleSprite = new Image();
 lordGoobIdleSprite.src = lordGoobIdleSpriteUrl;
+const lordGoobPhaseOneSprite = new Image();
+lordGoobPhaseOneSprite.src = lordGoobPhaseOneSpriteUrl;
+const lordGoobPhaseTwoSprite = new Image();
+lordGoobPhaseTwoSprite.src = lordGoobPhaseTwoSpriteUrl;
+const lordGoobPhaseThreeSprite = new Image();
+lordGoobPhaseThreeSprite.src = lordGoobPhaseThreeSpriteUrl;
 
 function getInterpolatedPosition(track, now)
 {
@@ -785,59 +879,287 @@ function drawShootingRobotSprite({
     return true;
 }
 
-function drawTankRobotSprite({context, screen, tilePixels, now, directionRow})
+function drawTankSlamWave({
+    context,
+    screen,
+    tilePixels,
+    slamFrame,
+})
 {
-    if (!tankRobotIdleSprite.complete || tankRobotIdleSprite.naturalWidth === 0)
+    const maxRadius = tilePixels * 2;
+    context.save();
+    context.translate(screen.x, screen.y);
+    if (slamFrame === 0)
+    {
+        context.strokeStyle = 'rgba(251, 146, 60, 0.35)';
+        context.lineWidth = 2;
+        context.setLineDash([6, 6]);
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    else if (slamFrame === 1)
+    {
+        context.fillStyle = 'rgba(249, 115, 22, 0.16)';
+        context.strokeStyle = 'rgba(251, 146, 60, 0.65)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.fill();
+        context.stroke();
+    }
+    else if (slamFrame === 2)
+    {
+        context.shadowColor = '#fb923c';
+        context.shadowBlur = 18;
+        context.strokeStyle = '#fdba74';
+        context.lineWidth = 6;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+        context.strokeStyle = 'rgba(239, 68, 68, 0.70)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius * 0.55,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    else if (slamFrame === 3)
+    {
+        context.strokeStyle = 'rgba(251, 146, 60, 0.30)';
+        context.lineWidth = 3;
+        context.beginPath();
+        context.arc(
+            0,
+            0,
+            maxRadius * 1.08,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+    }
+    context.restore();
+}
+
+function drawTankRobotSprite({
+    context,
+    entity,
+    screen,
+    tilePixels,
+    now,
+    directionRow,
+})
+{
+    const isSlamming = entity.state?.action === 'slam';
+    const isFlying =
+        !isSlamming && (
+            entity.velX !== 0 ||
+            entity.velY !== 0
+        );
+    const slamFrameValue = Number(entity.state?.slamFrame);
+    const slamFrame = Number.isInteger(slamFrameValue)
+        ? Math.max(
+            0,
+            Math.min(
+                TANK_ROBOT_FRAME_COUNT -1,
+                slamFrameValue
+            )
+        )
+        : 0;
+    let renderDirectionRow = directionRow;
+    const stateDirX = Number(entity.state?.dirX);
+    const stateDirY = Number(entity.state?.dirY);
+    if (stateDirX < 0)
+        renderDirectionRow = 1;
+    else if (stateDirX > 0)
+        renderDirectionRow = 2;
+    else if (stateDirY < 0)
+        renderDirectionRow = 3;
+    else if (stateDirY > 0)
+        renderDirectionRow = 0;
+    const sprite = isSlamming
+        ? tankRobotSlamSprite
+        : isFlying
+            ? tankRobotFlySprite
+            : tankRobotIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
-    const frame = Math.floor(now / TANK_ROBOT_FRAME_DURATION_MS) % TANK_ROBOT_FRAME_COUNT;
-    const sourceColumn = TANK_ROBOT_SOURCE_COLUMNS[frame] ?? TANK_ROBOT_SOURCE_COLUMNS[0];
-    const sourceRow = TANK_ROBOT_SOURCE_ROWS[directionRow] ?? TANK_ROBOT_SOURCE_ROWS[0];
-    const sourceX = sourceColumn.x;
-    const sourceY = sourceRow.y;
-    const sourceWidth = sourceColumn.width;
-    const sourceHeight = sourceRow.height;
+    const columns = isSlamming
+        ? TANK_ROBOT_SLAM_COLUMNS
+        : isFlying
+            ? TANK_ROBOT_FLY_COLUMNS
+            : TANK_ROBOT_SOURCE_COLUMNS;
+    const rows = isSlamming
+        ? TANK_ROBOT_SLAM_ROWS
+        : isFlying
+            ? TANK_ROBOT_FLY_ROWS
+            : TANK_ROBOT_SOURCE_ROWS;
+    const frameDuration = isFlying
+        ? TANK_ROBOT_FLY_FRAME_DURATION_MS
+        : TANK_ROBOT_FRAME_DURATION_MS;
+    const frame = isSlamming
+        ? slamFrame
+        : Math.floor(now / frameDuration) %
+            TANK_ROBOT_FRAME_COUNT;
+    const sourceColumn =
+        columns[frame] ??
+        columns[0];
+    const sourceRow =
+        rows[renderDirectionRow] ??
+        rows[0];
     const spriteSize = tilePixels * 2.1;
+    const referenceCellSize = 313;
+    const renderWidth = isFlying
+        ? spriteSize *
+            sourceColumn.width /
+            referenceCellSize
+        : spriteSize;
+
+    const renderHeight = isFlying
+        ? spriteSize *
+            sourceRow.height /
+            referenceCellSize
+        : spriteSize;
     const centerX = screen.x;
     const centerY = screen.y;
+    const anchorY = isFlying
+        ? 0.43
+        : 0.5;
+    if (isSlamming)
+    {
+        drawTankSlamWave({
+            context,
+            screen,
+            tilePixels,
+            slamFrame,
+        });
+    }
     context.drawImage(
-        tankRobotIdleSprite,
-        sourceX,
-        sourceY,
-        sourceWidth,
-        sourceHeight,
-        centerX - spriteSize / 2,
-        centerY - spriteSize / 2,
-        spriteSize,
-        spriteSize
+        sprite,
+        sourceColumn.x,
+        sourceRow.y,
+        sourceColumn.width,
+        sourceRow.height,
+        centerX - renderWidth / 2,
+        centerY - renderHeight * anchorY,
+        renderWidth,
+        renderHeight
     );
     return true;
 }
 
-function drawLordGoobSprite({context, screen, tilePixels, now, directionRow})
+function drawLordGoobSprite({context, entity, screen, tilePixels, now, directionRow})
 {
-    if (!lordGoobIdleSprite.complete || lordGoobIdleSprite.naturalWidth === 0)
+    const isPhaseOne = entity.state?.action === 'phase1';
+    const isPhaseTwo = entity.state?.action === 'phase2';
+    const isPhaseThree = entity.state?.action === 'phase3';
+    const sprite = isPhaseThree
+        ? lordGoobPhaseThreeSprite
+        : isPhaseTwo
+            ? lordGoobPhaseTwoSprite
+            : isPhaseOne
+                ? lordGoobPhaseOneSprite
+                : lordGoobIdleSprite;
+    if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
-    const frame = Math.floor(now / LORD_GOOB_FRAME_DURATION_MS) % LORD_GOOB_FRAME_COUNT;
+    let renderDirectionRow = directionRow;
+    const stateDirX = Number(entity.state?.dirX);
+    const stateDirY = Number(entity.state?.dirY);
+    if (stateDirX < 0)
+        renderDirectionRow = 1;
+    else if (stateDirX > 0)
+        renderDirectionRow = 2;
+    else if (stateDirY < 0)
+        renderDirectionRow = 3;
+    else if (stateDirY > 0)
+        renderDirectionRow = 0;
+    let frame;
+    let columns;
+    let rows;
+    let anchorXs = null;
+    let anchorYs = null;
+    let spriteSize;
+    if (isPhaseThree)
+    {
+        const engineFrame = Number(entity.state?.attackFrame);
+        frame = Number.isInteger(engineFrame)
+            ? Math.max(0, Math.min(LORD_GOOB_PHASE_THREE_FRAME_COUNT - 1, engineFrame)) : 0;
+        columns = LORD_GOOB_PHASE_THREE_COLUMNS;
+        rows = LORD_GOOB_PHASE_THREE_ROWS;
+        anchorYs = LORD_GOOB_PHASE_THREE_ANCHOR_Y;
+        spriteSize = tilePixels * LORD_GOOB_PHASE_THREE_SIZE_BY_ROW[renderDirectionRow];
+    }
+    else if (isPhaseTwo)
+    {
+        const engineFrame = Number(entity.state?.attackFrame);
+        frame = Number.isInteger(engineFrame) ? Math.max(0, Math.min(LORD_GOOB_PHASE_TWO_FRAME_COUNT - 1, engineFrame)) : 0;
+        columns = LORD_GOOB_PHASE_TWO_COLUMNS;
+        rows = LORD_GOOB_PHASE_TWO_ROWS;
+        anchorYs = LORD_GOOB_PHASE_TWO_ANCHOR_Y;
+        spriteSize = tilePixels * LORD_GOOB_PHASE_TWO_SIZE_BY_ROW[renderDirectionRow];
+    }
+    else if (isPhaseOne)
+    {
+        const engineFrame = Number(entity.state?.attackFrame);
+        frame = Number.isInteger(engineFrame)
+            ? Math.max(0, Math.min(LORD_GOOB_FRAME_COUNT - 1, engineFrame)) : 0;
+        columns = SOURCE_GRID_1254_COLUMNS;
+        rows = SOURCE_GRID_1254_ROWS;
+        spriteSize = tilePixels * 3.7;
+    }
+    else
+    {
+        frame = Math.floor(now / LORD_GOOB_FRAME_DURATION_MS) % LORD_GOOB_FRAME_COUNT;
+        columns = LORD_GOOB_SOURCE_COLUMNS;
+        rows = LORD_GOOB_SOURCE_ROWS;
+        anchorXs = LORD_GOOB_IDLE_ANCHOR_X;
+        spriteSize = tilePixels * 2.8;
+    }
     const source = getSpriteSource({
-        columns: LORD_GOOB_SOURCE_COLUMNS,
-        rows: LORD_GOOB_SOURCE_ROWS,
+        columns,
+        rows,
         frame,
-        directionRow,
-        anchorXs: LORD_GOOB_IDLE_ANCHOR_X,
+        directionRow: renderDirectionRow,
+        anchorXs,
+        anchorYs,
     });
-    const spriteSize = tilePixels * 2.8;
     const centerX = screen.x;
     const centerY = screen.y;
+    const renderHeight = spriteSize;
+    const renderWidth = isPhaseThree ? renderHeight * source.width / source.height : spriteSize;
     context.drawImage(
-        lordGoobIdleSprite,
+        sprite,
         source.x,
         source.y,
         source.width,
         source.height,
-        centerX - source.anchorX * spriteSize,
-        centerY - spriteSize / 2,
-        spriteSize,
-        spriteSize
+        centerX - source.anchorX * renderWidth,
+        centerY - source.anchorY * renderHeight,
+        renderWidth,
+        renderHeight
     );
     return true;
 }
@@ -923,7 +1245,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.TANK_ROBOT:
-            if (drawTankRobotSprite({context, screen, tilePixels, now, directionRow}))
+            if (drawTankRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
             {
                 break;
             }
@@ -945,7 +1267,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.BOSS:
-            if (drawLordGoobSprite({context, screen, tilePixels, now, directionRow}))
+            if (drawLordGoobSprite({context, entity, screen, tilePixels, now, directionRow}))
             {
                 break;
             }
@@ -1034,6 +1356,46 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             );
             context.fill();
             break;
+
+        case ENTITY_TYPE.BOSS_LASER_PROJECTILE:
+        {
+            const velocityX = Number(entity.velX) || 0;
+            const velocityY = Number(entity.velY) || 0;
+            const angle = Math.atan2(velocityY, velocityX);
+            const laserLength = tilePixels * 1.8;
+            const outerWidth = Math.max(10, tilePixels * 0.55);
+            const innerWidth = Math.max(4, tilePixels * 0.20);
+            context.translate(screen.x, screen.y);
+            context.rotate(angle);
+            context.lineCap = 'round';
+            context.shadowColor = '#d946ef';
+            context.shadowBlur = 24;
+            context.strokeStyle = 'rgba(168, 85, 247, 0.75)';
+            context.lineWidth = outerWidth;
+            context.beginPath();
+            context.moveTo(-laserLength / 2, 0);
+            context.lineTo(laserLength / 2, 0);
+            context.stroke();
+            context.shadowColor = '#f0abfc';
+            context.shadowBlur = 14;
+            context.strokeStyle = '#f5d0fe';
+            context.lineWidth = innerWidth;
+            context.beginPath();
+            context.moveTo(-laserLength / 2, 0);
+            context.lineTo(laserLength / 2, 0);
+            context.stroke();
+            context.fillStyle = '#ffffff';
+            context.beginPath();
+            context.arc(
+                laserLength / 2,
+                0,
+                Math.max(3, tilePixels * 0.10),
+                0,
+                Math.PI * 2
+            );
+            context.fill();
+            break;
+        }
 
         case ENTITY_TYPE.ENEMY_MELEE:
             break;

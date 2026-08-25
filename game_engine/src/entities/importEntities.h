@@ -13,6 +13,7 @@
 #include <entities/LaserProjectileEntity.hpp>		//
 #include <entities/LaserShieldEntity.hpp>			//
 #include <entities/BossProjectileEntity.hpp>
+#include <entities/BossLaserProjectileEntity.hpp>
 #include <entities/EnemyProjectileEntity.hpp>
 #include <entities/EnemyMeleeEntity.hpp>		//
 													//

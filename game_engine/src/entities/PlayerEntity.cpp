@@ -7,9 +7,12 @@ const int	PlayerEntity::_rangedCooldownTicks = 20;
 const int	PlayerEntity::_shieldCooldownTicks = 30;
 const int	PlayerEntity::_shieldBaseHealth = 30;
 const int	PlayerEntity::_shieldHealthPerLevel = 10;
+const int	PlayerEntity::_meleeBaseDamage = 100;
+const int	PlayerEntity::_rangedBaseDamage = 100;
+const int	PlayerEntity::_damagePerLevel = 10;
 
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
-	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 10, false),
+	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 100, false),
 	_playerId(playerId),
 	_receivedInput(true),
 	_curAction(PlayerActions::NOACTION),
@@ -116,7 +119,8 @@ void	PlayerEntity::_action_melee( const json& in ) {
 	const double slashDistance = static_cast<double>(g_game->getScale()) * _slashDist;
 	const long posX = _posX + static_cast<long>(dirX * slashDistance / directionLength);
 	const long posY = _posY + static_cast<long>(dirY * slashDistance / directionLength);
-	g_game->spawnEntity(new LaserSlashEntity(posX, posY, _id, 100));
+	const int meleeDamage = _meleeBaseDamage + playerData->upgrades.melee * _damagePerLevel;
+	g_game->spawnEntity(new LaserSlashEntity(posX, posY, _id, meleeDamage));
 	playerData->cooldowns.melee = _meleeCooldownTicks;
 	g_game->sendPlayerStateUpdate(*playerData);
 	_curAction = PlayerActions::NOACTION;
@@ -136,7 +140,8 @@ void	PlayerEntity::_action_range( const json& in ) {
 	const double directionLength = std::sqrt(static_cast<double>(dirX * dirX + dirY * dirY));
 	const long velX = static_cast<long>(dirX * g_game->getScale() / directionLength);
 	const long velY = static_cast<long>(dirY * g_game->getScale() / directionLength);
-	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, 100));
+	const int rangedDamage = _rangedBaseDamage + playerData->upgrades.ranged * _damagePerLevel;
+	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, rangedDamage));
 	playerData->cooldowns.ranged = _rangedCooldownTicks;
 	g_game->sendPlayerStateUpdate(*playerData);
 	_curAction = PlayerActions::NOACTION;

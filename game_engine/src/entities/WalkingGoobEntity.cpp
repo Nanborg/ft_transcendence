@@ -74,7 +74,7 @@ bool WalkingGoobEntity::_tick_attack( void )
                 return true;
         }
         _attackFrame++;
-        if (_attackFrame >= 1 || _attackFrame <= 3)
+        if (_attackFrame >= 1 && _attackFrame <= 3)
         {
                const int chargeVelocity = static_cast<int>(static_cast<float>(g_game->getScale()) * _chargeSpeed);
                _velX = _attackDirX * chargeVelocity;
