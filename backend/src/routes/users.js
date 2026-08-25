@@ -9,12 +9,27 @@ router.get("/me", authToken, async (req, res) => {
         const UserId = req.user.id
         const userProfile = await prisma.user.findUnique({
             where: { id: UserId },
-            select: { id: true, username: true, email: true, avatar: true}
+            select: {
+                id: true, username: true, email: true, avatar: true,
+                playerStats: { select: { gameRun: { select: { won: true, lost: true } } } },
+            }
         })
         if (!userProfile) {
             return res.status(404).json({ error: "not found" });
         }
-        res.json(userProfile);
+        const wins = userProfile.playerStats.filter(stat => stat.gameRun.won).length;
+        const losses = userProfile.playerStats.filter(stat => stat.gameRun.lost).length;
+        res.json({
+            id: userProfile.id,
+            username: userProfile.username,
+            email: userProfile.email,
+            avatar: userProfile.avatar,
+            stats: {
+                wins,
+                losses,
+                gamesPlayed: userProfile.playerStats.length,
+            },
+        });
     }
     catch (error) {
         res.status(500).json({ error: "internal error" });

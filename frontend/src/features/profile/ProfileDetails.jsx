@@ -14,6 +14,18 @@ export function ProfileDetails({ profileUser }) {
         <dd>{profileUser.email || 'Not available'}</dd>
       </div>
       <div>
+        <dt>Games played</dt>
+        <dd>{profileUser.stats?.gamesPlayed ?? 0}</dd>
+      </div>
+      <div>
+        <dt>Wins</dt>
+        <dd>{profileUser.stats?.wins ?? 0}</dd>
+      </div>
+      <div>
+        <dt>Losses</dt>
+        <dd>{profileUser.stats?.losses ?? 0}</dd>
+      </div>
+      <div>
         <dt>Role</dt>
         <dd>{profileUser.role || 'Not available'}</dd>
       </div>
