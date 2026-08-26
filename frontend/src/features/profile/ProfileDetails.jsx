@@ -1,12 +1,7 @@
 import badgeIconsUrl from '../../assets/game/badges/badges_icons.png';
 
-const BADGE_SPRITE_COLUMNS = 5;
-const BADGE_SPRITE_ROWS = 4;
-const BADGE_ICON_SIZE = 64;
-const BADGE_SPRITE_SIZE = {
-  width: `${BADGE_SPRITE_COLUMNS * BADGE_ICON_SIZE}px`,
-  height: `${BADGE_SPRITE_ROWS * BADGE_ICON_SIZE}px`,
-};
+
+const BADGE_SPRITE_SIZE = {width: '320px', height: '256px'};
 const BADGE_SPRITE_X = [4, 68, 128, 188, 252];
 const BADGE_SPRITE_Y = [1, 61, 122, 184];
 
@@ -16,62 +11,12 @@ function getMilestone(value, steps)
 }
 
 const BADGE_GROUPS = [
-  {
-    label: 'Experience',
-    valueKey: 'gamesPlayed',
-    iconColumn: 0,
-    badges: [
-      { name: 'Rookie', threshold: 5 },
-      { name: 'Regular', threshold: 20 },
-      { name: 'Veteran', threshold: 50 },
-      { name: 'Legend', threshold: 200 },
-    ],
-  },
-  {
-    label: 'Victories',
-    valueKey: 'wins',
-    iconColumn: 1,
-    badges: [
-      { name: 'First Win', threshold: 3 },
-      { name: 'Winner', threshold: 10 },
-      { name: 'Champion', threshold: 25 },
-      { name: 'Conqueror', threshold: 50 },
-    ],
-  },
-  {
-    label: 'Combat',
-    valueKey: 'totalDamageDealt',
-    iconColumn: 2,
-    badges: [
-      { name: 'Fighter', threshold: 5000 },
-      { name: 'Striker', threshold: 15000 },
-      { name: 'Destroyer', threshold: 30000 },
-      { name: 'Warlord', threshold: 60000 },
-    ],
-  },
-  {
-    label: 'Survivor',
-    valueKey: 'totalDamageReceived',
-    iconColumn: 3,
-    badges: [
-      { name: 'Survivor', threshold: 1000 },
-      { name: 'Tank', threshold: 5000 },
-      { name: 'Fortress', threshold: 15000 },
-      { name: 'Guardian', threshold: 30000 },
-    ],
-  },
-  {
-    label: 'Treasure',
-    valueKey: 'totalGoldEarned',
-    iconColumn: 4,
-    badges: [
-      { name: 'Collector', threshold: 1000 },
-      { name: 'Hoarder', threshold: 5000 },
-      { name: 'Tycoon', threshold: 15000 },
-      { name: 'Golden King', threshold: 30000 },
-    ],
-  },
-];
+  ['Experience', 'gamesPlayed', 0, [['Rookie', 5], ['Regular', 20], ['Veteran', 50], ['Legend', 200]]],
+  ['Victories', 'wins', 1, [['First Win', 3], ['Winner', 10], ['Champion', 25], ['Conqueror', 50]]],
+  [ 'Combat', 'totalDamageDealt', 2, [['Fighter', 5000], ['Striker', 15000], ['Destroyer', 30000], ['Warlord', 60000]]],
+  ['Survivor', 'totalDamageReceived', 3, [['Survivor', 1000], ['Tank', 5000], ['Fortress', 15000], ['Guardian', 30000]]],
+  ['Treasure', 'totalGoldEarned', 4, [['Collector', 1000], ['Hoarder', 5000], ['Tycoon', 15000], ['Golden King', 30000]]]]
+.map(([label, valueKey, iconColumn, badges]) => ({label, valueKey, iconColumn, badges: badges.map(([name, threshold]) => ({ name, threshold})), }));
 
 function getCurrentBadge(value, badges)
 {
