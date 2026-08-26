@@ -359,6 +359,7 @@ const lordGoobPhaseTwoSprite = new Image();
 lordGoobPhaseTwoSprite.src = lordGoobPhaseTwoSpriteUrl;
 const lordGoobPhaseThreeSprite = new Image();
 lordGoobPhaseThreeSprite.src = lordGoobPhaseThreeSpriteUrl;
+const SHIELD_BREAK_DURATION_MS = 400;
 
 function getInterpolatedPosition(track, now)
 {
@@ -1196,6 +1197,66 @@ function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
     context.fillRect(x, y, width * ratio, height);
 }
 
+function drawShieldBreakEffects({context, effects, camera, now})
+{
+    effects.forEach((effect, entityId) =>
+    {
+        const elapsed = now - effect.startedAt;
+        if (elapsed >= SHIELD_BREAK_DURATION_MS)
+        {
+            effects.delete(entityId);
+            return;
+        }
+        const progress = elapsed / SHIELD_BREAK_DURATION_MS;
+        const screen = worldToScreen(
+            {x: effect.posX, y: effect.posY},
+            camera
+        );
+        const tilePixels = camera.tileSize * camera.scale;
+        const radius = tilePixels * (0.85 + progress * 0.75);
+        const opacity = 1 - progress;
+
+        context.save();
+
+        context.globalAlpha = opacity;
+        context.strokeStyle = '#93c5fd';
+        context.shadowColor = '#60a5fa';
+        context.shadowBlur = 18;
+        context.lineWidth = Math.max(1, 5 * opacity);
+
+        context.beginPath();
+        context.arc(
+            screen.x,
+            screen.y,
+            radius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+
+        context.strokeStyle = '#dbeafe';
+        context.lineWidth = Math.max(1, 3 * opacity);
+
+        for (let index = 0; index < 8; index += 1)
+        {
+            const angle = (Math.PI * 2 * index) / 8;
+            const innerRadius = radius * 0.65;
+            const outerRadius = radius * 1.15;
+
+            context.beginPath();
+            context.moveTo(
+                screen.x + Math.cos(angle) * innerRadius,
+                screen.y + Math.sin(angle) * innerRadius
+            );
+            context.lineTo(
+                screen.x + Math.cos(angle) * outerRadius,
+                screen.y + Math.sin(angle) * outerRadius
+            );
+            context.stroke();
+        }
+        context.restore();
+    });
+}
 
 function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
 {
@@ -1566,7 +1627,7 @@ function drawStaticMapEntities({context, gameMap, camera, now})
     });
 }
 
-export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerData, goldFeedbacks = [], socket})
+export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
@@ -1578,6 +1639,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
         gamePlayerData,
     });
     const spectatorIndexRef = useRef(0);
+    const shieldBreakEffectsRef = useRef(new Map());
 
     const width = CANVAS_WIDTH;
     const mapAspectRatio = gameMap?.width > 0 && gameMap?.height > 0 ? gameMap.height / gameMap.width : 0.5625;
@@ -1643,6 +1705,35 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
             playerAttackRef.current.clear();
         };
     }, [socket]);
+
+    useEffect(() => {
+        if (!Array.isArray(deletedGameEntities))
+            return;
+        if (deletedGameEntities.length === 0)
+        {
+            shieldBreakEffectsRef.current.clear();
+            return;
+        }
+        const now = performance.now();
+        deletedGameEntities.forEach(entity => {
+            if (
+                !entity ||
+                typeof entity.entityId !== 'number' ||
+                getEntityType(entity) !== ENTITY_TYPE.LASER_SHIELD ||
+                typeof entity.health !== 'number' ||
+                entity.health > 0 ||
+                typeof entity.posX !== 'number' ||
+                typeof entity.posY !== 'number'
+            ) {
+                return;
+            }
+            shieldBreakEffectsRef.current.set(entity.entityId, {
+                posX: entity.posX,
+                posY: entity.posY,
+                startedAt: now,
+            });
+        });
+    }, [deletedGameEntities]);
 
     useEffect(() =>
     {
@@ -1773,6 +1864,12 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                     directionRow: renderDirectionRow,
                     maxHealthRef,
                 });
+            });
+            drawShieldBreakEffects({
+                context,
+                effects: shieldBreakEffectsRef.current,
+                camera,
+                now,
             });
             drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
             const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));

@@ -174,13 +174,14 @@ module.exports = (io) => {
 			);
 			return;
 		}
-		gameEngineService.cacheEntityDelete(roomId, message.entity.entityId, message.tick);
+		const deletedEntity = normalizeEngineEntity(message.entity);
+		gameEngineService.cacheEntityDelete(roomId, deletedEntity.entityId, message.tick);
 		io.to(roomId).emit("game:state:update", {
 			roomId,
 			tick: message.tick,
 			end: false,
 			entityUpdate: [],
-			entityDelete: [{ entityId: message.entity.entityId }],
+			entityDelete: [deletedEntity],
 			playerData: [],
 		});
 	});
