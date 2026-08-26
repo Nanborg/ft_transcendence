@@ -3,13 +3,13 @@
 const float	WalkingGoobEntity::_aggroRange = 5.f;
 const float	WalkingGoobEntity::_aggroLose = 10.f;
 const float     WalkingGoobEntity::_attackRange = 1.5f;
-const float     WalkingGoobEntity::_moveSpeed = 0.12f;
-const float     WalkingGoobEntity::_chargeSpeed = 0.9f;
+const float     WalkingGoobEntity::_moveSpeed = 0.13f;
+const float     WalkingGoobEntity::_chargeSpeed = 1.0f;
 const int	WalkingGoobEntity::_attackDamage = 1;
 const int	WalkingGoobEntity::_attackCooldownTicks = 10;
 
 WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
-	AbstractMovingEntity(EntityTypes::WALKINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false),
+		AbstractMovingEntity(EntityTypes::WALKINGGOOB, g_game->getScale(), posX, posY, 0, 0, 300, false),
 	_targetEntityId(-1),
 	_attackFrame(-1),
 	_attackCooldown(0),

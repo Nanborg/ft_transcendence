@@ -47,17 +47,17 @@ const UPGRADE_STATS = {
     melee: {
         label: 'Damage',
         baseValue: 100,
-        valuePerLevel: 10,
+        valuePerLevel: 30,
     },
     ranged: {
         label: 'Damage',
         baseValue: 100,
-        valuePerLevel: 10,
+        valuePerLevel: 30,
     },
     shield: {
         label: 'Shield HP',
-        baseValue: 30,
-        valuePerLevel: 10,
+        baseValue: 5,
+        valuePerLevel: 2,
     },
 };
 
