@@ -59,6 +59,9 @@ export function ProfileDetails({ profileUser }) {
   const damageDealt = stats.totalDamageDealt ?? 0;
   const damageReceived = stats.totalDamageReceived ?? 0;
   const goldEarned = stats.totalGoldEarned ?? 0;
+  const displayName = profileUser.username || 'Not available';
+  const avatarUrl = profileUser.avatar?.trim();
+  const avatarFallback = displayName.charAt(0).toUpperCase();
   const badges = BADGE_GROUPS.map(group => ({
     label: group.label,
     iconColumn: group.iconColumn,
@@ -69,8 +72,12 @@ export function ProfileDetails({ profileUser }) {
     <section className="profile-details">
       <div>
         <h2>Profile</h2>
-        <p>{profileUser.username || 'Not available'}</p>
+        <span className="profile-avatar" aria-label={`${displayName} avatar`}>
+          {avatarUrl ? ( <img src={avatarUrl} alt="" /> ) : ( <span className= "profile-avatar-fallback">{avatarFallback}</span> )}
+        </span>
+        <p>{displayName}</p>
       </div>
+
       <dl>
         <h2>Progression</h2>
         <ProgressRow label="Games played" value={gamesPlayed} target={getMilestone(gamesPlayed, [5, 20, 50, 200])} />
