@@ -17,6 +17,7 @@ import lordGoobPhaseOneSpriteUrl from '../../assets/game/enemies/lord-goob-phase
 import lordGoobPhaseTwoSpriteUrl from '../../assets/game/enemies/lord-goob-phase-2.png';
 import lordGoobPhaseThreeSpriteUrl from '../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
+import checkpointPlatformSpriteUrl from '../../assets/game/checkpoint/checkpoint-platform.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -28,6 +29,8 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
     ENTITY_TYPE.CHECKPOINT,
     ENTITY_TYPE.SPAWN_POINT,
 ]);
+const checkpointPlatformSprite = new Image();
+checkpointPlatformSprite.src = checkpointPlatformSpriteUrl;
 const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
@@ -1431,16 +1434,88 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.CHECKPOINT:
-            context.shadowColor = '#facc15';
-            context.shadowBlur = 14;
-            drawDiamond(
-                context,
+        {
+            if (!checkpointPlatformSprite.complete || checkpointPlatformSprite.naturalWidth === 0)
+            {
+                context.shadowColor = '#facc15';
+                context.shadowBlur = 14;
+                drawDiamond(
+                    context,
+                    screen.x,
+                    screen.y,
+                    entityPixels * 0.35,
+                    '#facc15'
+                );
+                break;
+            }
+            const platformWidth = entityPixels * 2;
+            const platformHeight = platformWidth* checkpointPlatformSprite.naturalHeight / checkpointPlatformSprite.naturalWidth;
+            const animationTime = Number.isFinite(now) ? now : 0;
+            const pulse = (Math.sin(animationTime / 320) + 1) / 2;
+            const ringCenterY = screen.y + platformHeight * 0.05;
+
+            context.fillStyle = `rgba(34, 211, 238, ${0.08 + pulse * 0.10})`;
+            context.shadowColor = '#22d3ee';
+            context.shadowBlur = 10 + pulse * 10;
+            context.beginPath();
+            context.ellipse(
                 screen.x,
-                screen.y,
-                entityPixels * 0.35,
-                '#facc15'
+                ringCenterY,
+                platformWidth * 0.56,
+                platformHeight * 0.38,
+                0,
+                0,
+                Math.PI * 2
             );
+            context.fill();
+            context.shadowBlur = 0;
+            context.drawImage(
+                checkpointPlatformSprite,
+                screen.x - platformWidth / 2,
+                screen.y - platformHeight / 2,
+                platformWidth,
+                platformHeight
+            );
+
+            context.lineWidth = Math.max(1.5, tilePixels * 0.04);
+            context.strokeStyle = `rgba(103, 232, 249, ${0.55 + pulse * 0.35})`;
+            context.setLineDash([
+                platformWidth * 0.10,
+                platformWidth * 0.06,
+            ]);
+            context.lineDashOffset = -animationTime / 35;
+            context.beginPath();
+            context.ellipse(
+                screen.x,
+                ringCenterY,
+                platformWidth * 0.58,
+                platformHeight * 0.42,
+                0,
+                0,
+                Math.PI * 2
+            );
+            context.stroke();
+            context.strokeStyle = `rgba(165, 243, 252, ${0.45 + pulse * 0.30})`;
+            context.setLineDash([
+                platformWidth * 0.06,
+                platformWidth * 0.05,
+            ]);
+            context.lineDashOffset = animationTime / 28;
+            context.beginPath();
+            context.ellipse(
+                screen.x,
+                ringCenterY,
+                platformWidth * 0.43,
+                platformHeight * 0.29,
+                0,
+                0,
+                Math.PI * 2
+            );
+            context.stroke();
+
+            context.setLineDash([]);
             break;
+        }
 
         case ENTITY_TYPE.SPAWN_POINT:
             context.strokeStyle = '#38bdf8';
@@ -1473,7 +1548,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
     context.restore();
 }
 
-function drawStaticMapEntities({context, gameMap, camera})
+function drawStaticMapEntities({context, gameMap, camera, now})
 {
     if (!Array.isArray(gameMap?.entities))
         return;
@@ -1486,6 +1561,7 @@ function drawStaticMapEntities({context, gameMap, camera})
             entity,
             position: {x: entity.posX, y: entity.posY},
             camera,
+            now,
         });
     });
 }
@@ -1671,6 +1747,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                 context,
                 gameMap: renderData.gameMap,
                 camera,
+                now,
             });
             entityTracksRef.current.forEach(track =>
             {
