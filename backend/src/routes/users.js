@@ -9,12 +9,40 @@ router.get("/me", authToken, async (req, res) => {
         const UserId = req.user.id
         const userProfile = await prisma.user.findUnique({
             where: { id: UserId },
-            select: { id: true, username: true, email: true, avatar: true}
+            select: {
+                id: true, username: true, email: true, avatar: true,
+                playerStats: { select: { deaths: true, damageDealt: true, damageReceived: true, goldEarned: true, gameRun: { select: { won: true, lost: true } } } },
+            }
         })
         if (!userProfile) {
             return res.status(404).json({ error: "not found" });
         }
-        res.json(userProfile);
+        const wins = userProfile.playerStats.filter(stat => stat.gameRun.won).length;
+        const losses = userProfile.playerStats.filter(stat => stat.gameRun.lost).length;
+        const gamesPlayed = userProfile.playerStats.length;
+        const totals = userProfile.playerStats.reduce((sum, stat) => ({
+            deaths: sum.deaths + stat.deaths,
+            damageDealt: sum.damageDealt + stat.damageDealt,
+            damageReceived: sum.damageReceived + stat.damageReceived,
+            goldEarned: sum.goldEarned + stat.goldEarned,
+        }),
+        { deaths: 0, damageDealt: 0, damageReceived: 0, goldEarned: 0 });
+        res.json({
+            id: userProfile.id,
+            username: userProfile.username,
+            email: userProfile.email,
+            avatar: userProfile.avatar,
+            stats: {
+                wins,
+                losses,
+                gamesPlayed,
+                winRate: gamesPlayed > 0 ? Math.round((wins / gamesPlayed) * 100) : 0,
+                totalDeaths: totals.deaths,
+                totalDamageDealt: totals.damageDealt,
+                totalDamageReceived: totals.damageReceived,
+                totalGoldEarned: totals.goldEarned,
+            },
+        });
     }
     catch (error) {
         res.status(500).json({ error: "internal error" });
