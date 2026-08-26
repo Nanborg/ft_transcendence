@@ -1073,14 +1073,16 @@ function drawTankRobotSprite({
 
 function drawLordGoobSprite({context, entity, screen, tilePixels, now, directionRow})
 {
-    const isPhaseOne = entity.state?.action === 'phase1';
-    const isPhaseTwo = entity.state?.action === 'phase2';
-    const isPhaseThree = entity.state?.action === 'phase3';
-    const sprite = isPhaseThree
+    const isAttacking = entity.state?.action === 'attack';
+    const attackType = isAttacking ? entity.state?.attackType : 'idle';
+    const useMagicAnimation = attackType === 'magicFan' || attackType === 'radial';
+    const useCannonAnimation = attackType === 'cannonFan';
+    const useLaserAnimation = attackType === 'laser';
+    const sprite = useLaserAnimation
         ? lordGoobPhaseThreeSprite
-        : isPhaseTwo
+        : useCannonAnimation
             ? lordGoobPhaseTwoSprite
-            : isPhaseOne
+            : useMagicAnimation
                 ? lordGoobPhaseOneSprite
                 : lordGoobIdleSprite;
     if (!sprite.complete || sprite.naturalWidth === 0)
@@ -1102,7 +1104,7 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
     let anchorXs = null;
     let anchorYs = null;
     let spriteSize;
-    if (isPhaseThree)
+    if (useLaserAnimation)
     {
         const engineFrame = Number(entity.state?.attackFrame);
         frame = Number.isInteger(engineFrame)
@@ -1112,7 +1114,7 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
         anchorYs = LORD_GOOB_PHASE_THREE_ANCHOR_Y;
         spriteSize = tilePixels * LORD_GOOB_PHASE_THREE_SIZE_BY_ROW[renderDirectionRow];
     }
-    else if (isPhaseTwo)
+    else if (useCannonAnimation)
     {
         const engineFrame = Number(entity.state?.attackFrame);
         frame = Number.isInteger(engineFrame) ? Math.max(0, Math.min(LORD_GOOB_PHASE_TWO_FRAME_COUNT - 1, engineFrame)) : 0;
@@ -1121,7 +1123,7 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
         anchorYs = LORD_GOOB_PHASE_TWO_ANCHOR_Y;
         spriteSize = tilePixels * LORD_GOOB_PHASE_TWO_SIZE_BY_ROW[renderDirectionRow];
     }
-    else if (isPhaseOne)
+    else if (useMagicAnimation)
     {
         const engineFrame = Number(entity.state?.attackFrame);
         frame = Number.isInteger(engineFrame)
@@ -1149,7 +1151,7 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
     const centerX = screen.x;
     const centerY = screen.y;
     const renderHeight = spriteSize;
-    const renderWidth = isPhaseThree ? renderHeight * source.width / source.height : spriteSize;
+    const renderWidth = useLaserAnimation ? renderHeight * source.width / source.height : spriteSize;
     context.drawImage(
         sprite,
         source.x,
