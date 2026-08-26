@@ -30,45 +30,54 @@ router.use(express.json());
 
 router.post("/", async (req, res) => {
 	try {
-		const refreshToken = req.body && req.body.token
-		if (refreshToken == null)
-			return res.sendStatus(401)
+		const refreshToken = req.body?.token
+		if (!refreshToken)
+			return res.status(401).json({error: "Missing refresh token"});
 
-			const tokenExist = await prisma.refreshToken.findUnique({
-				where: { token: refreshToken },
-				include: { user: true } //get associated user
+		const tokenExist = await prisma.refreshToken.findUnique({
+			where: { token: refreshToken },
+			include: { user: true } //get associated user
+		});
+		if (!tokenExist)
+			return res.status(401).json({error: "Invalid refresh token"});
+
+		const curDate = new Date()
+		if (curDate > tokenExist.expiresAt)
+			return res.status(401).json({error: "Refresh token expired"});
+		if (tokenExist.isRevoked === true)
+			return res.status(401).json({ error: "Refresh token revoked" })
+		try {
+			const user = await new Promise ((resolve, reject) => {
+			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, decoded) => {
+				if (err)
+					return reject(err);
+				resolve(decoded);
+				});
 			});
 
-			if (tokenExist == null)
-				return res.sendStatus(403) // invalid or expired
-			const curDate = new Date()
-			if (curDate > tokenExist.expiresAt)
-				return res.status(403).json({ error: "Token expired" })
-			if (tokenExist.isRevoked === true)
-				return res.status(403).json({ error: "Token revoked" })
-			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, async (err, user) => {
-			if (err)
-				return (res.sendStatus(403))
-			await prisma.refreshToken.update({
-				where: { id: tokenExist.id },
-				data: { isRevoked: true }
+			await prisma.refreshToken.delete ({
+				where: { id: tokenExist.id }
 			})
 			const userPayload = {
-    			id: user.id,
-    			username: user.username
+	    		id: user.id,
+	    		username: user.username
 			};
 			const newAccessToken = generateAccessToken(userPayload)
-			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN)
+			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256' }) // DONE
 			const expiresAt = new Date()
 			expiresAt.setDate(expiresAt.getDate() + 7)
 			await prisma.refreshToken.create({
 				data: { token: newRefreshToken, userId: userPayload.id, expiresAt: expiresAt }
 			});
 			res.json({
+				message: "Access granted",
 				accessToken: newAccessToken,
 				refreshToken: newRefreshToken
 			})
-		})
+		} catch (err) {
+				console.error("Token validation error:", err);
+				res.status(500).json({ error: 'Server error' });
+		}
 	}
 	catch (err) {
 		console.error("Refresh token error: ", err);
