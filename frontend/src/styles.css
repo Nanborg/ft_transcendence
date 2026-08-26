@@ -155,6 +155,10 @@ a {
   grid-template-columns: 1fr;
 }
 
+.page-content--profile {
+  grid-template-columns: 1fr;
+}
+
 .page-content--home .page-panel {
   margin-top: 0;
   padding: 0;

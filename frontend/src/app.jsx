@@ -368,7 +368,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
     </div>
   );
