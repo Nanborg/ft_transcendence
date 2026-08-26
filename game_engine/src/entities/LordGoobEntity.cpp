@@ -29,6 +29,7 @@ LordGoobEntity::LordGoobEntity(int posX, int posY):
 {
 	_state["phase"] = 1;
 	_state["action"] = "idle";
+	_state["attackType"] = "idle";
 	_state["attackFrame"] = -1;
 	_state["dirX"] = _dirX;
 	_state["dirY"] = _dirY;
@@ -80,7 +81,8 @@ void LordGoobEntity::_startPhaseOneAttack(const AbstractEntity* target)
 	_attackFrame = 0;
 	_attackFrameTicks = 0;
 	_state["phase"] = 1;
-	_state["action"] = "phase1";
+	_state["action"] = "attack";
+	_state["attackType"] = "magicFan";
 	_state["attackFrame"] = _attackFrame;
 }
 
@@ -133,6 +135,7 @@ bool LordGoobEntity::_tickPhaseOneAttack(void)
 		_attackCooldown = _attackCooldownTicks;
 		_targetEntityId = -1;
 		_state["action"] = "idle";
+		_state["attackType"] = "idle";
 		_state["attackFrame"] = -1;
 		return true;
 	}
@@ -153,7 +156,8 @@ void LordGoobEntity::_startPhaseTwoAttack( const AbstractEntity* target)
 	_attackFrame = 0;
 	_attackFrameTicks = 0;
 	_state["phase"] = 2;
-	_state["action"] = "phase2";
+	_state["action"] = "attack";
+	_state["attackType"] = _phaseTwoPattern == 0 ? "cannonFan" : "radial";
 	_state["attackFrame"] = _attackFrame;
 	_state["attackPattern"] = _phaseTwoPattern;
 }
@@ -162,19 +166,23 @@ bool LordGoobEntity::_tickPhaseTwoAttack(void)
 {
 	if (_attackFrame < 0)
 		return false;
-	if (_attackFrame == 4 && _attackFrameTicks == 0)
+	const bool useMagicAnimation = _state["attackType"] == "radial";
+	const int fireFrame = useMagicAnimation ? 2 : 4;
+	const int frameCount = useMagicAnimation ? _attackFrameCount : _phaseTwoFrameCount;
+	if (_attackFrame == fireFrame && _attackFrameTicks == 0)
 		_firePhaseTwoAttack();
 	_attackFrameTicks++;
 	if (_attackFrameTicks < _phaseTwoFrameDurationTicks)
 		return false;
 	_attackFrameTicks = 0;
 	_attackFrame++;
-	if (_attackFrame >= _phaseTwoFrameCount)
+	if (_attackFrame >= frameCount)
 	{
 		_attackFrame = -1;
 		_attackCooldown = _phaseTwoCooldownTicks;
 		_targetEntityId = -1;
 		_state["action"] = "idle";
+		_state["attackType"] = "idle";
 		_state["attackFrame"] = -1;
 		return true;
 	}
@@ -255,7 +263,13 @@ void LordGoobEntity::_startPhaseThreeAttack( const AbstractEntity* target)
 	_attackFrame = 0;
 	_attackFrameTicks = 0;
 	_state["phase"] = 3;
-	_state["action"] = "phase3";
+	_state["action"] = "attack";
+	if (_phaseThreePattern == 0)
+		_state["attackType"] = "cannonFan";
+	else if (_phaseThreePattern == 2)
+		_state["attackType"] = "radial";
+	else
+		_state["attackType"] = "laser";
 	_state["attackFrame"] = _attackFrame;
 	_state["attackPattern"] = _phaseThreePattern;
 }
@@ -264,19 +278,23 @@ bool LordGoobEntity::_tickPhaseThreeAttack(void)
 {
 	if (_attackFrame < 0)
 		return false;
-	if (_attackFrame == 4 && _attackFrameTicks == 0)
+	const bool useMagicAnimation = _state["attackType"] == "radial";
+	const int fireFrame = useMagicAnimation ? 2 : 4;
+	const int frameCount = useMagicAnimation ? _attackFrameCount : _phaseThreeFrameCount;
+	if (_attackFrame == fireFrame && _attackFrameTicks == 0)
 		_firePhaseThreeAttack();
 	_attackFrameTicks++;
 	if (_attackFrameTicks < _phaseThreeFrameDurationTicks)
 		return false;
 	_attackFrameTicks = 0;
 	_attackFrame++;
-	if (_attackFrame >= _phaseThreeFrameCount)
+	if (_attackFrame >= frameCount)
 	{
 		_attackFrame = -1;
 		_attackCooldown = _phaseThreeCooldownTicks;
 		_targetEntityId = -1;
 		_state["action"] = "idle";
+		_state["attackType"] = "idle";
 		_state["attackFrame"] = -1;
 		return true;
 	}
