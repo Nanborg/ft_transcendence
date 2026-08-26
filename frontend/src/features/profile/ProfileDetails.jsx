@@ -141,6 +141,33 @@ export function ProfileDetails({ profileUser }) {
           <dd>{stats.winRate ?? 0}%</dd>
         </div>
       </dl>
+      <section className="profile-badges">
+        <h2>Badges</h2>
+        <div className="profile-badge-list">
+          {badges.map(badge => (
+            <article
+              className={`badge-cell ${badge.unlocked ? 'is-unlocked' : 'is-locked'}`}
+              key={`${badge.label}-${badge.name}`}
+            >
+              <span className="badge-icon-wrapper">
+                <img
+                  className="badge-icon"
+                  alt=""
+                  aria-hidden="true"
+                  src={badgeIconsUrl}
+                  style={{
+                    ...BADGE_SPRITE_SIZE,
+                    transform: getBadgeBackgroundPosition(badge.iconColumn, badge.tier),
+                  }}
+                />
+              </span>
+              <span className="badge-label">
+                <strong>{badge.name}</strong>
+              </span>
+            </article>
+          ))}
+        </div>
+      </section>
     </section>
   );
 }
