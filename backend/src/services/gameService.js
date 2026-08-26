@@ -49,6 +49,20 @@ async function saveGameResults(gameData) {
                 }
             }
         });
+        if(gameData.won == true)
+        {
+            for (const player of gameData.players)
+            {
+                await prisma.user.update({
+                    where:{ id: player.userId },
+                    data:{
+                        wins:{
+                            increment: 1
+                        }
+                    }
+                });
+            }
+        }
         console.log("Game saved successfully, ID:", savedGame.id);
         return savedGame;
     } catch (error) {

@@ -6,6 +6,10 @@ export function ProfileDetails({ profileUser }) {
         <dd>{profileUser.id || 'Not available'}</dd>
       </div>
       <div>
+        <dt>Wins</dt>
+        <dd>{profileUser.wins ?? 0}</dd>
+      </div>
+      <div>
         <dt>Name</dt>
         <dd>{profileUser.username || 'Not available'}</dd>
       </div>

@@ -19,6 +19,7 @@ datasource db {
 // Modèle de l'Utilisateur
 model User {
   id            Int            @id @default(autoincrement())
+  wins          Int            @default(0)
   email         String         @unique
   username      String         @unique
   password      String?
