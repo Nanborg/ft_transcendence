@@ -1163,8 +1163,36 @@ function drawLordGoobSprite({context, entity, screen, tilePixels, now, direction
     );
     return true;
 }
+function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
+{
+    const health = Number(entity.health);
+    if (!Number.isFinite(health))
+        return;
+    const entityId = entity.entityId ?? entity.id;
+    if (!maxHealthRef.current.has(entityId))
+        maxHealthRef.current.set(entityId, health);
+    const maxHealth = maxHealthRef.current.get(entityId);
+    const ratio = Math.max(0, Math.min(1, health / maxHealth));
+    const width = tilePixels * 0.9;
+    const height = 5;
+    const x = screen.x - width / 2;
+    const y = screen.y - tilePixels * 0.72;
 
-function drawEntity({context, entity, position, camera, now, attack, directionRow = 0})
+    context.fillStyle = "rgba(15, 20, 42, 0.9)";
+    context.fillRect(x, y, width, height);
+    if (ratio > 0.85)
+        context.fillStyle = "#22c55e";
+    else if (ratio > 0.66)
+        context.fillStyle = "#eab308";
+    else if (ratio > 0.33)
+        context.fillStyle = "#f97316";
+    else
+        context.fillStyle = "#ef4444";
+    context.fillRect(x, y, width * ratio, height);
+}
+
+
+function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
 {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -1438,7 +1466,8 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             );
             context.fill();
     }
-
+    if (type === ENTITY_TYPE.PLAYER || type === ENTITY_TYPE.WALKING_ROBOT  || type === ENTITY_TYPE.SHOOTING_ROBOT || type === ENTITY_TYPE.TANK_ROBOT || type === ENTITY_TYPE.BOSS)
+        drawHealthBar({context, screen, entity, tilePixels, maxHealthRef});
     context.restore();
 }
 
@@ -1463,6 +1492,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
 {
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
+    const maxHealthRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
     const renderDataRef = useRef({
         currentPlayerId,
@@ -1662,6 +1692,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                     now,
                     attack,
                     directionRow: renderDirectionRow,
+                    maxHealthRef,
                 });
             });
             drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});

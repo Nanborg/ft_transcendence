@@ -2,14 +2,14 @@
 #include <cmath>
 
 const float	PlayerEntity::_slashDist = 0.5f;
-const int	PlayerEntity::_meleeCooldownTicks = 10;
-const int	PlayerEntity::_rangedCooldownTicks = 20;
-const int	PlayerEntity::_shieldCooldownTicks = 30;
-const int	PlayerEntity::_shieldBaseHealth = 30;
-const int	PlayerEntity::_shieldHealthPerLevel = 10;
+const int	PlayerEntity::_meleeCooldownTicks = 7;
+const int	PlayerEntity::_rangedCooldownTicks = 14;
+const int	PlayerEntity::_shieldCooldownTicks = 24;
+const int	PlayerEntity::_shieldBaseHealth = 5;
+const int	PlayerEntity::_shieldHealthPerLevel = 2;
 const int	PlayerEntity::_meleeBaseDamage = 100;
 const int	PlayerEntity::_rangedBaseDamage = 100;
-const int	PlayerEntity::_damagePerLevel = 10;
+const int	PlayerEntity::_damagePerLevel = 30;
 
 PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY ):
 	AbstractMovingEntity(EntityTypes::PLAYERENTITY, g_game->getScale(), posX, posY, velX, velY, 100, false),

@@ -2,14 +2,14 @@
 
 const float	ShootingGoobEntity::_fleeDist = 5.f;
 const float	ShootingGoobEntity::_range = 10.f;
-const float ShootingGoobEntity::_fleeSpeed = 0.15f;
-const float ShootingGoobEntity::_projectileSpeed = 0.5f;
+const float ShootingGoobEntity::_fleeSpeed = 0.17f;
+const float ShootingGoobEntity::_projectileSpeed = 0.58f;
 const int	ShootingGoobEntity::_projectileDamage = 1;
-const int	ShootingGoobEntity::_shootCooldownTicks = 20;
+const int	ShootingGoobEntity::_shootCooldownTicks = 16;
 const int	ShootingGoobEntity::_shootAnimationFrames = 4;
 
 ShootingGoobEntity::ShootingGoobEntity( int posX, int posY ):
-	AbstractMovingEntity(EntityTypes::SHOOTINGGOOB, g_game->getScale(), posX, posY, 0, 0, 100, false), _shootCooldown(0), _shootFrame(-1), _dirX(0), _dirY(1)
+		AbstractMovingEntity(EntityTypes::SHOOTINGGOOB, g_game->getScale(), posX, posY, 0, 0, 400, false), _shootCooldown(0), _shootFrame(-1), _dirX(0), _dirY(1)
 {
   setGold(15);
 	_state["action"] = "idle";
