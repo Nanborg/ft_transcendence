@@ -114,6 +114,11 @@ export function ProfileDetails({ profileUser }) {
   const damageDealt = stats.totalDamageDealt ?? 0;
   const damageReceived = stats.totalDamageReceived ?? 0;
   const goldEarned = stats.totalGoldEarned ?? 0;
+  const badges = BADGE_GROUPS.map(group => ({
+    label: group.label,
+    iconColumn: group.iconColumn,
+    ...getCurrentBadge(stats[group.valueKey] ?? 0, group.badges),
+  }));
 
   return (
     <section className="profile-details">
