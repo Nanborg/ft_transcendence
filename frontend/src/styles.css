@@ -417,6 +417,32 @@ p {
   text-align: center;
 }
 
+.badge-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  margin-top: 12px;
+  display: block;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.badge-icon {
+  display: block;
+  max-width: none;
+  transform-origin: top left;
+}
+
+.badge-label {
+  margin-top: 6px;
+  min-width: 0;
+  text-align: center;
+}
+
+.badge-label strong {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 720px) {
   .profile-badge-list {
     grid-template-columns: repeat(auto-fit, minmax(104px, 128px));
@@ -426,6 +452,14 @@ p {
   .badge-cell {
     width: 100%;
   }
+}
+
+.badge-cell.is-locked {
+  opacity: 0.62;
+}
+
+.badge-cell.is-locked .badge-icon {
+  filter: grayscale(1) brightness(0.55);
 }
 
 .profile-edit-form {
