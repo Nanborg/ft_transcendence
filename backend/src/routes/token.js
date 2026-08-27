@@ -78,7 +78,7 @@ router.post("/", async (req, res) => {
 			})
 		} catch (err) {
 				console.error("Token validation error:", err);
-				res.status(500).json({ error: 'Server error' });
+				res.status(403).json({ error: 'Invalid refresh token' }); //test-nico
 		}
 	}
 	catch (err) {

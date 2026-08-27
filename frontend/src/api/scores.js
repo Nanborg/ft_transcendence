@@ -12,10 +12,11 @@ export async function fetchMatchHistory(accessToken) {
 
 export async function fetchLeaderBoard() {
 	try{
-		return await apiRequest(`/api/scores/leaderboard`, {},);
+		const response = await fetch('/api/scores/leaderboard'); //test-nico
+		if (!response.ok)
+			throw new Error(`Api error: ${response.status}`);
+		return response.json();
 	} catch (err) {
-		if (err.message === "Session expired")
-			throw err;
 		throw new Error("Unable to load leaderboard");
 	}
 }

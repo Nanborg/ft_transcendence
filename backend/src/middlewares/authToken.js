@@ -16,7 +16,8 @@ const jwt = require("jsonwebtoken");
 //	param {NextFunction} next - Express next middleware function.
 //	
 //	throws {401} If no token is provided.
-//	throws {403} If the token is invalid or expired.
+//	throws {401} If the token is expired.
+//	throws {403} If the token is invalid.
 //	throws {500} If an unexpected server error occurs.
 
 
@@ -32,6 +33,8 @@ function authToken(req, res, next) {
 			if (err)
 			{
 				console.error("Token verification failed:", err.message);
+				if (err.name === "TokenExpiredError") //test-nico
+					return res.status(401).json({ error: "Token expired" });
 				return res.status(403).json({ error: "Invalid token" });
 			}
 
