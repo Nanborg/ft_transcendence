@@ -91,7 +91,7 @@ void	GameEngine::sendEntityDelete( const AbstractEntity* entity ) {
 	out["type"] = "entityDelete";
 	out["tick"] = _tick;
 	out["roomId"] = _roomId;
-	out["entity"]["entityId"] = entity->getId();
+	out["entity"] = entity->toJson();
 	g_io->sendMsg(out.dump());
 }
 

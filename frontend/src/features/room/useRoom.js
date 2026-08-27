@@ -17,6 +17,7 @@ export function useRoom(socket, currentUser) {
     const [gameStartInfo, setGameStartInfo] = useState(null);
     // const [latestGameState, setLatestGameState] = useState(null);
     const [gameEntities, setGameEntities] = useState([]);
+    const [deletedGameEntities, setDeletedGameEntities] = useState([]);
     const [gameResult, setGameResult] = useState(null);
     const [gameError, setGameError] = useState('');
     const [roomNameInput, setRoomNameInput] = useState('');
@@ -70,6 +71,7 @@ export function useRoom(socket, currentUser) {
             setGameStartInfo(gameStartPayload);
             // setLatestGameState(null);
             setGameEntities([]);
+            setDeletedGameEntities([]);
             setGamePlayerData([]);
             setGameStartedAt(null);
             setGameError('');
@@ -122,6 +124,8 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
+            if (gameStateUpdatePayload.entityDelete.length > 0)
+                setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
             setGameEntities(previousEntities => {
                 const updateEntities = new Map(
                     previousEntities.map(entity => [
@@ -344,6 +348,7 @@ export function useRoom(socket, currentUser) {
         // setLatestGameState(null);
         setGameError('');
         setGameEntities([]);
+        setDeletedGameEntities([]);
         setGamePlayerData([]);
         setGameStartedAt(null);
         setGameResult(null);
@@ -430,6 +435,7 @@ export function useRoom(socket, currentUser) {
         gameResult,
         gameMap,
         gameEntities,
+        deletedGameEntities,
         gameError,
         leaveGame,
         gamePlayerData,

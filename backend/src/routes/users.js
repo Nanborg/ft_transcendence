@@ -112,7 +112,17 @@ router.patch('/me', authToken, async (req, res) => {
                 return res.status(400).json({ error: "invalid avatar" });
             }
             else {
-                updateData.avatar = avatar.trim();
+                const avatarUrl = avatar.trim();
+                if (avatarUrl.length > 500)
+                    return res.status(400).json({ error: "invalid avatar" });
+                try {
+                    const parsedAvatarUrl = new URL(avatarUrl);
+                    if (!['http:', 'https:'].includes(parsedAvatarUrl.protocol))
+                        return res.status(400).json({ error: "invalid avatar" });
+                }
+                catch {return res.status(400).json({ error: "invalid avatar" });}
+                updateData.avatar = avatarUrl;
+
             }
         }
         const updatedUser = await prisma.user.update({

@@ -307,6 +307,7 @@ function App() {
               currentPlayerId={currentUser?.id}
               gameMap={room.gameMap}
               gameEntities={room.gameEntities}
+              deletedGameEntities={room.deletedGameEntities}
               gameStartedAt={room.gameStartedAt}
               gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}
@@ -365,7 +366,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
     </div>
   );
