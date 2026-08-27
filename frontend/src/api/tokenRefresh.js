@@ -1,6 +1,5 @@
 import { apiRequest } from "./apiReq";
 
-// frontend/src/api/tokenRefresh.js
 export async function refreshAccessToken(refreshToken)
 {
 	const response = await fetch('/api/token',
