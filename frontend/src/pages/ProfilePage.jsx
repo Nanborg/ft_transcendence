@@ -66,17 +66,17 @@ export function ProfilePage({
           <form className="profile-edit-form" onSubmit={handleSubmit}>
             <label>
               Username
-              <input value={username} onChange={event => setUsername(event.target.value)}></input>
+              <input className="form-control" value={username} onChange={event => setUsername(event.target.value)}></input>
             </label>
             <label>
               Avatar URL
-              <input value={avatar} onChange={event => setAvatar(event.target.value)}></input>
+              <input className="form-control" value={avatar} onChange={event => setAvatar(event.target.value)}></input>
             </label>
-            <button type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
+            <button className="btn btn-success" type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
               {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}
             </button>
-            {saveStatus === 'saved' && <p>Profile saved.</p>}
-            {saveStatus === 'error' && <p role="alert">{saveError}</p>}
+            {saveStatus === 'saved' && <p className="alert alert-success">Profile saved.</p>}
+            {saveStatus === 'error' && <p className="alert alert-danger" role="alert">{saveError}</p>}
           </form>
         </>
       )}

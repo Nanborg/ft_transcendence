@@ -6,7 +6,7 @@ export function CurrentUserCard({ currentUser, onLogout }) {
       {currentUser.email && (
         <p>{currentUser.email}</p>
       )}
-      <button type="button" onClick={onLogout}> Logout</button>
+      <button className="btn btn-outline-warning" type="button" onClick={onLogout}>Logout</button>
     </div>
   );
 }

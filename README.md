@@ -26,6 +26,13 @@ Install:
 - Node.js LTS
 - npm
 
+## Technologies
+
+- Frontend: React with Vite.
+- Frontend styling: Bootstrap for forms, buttons, navigation utilities and responsive UI primitives, extended by custom CSS in `frontend/src/styles.css`.
+- Backend: Express with Socket.IO.
+- Database: PostgreSQL with Prisma ORM.
+
 Check local tools:
 
 ```bash

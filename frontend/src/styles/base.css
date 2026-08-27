@@ -1,0 +1,42 @@
+/* Base */
+
+:root {
+  --color-bg: #000000;
+  --color-surface: #111111;
+  --color-surface-strong: #222222;
+  --color-border: #006666;
+
+  --color-text: #eeeeee;
+  --color-muted: #888888;
+
+  --color-cyan: #00ffff;
+  --color-green: #00ff66;
+  --color-orange: #ff9900;
+  --color-red: #ff0000;
+
+  --glow-cyan: 0 0 18px rgba(54, 231, 255, 0.35);
+  --glow-orange: 0 0 18px rgba(255, 159, 63, 0.28);
+
+  --font-ui: Arial, sans-serif;
+  --radius-panel: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text);
+  background:
+    linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 70% 20%, rgba(255, 153, 0, 0.12), transparent 28%),
+    var(--color-bg);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+  font-family: var(--font-ui);
+}
+
+a {
+  color: inherit;
+}

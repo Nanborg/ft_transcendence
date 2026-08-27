@@ -16,9 +16,10 @@ export function DevLoginForm({
   }
   return (
     <form className="login-form" onSubmit={authMode === 'register' ? onRegister : onSubmit}>
-      <label htmlFor="dev-user-name">Username</label>
+      <label className="form-label" htmlFor="dev-user-name">Username</label>
       <input
         id="dev-user-name"
+        className="form-control"
         type="text"
         value={devUserName}
         onChange={(event) => onDevUserNameChange(event.target.value)}
@@ -26,9 +27,10 @@ export function DevLoginForm({
       />
       {authMode === 'register' && (
         <>
-          <label htmlFor="email">Email</label>
+          <label className="form-label" htmlFor="email">Email</label>
           <input
             id="email"
+            className="form-control"
             type="email"
             value={email}
             onChange={event => onEmailChange(event.target.value)}
@@ -36,25 +38,27 @@ export function DevLoginForm({
           />
         </>
       )}
-      <label htmlFor="password">Password</label>
+      <label className="form-label" htmlFor="password">Password</label>
       <input
         id="password"
+        className="form-control"
         type="password"
         value={password}
         onChange={event => onPasswordChange(event.target.value)}
       />
       <button
+        className="btn btn-outline-info"
         type="button"
         onClick={() => onAuthModeChange(authMode === 'login' ? 'register' : 'login')}
       >
         {authMode === 'login' ? 'Create account' : 'Back to login'}
       </button>
       {authMode === 'login' && (
-        <button type="button" onClick={handleFortyTwoLogin}>
+        <button className="btn btn-outline-light" type="button" onClick={handleFortyTwoLogin}>
           Login with 42
         </button>
       )}
-      <button type="submit" disabled={authStatus === 'loading'}>
+      <button className="btn btn-success" type="submit" disabled={authStatus === 'loading'}>
         {authStatus === 'loading' ? 'Loading...' : authMode === 'register' ? 'Create account' : 'Login'}
       </button>
     </form>

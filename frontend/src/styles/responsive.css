@@ -1,0 +1,47 @@
+/* Responsive (mobile) */
+
+@media (max-width: 760px) {
+  .app-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .main-nav {
+    justify-content: flex-start;
+  }
+
+  .page-content {
+    grid-template-columns: 1fr;
+    padding: 24px 16px;
+  }
+
+  .page-panel {
+    min-height: 240px;
+    padding: 24px;
+  }
+
+  .home-game-window {
+    min-height: 620px;
+  }
+
+  .home-game-title {
+    width: calc(100% - 24px);
+  }
+
+  .leaderboard-table {
+    font-size: 0.9rem;
+  }
+
+  .leaderboard-table th,
+  .leaderboard-table td {
+    padding: 0.5rem;
+  }
+
+  .match-history-item {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 30px;
+  }
+}

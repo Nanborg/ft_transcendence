@@ -1,0 +1,179 @@
+/* Room */
+
+.room-panel {
+  display: grid;
+  gap: 16px;
+  max-width: 500px;
+  margin-top: 24px;
+}
+
+.room-form input {
+  width: 90%;
+  padding: 10px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font: inherit;
+}
+
+.room-panel button {
+  width: fit-content;
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--color-cyan);
+  background: var(--color-surface-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.room-panel button:disabled {
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.room-loading,
+.room-error {
+  margin: 0;
+}
+
+.room-current {
+  display: grid;
+  gap: 12px;
+}
+
+.room-players {
+  display: grid;
+  gap: 8px;
+}
+
+.room-players h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.room-players ul {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.room-players li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+}
+
+.room-player-name {
+  font-weight: 700;
+}
+
+.room-player-meta {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.room-error {
+  color: var(--color-red);
+  font-weight: 700;
+}
+
+.room-ready-button {
+  background: var(--color-green);
+}
+
+.room-start-button {
+  background: var(--color-surface-strong);
+}
+
+.room-started {
+  margin: 0;
+  color: var(--color-green);
+  font-weight: 700;
+}
+
+.room-chat {
+  display: grid;
+  gap: 8px;
+}
+
+.room-chat h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.room-chat-messages {
+  display: grid;
+  gap: 8px;
+  min-height: 80px;
+  max-height: 180px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.room-chat-messages li {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+}
+
+.room-chat-author {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.room-chat-message {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.room-chat-form {
+  display: grid;
+  gap: 8px;
+}
+
+.room-chat-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font: inherit;
+}
+
+.room-empty {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.room-summary {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.room-status,
+.room-muted {
+  color: var(--color-muted);
+}
+
+.room-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}

@@ -387,7 +387,7 @@ export function GamePage({
                     </div>
                     <h3>Player statistics</h3>
                     {playerStats.length > 0 ? (
-                        <table className="game-stats-table">
+                        <table className="game-stats-table table table-dark table-hover align-middle">
                             <thead>
                                 <tr>
                                     <th>Player</th>
