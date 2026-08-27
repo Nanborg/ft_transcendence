@@ -6,10 +6,8 @@ export async function refreshAccessToken(refreshToken)
 		{
 			method: 'POST',
 			headers: {'Content-Type': 'application/json',},
-			body: JSON.stringify({
-			token: refreshToken,
-		}),
-	});
+			body: JSON.stringify({token: refreshToken,}),
+		});
 
 	if (!response.ok)
 		throw new Error('Token refresh failed');
