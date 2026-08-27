@@ -1,17 +1,19 @@
 import { apiRequest } from "./apiReq";
 
+// frontend/src/api/tokenRefresh.js
 export async function refreshAccessToken(refreshToken)
 {
-	try{
-		return await apiRequest(`/api/token`,
-			{
-				method: "POST",
-				headers: {'Content-type': 'application/json'},
-				body: JSON.stringify({token: refreshToken}),
-			}); // return new accessToken and new refreshToken
-	} catch (err) {
-		if (err.message === "Session expired")
-			throw err;
-		throw new Error("Token refresh failed");
-	}
+	const response = await fetch('/api/token',
+		{
+			method: 'POST',
+			headers: {'Content-Type': 'application/json',},
+			body: JSON.stringify({
+			token: refreshToken,
+		}),
+	});
+
+	if (!response.ok)
+		throw new Error('Token refresh failed');
+
+	return response.json(); // accessToken, refreshToken;
 }
