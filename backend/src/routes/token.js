@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
 	    		username: user.username
 			};
 			const newAccessToken = generateAccessToken(userPayload)
-			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256' }) // DONE
+			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID(), })
 			const expiresAt = new Date()
 			expiresAt.setDate(expiresAt.getDate() + 7)
 			await prisma.refreshToken.create({

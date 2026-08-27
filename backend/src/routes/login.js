@@ -54,7 +54,7 @@ async function loginUser(user, res, mess, code) {
 	};
 
 	const accessToken = generateAccessToken(payload);
-	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256' });
+	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID()});
 
 	const expiresAt = new Date()
 	expiresAt.setDate(expiresAt.getDate() + 7)

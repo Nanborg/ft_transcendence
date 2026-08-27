@@ -10,7 +10,7 @@ const prisma = require('../db');
 //		returns: signed JWT access token valid for 15 minutes.
 
 function generateAccessToken(user) {
-	return jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '15m', algorithm: 'HS256' })
+	return jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '15m', algorithm: 'HS256', jwtid: crypto.randomUUID()})
 }
 
 
@@ -53,7 +53,7 @@ async function OAuth(req, res, next) {
 			username: user.username
 		}
 		const accessToken = generateAccessToken(u)
-		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256' })
+		const refreshToken = jwt.sign(u, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID()})
 		const expiresAt = new Date()
 		expiresAt.setDate(expiresAt.getDate() + 7)
 		await prisma.refreshToken.create({
