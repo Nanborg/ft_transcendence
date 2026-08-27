@@ -5,7 +5,7 @@
 const float		LordGoobEntity::_attackRange = 18.f;
 const float		LordGoobEntity::_projectileSpeed = 0.35f;
 const float		LordGoobEntity::_projectileSpawnDistance = 1.2f;
-const int		LordGoobEntity::_projectileDamage = 2;
+const int		LordGoobEntity::_projectileDamage = 6;
 const int		LordGoobEntity::_attackCooldownTicks = 25;
 const int		LordGoobEntity::_attackFrameDurationTicks = 3;
 const int		LordGoobEntity::_attackFrameCount = 4;
@@ -19,13 +19,13 @@ const int		LordGoobEntity::_phaseThreeCooldownTicks = 15;
 const int		LordGoobEntity::_phaseThreeFrameCount = 6;
 const int		LordGoobEntity::_phaseThreeFrameDurationTicks = 3;
 const int		LordGoobEntity::_phaseThreeRadialProjectileCount = 12;
-const int		LordGoobEntity::_phaseThreeLaserDamage = 4;
+const int		LordGoobEntity::_phaseThreeLaserDamage = 12;
 const float		LordGoobEntity::_phaseThreeLaserSpeed = 0.22f;
 const float		LordGoobEntity::_phaseThreeLaserSpawnDistance = 1.4f;
 const double	LordGoobEntity::_phaseThreeFanAngleStep = 0.14;
 
 LordGoobEntity::LordGoobEntity(int posX, int posY):
-	AbstractEntity(EntityTypes::LORDGOOB, g_game->getScale(), posX, posY, 3000, false), _targetEntityId(-1), _attackCooldown(0), _attackFrame(-1), _attackFrameTicks(0), _currentPhase(1), _phaseTwoPattern(0), _phaseThreePattern(0), _dirX(0), _dirY(1), _aimX(0), _aimY(1)
+	AbstractEntity(EntityTypes::LORDGOOB, g_game->getScale(), posX, posY, 10000, false), _targetEntityId(-1), _attackCooldown(0), _attackFrame(-1), _attackFrameTicks(0), _currentPhase(1), _phaseTwoPattern(0), _phaseThreePattern(0), _dirX(0), _dirY(1), _aimX(0), _aimY(1)
 {
 	_state["phase"] = 1;
 	_state["action"] = "idle";

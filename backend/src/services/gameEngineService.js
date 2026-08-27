@@ -35,6 +35,7 @@ const PLAYER_UPGRADE = Object.freeze({
     MELEE: "melee",
     RANGED: "ranged",
     SHIELD: "shield",
+    HEALTH: "health",
 });
 
 class GameEngineService extends EventEmitter {
@@ -323,6 +324,7 @@ class GameEngineService extends EventEmitter {
                 melee: upgrade === PLAYER_UPGRADE.MELEE,
                 ranged: upgrade === PLAYER_UPGRADE.RANGED,
                 shield: upgrade === PLAYER_UPGRADE.SHIELD,
+                health: upgrade === PLAYER_UPGRADE.HEALTH,
             },
         });
     }
