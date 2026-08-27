@@ -309,6 +309,7 @@ function App() {
               currentPlayerId={currentUser?.id}
               gameMap={room.gameMap}
               gameEntities={room.gameEntities}
+              deletedGameEntities={room.deletedGameEntities}
               gameStartedAt={room.gameStartedAt}
               gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}

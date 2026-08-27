@@ -98,6 +98,7 @@ export function GamePage({
     currentPlayerId,
     gameMap,
     gameEntities,
+    deletedGameEntities,
     gameStartedAt,
     gamePlayerData,
     gameResult,
@@ -472,6 +473,7 @@ export function GamePage({
                     currentPlayerId={currentPlayerId}
                     gameMap={gameMap}
                     gameEntities={gameEntities}
+                    deletedGameEntities={deletedGameEntities}
                     gamePlayerData={gamePlayerData}
                     goldFeedbacks={goldFeedbacks}
                     socket={socket}

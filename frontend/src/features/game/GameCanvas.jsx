@@ -17,6 +17,7 @@ import lordGoobPhaseOneSpriteUrl from '../../assets/game/enemies/lord-goob-phase
 import lordGoobPhaseTwoSpriteUrl from '../../assets/game/enemies/lord-goob-phase-2.png';
 import lordGoobPhaseThreeSpriteUrl from '../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../assets/game/enemies/walking-robot-charge.png';
+import checkpointPlatformSpriteUrl from '../../assets/game/checkpoint/checkpoint-platform.png';
 
 const CANVAS_WIDTH = 800;
 const MIN_CANVAS_HEIGHT = 450;
@@ -28,6 +29,8 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
     ENTITY_TYPE.CHECKPOINT,
     ENTITY_TYPE.SPAWN_POINT,
 ]);
+const checkpointPlatformSprite = new Image();
+checkpointPlatformSprite.src = checkpointPlatformSpriteUrl;
 const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
@@ -356,6 +359,7 @@ const lordGoobPhaseTwoSprite = new Image();
 lordGoobPhaseTwoSprite.src = lordGoobPhaseTwoSpriteUrl;
 const lordGoobPhaseThreeSprite = new Image();
 lordGoobPhaseThreeSprite.src = lordGoobPhaseThreeSpriteUrl;
+const SHIELD_BREAK_DURATION_MS = 400;
 
 function getInterpolatedPosition(track, now)
 {
@@ -1193,6 +1197,66 @@ function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
     context.fillRect(x, y, width * ratio, height);
 }
 
+function drawShieldBreakEffects({context, effects, camera, now})
+{
+    effects.forEach((effect, entityId) =>
+    {
+        const elapsed = now - effect.startedAt;
+        if (elapsed >= SHIELD_BREAK_DURATION_MS)
+        {
+            effects.delete(entityId);
+            return;
+        }
+        const progress = elapsed / SHIELD_BREAK_DURATION_MS;
+        const screen = worldToScreen(
+            {x: effect.posX, y: effect.posY},
+            camera
+        );
+        const tilePixels = camera.tileSize * camera.scale;
+        const radius = tilePixels * (0.85 + progress * 0.75);
+        const opacity = 1 - progress;
+
+        context.save();
+
+        context.globalAlpha = opacity;
+        context.strokeStyle = '#93c5fd';
+        context.shadowColor = '#60a5fa';
+        context.shadowBlur = 18;
+        context.lineWidth = Math.max(1, 5 * opacity);
+
+        context.beginPath();
+        context.arc(
+            screen.x,
+            screen.y,
+            radius,
+            0,
+            Math.PI * 2
+        );
+        context.stroke();
+
+        context.strokeStyle = '#dbeafe';
+        context.lineWidth = Math.max(1, 3 * opacity);
+
+        for (let index = 0; index < 8; index += 1)
+        {
+            const angle = (Math.PI * 2 * index) / 8;
+            const innerRadius = radius * 0.65;
+            const outerRadius = radius * 1.15;
+
+            context.beginPath();
+            context.moveTo(
+                screen.x + Math.cos(angle) * innerRadius,
+                screen.y + Math.sin(angle) * innerRadius
+            );
+            context.lineTo(
+                screen.x + Math.cos(angle) * outerRadius,
+                screen.y + Math.sin(angle) * outerRadius
+            );
+            context.stroke();
+        }
+        context.restore();
+    });
+}
 
 function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
 {
@@ -1431,16 +1495,88 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.CHECKPOINT:
-            context.shadowColor = '#facc15';
-            context.shadowBlur = 14;
-            drawDiamond(
-                context,
+        {
+            if (!checkpointPlatformSprite.complete || checkpointPlatformSprite.naturalWidth === 0)
+            {
+                context.shadowColor = '#facc15';
+                context.shadowBlur = 14;
+                drawDiamond(
+                    context,
+                    screen.x,
+                    screen.y,
+                    entityPixels * 0.35,
+                    '#facc15'
+                );
+                break;
+            }
+            const platformWidth = entityPixels * 2;
+            const platformHeight = platformWidth* checkpointPlatformSprite.naturalHeight / checkpointPlatformSprite.naturalWidth;
+            const animationTime = Number.isFinite(now) ? now : 0;
+            const pulse = (Math.sin(animationTime / 320) + 1) / 2;
+            const ringCenterY = screen.y + platformHeight * 0.05;
+
+            context.fillStyle = `rgba(34, 211, 238, ${0.08 + pulse * 0.10})`;
+            context.shadowColor = '#22d3ee';
+            context.shadowBlur = 10 + pulse * 10;
+            context.beginPath();
+            context.ellipse(
                 screen.x,
-                screen.y,
-                entityPixels * 0.35,
-                '#facc15'
+                ringCenterY,
+                platformWidth * 0.56,
+                platformHeight * 0.38,
+                0,
+                0,
+                Math.PI * 2
             );
+            context.fill();
+            context.shadowBlur = 0;
+            context.drawImage(
+                checkpointPlatformSprite,
+                screen.x - platformWidth / 2,
+                screen.y - platformHeight / 2,
+                platformWidth,
+                platformHeight
+            );
+
+            context.lineWidth = Math.max(1.5, tilePixels * 0.04);
+            context.strokeStyle = `rgba(103, 232, 249, ${0.55 + pulse * 0.35})`;
+            context.setLineDash([
+                platformWidth * 0.10,
+                platformWidth * 0.06,
+            ]);
+            context.lineDashOffset = -animationTime / 35;
+            context.beginPath();
+            context.ellipse(
+                screen.x,
+                ringCenterY,
+                platformWidth * 0.58,
+                platformHeight * 0.42,
+                0,
+                0,
+                Math.PI * 2
+            );
+            context.stroke();
+            context.strokeStyle = `rgba(165, 243, 252, ${0.45 + pulse * 0.30})`;
+            context.setLineDash([
+                platformWidth * 0.06,
+                platformWidth * 0.05,
+            ]);
+            context.lineDashOffset = animationTime / 28;
+            context.beginPath();
+            context.ellipse(
+                screen.x,
+                ringCenterY,
+                platformWidth * 0.43,
+                platformHeight * 0.29,
+                0,
+                0,
+                Math.PI * 2
+            );
+            context.stroke();
+
+            context.setLineDash([]);
             break;
+        }
 
         case ENTITY_TYPE.SPAWN_POINT:
             context.strokeStyle = '#38bdf8';
@@ -1473,7 +1609,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
     context.restore();
 }
 
-function drawStaticMapEntities({context, gameMap, camera})
+function drawStaticMapEntities({context, gameMap, camera, now})
 {
     if (!Array.isArray(gameMap?.entities))
         return;
@@ -1486,11 +1622,12 @@ function drawStaticMapEntities({context, gameMap, camera})
             entity,
             position: {x: entity.posX, y: entity.posY},
             camera,
+            now,
         });
     });
 }
 
-export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerData, goldFeedbacks = [], socket})
+export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
     const entityTracksRef = useRef(new Map());
@@ -1502,6 +1639,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
         gamePlayerData,
     });
     const spectatorIndexRef = useRef(0);
+    const shieldBreakEffectsRef = useRef(new Map());
 
     const width = CANVAS_WIDTH;
     const mapAspectRatio = gameMap?.width > 0 && gameMap?.height > 0 ? gameMap.height / gameMap.width : 0.5625;
@@ -1567,6 +1705,35 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
             playerAttackRef.current.clear();
         };
     }, [socket]);
+
+    useEffect(() => {
+        if (!Array.isArray(deletedGameEntities))
+            return;
+        if (deletedGameEntities.length === 0)
+        {
+            shieldBreakEffectsRef.current.clear();
+            return;
+        }
+        const now = performance.now();
+        deletedGameEntities.forEach(entity => {
+            if (
+                !entity ||
+                typeof entity.entityId !== 'number' ||
+                getEntityType(entity) !== ENTITY_TYPE.LASER_SHIELD ||
+                typeof entity.health !== 'number' ||
+                entity.health > 0 ||
+                typeof entity.posX !== 'number' ||
+                typeof entity.posY !== 'number'
+            ) {
+                return;
+            }
+            shieldBreakEffectsRef.current.set(entity.entityId, {
+                posX: entity.posX,
+                posY: entity.posY,
+                startedAt: now,
+            });
+        });
+    }, [deletedGameEntities]);
 
     useEffect(() =>
     {
@@ -1671,6 +1838,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                 context,
                 gameMap: renderData.gameMap,
                 camera,
+                now,
             });
             entityTracksRef.current.forEach(track =>
             {
@@ -1696,6 +1864,12 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, gamePlayerDa
                     directionRow: renderDirectionRow,
                     maxHealthRef,
                 });
+            });
+            drawShieldBreakEffects({
+                context,
+                effects: shieldBreakEffectsRef.current,
+                camera,
+                now,
             });
             drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
             const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));
