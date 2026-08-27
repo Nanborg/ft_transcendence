@@ -48,6 +48,16 @@ function App() {
   }, [currentUser]);
 
   useEffect(() => {
+    function handleSessionRefreshed(event) {
+      setAuthSession(event.detail);
+    }
+    window.addEventListener('auth:session-refreshed', handleSessionRefreshed);
+    return () => {
+      window.removeEventListener('auth:session-refreshed', handleSessionRefreshed);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleHashChange = () => {
       setCurrentPath(getCurrentPath());
     };
@@ -90,8 +100,10 @@ function App() {
       setAuthStatus('loading');
       setAuthError('');
       try {
+        const pendingSession = { accessToken, refreshToken };
+        storeAuthSession(pendingSession);
         const user = await fetchCurrentUser(accessToken);
-        const session = { user, accessToken, refreshToken };
+        const session = { ...pendingSession, user };
 
         setAuthSession(session);
         storeAuthSession(session);
@@ -201,12 +213,16 @@ function App() {
       setDevUserName('');
       */
       const tokens = await loginUser(trimmedName, password);
+      const pendingSession = {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      };
+      storeAuthSession(pendingSession);
       const user = await fetchCurrentUser(tokens.accessToken);
 
       const session = {
+        ...pendingSession,
         user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
       };
 
       setAuthSession(session);
@@ -217,6 +233,8 @@ function App() {
       setPassword('');
     } catch (error) {
       setCurrentUser(null);
+      setAuthSession(null);
+      clearStoredAuthSession();
       setAuthStatus('error');
       setAuthError(error.message);
     }

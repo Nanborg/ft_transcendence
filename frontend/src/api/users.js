@@ -1,3 +1,4 @@
+import { apiRequest } from "./apiReq";
 
 export async function loginUser(username, password) {
   const response = await fetch('/api/login', {
@@ -39,37 +40,27 @@ export async function registerUser(username, email, password) {
 }
 
 export async function fetchCurrentUser(accessToken) {
-  const response = await fetch('/api/users/me', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  if (!response.ok) {
-    const error = new Error(
-      response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to load profile.',
-    );
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
+	try{
+		return await apiRequest("/api/users/me", {});
+	} catch (err) {
+		if (err.message === "Session expired")
+			throw err;
+		throw new Error("Unable to load profile");
+	}
 }
 
 export async function updateCurrentUser(accessToken, profileData) {
-  const response = await fetch('/api/users/me', {
-    method: 'PATCH',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-type': 'application/json',
-    },
-    body: JSON.stringify(profileData),
-  });
-  if (!response.ok) {
-    const error = new Error(
-      response.status === 401 || response.status === 403 ? 'Session expired. Login again.' : 'Unable to update profile.',);
-    error.status = response.status;
-    throw error;
-  }
-  return response.json();
+
+	try{
+		return await apiRequest("/api/users/me", 
+			{
+				method: "PATCH",
+				headers: {'Content-type': 'application/json',},
+				body: JSON.stringify(profileData),
+			});
+	} catch (err) {
+		if (err.message === "Session expired")
+			throw err;
+		throw new Error("Unable to update profile");
+	}
 }

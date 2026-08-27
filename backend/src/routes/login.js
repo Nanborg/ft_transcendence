@@ -3,10 +3,10 @@ const router = express.Router();
 const { OAuth } = require("../middlewares/OAuth");
 router.use(express.json());
 const prisma = require('../db');
-const bcrypt = require("bcrypt");
 const {generateAccessToken} = require('../middlewares/OAuth');
 const jwt = require("jsonwebtoken");
-
+const crypto = require('crypto');
+const loginLimiter = require('../middlewares/rateLimit');
 require("../middlewares/OAuth");
 
 
@@ -33,9 +33,7 @@ require("../middlewares/OAuth");
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
 
 
-router.post("/", OAuth, (req, res) => {
-});
-
+router.post("/", loginLimiter, OAuth);
 
 router.get("/42", (req, res) => {
 	const url =
@@ -55,7 +53,7 @@ async function loginUser(user, res, mess, code) {
 	};
 
 	const accessToken = generateAccessToken(payload);
-	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN);
+	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID()});
 
 	const expiresAt = new Date()
 	expiresAt.setDate(expiresAt.getDate() + 7)
