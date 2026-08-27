@@ -5,6 +5,7 @@ LaserShieldEntity::LaserShieldEntity( int posX, int posY, int health, int ownerI
 	_max_health(health)
 	{
 		setPassableHitBox(false);
+		setGold(0);
 	}
 
 LaserShieldEntity::~LaserShieldEntity( void ) {}
