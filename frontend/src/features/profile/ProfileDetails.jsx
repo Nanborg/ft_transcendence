@@ -1,5 +1,5 @@
+import { useEffect, useState } from 'react';
 import badgeIconsUrl from '../../assets/game/badges/badges_icons.png';
-
 
 const BADGE_SPRITE_SIZE = {width: '320px', height: '256px'};
 const BADGE_SPRITE_X = [4, 68, 128, 188, 252];
@@ -59,6 +59,11 @@ export function ProfileDetails({ profileUser }) {
   const damageDealt = stats.totalDamageDealt ?? 0;
   const damageReceived = stats.totalDamageReceived ?? 0;
   const goldEarned = stats.totalGoldEarned ?? 0;
+  const displayName = profileUser.username || 'Not available';
+  const avatarUrl = profileUser.avatar?.trim();
+  const avatarFallback = displayName.charAt(0).toUpperCase();
+  const [avatarFailed, setAvatarFailed] = useState(false);
+  useEffect(() => {setAvatarFailed(false);}, [avatarUrl]);
   const badges = BADGE_GROUPS.map(group => ({
     label: group.label,
     iconColumn: group.iconColumn,
@@ -69,8 +74,13 @@ export function ProfileDetails({ profileUser }) {
     <section className="profile-details">
       <div>
         <h2>Profile</h2>
-        <p>{profileUser.username || 'Not available'}</p>
+        <span className="profile-avatar" aria-label={`${displayName} avatar`}>
+          {avatarUrl && !avatarFailed ? ( <img src={avatarUrl} alt="" onError={() => setAvatarFailed(true)}/>
+        ) : ( <span className= "profile-avatar-fallback">{avatarFallback}</span> )}
+        </span>
+        <p>{displayName}</p>
       </div>
+
       <dl>
         <h2>Progression</h2>
         <ProgressRow label="Games played" value={gamesPlayed} target={getMilestone(gamesPlayed, [5, 20, 50, 200])} />
