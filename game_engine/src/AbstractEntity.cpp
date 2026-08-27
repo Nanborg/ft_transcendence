@@ -27,9 +27,33 @@ bool AbstractEntity::doTick( void ) {
 	return a | b;
 }
 
+static long	clamp(long x, long lower, long upper) {
+	if (x > upper)
+		return upper;
+	else if (x < lower)
+		return lower;
+	return x;
+}
+
+static long	dot(long v1X, long v1Y, long v2X, long v2Y) {
+	return (v1X * v2X) + (v1Y * v2Y);
+}
+
 bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
-	int dist = (_size + o._size) / 2;
-	return o.distance(_posX, _posY) < dist;
+	int dist = (_size + o._size) / 2 - 1;
+	int collisionX, collisionY;
+	long velX = o.getVelX(), velY = o.getVelY();
+	int diffX = _posX - o.getPosX(), diffY = _posY - o.getPosY();
+	if (velX == 0 && velY == 0) {
+		collisionX = o.getPosX();
+		collisionY = o.getPosY();
+	} else {
+		long vel2 = dot(velX, velY, velX, velY); // get length of o._vel squared without sqrt()
+		long coef = clamp(dot(velX, velY, diffX, diffY), 0, vel2);
+		collisionX = o.getPosX() + (((__int128_t) velX * coef) / vel2); // cast to dodge the long overflow
+		collisionY = o.getPosY() + (((__int128_t) velY * coef) / vel2); // cast to dodge the long overflow
+	}
+	return distance(collisionX, collisionY) < dist;
 }
 
 json AbstractEntity::toJson( void ) const {

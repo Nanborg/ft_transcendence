@@ -15,13 +15,6 @@ int AbstractHitboxEntity::getOwnerId(void) const { return _ownerId; }
 bool	AbstractHitboxEntity::_templateTick( void ) {
 	bool ret = false;
 
-	if (_velX != 0 || _velY != 0)
-	{
-		_posX += _velX;
-		_posY += _velY;
-		ret = true;
-	}
-
 	_health--;
 
 	const GameEngine::entityList_t&	entities = g_game->getEntityList();
@@ -39,11 +32,13 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 			continue;
 
 		_health = -1;
+		ret = true;
 		if (g_game->canDamage(this, entity))
 			g_game->applyDamage(entity, _damage, _ownerId);
 		if (_typeId == EntityTypes::LASERPROJECTILE || _typeId == EntityTypes::BOSSPROJECTILE || _typeId == EntityTypes::BOSSLASERPROJECTILE || _typeId == EntityTypes::ENEMYPROJECTILE)
 			break;
 	}
+	ret |= AbstractMovingEntity::_templateTick();
 	return ret;
 }
 
