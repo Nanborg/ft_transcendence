@@ -12,7 +12,7 @@ export async function fetchMatchHistory(accessToken) {
 
 export async function fetchLeaderBoard() {
 	try{
-		return await apiRequest(`/api/leaderboard`, {},);
+		return await apiRequest(`/api/scores/leaderboard`, {},);
 	} catch (err) {
 		if (err.message === "Session expired")
 			throw err;

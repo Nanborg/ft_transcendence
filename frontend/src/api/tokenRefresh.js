@@ -1,5 +1,3 @@
-import { apiRequest } from "./apiReq";
-
 export async function refreshAccessToken(refreshToken)
 {
 	const response = await fetch('/api/token',
