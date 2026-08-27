@@ -17,7 +17,7 @@
 
 #include <entities/importEntities.h>
 
-#define CHECKPOINT_RANGE 2
+#define CHECKPOINT_RANGE 1
 
 class GameEngine
 {

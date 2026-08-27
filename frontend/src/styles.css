@@ -1019,7 +1019,7 @@ p {
 
 .checkpoint-upgrade-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
@@ -1027,7 +1027,7 @@ p {
   --upgrade-color: var(--color-orange);
 
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   grid-template-areas:
     "icon title"
     "icon level"
@@ -1036,8 +1036,8 @@ p {
   align-items: center;
   gap: 0.35rem 0.85rem;
   min-width: 0;
-  min-height: 158px;
-  padding: 1rem;
+  min-height: 148px;
+  padding: 0.8rem;
   overflow: hidden;
   text-align: left;
   color: var(--color-text);
@@ -1114,8 +1114,8 @@ p {
 
 .upgrade-preview-icon {
   grid-area: icon;
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   border: 2px solid var(--upgrade-color);
   border-radius: 14px;
   background-color: rgba(2, 6, 23, 0.88);
@@ -1137,7 +1137,7 @@ p {
 .checkpoint-upgrade-card__title {
   grid-area: title;
   color: var(--upgrade-color);
-  font-size: 1.15rem;
+  font-size: 0.98rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -1145,7 +1145,7 @@ p {
 .checkpoint-upgrade-card__level {
   grid-area: level;
   color: var(--color-muted);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
 }
 
 .checkpoint-upgrade-card__stat {
@@ -1164,14 +1164,14 @@ p {
 .checkpoint-upgrade-card__stat strong {
   max-width: 100%;
   color: var(--color-text);
-  font-size: 0.95rem;
+  font-size: 0.86rem;
   white-space: nowrap;
 }
 
 .checkpoint-upgrade-card__price {
   grid-area: price;
-  margin-top: 0.55rem;
-  padding-top: 0.65rem;
+  margin-top: 0.35rem;
+  padding-top: 0.45rem;
   color: #facc15;
   font-weight: 700;
   text-align: center;
@@ -1191,6 +1191,10 @@ p {
 }
 
 @media (max-width: 950px) {
+  .checkpoint-upgrade-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .checkpoint-upgrade-card {
     grid-template-columns: 62px minmax(0, 1fr);
     gap: 0.3rem 0.65rem;
