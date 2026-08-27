@@ -14,30 +14,30 @@ export async function apiRequest(endpoint, opt, onSessionExpired = null)
 
 	const headers = {...opt.headers, Authorization: `Bearer ${session.accessToken}`,}
 	let response = await fetch(endpoint, {...opt, headers})
-	if (response.status === 401) //test-nico
+	if (response.status === 401)
 	{
 		try {
 			const newTokens = await refreshAccessToken(session.refreshToken);
 			const updatedSession = {...session, accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken};
 			storeAuthSession(updatedSession);
-			window.dispatchEvent(new CustomEvent('auth:session-refreshed', { detail: updatedSession })); //test-nico
+			window.dispatchEvent(new CustomEvent('auth:session-refreshed', { detail: updatedSession }));
 
 			const newHeaders = {...opt.headers, Authorization: `Bearer ${newTokens.accessToken}`,}
 			response = await fetch(endpoint, {...opt, headers: newHeaders})
-			if (response.status === 401) //test-nico
+			if (response.status === 401)
 			{
 				if (onSessionExpired)
 					onSessionExpired("Session expired. Login again.");
-				const error = new Error("Session expired"); //test-nico
-				error.status = 401; //test-nico
+				const error = new Error("Session expired");
+				error.status = 401;
 				throw error;
 			}
 		} catch (err) {
 			clearStoredAuthSession()
 			if (onSessionExpired)
 				onSessionExpired("Session expired. Login again.");
-			const error = new Error("Session expired"); //test-nico
-			error.status = 401; //test-nico
+			const error = new Error("Session expired");
+			error.status = 401;
 			throw error;
 		}
 	}

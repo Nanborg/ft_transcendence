@@ -5,7 +5,7 @@ router.use(express.json());
 const prisma = require('../db');
 const {generateAccessToken} = require('../middlewares/OAuth');
 const jwt = require("jsonwebtoken");
-const crypto = require('crypto'); //test-nico
+const crypto = require('crypto');
 const loginLimiter = require('../middlewares/rateLimit');
 require("../middlewares/OAuth");
 

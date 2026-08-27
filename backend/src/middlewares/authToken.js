@@ -33,7 +33,7 @@ function authToken(req, res, next) {
 			if (err)
 			{
 				console.error("Token verification failed:", err.message);
-				if (err.name === "TokenExpiredError") //test-nico
+				if (err.name === "TokenExpiredError")
 					return res.status(401).json({ error: "Token expired" });
 				return res.status(403).json({ error: "Invalid token" });
 			}

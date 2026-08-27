@@ -12,7 +12,7 @@ export async function fetchMatchHistory(accessToken) {
 
 export async function fetchLeaderBoard() {
 	try{
-		const response = await fetch('/api/scores/leaderboard'); //test-nico
+		const response = await fetch('/api/scores/leaderboard');
 		if (!response.ok)
 			throw new Error(`Api error: ${response.status}`);
 		return response.json();

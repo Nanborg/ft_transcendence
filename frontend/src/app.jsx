@@ -49,9 +49,9 @@ function App() {
 
   useEffect(() => {
     function handleSessionRefreshed(event) {
-      setAuthSession(event.detail); //test-nico
+      setAuthSession(event.detail);
     }
-    window.addEventListener('auth:session-refreshed', handleSessionRefreshed); //test-nico
+    window.addEventListener('auth:session-refreshed', handleSessionRefreshed);
     return () => {
       window.removeEventListener('auth:session-refreshed', handleSessionRefreshed);
     };
@@ -100,10 +100,10 @@ function App() {
       setAuthStatus('loading');
       setAuthError('');
       try {
-        const pendingSession = { accessToken, refreshToken }; //test-nico
-        storeAuthSession(pendingSession); //test-nico
+        const pendingSession = { accessToken, refreshToken };
+        storeAuthSession(pendingSession);
         const user = await fetchCurrentUser(accessToken);
-        const session = { ...pendingSession, user }; //test-nico
+        const session = { ...pendingSession, user };
 
         setAuthSession(session);
         storeAuthSession(session);
@@ -216,14 +216,14 @@ function App() {
       const pendingSession = {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
-      }; //test-nico
-      storeAuthSession(pendingSession); //test-nico
+      };
+      storeAuthSession(pendingSession);
       const user = await fetchCurrentUser(tokens.accessToken);
 
       const session = {
         ...pendingSession,
         user,
-      }; //test-nico
+      };
 
       setAuthSession(session);
       storeAuthSession(session);
@@ -234,7 +234,7 @@ function App() {
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
-      clearStoredAuthSession(); //test-nico
+      clearStoredAuthSession();
       setAuthStatus('error');
       setAuthError(error.message);
     }
