@@ -20,7 +20,7 @@ const jwt = require("jsonwebtoken");
 //	throws {500} If an unexpected server error occurs.
 
 
-async function authToken(req, res, next) {
+function authToken(req, res, next) {
 	try {
 		const authHeader = req.headers['authorization'];
 		const token = authHeader && authHeader.split(' ')[1];
@@ -30,7 +30,10 @@ async function authToken(req, res, next) {
 
 		jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, user) => {
 			if (err)
-				return res.sendStatus(403);
+			{
+				console.error("Token verification failed:", err.message);
+				return res.status(403).json({ error: "Invalid token" });
+			}
 
 			req.user = user;
 			next();

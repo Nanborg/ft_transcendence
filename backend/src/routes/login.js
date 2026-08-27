@@ -32,9 +32,7 @@ require("../middlewares/OAuth");
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
 
 
-router.post("/", loginLimiter, OAuth, (req, res) => {
-});
-
+router.post("/", loginLimiter, OAuth);
 
 router.get("/42", (req, res) => {
 	const url =

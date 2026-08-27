@@ -5,6 +5,7 @@ const {generateAccessToken} = require('../middlewares/OAuth');
 require("../middlewares/OAuth");
 const prisma = require('../db');
 router.use(express.json());
+const crypto = require('crypto')
 
 
 
@@ -39,13 +40,13 @@ router.post("/", async (req, res) => {
 			include: { user: true } //get associated user
 		});
 		if (!tokenExist)
-			return res.status(401).json({error: "Invalid refresh token"});
+			return res.status(403).json({error: "Invalid refresh token"});
 
 		const curDate = new Date()
 		if (curDate > tokenExist.expiresAt)
-			return res.status(401).json({error: "Refresh token expired"});
+			return res.status(403).json({error: "Refresh token expired"});
 		if (tokenExist.isRevoked === true)
-			return res.status(401).json({ error: "Refresh token revoked" })
+			return res.status(403).json({ error: "Refresh token revoked" })
 		try {
 			const user = await new Promise ((resolve, reject) => {
 			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, decoded) => {
@@ -55,8 +56,9 @@ router.post("/", async (req, res) => {
 				});
 			});
 
-			await prisma.refreshToken.delete ({
-				where: { id: tokenExist.id }
+			await prisma.refreshToken.update ({
+				where: { id: tokenExist.id },
+				data: { isRevoked: true }
 			})
 			const userPayload = {
 	    		id: user.id,
