@@ -1,0 +1,28 @@
+/*Leaderboard*/
+
+.leaderboard-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.25);
+  text-align: left;
+}
+
+.leaderboard-table th {
+  font-weight: 700;
+}
+
+.leaderboard-table td:first-child,
+.leaderboard-table th:first-child {
+  width: 72px;
+}
+

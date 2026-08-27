@@ -28,7 +28,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
 
       <div className="room-panel">
         {!currentUser && (
-          <p className="room-error">Login first to view your room.</p>
+          <p className="room-error alert alert-danger">Login first to view your room.</p>
         )}
 
         {currentRoom ? (
@@ -38,7 +38,9 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 <h2>{currentRoom.name || 'Current room'}</h2>
                 <p className="room-muted">Room id: {currentRoom.id}</p>
               </div>
-              <p className="room-status">Status: {currentRoom.status}</p>
+              <p className="room-status">
+                Status: <span className="badge text-bg-info">{currentRoom.status}</span>
+              </p>
             </header>
 
             <div className="room-players">
@@ -49,10 +51,10 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                   {players.map(player => (
                     <li key={player.id}>
                       <span className="room-player-name">{player.name}</span>
-                      <span className="room-player-meta">
+                      <span className="room-player-meta badge text-bg-secondary">
                         {String(player.id) === String(currentRoom.ownerId) ? 'Owner' : 'Player'}
                       </span>
-                      <span className="room-player-meta">
+                      <span className={`room-player-meta badge ${player.ready ? 'text-bg-success' : 'text-bg-warning'}`}>
                         {player.ready ? 'Ready' : 'Not ready'}
                       </span>
                     </li>
@@ -65,7 +67,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
             <div className="room-actions">
               <button
                 type="button"
-                className="room-ready-button"
+                className="room-ready-button btn btn-success"
                 onClick={toggleReady}
                 disabled={isDisabled || !currentPlayer}
               >
@@ -74,7 +76,7 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
               {currentRoom.status === 'playing' ? (
                 <button
                   type="button"
-                  className="room-reconnect-button"
+                  className="room-reconnect-button btn btn-outline-warning"
                   onClick={() => socket.emit('game:resync', { roomId: currentRoom.id })}
                   disabled={isDisabled}
                   style={{ backgroundColor: 'orange', color: 'white' }}
@@ -84,14 +86,14 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
               ) : (
                 <button
                   type="button"
-                  className="room-start-button"
+                  className="room-start-button btn btn-primary"
                   onClick={startGame}
                   disabled={!canStartGame}
                 >
                   Start game
                 </button>
               )}
-              <button type="button" onClick={leaveRoom}>
+              <button className="btn btn-outline-light" type="button" onClick={leaveRoom}>
                 Leave room
               </button>
             </div>
@@ -118,16 +120,17 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 ))}
               </ul>
               <form className="room-chat-form" onSubmit={sendChatMessage}>
-                <label htmlFor="room-chat-message">Message</label>
+                <label className="form-label" htmlFor="room-chat-message">Message</label>
                 <input
                   id="room-chat-message"
+                  className="form-control"
                   type="text"
                   value={chatInput}
                   onChange={event => setChatInput(event.target.value)}
                   placeholder="write a message"
                   disabled={isDisabled}
                 />
-                <button type="submit" disabled={isDisabled || !chatInput.trim()}>
+                <button className="btn btn-primary" type="submit" disabled={isDisabled || !chatInput.trim()}>
                   Send
                 </button>
               </form>
@@ -137,18 +140,18 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
           <div className="room-empty">
             <h2>No active room</h2>
             <p>Create or join a room from the lobby first.</p>
-            <button type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
+            <button className="btn btn-primary" type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
               Go to lobby
             </button>
           </div>
         )}
 
         {roomStatus === 'loading' && (
-          <p className="room-loading">Room action in progress...</p>
+          <p className="room-loading alert alert-info">Room action in progress...</p>
         )}
 
         {roomError && (
-          <p className="room-error">{roomError}</p>
+          <p className="room-error alert alert-danger">{roomError}</p>
         )}
       </div>
     </>
