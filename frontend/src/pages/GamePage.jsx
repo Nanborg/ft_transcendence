@@ -44,7 +44,7 @@ const SKILL_COLUMNS = {
 };
 const MAX_SKILL_LEVEL = 3;
 function getUpgradeCost(level){return 100 + level * 150;}
-const HEALTH_UPGRADE_COST = 10;
+const HEALTH_UPGRADE_COST = 50;
 const HEALTH_UPGRADE_BONUS = 10;
 const UPGRADE_STATS = {
     melee: {

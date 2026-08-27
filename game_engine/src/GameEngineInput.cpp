@@ -85,7 +85,7 @@ const int MAX_UPGRADE_LEVEL = 3;
 const int UPGRADE_COST_MELEE = 100;
 const int UPGRADE_COST_RANGED = 100;
 const int UPGRADE_COST_SHIELD = 100;
-const int UPGRADE_COST_HEALTH = 10;
+const int UPGRADE_COST_HEALTH = 50;
 const int UPGRADE_HEALTH_BONUS = 10;
 
 void	GameEngine::_input_action( const json& in ) {
