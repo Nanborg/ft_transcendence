@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const {generateAccessToken} = require('../middlewares/OAuth');
-require("../middlewares/OAuth");
 const prisma = require('../db');
 router.use(express.json());
 
@@ -30,7 +28,7 @@ router.use(express.json());
 
 router.post("/", async (req, res) => {
 	try {
-		const refreshToken = req.body && req.body.token
+		const refreshToken = req.cookies ? req.cookies.refreshToken : null;
 		if (refreshToken == null)
 			return res.sendStatus(401)
 
@@ -64,10 +62,13 @@ router.post("/", async (req, res) => {
 			await prisma.refreshToken.create({
 				data: { token: newRefreshToken, userId: userPayload.id, expiresAt: expiresAt }
 			});
-			res.json({
-				accessToken: newAccessToken,
-				refreshToken: newRefreshToken
-			})
+			res.cookie('accessToken', newAccessToken, {
+            	httpOnly: true, secure: true, sameSite: 'strict', maxAge: 15 * 60 * 1000
+            });
+            res.cookie('refreshToken', newRefreshToken, {
+                httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+			res.json({ message: "Token refreshed successfully" });
 		})
 	}
 	catch (err) {

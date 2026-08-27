@@ -1,16 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const { OAuth } = require("../middlewares/OAuth");
 router.use(express.json());
 const prisma = require('../db');
 const bcrypt = require("bcrypt");
 const {generateAccessToken} = require('../middlewares/OAuth');
 const jwt = require("jsonwebtoken");
-
-require("../middlewares/OAuth");
-
-
-
 
 
 // login route
@@ -33,7 +27,31 @@ require("../middlewares/OAuth");
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
 
 
-router.post("/", OAuth, (req, res) => {
+router.post("/", async (req, res) => {
+	try {
+        const { username, password } = req.body;
+
+        if (!username || !password)
+            return res.status(400).json({ error: "Missing username or password" });
+
+        const user = await prisma.user.findUnique({
+            where: { username: username }
+        });
+
+        if (!user) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        return loginUser(user, res, "Dev login success", 200);
+    }
+	catch (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ error: "Internal server error" });
+    }
 });
 
 
@@ -48,7 +66,7 @@ router.get("/42", (req, res) => {
 });
 
 
-async function loginUser(user, res, mess, code) {
+async function loginUser(user, res, mess, code, isOAuth = false) {
 	const payload = {
 		id: user.id,
 		username: user.username
@@ -63,13 +81,26 @@ async function loginUser(user, res, mess, code) {
 		data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
 	});
 
-	const params = new URLSearchParams({
-		oauth: "42",
-		accessToken,
-		refreshToken,
-	});
+	res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000
+    });
 
-	return res.redirect(`/#/login?${params.toString()}`);
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+	if (isOAuth) {
+        return res.redirect('/#/login?oauth=success');
+    }
+	else {
+        return res.status(code || 200).json({ message: mess, user: { id: user.id, username: user.username } });
+    }
 }
 
 
@@ -131,7 +162,7 @@ router.get("/42/callback", async (req, res) => {
 		});
 
 		if (user)
-			return loginUser(user, res, "Connection success", 200);
+			return loginUser(user, res, "Connection success", 200, true);
 
 		user = await prisma.user.findUnique({
 			where: { email: userData.email }
@@ -148,7 +179,7 @@ router.get("/42/callback", async (req, res) => {
 					}
 				});
 			}
-			return loginUser(user, res, "Connection success", 200);
+			return loginUser(user, res, "Connection success", 200, true);
 		}
 		try {
 
@@ -173,7 +204,7 @@ router.get("/42/callback", async (req, res) => {
 				}
 			});
 
-			return loginUser(created, res, "Register and Connection success", 201);
+			return loginUser(created, res, "Register and Connection success", 201, true);
 		}
 		catch (err){
 				if (err.code === 'P2002') {

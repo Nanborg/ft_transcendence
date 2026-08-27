@@ -5,7 +5,6 @@ export function ProfilePage({
   profileStatus,
   profileError,
   profileUser,
-  accessToken,
   onSessionExpired,
   onProfileUpdated,
   onUpdateProfile,
@@ -24,13 +23,13 @@ export function ProfilePage({
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!accessToken || !onUpdateProfile) {
+    if (!onUpdateProfile) {
       return;
     }
     setSaveStatus('loading');
     setSaveError('');
     try {
-      const result = await onUpdateProfile(accessToken, {
+      const result = await onUpdateProfile({
         username: username.trim(),
         avatar: avatar.trim(),
       });

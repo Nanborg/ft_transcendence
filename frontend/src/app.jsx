@@ -78,11 +78,9 @@ function App() {
     }
 
     const params = new URLSearchParams(hash.slice(queryIndex + 1));
-    const isFortyTwoOauth = params.get('oauth') === '42';
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+    const isFortyTwoOauth = params.get('oauth') === 'success';
 
-    if (!isFortyTwoOauth || !accessToken || !refreshToken) {
+    if (!isFortyTwoOauth) {
       return;
     }
 
@@ -90,8 +88,8 @@ function App() {
       setAuthStatus('loading');
       setAuthError('');
       try {
-        const user = await fetchCurrentUser(accessToken);
-        const session = { user, accessToken, refreshToken };
+        const user = await fetchCurrentUser();
+        const session = { user };
 
         setAuthSession(session);
         storeAuthSession(session);
@@ -111,16 +109,15 @@ function App() {
     finishFortyTwoLogin();
   }, []);
 
-  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
+  const friends = useFriends(currentUser, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
     currentUser,
-    authSession?.accessToken,
     handleSessionExpired,
   );
 
   useEffect(() => {
-    if (!authSession?.accessToken) {
+    if (!currentUser) {
       setSocket(null);
       setSocketStatus('disconnected');
       return undefined;
@@ -128,9 +125,7 @@ function App() {
     const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
-      auth: {
-        token: authSession.accessToken,
-      },
+      withCredentials: true,
     });
     let connectionReplacedMessage = '';
     // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
@@ -181,7 +176,7 @@ function App() {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, [authSession?.accessToken, handleSessionExpired]);
+  }, [currentUser, handleSessionExpired]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
@@ -200,14 +195,10 @@ function App() {
       setAuthStatus('authenticated');
       setDevUserName('');
       */
-      const tokens = await loginUser(trimmedName, password);
-      const user = await fetchCurrentUser(tokens.accessToken);
+      await loginUser(trimmedName, password);
+      const user = await fetchCurrentUser();
 
-      const session = {
-        user,
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      };
+      const session = { user };
 
       setAuthSession(session);
       storeAuthSession(session);
@@ -247,9 +238,17 @@ function App() {
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    try {
+      await fetch('/api/logout', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+    }
+    catch (error) {
+      console.error("Erreur lors de la déconnexion backend :", error);
+    }
     setCurrentUser(null);
-    /*clearStoredDevUser();*/
     setAuthSession(null);
     clearStoredAuthSession();
     setAuthStatus('idle');
@@ -277,7 +276,6 @@ function App() {
               profileStatus={profileStatus}
               profileError={profileError}
               profileUser={profileUser}
-              accessToken={authSession?.accessToken}
               onSessionExpired={handleSessionExpired}
               onProfileUpdated={(user) => {
                 setCurrentUser(user);
@@ -364,7 +362,6 @@ function App() {
             <MatchHistoryPage
               title={currentPage.title}
               description={currentPage.description}
-              accessToken={authSession?.accessToken}
             />
           )}
         </section>

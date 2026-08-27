@@ -1,9 +1,7 @@
 
-export async function fetchFriends(accessToken) {
+export async function fetchFriends() {
     const response = await fetch('/api/friends', {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
     });
 
     if (!response.ok) {
@@ -16,12 +14,10 @@ export async function fetchFriends(accessToken) {
     return response.json();
 }
 
-export async function addFriend(accessToken, friendId) {
+export async function addFriend(friendId) {
     const response = await fetch(`/api/friends/${friendId}`, {
         method: 'POST',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
     });
     if (!response.ok) {
         const error = new Error('Unable to add friend.');
@@ -31,12 +27,10 @@ export async function addFriend(accessToken, friendId) {
     return response.json();
 }
 
-export async function removeFriend(accessToken, friendId) {
+export async function removeFriend(friendId) {
     const response = await fetch(`/api/friends/${friendId}`, {
         method: 'DELETE',
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
     });
     if (!response.ok) {
         const error = new Error('Unable to remove friend.');

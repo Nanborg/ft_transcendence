@@ -2,23 +2,18 @@ import { PageHeading } from "../components/PageHeading";
 import { useEffect, useState } from 'react';
 import { fetchMatchHistory } from "../api/scores";
 
-export function MatchHistoryPage({ title, description, accessToken }) {
+export function MatchHistoryPage({ title, description }) {
     const [matches, setMatches] = useState([]);
-    const [status, setStatus] = useState(accessToken ? 'loading' : 'idle');
+    const [status, setStatus] = useState('loading');
     const [error, setError] = useState('');
     const [expandedMatchId, setExpandedMatchId] = useState(null);
     useEffect(() => {
-        if (!accessToken) {
-            setStatus('idle');
-            setMatches([]);
-            return undefined;
-        }
         let cancelled = false;
         async function loadHistory() {
             setStatus('loading');
             setError('');
             try {
-                const data = await fetchMatchHistory(accessToken);
+                const data = await fetchMatchHistory();
                 if (!cancelled) {
                     setMatches(Array.isArray(data) ? data : []);
                     setStatus('loaded');
@@ -34,7 +29,7 @@ export function MatchHistoryPage({ title, description, accessToken }) {
         return () => {
             cancelled = true;
         };
-    }, [accessToken]);
+    }, []);
     return (
         <div className="match-history-panel">
             <PageHeading title={title} description={description} />

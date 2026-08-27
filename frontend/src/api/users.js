@@ -2,6 +2,7 @@
 export async function loginUser(username, password) {
   const response = await fetch('/api/login', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -21,6 +22,7 @@ export async function loginUser(username, password) {
 export async function registerUser(username, email, password) {
   const response = await fetch('/api/register', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -38,12 +40,10 @@ export async function registerUser(username, email, password) {
   return response.json();
 }
 
-export async function fetchCurrentUser(accessToken) {
+export async function fetchCurrentUser() {
   const response = await fetch('/api/users/me', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+    credentials: 'include'
+  })
 
   if (!response.ok) {
     const error = new Error(
@@ -56,11 +56,11 @@ export async function fetchCurrentUser(accessToken) {
   return response.json();
 }
 
-export async function updateCurrentUser(accessToken, profileData) {
+export async function updateCurrentUser(profileData) {
   const response = await fetch('/api/users/me', {
     method: 'PATCH',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-type': 'application/json',
     },
     body: JSON.stringify(profileData),

@@ -1,9 +1,7 @@
 
-export async function fetchMatchHistory(accessToken) {
+export async function fetchMatchHistory() {
     const response = await fetch('/api/scores/history', {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
+        credentials: 'include',
     });
     if (!response.ok) {
         const error = new Error('Unable to load match history');
