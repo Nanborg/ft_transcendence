@@ -348,6 +348,24 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+		const bool entityIsPlayer = entity->getType() == EntityTypes::PLAYERENTITY;
+		const bool otherIsPlayer = other->getType() == EntityTypes::PLAYERENTITY;
+		const bool entityIsEnemy =
+			entity->getType() == EntityTypes::WALKINGGOOB ||
+			entity->getType() == EntityTypes::SHOOTINGGOOB ||
+			entity->getType() == EntityTypes::TANKGOOB ||
+			entity->getType() == EntityTypes::LORDGOOB;
+		const bool otherIsEnemy =
+			other->getType() == EntityTypes::WALKINGGOOB ||
+			other->getType() == EntityTypes::SHOOTINGGOOB ||
+			other->getType() == EntityTypes::TANKGOOB ||
+			other->getType() == EntityTypes::LORDGOOB;
+		if (
+			(entityIsPlayer && otherIsPlayer) ||
+			(entityIsPlayer && otherIsEnemy) ||
+			(entityIsEnemy && otherIsPlayer)
+		)
+			continue;
 		if (
 			entity->getType() == EntityTypes::WALKINGGOOB &&
 			other->getType() == EntityTypes::PLAYERENTITY
