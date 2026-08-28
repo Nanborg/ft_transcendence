@@ -26,6 +26,7 @@ export function clearStoredDevUser() {
   */
 
 const AUTH_SESSION_STORAGE_KEY = 'ft_transcendence_auth_session';
+export const AUTH_SESSION_CHANGED_EVENT = 'auth:session-changed'; //test-nico
 
 export function getStoredAuthSession() {
   try {
@@ -53,4 +54,25 @@ export function storeAuthSession(session) {
 
 export function clearStoredAuthSession() {
   window.localStorage.removeItem(AUTH_SESSION_STORAGE_KEY);
+}
+
+export function setAuthSession(session) { //test-nico
+  storeAuthSession(session);
+  window.dispatchEvent(
+    new CustomEvent(AUTH_SESSION_CHANGED_EVENT, { detail: session }),
+  );
+}
+
+export function clearAuthSession(expectedRefreshToken = null) { //test-nico
+  if (expectedRefreshToken) {
+    const currentSession = getStoredAuthSession();
+    if (currentSession?.refreshToken !== expectedRefreshToken) {
+      return false;
+    }
+  }
+  clearStoredAuthSession();
+  window.dispatchEvent(
+    new CustomEvent(AUTH_SESSION_CHANGED_EVENT, { detail: null }),
+  );
+  return true;
 }

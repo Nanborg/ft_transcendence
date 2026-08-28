@@ -26,16 +26,25 @@ function authToken(req, res, next) {
 		const authHeader = req.headers['authorization'];
 		const token = authHeader && authHeader.split(' ')[1];
 
-		if (!token)
-			return res.sendStatus(401);
+		if (!token) //test-nico
+			return res.status(401).json({
+				error: "Access token missing",
+				code: "ACCESS_TOKEN_MISSING"
+			});
 
 		jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, user) => {
 			if (err)
 			{
 				console.error("Token verification failed:", err.message);
-				if (err.name === "TokenExpiredError")
-					return res.status(401).json({ error: "Token expired" });
-				return res.status(403).json({ error: "Invalid token" });
+				if (err.name === "TokenExpiredError") //test-nico
+					return res.status(401).json({
+						error: "Token expired",
+						code: "ACCESS_TOKEN_EXPIRED"
+					});
+				return res.status(403).json({ //test-nico
+					error: "Invalid token",
+					code: "ACCESS_TOKEN_INVALID"
+				});
 			}
 
 			req.user = user;
