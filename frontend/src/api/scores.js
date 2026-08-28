@@ -1,22 +1,22 @@
+import { apiRequest } from "./apiReq";
 
 export async function fetchMatchHistory() {
-    const response = await fetch('/api/scores/history', {
-        credentials: 'include',
-    });
-    if (!response.ok) {
-        const error = new Error('Unable to load match history');
-        error.status = response.status;
-        throw error;
-    }
-    return response.json();
+	try{
+		return await apiRequest(`/api/scores/history`, {});
+	} catch (err) {
+		if (err.message === "Session expired")
+			throw err;
+		throw new Error("Unable to load match history");
+	}
 }
 
 export async function fetchLeaderBoard() {
-    const response = await fetch('/api/scores/leaderboard');
-    if (!response.ok) {
-        const error = new Error('Unable to load leaderboard');
-        error.status = response.status;
-        throw error;
-    }
-    return response.json();
+	try{
+		const response = await fetch('/api/scores/leaderboard');
+		if (!response.ok)
+			throw new Error(`Api error: ${response.status}`);
+		return response.json();
+	} catch (err) {
+		throw new Error("Unable to load leaderboard");
+	}
 }

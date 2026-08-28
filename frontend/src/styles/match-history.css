@@ -1,0 +1,57 @@
+/* Match history */
+
+.match-history-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.match-history-list {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.match-history-item {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 8px;
+}
+
+.match-history-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.75rem;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.match-history-players {
+  margin: 0;
+}
+
+.match-history-players li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.match-history-result {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.match-history-result--win {
+  color: var(--color-green);
+}
+
+.match-history-result--loss {
+  color: var(--color-red);
+}

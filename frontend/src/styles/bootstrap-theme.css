@@ -1,0 +1,145 @@
+/* Bootstrap theme overrides */
+
+.btn {
+  --bs-btn-border-radius: var(--radius-panel);
+  --bs-btn-font-weight: 700;
+  --bs-btn-padding-x: 14px;
+  --bs-btn-padding-y: 10px;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+.btn:hover,
+.btn:focus-visible {
+  box-shadow: var(--glow-cyan);
+}
+
+.btn-primary,
+.btn-success {
+  --bs-btn-color: #001111;
+  --bs-btn-bg: var(--color-cyan);
+  --bs-btn-border-color: var(--color-cyan);
+  --bs-btn-hover-color: #001111;
+  --bs-btn-hover-bg: var(--color-green);
+  --bs-btn-hover-border-color: var(--color-green);
+  --bs-btn-active-color: #001111;
+  --bs-btn-active-bg: var(--color-green);
+  --bs-btn-active-border-color: var(--color-green);
+  --bs-btn-disabled-color: var(--color-muted);
+  --bs-btn-disabled-bg: var(--color-surface-strong);
+  --bs-btn-disabled-border-color: var(--color-border);
+}
+
+.btn-outline-info,
+.btn-outline-light,
+.btn-outline-warning {
+  --bs-btn-color: var(--color-cyan);
+  --bs-btn-border-color: var(--color-border);
+  --bs-btn-hover-color: #001111;
+  --bs-btn-hover-bg: var(--color-orange);
+  --bs-btn-hover-border-color: var(--color-orange);
+  --bs-btn-active-color: #001111;
+  --bs-btn-active-bg: var(--color-orange);
+  --bs-btn-active-border-color: var(--color-orange);
+}
+
+.form-label {
+  margin-bottom: 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.form-control {
+  border-color: var(--color-border);
+  border-radius: var(--radius-panel);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+}
+
+.form-control:focus {
+  border-color: var(--color-cyan);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  box-shadow: var(--glow-cyan);
+}
+
+.form-control::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
+.nav-link {
+  color: var(--color-cyan);
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+  color: var(--color-orange);
+}
+
+.alert {
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  border-radius: var(--radius-panel);
+  font-weight: 700;
+}
+
+.alert-info,
+.alert-success,
+.alert-danger {
+  color: var(--color-text);
+  background: var(--color-surface-strong);
+}
+
+.alert-info {
+  border-color: var(--color-cyan);
+}
+
+.alert-success {
+  border-color: var(--color-green);
+}
+
+.alert-danger {
+  border-color: var(--color-red);
+}
+
+.badge {
+  border: 1px solid currentColor;
+  border-radius: var(--radius-panel);
+  letter-spacing: 0;
+}
+
+.text-bg-info {
+  color: #001111 !important;
+  background-color: var(--color-cyan) !important;
+}
+
+.text-bg-success {
+  color: #001111 !important;
+  background-color: var(--color-green) !important;
+}
+
+.text-bg-warning {
+  color: #180f00 !important;
+  background-color: var(--color-orange) !important;
+}
+
+.text-bg-secondary {
+  color: var(--color-text) !important;
+  background-color: var(--color-surface-strong) !important;
+}
+
+.table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--color-text);
+  --bs-table-border-color: var(--color-border);
+  --bs-table-hover-bg: rgba(0, 255, 255, 0.08);
+  --bs-table-hover-color: var(--color-text);
+  margin-bottom: 0;
+}
+
+.table thead th {
+  color: var(--color-cyan);
+  background: var(--color-surface-strong);
+}

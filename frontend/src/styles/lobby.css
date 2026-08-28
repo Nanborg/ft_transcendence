@@ -1,0 +1,20 @@
+/* lobby */
+
+.lobby-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.lobby-form {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 420px;
+}
+
+.lobby-error {
+  color: var(--color-red);
+}
+
+.lobby-muted {
+  color: var(--color-muted);
+}

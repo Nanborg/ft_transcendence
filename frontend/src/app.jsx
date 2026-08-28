@@ -48,6 +48,16 @@ function App() {
   }, [currentUser]);
 
   useEffect(() => {
+    function handleSessionRefreshed(event) {
+      setAuthSession(event.detail);
+    }
+    window.addEventListener('auth:session-refreshed', handleSessionRefreshed);
+    return () => {
+      window.removeEventListener('auth:session-refreshed', handleSessionRefreshed);
+    };
+  }, []);
+
+  useEffect(() => {
     const handleHashChange = () => {
       setCurrentPath(getCurrentPath());
     };
@@ -208,6 +218,8 @@ function App() {
       setPassword('');
     } catch (error) {
       setCurrentUser(null);
+      setAuthSession(null);
+      clearStoredAuthSession();
       setAuthStatus('error');
       setAuthError(error.message);
     }

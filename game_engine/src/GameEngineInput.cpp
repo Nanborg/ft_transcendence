@@ -85,6 +85,8 @@ const int MAX_UPGRADE_LEVEL = 3;
 const int UPGRADE_COST_MELEE = 100;
 const int UPGRADE_COST_RANGED = 100;
 const int UPGRADE_COST_SHIELD = 100;
+const int UPGRADE_COST_HEALTH = 50;
+const int UPGRADE_HEALTH_BONUS = 10;
 
 void	GameEngine::_input_action( const json& in ) {
 	if (!in["playerId"].is_number_integer())
@@ -99,6 +101,7 @@ void	GameEngine::_input_action( const json& in ) {
 		int cost_m = (UPGRADE_COST_MELEE + player_data->upgrades.melee * 150); // upgrade lvl2 will be 250 as in the doc
 		int cost_r = (UPGRADE_COST_RANGED + player_data->upgrades.ranged * 150);
 		int cost_s = (UPGRADE_COST_SHIELD + player_data->upgrades.shield * 150);
+		int cost_h = UPGRADE_COST_HEALTH;
 
 		if (in["upgrade"].count("melee") > 0 && in["upgrade"]["melee"] == true && player_data->upgrades.melee < MAX_UPGRADE_LEVEL && player_data->gold >= cost_m)
 		{
@@ -121,6 +124,14 @@ void	GameEngine::_input_action( const json& in ) {
 			player_data->gold -= cost_s;
 			player_data->upgrades.shield++;
 			entIt->get()->setGold(player_data->gold);
+			sendEntityUpdate(entIt->get());
+			sendPlayerStateUpdate(*player_data);
+		}
+		else if (in["upgrade"].count("health") > 0 && in["upgrade"]["health"] == true && player_data->gold >= cost_h)
+		{
+			player_data->gold -= cost_h;
+			entIt->get()->setGold(player_data->gold);
+			entIt->get()->setHealth(entIt->get()->getHealth() + UPGRADE_HEALTH_BONUS);
 			sendEntityUpdate(entIt->get());
 			sendPlayerStateUpdate(*player_data);
 		}

@@ -34,11 +34,11 @@ export function LeaderboardPage({ title, description }) {
 return (
   <div className="leaderboard-panel">
     <PageHeading title={title} description={description} />
-    {status === 'loading' && <p>Loading leaderboard...</p>}
-    {status === 'error' && <p role="alert">{error}</p>}
+    {status === 'loading' && <p className="alert alert-info">Loading leaderboard...</p>}
+    {status === 'error' && <p className="alert alert-danger" role="alert">{error}</p>}
     {status === 'loaded' && leaderboard.length === 0 && (<p>No leaderboard data yet.</p>)}
     {status === 'loaded' && leaderboard.length > 0 && (
-      <table className="leaderboard-table">
+      <table className="leaderboard-table table table-dark table-hover align-middle">
         <thead>
           <tr>
             <th>Rank</th>

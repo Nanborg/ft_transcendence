@@ -2,9 +2,14 @@ const express = require("express");
 const router = express.Router();
 router.use(express.json());
 const prisma = require('../db');
-const bcrypt = require("bcrypt");
 const {generateAccessToken} = require('../middlewares/OAuth');
 const jwt = require("jsonwebtoken");
+const crypto = require('crypto');
+const bcrypt = require("bcrypt");
+const loginLimiter = require('../middlewares/rateLimit');
+
+
+
 
 
 // login route
@@ -27,7 +32,7 @@ const jwt = require("jsonwebtoken");
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
 
 
-router.post("/", async (req, res) => {
+router.post("/", loginLimiter, async (req, res) => {
 	try {
         const { username, password } = req.body;
 
@@ -54,7 +59,6 @@ router.post("/", async (req, res) => {
     }
 });
 
-
 router.get("/42", (req, res) => {
 	const url =
 		"https://api.intra.42.fr/oauth/authorize" +
@@ -73,7 +77,7 @@ async function loginUser(user, res, mess, code, isOAuth = false) {
 	};
 
 	const accessToken = generateAccessToken(payload);
-	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN);
+	const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID()});
 
 	const expiresAt = new Date()
 	expiresAt.setDate(expiresAt.getDate() + 7)

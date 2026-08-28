@@ -33,8 +33,8 @@ export function MatchHistoryPage({ title, description }) {
     return (
         <div className="match-history-panel">
             <PageHeading title={title} description={description} />
-            {status === 'loading' && <p>Loading match history...</p>}
-            {status === 'error' && <p role="alert">{error}</p>}
+            {status === 'loading' && <p className="alert alert-info">Loading match history...</p>}
+            {status === 'error' && <p className="alert alert-danger" role="alert">{error}</p>}
             {status === 'loaded' && matches.length === 0 && (
                 <p>No matches played yet.</p>
             )}
@@ -42,8 +42,8 @@ export function MatchHistoryPage({ title, description }) {
                 <ul className="match-history-list">
                     {matches.map(match => (
                         <li className="match-history-item" key={match.gameRunId}>
-                            <button className="match-history-summary" type="button" onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}>
-                                <span>{match.result}</span>
+                            <button className="match-history-summary btn btn-outline-info" type="button" onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}>
+                                <span className="badge text-bg-info">{match.result}</span>
                                 <span>{match.durationSeconds} seconds</span>
                                 <span>{match.createdAt ? new Date(match.createdAt).toLocaleString() : '-'}</span>
                             </button>

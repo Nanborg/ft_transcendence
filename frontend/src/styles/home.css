@@ -1,0 +1,56 @@
+/* Home */
+
+.home-game-window {
+  position: relative;
+  min-height: min(68vh, 680px);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-panel);
+  background: #000000;
+}
+
+.home-game-scene {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(0, 255, 255, 0.12), transparent 18%),
+    radial-gradient(circle at 78% 28%, rgba(255, 153, 0, 0.16), transparent 16%),
+    linear-gradient(180deg, #111111, #000000);
+}
+
+.home-arena-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(0, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 48px 48px;
+  transform: perspective(520px) rotateX(58deg) scale(1.35);
+  transform-origin: center bottom;
+}
+
+.home-game-title {
+  position: absolute;
+  z-index: 2;
+  top: 54%;
+  left: 50%;
+  max-width: 480px;
+  padding: 12px 14px;
+  border: 1px solid rgba(100, 100, 100, 0.25);
+  border-radius: 8px;
+  background: rgba(10, 20, 30, 0.40);
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.home-game-title h1 {
+  margin: 0 0 8px;
+  color: var(--color-text);
+  font-size: clamp(34px, 6vw, 72px);
+  line-height: 0.95;
+}
+
+.home-game-title p:last-child {
+  margin: 0;
+  color: var(--color-muted);
+}
