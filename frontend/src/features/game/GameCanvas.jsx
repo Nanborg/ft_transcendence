@@ -32,16 +32,15 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
 ]);
 const checkpointPlatformSprite = new Image();
 checkpointPlatformSprite.src = checkpointPlatformSpriteUrl;
-const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
 const PLAYER_IDLE_FRAME_COUNT = 4;
 const PLAYER_IDLE_FRAME_DURATION_MS = 240;
 const playerIdleSprite = new Image();
 playerIdleSprite.src = playerIdleSpriteUrl;
-const PLAYER_ATTACK_FRAME_COUNT = 6;
-const PLAYER_MELEE_FRAME_DURATION_MS = 60;
-const PLAYER_RANGED_FRAME_DURATION_MS = 50;
+const PLAYER_ATTACK_FRAME_COUNT = 4;
+const PLAYER_MELEE_FRAME_DURATION_MS = 90;
+const PLAYER_RANGED_FRAME_DURATION_MS = 75;
 const playerWalkSprite = new Image();
 playerWalkSprite.src = playerWalkSpriteUrl;
 const playerMeleeAttackSprite = new Image();
@@ -178,16 +177,40 @@ const PLAYER_WALK_ANCHOR_Y = Object.freeze([
     [0.3048, 0.3099, 0.3130, 0.3027],
 ]);
 const PLAYER_IDLE_ANCHOR_X = Object.freeze([
-    [0.6566, 0.5694, 0.4580, 0.3677],
-    [0.6645, 0.5781, 0.4773, 0.3883],
-    [0.6359, 0.5455, 0.4469, 0.3471],
-    [0.6565, 0.5696, 0.4583, 0.3674],
+    [0.4930, 0.4766, 0.4771, 0.4810],
+    [0.4893, 0.4735, 0.4735, 0.4725],
+    [0.5051, 0.4897, 0.4920, 0.4880],
+    [0.4955, 0.4717, 0.4798, 0.4745],
 ]);
 const PLAYER_IDLE_ANCHOR_Y = Object.freeze([
     [0.5946, 0.5953, 0.5953, 0.5950],
     [0.4779, 0.4783, 0.4774, 0.4766],
     [0.4024, 0.4026, 0.4022, 0.4021],
     [0.2929, 0.2935, 0.2938, 0.2934],
+]);
+const PLAYER_MELEE_ANCHOR_X = Object.freeze([
+    [0.6651, 0.5489, 0.4963, 0.4163],
+    [0.6521, 0.5087, 0.5327, 0.4815],
+    [0.5600, 0.4548, 0.3737, 0.3509],
+    [0.5938, 0.6068, 0.4298, 0.4247],
+]);
+const PLAYER_MELEE_ANCHOR_Y = Object.freeze([
+    [0.5776, 0.5871, 0.5776, 0.5776],
+    [0.4448, 0.4576, 0.4352, 0.4384],
+    [0.3673, 0.3832, 0.3577, 0.3577],
+    [0.2151, 0.2311, 0.2087, 0.2151],
+]);
+const PLAYER_RANGED_ANCHOR_X = Object.freeze([
+    [0.6093, 0.5281, 0.4851, 0.4402],
+    [0.6585, 0.5933, 0.5550, 0.5199],
+    [0.5154, 0.4659, 0.4262, 0.3893],
+    [0.5874, 0.5493, 0.4935, 0.4598],
+]);
+const PLAYER_RANGED_ANCHOR_Y = Object.freeze([
+    [0.5776, 0.5776, 0.5776, 0.5776],
+    [0.4512, 0.4512, 0.4512, 0.4512],
+    [0.3514, 0.3482, 0.3482, 0.3482],
+    [0.2375, 0.2375, 0.2566, 0.2375],
 ]);
 const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.6059, 0.5500, 0.4853, 0.3886],
@@ -224,12 +247,6 @@ const WALKING_ROBOT_CHARGE_ANCHOR_Y = Object.freeze([
     [0.4521, 0.4473, 0.4201, 0.4505],
     [0.5048, 0.5525, 0.5414, 0.5048],
     [0.4617, 0.4489, 0.5383, 0.4617],
-]);
-const WALKING_ROBOT_CHARGE_OFFSET = Object.freeze([
-    0,
-    0.08,
-    0.28,
-    0.06,
 ]);
 const WALKING_ROBOT_AFTERIMAGES = Object.freeze([
     { distance: 0.25, opacity: 0.28 },
@@ -607,20 +624,30 @@ function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, direc
         return false;
 
     const frame = Math.min(PLAYER_ATTACK_FRAME_COUNT - 1, Math.floor(elapsed / frameDuration));
-    const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
-    const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
+    const source = getSpriteSource({
+        columns: SOURCE_GRID_1254_COLUMNS,
+        rows: SOURCE_GRID_1254_ROWS,
+        frame,
+        directionRow,
+        anchorXs: isMelee
+            ? PLAYER_MELEE_ANCHOR_X
+            : PLAYER_RANGED_ANCHOR_X,
+        anchorYs: isMelee
+            ? PLAYER_MELEE_ANCHOR_Y
+            : PLAYER_RANGED_ANCHOR_Y,
+    });
     const spriteSize = tilePixels * 1.8;
     const centerX = screen.x;
     const centerY = screen.y;
 
     context.drawImage(
         sprite,
-        sourceX,
-        sourceY,
-        PLAYER_SPRITE_CELL_SIZE,
-        PLAYER_SPRITE_CELL_SIZE,
-        centerX - spriteSize / 2,
-        centerY - spriteSize / 2,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        centerX - source.anchorX * spriteSize,
+        centerY - source.anchorY * spriteSize,
         spriteSize,
         spriteSize
     );
@@ -1430,7 +1457,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             context.arc(
                 screen.x,
                 screen.y,
-                entityPixels * 0.85,
+                entityPixels * 1.10,
                 0,
                 Math.PI * 2
             );
@@ -1859,6 +1886,13 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 const entityType = getEntityType(track.entity);
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
                 const renderDirectionRow = facesPlayer ? getDirectionRowToward(position, focusPosition, track.directionRow) : track.directionRow;
+                let spriteDirectionRow = renderDirectionRow;
+                if (attack)
+                {
+                    if (!Number.isInteger(attack.directionRow))
+                        attack.directionRow = renderDirectionRow;
+                    spriteDirectionRow = attack.directionRow;
+                }
                 drawEntity({
                     context,
                     entity: track.entity,
@@ -1866,7 +1900,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     camera,
                     now,
                     attack,
-                    directionRow: renderDirectionRow,
+                    directionRow: spriteDirectionRow,
                     maxHealthRef,
                 });
             });
