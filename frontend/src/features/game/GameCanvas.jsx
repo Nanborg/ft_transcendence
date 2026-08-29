@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ENTITY_TYPE, PLAYER_ACTION } from './gameProtocol';
+import { drawDebugHitboxesIfEnabled, handleDebugHitboxKeyDown } from './debugHitboxes'; //test-nico-hitbox
 import playerWalkSpriteUrl from '../../assets/game/player/player-walk.png';
 import playerMeleeAttackSpriteUrl from '../../assets/game/player/player-melee-attack.png';
 import playerRangedAttackSpriteUrl from '../../assets/game/player/player-ranged-attack.png';
@@ -1640,6 +1641,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     });
     const spectatorIndexRef = useRef(0);
     const shieldBreakEffectsRef = useRef(new Map());
+    const debugHitboxesRef = useRef(false); //test-nico-hitbox
 
     const width = CANVAS_WIDTH;
     const mapAspectRatio = gameMap?.width > 0 && gameMap?.height > 0 ? gameMap.height / gameMap.width : 0.5625;
@@ -1657,6 +1659,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     {
         function handleKeyDown(event)
         {
+            if (handleDebugHitboxKeyDown(event, debugHitboxesRef)) //test-nico-hitbox
+                return;
+
             const players = renderDataRef.current.gamePlayerData;
             const myPlayer = players.find(p => String(p.playerId) === String(currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
@@ -1871,6 +1876,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 camera,
                 now,
             });
+            drawDebugHitboxesIfEnabled(debugHitboxesRef, context, entityTracksRef.current, renderData.gameMap, camera, now, worldToScreen, getInterpolatedPosition); //test-nico-hitbox
             drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
             const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));
             if (myPlayer && myPlayer.alive === false)

@@ -65,8 +65,10 @@ json AbstractEntity::toJson( void ) const {
 	entityJson["posY"] = _posY;
 	entityJson["velX"] = _velX;
 	entityJson["velY"] = _velY;
+	entityJson["size"] = _size; //test-nico-hitbox
 	entityJson["health"] = _health;
 	entityJson["gold"] = _gold;
+	entityJson["passableHitBox"] = _passableHitBox; //test-nico-hitbox
 	entityJson["state"] = _state;
 
 	return entityJson;
