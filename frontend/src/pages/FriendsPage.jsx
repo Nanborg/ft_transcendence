@@ -2,7 +2,7 @@ import { PageHeading } from '../components/PageHeading';
 
 export function FriendsPage({ title, description, currentUser, friends }) {
     const {
-        friends: friendList,
+        friends: friendData,
         friendIdInput,
         setFriendIdInput,
         friendsStatus,
@@ -11,6 +11,8 @@ export function FriendsPage({ title, description, currentUser, friends }) {
         submitRemoveFriend,
     } = friends;
 
+    // TEMP: Anti-crash for the new friends object response format
+    const friendList = Array.isArray(friendData) ? friendData : (friendData?.friends || []);
     const isDisabled = friendsStatus === 'loading';
 
     return (

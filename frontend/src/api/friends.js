@@ -30,3 +30,14 @@ export async function removeFriend(accessToken, friendId) {
 		throw new Error("Unable to delete friend");
 	}
 }
+
+export async function acceptFriends(accessToken, friendId) {
+
+	try{
+		return await apiRequest(`/api/friends/${friendId}/accept`, {method: "PATCH"});
+	} catch (err) {
+		if (err.message === "Session expired")
+			throw err;
+		throw new Error("Unable to load friends");
+	}
+}

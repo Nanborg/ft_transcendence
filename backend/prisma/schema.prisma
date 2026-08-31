@@ -18,20 +18,20 @@ datasource db {
 
 // Modèle de l'Utilisateur
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  username      String         @unique
-  password      String?
-  fortyTwoId    Int?           @unique
-  avatar        String?
-  roomsOwned    Room[]
-  rooms         RoomPlayer[]
-  refreshTokens RefreshToken[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  friends       User[]         @relation("UserFriends")
-  friendOf      User[]         @relation("UserFriends")
-  playerStats   PlayerRunStats[]
+  id                Int            @id @default(autoincrement())
+  email             String         @unique
+  username          String         @unique
+  password          String?
+  fortyTwoId        Int?           @unique
+  avatar            String?
+  roomsOwned        Room[]
+  rooms             RoomPlayer[]
+  refreshTokens     RefreshToken[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  sentRequests      Friendship[] @relation("SentRequests")
+  receivedRequests  Friendship[] @relation("ReceivedRequests")
+  playerStats       PlayerRunStats[]
 }
 
 model Room {
@@ -91,4 +91,16 @@ model PlayerRunStats {
   upgrade1          Int
   upgrade2          Int
   upgrade3          Int
+}
+
+model Friendship {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  status    String   @default("PENDING")
+
+  user      User     @relation("SentRequests", fields: [userId], references: [id])
+  friend    User     @relation("ReceivedRequests", fields: [friendId], references: [id])
+
+  @@unique([userId, friendId])
 }
