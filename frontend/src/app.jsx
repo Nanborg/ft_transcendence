@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
-import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser, registerUser, updateCurrentUser } from './api/users';
+import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
+import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -32,6 +32,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
+  const sessionExpiredRef = useRef(false);
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
@@ -48,12 +49,29 @@ function App() {
   }, [currentUser]);
 
   useEffect(() => {
-    function handleSessionRefreshed(event) {
-      setAuthSession(event.detail);
+    function applySession(session) {
+      setAuthSession(session);
+      setCurrentUser(session?.user || null);
+      if (session?.user) {
+        sessionExpiredRef.current = false;
+        setAuthStatus('authenticated');
+        setAuthError('');
+      }
     }
-    window.addEventListener('auth:session-refreshed', handleSessionRefreshed);
+    function handleSessionChanged(event) {
+      applySession(event.detail);
+    }
+    function handleStorage(event) {
+      if (event.key !== 'ft_transcendence_auth_session') {
+        return;
+      }
+      applySession(getStoredAuthSession());
+    }
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChanged);
+    window.addEventListener('storage', handleStorage);
     return () => {
-      window.removeEventListener('auth:session-refreshed', handleSessionRefreshed);
+      window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChanged);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -71,9 +89,13 @@ function App() {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
   const handleSessionExpired = useCallback((message) => {
+    if (sessionExpiredRef.current) {
+      return;
+    }
+    sessionExpiredRef.current = true;
     setCurrentUser(null);
     setAuthSession(null);
-    clearStoredAuthSession();
+    clearAuthSession();
     setAuthStatus('error');
     setAuthError(message || 'Session expired. Login again.');
     window.location.hash = '#/login';
@@ -93,23 +115,23 @@ function App() {
     if (!isFortyTwoOauth) {
       return;
     }
+    window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
-      setAuthError('');
+        setAuthError('');
       try {
         const user = await fetchCurrentUser();
         const session = { user };
 
-        setAuthSession(session);
-        storeAuthSession(session);
+        writeAuthSession(session);
         setCurrentUser(user);
         setAuthStatus('authenticated');
         window.location.hash = '#/profile';
       } catch (error) {
         setCurrentUser(null);
         setAuthSession(null);
-        clearStoredAuthSession();
+        clearAuthSession();
         setAuthStatus('error');
         setAuthError(error.message);
         window.location.hash = '#/login';
@@ -138,9 +160,6 @@ function App() {
       withCredentials: true,
     });
     let connectionReplacedMessage = '';
-    // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
-    window.socket = nextSocket;
-    // DEV DEBUG END app.jsx socket console exposure.
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
@@ -155,7 +174,6 @@ function App() {
     });
     nextSocket.on('connect', () => {
       setSocketStatus(`connected: ${nextSocket.id}`);
-      console.log('socket connected:', nextSocket.id);
     });
 
     nextSocket.on('disconnect', () => {
@@ -166,8 +184,6 @@ function App() {
         } else {
             setSocketStatus('disconnected');
         }
-
-        console.log('socket disconnected');
     });
 
     nextSocket.on('connect_error', (error) => {
@@ -176,12 +192,6 @@ function App() {
         handleSessionExpired(error.message);
       }
     });
-    // DEV DEBUG START app.jsx socket event console logs - remove lines until DEV DEBUG END.
-    nextSocket.on('room:update', (...args) => console.log('room:update', ...args));
-    nextSocket.on('room:error', (...args) => console.log('room:error', ...args));
-    nextSocket.on('game:start', (...args) => console.log('game:start', ...args));
-    nextSocket.on('player:input', (...args) => console.log('player:input', ...args));
-    // DEV DEBUG END app.jsx socket event console logs.
     return () => {
       nextSocket.disconnect();
       setSocket(null);
@@ -198,20 +208,12 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      /*
-      const user = await fetchCurrentUser(trimmedName);
-      setCurrentUser(user);
-      storeDevUser(user);
-      setAuthStatus('authenticated');
-      setDevUserName('');
-      */
       await loginUser(trimmedName, password);
       const user = await fetchCurrentUser();
 
       const session = { user };
 
-      setAuthSession(session);
-      storeAuthSession(session);
+      writeAuthSession(session);
       setCurrentUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
@@ -219,7 +221,7 @@ function App() {
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
-      clearStoredAuthSession();
+      clearAuthSession();
       setAuthStatus('error');
       setAuthError(error.message);
     }
@@ -252,17 +254,13 @@ function App() {
 
   async function handleLogout() {
     try {
-      await fetch('/api/logout', {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-    }
-    catch (error) {
-      console.error("Erreur lors de la déconnexion backend :", error);
+      await logoutUser();
+    } catch {
+      // Local logout must complete even when the network request fails.
     }
     setCurrentUser(null);
     setAuthSession(null);
-    clearStoredAuthSession();
+    clearAuthSession();
     setAuthStatus('idle');
     setAuthError('');
   }
@@ -291,14 +289,10 @@ function App() {
               onSessionExpired={handleSessionExpired}
               onProfileUpdated={(user) => {
                 setCurrentUser(user);
-                setAuthSession(session => {
-                  if (!session) {
-                    return session;
-                  }
-                  const nextSession = { ...session, user };
-                  storeAuthSession(nextSession);
-                  return nextSession;
-                });
+                const latestSession = getStoredAuthSession();
+                if (latestSession) {
+                  writeAuthSession({ ...latestSession, user });
+                }
               }}
               onUpdateProfile={updateCurrentUser}
             />

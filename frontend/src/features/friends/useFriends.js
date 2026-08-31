@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { addFriend, fetchFriends, removeFriend } from '../../api/friends';
 
-export function useFriends(currentUser, accessToken, onSessionExpired) {
+export function useFriends(currentUser, onSessionExpired) {
     const [friends, setFriends] = useState([]);
     const [friendIdInput, setFriendIdInput] = useState('');
     const [friendsStatus, setFriendsStatus] = useState('idle');
     const [friendsError, setFriendsError] = useState('');
 
     const loadFriends = useCallback(async () => {
-        if (!currentUser || !accessToken) {
+        if (!currentUser) {
             setFriends([]);
             setFriendsStatus('empty');
             setFriendsError('');
@@ -18,7 +18,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsError('');
 
         try {
-            const nextFriends = await fetchFriends(accessToken);
+            const nextFriends = await fetchFriends();
             setFriends(nextFriends);
             setFriendsStatus('loaded');
         } catch (error) {
@@ -30,7 +30,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
             setFriendsStatus('error');
             setFriendsError(error.message);
         }
-    }, [currentUser, accessToken, onSessionExpired]);
+    }, [currentUser, onSessionExpired]);
 
     useEffect(() => {
         loadFriends();
@@ -48,7 +48,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsStatus('loading');
         setFriendsError('');
         try {
-            await addFriend(accessToken, friendId);
+            await addFriend(friendId);
             setFriendIdInput('');
             await loadFriends();
         } catch (error) {
@@ -65,7 +65,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsStatus('loading');
         setFriendsError('');
         try {
-            await removeFriend(accessToken, friendId);
+            await removeFriend(friendId);
             await loadFriends();
         } catch (error) {
             if (error.status === 401 || error.status === 403) {

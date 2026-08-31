@@ -1,40 +1,60 @@
-import { refreshAccessToken } from "./tokenRefresh";
-import { clearStoredAuthSession } from '../features/auth/devUserStorage';
+import { apiError, refreshAccessToken } from "./tokenRefresh";
+import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession } from '../features/auth/devUserStorage';
 
-//call refreshAccessToken if the access token is no more valid(401/403)
-//send an error or store new tokens if valids and then do their action if store
+let sessionExpiredHandled = false;
 
-export async function apiRequest(endpoint, opt = {}, onSessionExpired = null)
-{
+if (typeof window !== 'undefined') {
+	window.addEventListener(AUTH_SESSION_CHANGED_EVENT, (event) => {
+		if (event.detail) {
+			sessionExpiredHandled = false;
+		}
+	});
+}
 
-	const fetchOptions = {
-        ...opt,
-        credentials: 'include'
-    };
+function expireSession(onSessionExpired, error) {
+	if (sessionExpiredHandled) {
+		return;
+	}
+	sessionExpiredHandled = true;
+	if (clearAuthSession() && onSessionExpired) {
+		onSessionExpired(error.message || "Session expired. Login again.");
+	}
+}
 
-	let response = await fetch(endpoint, fetchOptions)
-	if (response.status === 401)
-	{
-		try {
-			await refreshAccessToken();
-			response = await fetch(endpoint, fetchOptions)
-			if (response.status === 401)
-				throw new Error("Session expired");
-		} catch (err) {
-			clearStoredAuthSession()
-			if (onSessionExpired)
-				onSessionExpired("Session expired. Login again.");
-			const error = new Error("Session expired");
-			error.status = 401;
+function fetchWithSession(endpoint, opt) {
+	return fetch(endpoint, {
+		...opt,
+		credentials: 'include',
+	});
+}
+
+export async function apiRequest(endpoint, opt = {}, onSessionExpired = null) {
+	let response = await fetchWithSession(endpoint, opt);
+
+	if (response.status === 401) {
+		const error = await apiError(response);
+		if (error.code !== "ACCESS_TOKEN_EXPIRED") {
+			expireSession(onSessionExpired, error);
 			throw error;
 		}
-	}
-	if (!response.ok)
-	{
-		const err = new Error(`Api error: ${response.status}`);
-		err.status = response.status;
-		throw err;
+		try {
+			await refreshAccessToken();
+			response = await fetchWithSession(endpoint, opt);
+		} catch (refreshError) {
+			expireSession(onSessionExpired, refreshError);
+			throw refreshError;
+		}
 	}
 
-	return (response.json());
+	if (response.status === 401 || response.status === 403) {
+		const error = await apiError(response);
+		expireSession(onSessionExpired, error);
+		throw error;
+	}
+
+	if (!response.ok) {
+		throw await apiError(response);
+	}
+
+	return response.json();
 }

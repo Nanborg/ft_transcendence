@@ -59,12 +59,30 @@ router.post("/", loginLimiter, async (req, res) => {
     }
 });
 
+function getOAuth42Config() {
+	const clientId = process.env.OAUTH42_CLIENT_ID;
+	const clientSecret = process.env.OAUTH42_CLIENT_SECRET;
+	const redirectUri = process.env.OAUTH42_REDIRECT_URI;
+
+	if (!clientId || !clientSecret || !redirectUri) {
+		return null;
+	}
+	return { clientId, clientSecret, redirectUri };
+}
+
 router.get("/42", (req, res) => {
-	const url =
-		"https://api.intra.42.fr/oauth/authorize" +
-		"?client_id=" + process.env.OAUTH42_CLIENT_ID +
-		"&redirect_uri=" + encodeURIComponent("https://localhost:4242/api/login/42/callback") +
-		"&response_type=code";
+	const config = getOAuth42Config();
+
+	if (!config) {
+		return res.status(503).json({ error: "OAuth 42 is not configured" });
+	}
+
+	const params = new URLSearchParams({
+		client_id: config.clientId,
+		redirect_uri: config.redirectUri,
+		response_type: "code",
+	});
+	const url = `https://api.intra.42.fr/oauth/authorize?${params.toString()}`;
 
 	return res.redirect(url);
 });
@@ -111,6 +129,10 @@ async function loginUser(user, res, mess, code, isOAuth = false) {
 
 router.get("/42/callback", async (req, res) => {
 	try{
+		const config = getOAuth42Config();
+		if (!config) {
+			return res.status(500).json({ error: "OAuth 42 is not configured" });
+		}
 		const code = req.query.code;
 
 		if (!code || typeof req.query.code !== "string") {
@@ -121,20 +143,20 @@ router.get("/42/callback", async (req, res) => {
 		const response = await fetch("https://api.intra.42.fr/oauth/token", {
 			method: "POST",
 			headers: {
-				"Content-Type": "application/json",
+				"Content-Type": "application/x-www-form-urlencoded",
 			},
-			body: JSON.stringify({
+			body: new URLSearchParams({
 				grant_type: "authorization_code",
-				client_id: process.env.OAUTH42_CLIENT_ID,
-				client_secret: process.env.OAUTH42_CLIENT_SECRET,
+				client_id: config.clientId,
+				client_secret: config.clientSecret,
 				code: code,
-				redirect_uri: "https://localhost:4242/api/login/42/callback",
+				redirect_uri: config.redirectUri,
 			}),
 		});
 		let body = await response.text();
 		if (!response.ok) {
-			console.error(body);
-			return res.status(response.status).send(body);
+			console.error("42 token exchange failed:", response.status);
+			return res.status(response.status).send("42 token exchange failed");
 		}
 
 		const data = JSON.parse(body);
