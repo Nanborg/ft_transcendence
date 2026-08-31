@@ -212,6 +212,30 @@ const PLAYER_RANGED_ANCHOR_Y = Object.freeze([
     [0.3514, 0.3482, 0.3482, 0.3482],
     [0.2375, 0.2375, 0.2566, 0.2375],
 ]);
+const PLAYER_SPRITE_TINTS = Object.freeze([
+    null,
+    Object.freeze({
+        id: 'violet',
+        red: 124,
+        green: 58,
+        blue: 237,
+        strength: 0.72,
+    }),
+    Object.freeze({
+        id: 'green',
+        red: 22,
+        green: 163,
+        blue: 74,
+        strength: 0.68,
+    }),
+    Object.freeze({
+        id: 'blue',
+        red: 37,
+        green: 99,
+        blue: 235,
+        strength: 0.72,
+    }),
+]);
 const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.6059, 0.5500, 0.4853, 0.3886],
     [0.6114, 0.5658, 0.4994, 0.4390],
@@ -594,6 +618,14 @@ function getSpriteSource({columns, rows, frame, directionRow, anchorXs = null, a
     };
 }
 
+function getPlayerSpriteTint(playerEntityId, orderedPlayerIds)
+{
+    const playerIndex = orderedPlayerIds.indexOf(String(playerEntityId));
+    if (playerIndex < 0)
+        return PLAYER_SPRITE_TINTS[0];
+    return PLAYER_SPRITE_TINTS[playerIndex % PLAYER_SPRITE_TINTS.length];
+}
+
 function getPlayerAttackDuration(action)
 {
     if (action === PLAYER_ACTION.MELEE)
@@ -603,7 +635,135 @@ function getPlayerAttackDuration(action)
     return 0;
 }
 
-function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0})
+const playerTintFrameCache = new Map();
+
+function drawPlayerSpriteImage({
+    context,
+    sprite,
+    source,
+    destinationX,
+    destinationY,
+    spriteSize,
+    tint,
+})
+{
+    if (!tint)
+    {
+        context.drawImage(
+            sprite,
+            source.x,
+            source.y,
+            source.width,
+            source.height,
+            destinationX,
+            destinationY,
+            spriteSize,
+            spriteSize
+        );
+        return;
+    }
+
+    const renderSize = Math.max(1, Math.round(spriteSize));
+    const cacheKey = [
+        sprite.src,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        renderSize,
+        tint.id,
+    ].join(':');
+
+    let tintedFrame = playerTintFrameCache.get(cacheKey);
+
+    if (!tintedFrame)
+    {
+        tintedFrame = document.createElement('canvas');
+        tintedFrame.width = renderSize;
+        tintedFrame.height = renderSize;
+
+        const tintContext = tintedFrame.getContext(
+            '2d',
+            {willReadFrequently: true}
+        );
+
+        tintContext.drawImage(
+            sprite,
+            source.x,
+            source.y,
+            source.width,
+            source.height,
+            0,
+            0,
+            renderSize,
+            renderSize
+        );
+
+        const imageData = tintContext.getImageData(
+            0,
+            0,
+            renderSize,
+            renderSize
+        );
+
+        const pixels = imageData.data;
+
+        for (let index = 0; index < pixels.length; index += 4)
+        {
+            const red = pixels[index];
+            const green = pixels[index + 1];
+            const blue = pixels[index + 2];
+            const alpha = pixels[index + 3];
+
+            if (alpha === 0)
+                continue;
+
+            const brightest = Math.max(red, green, blue);
+            const darkest = Math.min(red, green, blue);
+            const colorDifference = brightest - darkest;
+
+            const isLightArmor =
+                red >= 145 &&
+                green >= 145 &&
+                blue >= 145 &&
+                colorDifference <= 55;
+
+            if (!isLightArmor)
+                continue;
+
+            const shade = (red + green + blue) / (3 * 255);
+            const strength = tint.strength;
+
+            pixels[index] = Math.round(
+                red * (1 - strength) +
+                tint.red * shade * strength
+            );
+            pixels[index + 1] = Math.round(
+                green * (1 - strength) +
+                tint.green * shade * strength
+            );
+            pixels[index + 2] = Math.round(
+                blue * (1 - strength) +
+                tint.blue * shade * strength
+            );
+        }
+
+        tintContext.putImageData(imageData, 0, 0);
+
+        if (playerTintFrameCache.size >= 256)
+            playerTintFrameCache.clear();
+        playerTintFrameCache.set(cacheKey, tintedFrame);
+    }
+    context.drawImage(
+        tintedFrame,
+        destinationX,
+        destinationY,
+        spriteSize,
+        spriteSize
+    );
+}
+
+function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0, playerSpriteTint = null})
 {
     if (!attack)
         return false;
@@ -640,21 +800,19 @@ function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, direc
     const centerX = screen.x;
     const centerY = screen.y;
 
-    context.drawImage(
+    drawPlayerSpriteImage({
+        context,
         sprite,
-        source.x,
-        source.y,
-        source.width,
-        source.height,
-        centerX - source.anchorX * spriteSize,
-        centerY - source.anchorY * spriteSize,
+        source,
+        destinationX: centerX - source.anchorX * spriteSize,
+        destinationY: centerY - source.anchorY * spriteSize,
         spriteSize,
-        spriteSize
-    );
+        tint: playerSpriteTint,
+    });
     return true;
 }
 
-function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0})
+function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0, playerSpriteTint = null})
 {
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     const sprite = isMoving ? playerWalkSprite : playerIdleSprite;
@@ -676,17 +834,15 @@ function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directi
     const centerX = screen.x;
     const centerY = screen.y;
 
-    context.drawImage(
+    drawPlayerSpriteImage({
+        context,
         sprite,
-        source.x,
-        source.y,
-        source.width,
-        source.height,
-        centerX - source.anchorX * spriteSize,
-        centerY - source.anchorY * spriteSize,
+        source,
+        destinationX: centerX - source.anchorX * spriteSize,
+        destinationY: centerY - source.anchorY * spriteSize,
         spriteSize,
-        spriteSize
-    );
+        tint: playerSpriteTint,
+    });
 
     return true;
 }
@@ -1286,7 +1442,7 @@ function drawShieldBreakEffects({context, effects, camera, now})
     });
 }
 
-function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
+function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, playerSpriteTint = null, maxHealthRef})
 {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -1320,9 +1476,9 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.PLAYER:
-            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow}))
+            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow, playerSpriteTint}))
                 break;
-            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow, playerSpriteTint}))
                 break;
             context.shadowColor = '#22c55e';
             context.shadowBlur = 12;
@@ -1872,10 +2028,18 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 camera,
                 now,
             });
+            const orderedPlayerIds = Array.from(entityTracksRef.current.values()).filter(track =>
+                getEntityType(track.entity) === ENTITY_TYPE.PLAYER
+            ).map(track => String(track.entity.entityId)).sort((firstId, secondId) =>
+                firstId.localeCompare(secondId, 'en', {numeric: true}));
             entityTracksRef.current.forEach(track =>
             {
+                const entityType = getEntityType(track.entity);
                 const playerData = renderData.gamePlayerData.find(player => String(player.playerEntityId) === String(track.entity.entityId));
                 const playerId = playerData?.playerId ?? (track.entity.entityId === localEntityId ? renderData.currentPlayerId : null);
+                const playerSpriteTint = entityType === ENTITY_TYPE.PLAYER
+                    ? getPlayerSpriteTint(track.entity.entityId, orderedPlayerIds)
+                    : null;
                 let attack = playerId === null ? null : playerAttackRef.current.get(String(playerId));
                 if (attack && now - attack.startedAt >= getPlayerAttackDuration(attack.action))
                 {
@@ -1883,7 +2047,6 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     attack = null;
                 }
                 const position = getInterpolatedPosition(track, now);
-                const entityType = getEntityType(track.entity);
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
                 const renderDirectionRow = facesPlayer ? getDirectionRowToward(position, focusPosition, track.directionRow) : track.directionRow;
                 let spriteDirectionRow = renderDirectionRow;
@@ -1901,6 +2064,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     now,
                     attack,
                     directionRow: spriteDirectionRow,
+                    playerSpriteTint,
                     maxHealthRef,
                 });
             });
