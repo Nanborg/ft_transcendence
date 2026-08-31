@@ -16,6 +16,7 @@
 - aggregate stats;
 - progression display;
 - badges;
+- badge sprite sheet;
 - friends list;
 - add friend;
 - remove friend.
@@ -71,6 +72,14 @@ Automatic checks:
 - self-add rejected;
 - missing target user rejected.
 
+## Progression Rules
+
+- games played badges;
+- wins badges;
+- damage dealt badges;
+- damage received badges;
+- gold earned badges.
+
 ## Manual Checks
 
 - open profile;
@@ -85,4 +94,3 @@ Automatic checks:
 
 - avatar is URL only;
 - friend online status is not implemented.
-

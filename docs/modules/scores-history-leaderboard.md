@@ -16,7 +16,8 @@
 - leaderboard API;
 - match history page;
 - leaderboard page;
-- profile aggregate stats.
+- profile aggregate stats;
+- detailed stored stats: deaths, damage dealt, damage received and gold earned.
 
 ## Flow
 
@@ -26,6 +27,7 @@ Save:
 - backend receives result;
 - backend saves game run;
 - backend saves player stats.
+- profile totals are derived from saved player stats.
 
 History:
 
@@ -58,6 +60,7 @@ Leaderboard:
 - finish a game;
 - open profile;
 - verify stats changed;
+- verify detailed stats are visible;
 - open match history;
 - open leaderboard;
 - test empty history user.
@@ -67,4 +70,3 @@ Leaderboard:
 - real game-end persistence;
 - leaderboard ordering;
 - match detail display.
-

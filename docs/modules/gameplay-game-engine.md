@@ -19,6 +19,8 @@
 - gold;
 - enemies;
 - boss;
+- sprite-based rendering;
+- player and enemy animation states;
 - game end state.
 
 ## Flow
@@ -30,6 +32,7 @@
 - engine updates simulation;
 - backend receives game state;
 - frontend renders canvas;
+- frontend selects sprites and animation frames;
 - backend saves final stats.
 
 ```mermaid
@@ -54,6 +57,7 @@ sequenceDiagram
 - `backend/src/socket/socketHandler.js`
 - `frontend/src/pages/GamePage.jsx`
 - `frontend/src/features/game/`
+- `frontend/src/assets/game/`
 
 ## Socket Events
 
@@ -73,6 +77,7 @@ sequenceDiagram
 - use ranged;
 - use shield;
 - buy checkpoint upgrades;
+- verify idle, walk and attack sprites;
 - finish a game;
 - verify stats are saved.
 

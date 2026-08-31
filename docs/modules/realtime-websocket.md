@@ -15,7 +15,8 @@
 - room events;
 - chat events;
 - game events;
-- reconnect/resync path.
+- reconnect/resync path;
+- token refresh and reconnect path for expired access tokens.
 
 ## Flow
 
@@ -26,6 +27,7 @@ Connection:
 - access token is sent in `auth.token`;
 - backend verifies token;
 - backend assigns `socket.user`.
+- if the token is expired, frontend refreshes the session and reconnects.
 
 Events:
 
@@ -43,10 +45,13 @@ sequenceDiagram
   participant Room
   Frontend->>SocketIO: connect with token
   SocketIO->>Backend: verify token
-  Backend-->>Frontend: connected
-  Frontend->>Backend: emit event
+  Backend-->>SocketIO: auth accepted
+  SocketIO-->>Frontend: connected
+  Frontend->>SocketIO: emit event
+  SocketIO->>Backend: handle event
   Backend->>Room: update room/game state
-  Backend-->>Frontend: emit update
+  Backend-->>SocketIO: emit update
+  SocketIO-->>Frontend: receive update
 ```
 
 ## Key Files
@@ -73,6 +78,7 @@ sequenceDiagram
 - `game:state:update`
 - `game:end`
 - `player:input`
+- `connect_error` auth codes: `TOKEN_MISSING`, `TOKEN_INVALID`, `TOKEN_EXPIRED`
 
 ## Validation
 
@@ -99,4 +105,4 @@ Automatic checks:
 ## Current Limitations
 
 - browser console must be checked;
-- debug socket logs should be removed before final evaluation.
+- debug latency logs should be removed before final evaluation.

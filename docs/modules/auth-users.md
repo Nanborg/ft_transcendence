@@ -17,6 +17,8 @@
 - refresh token storage;
 - refresh token rotation;
 - logout token revocation;
+- frontend logout calls backend logout;
+- OAuth 42 redirect URI configurable with `OAUTH42_REDIRECT_URI`;
 - OAuth 42 login/linking.
 
 ## Flow
@@ -40,6 +42,8 @@ Session:
 - frontend stores session data;
 - API requests use bearer token;
 - Socket.IO uses the access token.
+- frontend refreshes expired sessions when possible;
+- logout revokes the refresh token server-side.
 
 ```mermaid
 sequenceDiagram
@@ -54,6 +58,11 @@ sequenceDiagram
   Backend-->>Frontend: Access + refresh token
   Frontend->>Backend: API bearer token
   Frontend->>Backend: Socket auth token
+  Frontend->>Backend: Refresh token request
+  Backend->>Database: Rotate refresh token
+  Backend-->>Frontend: New access + refresh token
+  Frontend->>Backend: Logout request
+  Backend->>Database: Revoke refresh token
 ```
 
 ## Key Files
@@ -94,10 +103,11 @@ Automatic checks:
 - load profile;
 - refresh session;
 - logout;
+- verify backend logout revokes refresh token;
 - try invalid credentials;
 - test OAuth 42.
 
 ## Current Limitations
 
 - auth form validation must be reviewed before final evaluation;
-- OAuth 42 needs real credentials during demo.
+- OAuth 42 needs real credentials and redirect URI verification during demo.
