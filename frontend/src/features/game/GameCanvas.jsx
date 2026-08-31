@@ -32,16 +32,15 @@ const STATIC_MAP_ENTITY_TYPES = new Set([
 ]);
 const checkpointPlatformSprite = new Image();
 checkpointPlatformSprite.src = checkpointPlatformSpriteUrl;
-const PLAYER_SPRITE_CELL_SIZE = 256;
 const PLAYER_WALK_FRAME_COUNT = 4;
 const PLAYER_WALK_FRAME_DURATION_MS = 125;
 const PLAYER_IDLE_FRAME_COUNT = 4;
 const PLAYER_IDLE_FRAME_DURATION_MS = 240;
 const playerIdleSprite = new Image();
 playerIdleSprite.src = playerIdleSpriteUrl;
-const PLAYER_ATTACK_FRAME_COUNT = 6;
-const PLAYER_MELEE_FRAME_DURATION_MS = 60;
-const PLAYER_RANGED_FRAME_DURATION_MS = 50;
+const PLAYER_ATTACK_FRAME_COUNT = 4;
+const PLAYER_MELEE_FRAME_DURATION_MS = 90;
+const PLAYER_RANGED_FRAME_DURATION_MS = 75;
 const playerWalkSprite = new Image();
 playerWalkSprite.src = playerWalkSpriteUrl;
 const playerMeleeAttackSprite = new Image();
@@ -178,16 +177,64 @@ const PLAYER_WALK_ANCHOR_Y = Object.freeze([
     [0.3048, 0.3099, 0.3130, 0.3027],
 ]);
 const PLAYER_IDLE_ANCHOR_X = Object.freeze([
-    [0.6566, 0.5694, 0.4580, 0.3677],
-    [0.6645, 0.5781, 0.4773, 0.3883],
-    [0.6359, 0.5455, 0.4469, 0.3471],
-    [0.6565, 0.5696, 0.4583, 0.3674],
+    [0.4930, 0.4766, 0.4771, 0.4810],
+    [0.4893, 0.4735, 0.4735, 0.4725],
+    [0.5051, 0.4897, 0.4920, 0.4880],
+    [0.4955, 0.4717, 0.4798, 0.4745],
 ]);
 const PLAYER_IDLE_ANCHOR_Y = Object.freeze([
     [0.5946, 0.5953, 0.5953, 0.5950],
     [0.4779, 0.4783, 0.4774, 0.4766],
     [0.4024, 0.4026, 0.4022, 0.4021],
     [0.2929, 0.2935, 0.2938, 0.2934],
+]);
+const PLAYER_MELEE_ANCHOR_X = Object.freeze([
+    [0.6651, 0.5489, 0.4963, 0.4163],
+    [0.6521, 0.5087, 0.5327, 0.4815],
+    [0.5600, 0.4548, 0.3737, 0.3509],
+    [0.5938, 0.6068, 0.4298, 0.4247],
+]);
+const PLAYER_MELEE_ANCHOR_Y = Object.freeze([
+    [0.5776, 0.5871, 0.5776, 0.5776],
+    [0.4448, 0.4576, 0.4352, 0.4384],
+    [0.3673, 0.3832, 0.3577, 0.3577],
+    [0.2151, 0.2311, 0.2087, 0.2151],
+]);
+const PLAYER_RANGED_ANCHOR_X = Object.freeze([
+    [0.6093, 0.5281, 0.4851, 0.4402],
+    [0.6585, 0.5933, 0.5550, 0.5199],
+    [0.5154, 0.4659, 0.4262, 0.3893],
+    [0.5874, 0.5493, 0.4935, 0.4598],
+]);
+const PLAYER_RANGED_ANCHOR_Y = Object.freeze([
+    [0.5776, 0.5776, 0.5776, 0.5776],
+    [0.4512, 0.4512, 0.4512, 0.4512],
+    [0.3514, 0.3482, 0.3482, 0.3482],
+    [0.2375, 0.2375, 0.2566, 0.2375],
+]);
+const PLAYER_SPRITE_TINTS = Object.freeze([
+    null,
+    Object.freeze({
+        id: 'violet',
+        red: 124,
+        green: 58,
+        blue: 237,
+        strength: 0.72,
+    }),
+    Object.freeze({
+        id: 'green',
+        red: 22,
+        green: 163,
+        blue: 74,
+        strength: 0.68,
+    }),
+    Object.freeze({
+        id: 'blue',
+        red: 37,
+        green: 99,
+        blue: 235,
+        strength: 0.72,
+    }),
 ]);
 const WALKING_ROBOT_IDLE_ANCHOR_X = Object.freeze([
     [0.6059, 0.5500, 0.4853, 0.3886],
@@ -224,12 +271,6 @@ const WALKING_ROBOT_CHARGE_ANCHOR_Y = Object.freeze([
     [0.4521, 0.4473, 0.4201, 0.4505],
     [0.5048, 0.5525, 0.5414, 0.5048],
     [0.4617, 0.4489, 0.5383, 0.4617],
-]);
-const WALKING_ROBOT_CHARGE_OFFSET = Object.freeze([
-    0,
-    0.08,
-    0.28,
-    0.06,
 ]);
 const WALKING_ROBOT_AFTERIMAGES = Object.freeze([
     { distance: 0.25, opacity: 0.28 },
@@ -577,6 +618,14 @@ function getSpriteSource({columns, rows, frame, directionRow, anchorXs = null, a
     };
 }
 
+function getPlayerSpriteTint(playerEntityId, orderedPlayerIds)
+{
+    const playerIndex = orderedPlayerIds.indexOf(String(playerEntityId));
+    if (playerIndex < 0)
+        return PLAYER_SPRITE_TINTS[0];
+    return PLAYER_SPRITE_TINTS[playerIndex % PLAYER_SPRITE_TINTS.length];
+}
+
 function getPlayerAttackDuration(action)
 {
     if (action === PLAYER_ACTION.MELEE)
@@ -586,7 +635,135 @@ function getPlayerAttackDuration(action)
     return 0;
 }
 
-function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0})
+const playerTintFrameCache = new Map();
+
+function drawPlayerSpriteImage({
+    context,
+    sprite,
+    source,
+    destinationX,
+    destinationY,
+    spriteSize,
+    tint,
+})
+{
+    if (!tint)
+    {
+        context.drawImage(
+            sprite,
+            source.x,
+            source.y,
+            source.width,
+            source.height,
+            destinationX,
+            destinationY,
+            spriteSize,
+            spriteSize
+        );
+        return;
+    }
+
+    const renderSize = Math.max(1, Math.round(spriteSize));
+    const cacheKey = [
+        sprite.src,
+        source.x,
+        source.y,
+        source.width,
+        source.height,
+        renderSize,
+        tint.id,
+    ].join(':');
+
+    let tintedFrame = playerTintFrameCache.get(cacheKey);
+
+    if (!tintedFrame)
+    {
+        tintedFrame = document.createElement('canvas');
+        tintedFrame.width = renderSize;
+        tintedFrame.height = renderSize;
+
+        const tintContext = tintedFrame.getContext(
+            '2d',
+            {willReadFrequently: true}
+        );
+
+        tintContext.drawImage(
+            sprite,
+            source.x,
+            source.y,
+            source.width,
+            source.height,
+            0,
+            0,
+            renderSize,
+            renderSize
+        );
+
+        const imageData = tintContext.getImageData(
+            0,
+            0,
+            renderSize,
+            renderSize
+        );
+
+        const pixels = imageData.data;
+
+        for (let index = 0; index < pixels.length; index += 4)
+        {
+            const red = pixels[index];
+            const green = pixels[index + 1];
+            const blue = pixels[index + 2];
+            const alpha = pixels[index + 3];
+
+            if (alpha === 0)
+                continue;
+
+            const brightest = Math.max(red, green, blue);
+            const darkest = Math.min(red, green, blue);
+            const colorDifference = brightest - darkest;
+
+            const isLightArmor =
+                red >= 145 &&
+                green >= 145 &&
+                blue >= 145 &&
+                colorDifference <= 55;
+
+            if (!isLightArmor)
+                continue;
+
+            const shade = (red + green + blue) / (3 * 255);
+            const strength = tint.strength;
+
+            pixels[index] = Math.round(
+                red * (1 - strength) +
+                tint.red * shade * strength
+            );
+            pixels[index + 1] = Math.round(
+                green * (1 - strength) +
+                tint.green * shade * strength
+            );
+            pixels[index + 2] = Math.round(
+                blue * (1 - strength) +
+                tint.blue * shade * strength
+            );
+        }
+
+        tintContext.putImageData(imageData, 0, 0);
+
+        if (playerTintFrameCache.size >= 256)
+            playerTintFrameCache.clear();
+        playerTintFrameCache.set(cacheKey, tintedFrame);
+    }
+    context.drawImage(
+        tintedFrame,
+        destinationX,
+        destinationY,
+        spriteSize,
+        spriteSize
+    );
+}
+
+function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0, playerSpriteTint = null})
 {
     if (!attack)
         return false;
@@ -607,27 +784,35 @@ function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, direc
         return false;
 
     const frame = Math.min(PLAYER_ATTACK_FRAME_COUNT - 1, Math.floor(elapsed / frameDuration));
-    const sourceX = frame * PLAYER_SPRITE_CELL_SIZE;
-    const sourceY = directionRow * PLAYER_SPRITE_CELL_SIZE;
+    const source = getSpriteSource({
+        columns: SOURCE_GRID_1254_COLUMNS,
+        rows: SOURCE_GRID_1254_ROWS,
+        frame,
+        directionRow,
+        anchorXs: isMelee
+            ? PLAYER_MELEE_ANCHOR_X
+            : PLAYER_RANGED_ANCHOR_X,
+        anchorYs: isMelee
+            ? PLAYER_MELEE_ANCHOR_Y
+            : PLAYER_RANGED_ANCHOR_Y,
+    });
     const spriteSize = tilePixels * 1.8;
     const centerX = screen.x;
     const centerY = screen.y;
 
-    context.drawImage(
+    drawPlayerSpriteImage({
+        context,
         sprite,
-        sourceX,
-        sourceY,
-        PLAYER_SPRITE_CELL_SIZE,
-        PLAYER_SPRITE_CELL_SIZE,
-        centerX - spriteSize / 2,
-        centerY - spriteSize / 2,
+        source,
+        destinationX: centerX - source.anchorX * spriteSize,
+        destinationY: centerY - source.anchorY * spriteSize,
         spriteSize,
-        spriteSize
-    );
+        tint: playerSpriteTint,
+    });
     return true;
 }
 
-function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0})
+function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0, playerSpriteTint = null})
 {
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     const sprite = isMoving ? playerWalkSprite : playerIdleSprite;
@@ -649,17 +834,15 @@ function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directi
     const centerX = screen.x;
     const centerY = screen.y;
 
-    context.drawImage(
+    drawPlayerSpriteImage({
+        context,
         sprite,
-        source.x,
-        source.y,
-        source.width,
-        source.height,
-        centerX - source.anchorX * spriteSize,
-        centerY - source.anchorY * spriteSize,
+        source,
+        destinationX: centerX - source.anchorX * spriteSize,
+        destinationY: centerY - source.anchorY * spriteSize,
         spriteSize,
-        spriteSize
-    );
+        tint: playerSpriteTint,
+    });
 
     return true;
 }
@@ -1259,7 +1442,7 @@ function drawShieldBreakEffects({context, effects, camera, now})
     });
 }
 
-function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, maxHealthRef})
+function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, playerSpriteTint = null, maxHealthRef})
 {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -1293,9 +1476,9 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             break;
 
         case ENTITY_TYPE.PLAYER:
-            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow}))
+            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow, playerSpriteTint}))
                 break;
-            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow, playerSpriteTint}))
                 break;
             context.shadowColor = '#22c55e';
             context.shadowBlur = 12;
@@ -1430,7 +1613,7 @@ function drawEntity({context, entity, position, camera, now, attack, directionRo
             context.arc(
                 screen.x,
                 screen.y,
-                entityPixels * 0.85,
+                entityPixels * 1.10,
                 0,
                 Math.PI * 2
             );
@@ -1845,10 +2028,18 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 camera,
                 now,
             });
+            const orderedPlayerIds = Array.from(entityTracksRef.current.values()).filter(track =>
+                getEntityType(track.entity) === ENTITY_TYPE.PLAYER
+            ).map(track => String(track.entity.entityId)).sort((firstId, secondId) =>
+                firstId.localeCompare(secondId, 'en', {numeric: true}));
             entityTracksRef.current.forEach(track =>
             {
+                const entityType = getEntityType(track.entity);
                 const playerData = renderData.gamePlayerData.find(player => String(player.playerEntityId) === String(track.entity.entityId));
                 const playerId = playerData?.playerId ?? (track.entity.entityId === localEntityId ? renderData.currentPlayerId : null);
+                const playerSpriteTint = entityType === ENTITY_TYPE.PLAYER
+                    ? getPlayerSpriteTint(track.entity.entityId, orderedPlayerIds)
+                    : null;
                 let attack = playerId === null ? null : playerAttackRef.current.get(String(playerId));
                 if (attack && now - attack.startedAt >= getPlayerAttackDuration(attack.action))
                 {
@@ -1856,9 +2047,15 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     attack = null;
                 }
                 const position = getInterpolatedPosition(track, now);
-                const entityType = getEntityType(track.entity);
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
                 const renderDirectionRow = facesPlayer ? getDirectionRowToward(position, focusPosition, track.directionRow) : track.directionRow;
+                let spriteDirectionRow = renderDirectionRow;
+                if (attack)
+                {
+                    if (!Number.isInteger(attack.directionRow))
+                        attack.directionRow = renderDirectionRow;
+                    spriteDirectionRow = attack.directionRow;
+                }
                 drawEntity({
                     context,
                     entity: track.entity,
@@ -1866,7 +2063,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     camera,
                     now,
                     attack,
-                    directionRow: renderDirectionRow,
+                    directionRow: spriteDirectionRow,
+                    playerSpriteTint,
                     maxHealthRef,
                 });
             });

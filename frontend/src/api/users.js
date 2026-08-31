@@ -43,7 +43,7 @@ export async function fetchCurrentUser(accessToken) {
 	try{
 		return await apiRequest("/api/users/me", {});
 	} catch (err) {
-		if (err.message === "Session expired")
+		if (err.status === 401 || err.status === 403)
 			throw err;
 		throw new Error("Unable to load profile");
 	}
@@ -59,8 +59,21 @@ export async function updateCurrentUser(accessToken, profileData) {
 				body: JSON.stringify(profileData),
 			});
 	} catch (err) {
-		if (err.message === "Session expired")
+		if (err.status === 401 || err.status === 403)
 			throw err;
 		throw new Error("Unable to update profile");
 	}
+}
+
+export async function logoutUser(refreshToken) {
+	if (!refreshToken) {
+		return;
+	}
+	await fetch('/api/logout', {
+		method: 'DELETE',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({ token: refreshToken }),
+	});
 }
