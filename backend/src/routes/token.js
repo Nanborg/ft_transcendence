@@ -1,91 +1,119 @@
 const express = require("express");
-const router = express.Router();
 const jwt = require("jsonwebtoken");
-const {generateAccessToken} = require('../middlewares/OAuth');
-require("../middlewares/OAuth");
-const prisma = require('../db');
+const crypto = require("crypto");
+const { generateAccessToken } = require("../middlewares/OAuth");
+const prisma = require("../db");
+
+const router = express.Router();
 router.use(express.json());
-const crypto = require('crypto')
 
+class AuthRefreshError extends Error {
+	constructor(status, code, message) {
+		super(message);
+		this.status = status;
+		this.code = code;
+	}
+}
 
-
-
-// token route that give you a valid token for another 15 min (can be changed)
-
-//		└──>curl -i -X POST http://localhost:3000/token \
-//		 -H "Content-Type: application/json" \
-//		 -d '{"token":"yyyyyyyyyyyyyyyyyyyy"}'		#refreshToken here
-//
-//		HTTP/1.1 200 OK
-//		X-Powered-By: Express
-//		Content-Type: application/json; charset=utf-8
-//		Content-Length: 159
-//		ETag: W/"9f-rYKJNvOnaQvNwQ6EfvLSiizdeUA"
-//		Date: Tue, 23 Jun 2026 14:50:23 GMT
-//		Connection: keep-alive
-//		Keep-Alive: timeout=5
-//
-//		{"accessToken":"XXXXXXXXXXXXXXXXXXXXX"}
-
-
+function verifyRefreshToken(refreshToken) {
+	try {
+		return jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN);
+	} catch (error) {
+		const code = error.name === "TokenExpiredError"
+			? "REFRESH_TOKEN_EXPIRED"
+			: "REFRESH_TOKEN_INVALID";
+		throw new AuthRefreshError(401, code, "Invalid refresh token");
+	}
+}
 
 router.post("/", async (req, res) => {
-	try {
-		const refreshToken = req.body?.token
-		if (!refreshToken)
-			return res.status(401).json({error: "Missing refresh token"});
+	const refreshToken = req.body?.token;
 
-		const tokenExist = await prisma.refreshToken.findUnique({
-			where: { token: refreshToken },
-			include: { user: true } //get associated user
+	if (!refreshToken) {
+		return res.status(401).json({
+			error: "Missing refresh token",
+			code: "REFRESH_TOKEN_MISSING"
 		});
-		if (!tokenExist)
-			return res.status(403).json({error: "Invalid refresh token"});
+	}
 
-		const curDate = new Date()
-		if (curDate > tokenExist.expiresAt)
-			return res.status(403).json({error: "Refresh token expired"});
-		if (tokenExist.isRevoked === true)
-			return res.status(403).json({ error: "Refresh token revoked" })
-		try {
-			const user = await new Promise ((resolve, reject) => {
-			jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN, (err, decoded) => {
-				if (err)
-					return reject(err);
-				resolve(decoded);
-				});
+	try {
+		const decoded = verifyRefreshToken(refreshToken);
+
+		const tokens = await prisma.$transaction(async (tx) => {
+			const tokenRecord = await tx.refreshToken.findUnique({
+				where: { token: refreshToken }
 			});
 
-			await prisma.refreshToken.update ({
-				where: { id: tokenExist.id },
+			if (!tokenRecord || tokenRecord.userId !== decoded.id) {
+				throw new AuthRefreshError(401, "REFRESH_TOKEN_INVALID", "Invalid refresh token");
+			}
+			if (tokenRecord.expiresAt < new Date()) {
+				throw new AuthRefreshError(401, "REFRESH_TOKEN_EXPIRED", "Refresh token expired");
+			}
+			if (tokenRecord.isRevoked) {
+				throw new AuthRefreshError(401, "REFRESH_TOKEN_REVOKED", "Refresh token revoked");
+			}
+
+			const revoked = await tx.refreshToken.updateMany({
+				where: {
+					id: tokenRecord.id,
+					isRevoked: false
+				},
 				data: { isRevoked: true }
-			})
-			const userPayload = {
-	    		id: user.id,
-	    		username: user.username
-			};
-			const newAccessToken = generateAccessToken(userPayload)
-			const newRefreshToken = jwt.sign(userPayload, process.env.REFRESH_SECRET_TOKEN, { expiresIn: '7d', algorithm: 'HS256', jwtid: crypto.randomUUID(), })
-			const expiresAt = new Date()
-			expiresAt.setDate(expiresAt.getDate() + 7)
-			await prisma.refreshToken.create({
-				data: { token: newRefreshToken, userId: userPayload.id, expiresAt: expiresAt }
 			});
-			res.json({
-				message: "Access granted",
-				accessToken: newAccessToken,
-				refreshToken: newRefreshToken
-			})
-		} catch (err) {
-				console.error("Token validation error:", err);
-				res.status(403).json({ error: 'Invalid refresh token' });
-		}
-	}
-	catch (err) {
-		console.error("Refresh token error: ", err);
-		res.status(500).json({ error: 'Server error' });
-	}
 
+			if (revoked.count !== 1) {
+				throw new AuthRefreshError(401, "REFRESH_TOKEN_REVOKED", "Refresh token revoked");
+			}
+
+			const userPayload = {
+				id: decoded.id,
+				username: decoded.username
+			};
+			const accessToken = generateAccessToken(userPayload);
+			const nextRefreshToken = jwt.sign(
+				userPayload,
+				process.env.REFRESH_SECRET_TOKEN,
+				{
+					expiresIn: "7d",
+					algorithm: "HS256",
+					jwtid: crypto.randomUUID()
+				}
+			);
+			const expiresAt = new Date();
+			expiresAt.setDate(expiresAt.getDate() + 7);
+
+			await tx.refreshToken.create({
+				data: {
+					token: nextRefreshToken,
+					userId: userPayload.id,
+					expiresAt
+				}
+			});
+
+			return {
+				accessToken,
+				refreshToken: nextRefreshToken
+			};
+		});
+
+		return res.json({
+			message: "Access granted",
+			...tokens
+		});
+	} catch (error) {
+		if (error instanceof AuthRefreshError) {
+			return res.status(error.status).json({
+				error: error.message,
+				code: error.code
+			});
+		}
+		console.error("Refresh token error:", error);
+		return res.status(500).json({
+			error: "Server error",
+			code: "TOKEN_REFRESH_INTERNAL_ERROR"
+		});
+	}
 });
 
 module.exports = router;

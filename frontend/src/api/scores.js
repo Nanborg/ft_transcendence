@@ -4,7 +4,7 @@ export async function fetchMatchHistory(accessToken) {
 	try{
 		return await apiRequest(`/api/scores/history`, {});
 	} catch (err) {
-		if (err.message === "Session expired")
+		if (err.status === 401 || err.status === 403)
 			throw err;
 		throw new Error("Unable to load match history");
 	}

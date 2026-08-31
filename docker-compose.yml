@@ -29,6 +29,7 @@ services:
       OAUTH42_CLIENT_ID: ${OAUTH42_CLIENT_ID:-replace_me_a}
       OAUTH42_CLIENT_SECRET: ${OAUTH42_CLIENT_SECRET:-replace_me_b}
       SESSION_SECRET: ${SESSION_SECRET:-replace_me_c}
+      OAUTH42_REDIRECT_URI: ${OAUTH42_REDIRECT_URI:-https://localhost:4242/api/login/42/callback}
       ACCESS_SECRET_TOKEN: ${ACCESS_SECRET_TOKEN}
       REFRESH_SECRET_TOKEN: ${REFRESH_SECRET_TOKEN}
     expose:

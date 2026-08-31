@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
-import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser, registerUser, updateCurrentUser } from './api/users';
+import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
+import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
+import { refreshAuthSession } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -32,6 +33,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
+  const sessionExpiredRef = useRef(false); //test-nico
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
@@ -47,13 +49,30 @@ function App() {
     }
   }, [currentUser]);
 
-  useEffect(() => {
-    function handleSessionRefreshed(event) {
-      setAuthSession(event.detail);
+  useEffect(() => { //test-nico
+    function applySession(session) {
+      setAuthSession(session);
+      setCurrentUser(session?.user || null);
+      if (session?.user) {
+        sessionExpiredRef.current = false;
+        setAuthStatus('authenticated');
+        setAuthError('');
+      }
     }
-    window.addEventListener('auth:session-refreshed', handleSessionRefreshed);
+    function handleSessionChanged(event) {
+      applySession(event.detail);
+    }
+    function handleStorage(event) {
+      if (event.key !== 'ft_transcendence_auth_session') {
+        return;
+      }
+      applySession(getStoredAuthSession());
+    }
+    window.addEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChanged);
+    window.addEventListener('storage', handleStorage);
     return () => {
-      window.removeEventListener('auth:session-refreshed', handleSessionRefreshed);
+      window.removeEventListener(AUTH_SESSION_CHANGED_EVENT, handleSessionChanged);
+      window.removeEventListener('storage', handleStorage);
     };
   }, []);
 
@@ -70,10 +89,14 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
-  const handleSessionExpired = useCallback((message) => {
+  const handleSessionExpired = useCallback((message) => { //test-nico
+    if (sessionExpiredRef.current) {
+      return;
+    }
+    sessionExpiredRef.current = true;
     setCurrentUser(null);
     setAuthSession(null);
-    clearStoredAuthSession();
+    clearAuthSession();
     setAuthStatus('error');
     setAuthError(message || 'Session expired. Login again.');
     window.location.hash = '#/login';
@@ -95,25 +118,25 @@ function App() {
     if (!isFortyTwoOauth || !accessToken || !refreshToken) {
       return;
     }
+    window.history.replaceState(null, '', '#/login'); //test-nico
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
-      setAuthError('');
+        setAuthError('');
       try {
         const pendingSession = { accessToken, refreshToken };
-        storeAuthSession(pendingSession);
+        writeAuthSession(pendingSession); //test-nico
         const user = await fetchCurrentUser(accessToken);
         const session = { ...pendingSession, user };
 
-        setAuthSession(session);
-        storeAuthSession(session);
+        writeAuthSession(session); //test-nico
         setCurrentUser(user);
         setAuthStatus('authenticated');
         window.location.hash = '#/profile';
       } catch (error) {
         setCurrentUser(null);
         setAuthSession(null);
-        clearStoredAuthSession();
+        clearAuthSession();
         setAuthStatus('error');
         setAuthError(error.message);
         window.location.hash = '#/login';
@@ -131,8 +154,18 @@ function App() {
     handleSessionExpired,
   );
 
-  useEffect(() => {
-    if (!authSession?.accessToken) {
+  useEffect(() => { //test-nico
+    if (!socket || !authSession?.accessToken) {
+      return;
+    }
+    socket.auth = {
+      ...(socket.auth || {}),
+      token: authSession.accessToken,
+    };
+  }, [socket, authSession?.accessToken]);
+
+  useEffect(() => { //test-nico
+    if (!currentUser || !authSession?.accessToken) {
       setSocket(null);
       setSocketStatus('disconnected');
       return undefined;
@@ -145,9 +178,7 @@ function App() {
       },
     });
     let connectionReplacedMessage = '';
-    // DEV DEBUG START app.jsx socket console exposure - remove lines until DEV DEBUG END.
-    window.socket = nextSocket;
-    // DEV DEBUG END app.jsx socket console exposure.
+    let reconnectAfterRefresh = false;
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
@@ -162,7 +193,6 @@ function App() {
     });
     nextSocket.on('connect', () => {
       setSocketStatus(`connected: ${nextSocket.id}`);
-      console.log('socket connected:', nextSocket.id);
     });
 
     nextSocket.on('disconnect', () => {
@@ -173,27 +203,43 @@ function App() {
         } else {
             setSocketStatus('disconnected');
         }
-
-        console.log('socket disconnected');
     });
 
-    nextSocket.on('connect_error', (error) => {
+    nextSocket.on('connect_error', async (error) => { //test-nico
       setSocketStatus(`connection error: ${error.message}`);
-      if (error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
+      const code = error.data?.code;
+      if (code === 'TOKEN_INVALID' || code === 'TOKEN_MISSING') {
         handleSessionExpired(error.message);
+        return;
+      }
+      if (code !== 'TOKEN_EXPIRED' || reconnectAfterRefresh) {
+        return;
+      }
+      reconnectAfterRefresh = true;
+      try {
+        const latestSession = getStoredAuthSession();
+        if (!latestSession?.accessToken) {
+          handleSessionExpired(error.message);
+          return;
+        }
+        let nextSession = latestSession;
+        if (latestSession.accessToken === nextSocket.auth?.token) {
+          nextSession = await refreshAuthSession(latestSession);
+        }
+        nextSocket.auth = {
+          ...(nextSocket.auth || {}),
+          token: nextSession.accessToken,
+        };
+        nextSocket.connect();
+      } catch (refreshError) {
+        handleSessionExpired(refreshError.message);
       }
     });
-    // DEV DEBUG START app.jsx socket event console logs - remove lines until DEV DEBUG END.
-    nextSocket.on('room:update', (...args) => console.log('room:update', ...args));
-    nextSocket.on('room:error', (...args) => console.log('room:error', ...args));
-    nextSocket.on('game:start', (...args) => console.log('game:start', ...args));
-    nextSocket.on('player:input', (...args) => console.log('player:input', ...args));
-    // DEV DEBUG END app.jsx socket event console logs.
     return () => {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, [authSession?.accessToken, handleSessionExpired]);
+  }, [currentUser?.id, Boolean(authSession?.accessToken), handleSessionExpired]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
@@ -205,19 +251,12 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      /*
-      const user = await fetchCurrentUser(trimmedName);
-      setCurrentUser(user);
-      storeDevUser(user);
-      setAuthStatus('authenticated');
-      setDevUserName('');
-      */
       const tokens = await loginUser(trimmedName, password);
       const pendingSession = {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
       };
-      storeAuthSession(pendingSession);
+      writeAuthSession(pendingSession); //test-nico
       const user = await fetchCurrentUser(tokens.accessToken);
 
       const session = {
@@ -225,8 +264,7 @@ function App() {
         user,
       };
 
-      setAuthSession(session);
-      storeAuthSession(session);
+      writeAuthSession(session); //test-nico
       setCurrentUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
@@ -234,7 +272,7 @@ function App() {
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
-      clearStoredAuthSession();
+      clearAuthSession();
       setAuthStatus('error');
       setAuthError(error.message);
     }
@@ -265,11 +303,16 @@ function App() {
     }
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    const session = getStoredAuthSession();
+    try {
+      await logoutUser(session?.refreshToken); //test-nico
+    } catch {
+      // Local logout must complete even when the network request fails.
+    }
     setCurrentUser(null);
-    /*clearStoredDevUser();*/
     setAuthSession(null);
-    clearStoredAuthSession();
+    clearAuthSession();
     setAuthStatus('idle');
     setAuthError('');
   }
@@ -299,14 +342,10 @@ function App() {
               onSessionExpired={handleSessionExpired}
               onProfileUpdated={(user) => {
                 setCurrentUser(user);
-                setAuthSession(session => {
-                  if (!session) {
-                    return session;
-                  }
-                  const nextSession = { ...session, user };
-                  storeAuthSession(nextSession);
-                  return nextSession;
-                });
+                const latestSession = getStoredAuthSession();
+                if (latestSession) {
+                  writeAuthSession({ ...latestSession, user }); //test-nico
+                }
               }}
               onUpdateProfile={updateCurrentUser}
             />
@@ -327,6 +366,7 @@ function App() {
               currentPlayerId={currentUser?.id}
               gameMap={room.gameMap}
               gameEntities={room.gameEntities}
+              deletedGameEntities={room.deletedGameEntities}
               gameStartedAt={room.gameStartedAt}
               gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}
@@ -386,7 +426,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
     </div>
   );
