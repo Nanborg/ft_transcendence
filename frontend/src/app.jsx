@@ -19,6 +19,7 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { useChat } from './features/chat/useChat';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -36,6 +37,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+  const chat = useChat(socket, currentUser, room.currentRoom);
 
 
   const [authMode, setAuthMode] = useState('login');
@@ -304,6 +306,7 @@ function App() {
               socket={socket}
               currentUser={currentUser}
               room={room}
+              chat={chat}
             />
           )}
           {currentPage.id === 'game' && (
@@ -319,6 +322,7 @@ function App() {
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
+              chat={chat}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
               onLeaveGame={room.leaveGame}
