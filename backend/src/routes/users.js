@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
-const bcrypt = require("bcrypt");
 const prisma = require('../db');
+const { cleanInput } = require('../services/sanitize');
 
 router.get("/me", authToken, async (req, res) => {
 	try{
@@ -99,20 +99,22 @@ router.patch('/me', authToken, async (req, res) => {
         const { username, avatar } = req.body;
         const updateData = {};
         if (username !== undefined) {
-            if (typeof username !== 'string' || username.trim() === '') {
+            if (typeof username !== 'string')
                 return res.status(400).json({ error: "invalid username" });
-            }
-            updateData.username = username.trim();
+            const cleanUserName = cleanInput(username.trim());
+            if (cleanUserName === '')
+                return res.status(400).json({ error: "invalid username" });
+            updateData.username = cleanUserName;
         }
         if (avatar !== undefined) {
-            if (avatar === null || (typeof avatar === 'string' && avatar.trim() === '')) {
+            if (avatar === null || (typeof avatar === 'string' && avatar === '')) {
                 updateData.avatar = null;
             }
             else if (typeof avatar !== 'string') {
                 return res.status(400).json({ error: "invalid avatar" });
             }
             else {
-                const avatarUrl = avatar.trim();
+                const avatarUrl = cleanInput(avatar.trim());
                 if (avatarUrl.length > 500)
                     return res.status(400).json({ error: "invalid avatar" });
                 try {

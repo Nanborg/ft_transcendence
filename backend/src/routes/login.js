@@ -269,21 +269,4 @@ router.get("/42/callback", async (req, res) => {
 
 //		{"id":"dev-123","email":"maxime@local.dev","name":"maxime","role":"user"}%
 
-
-router.post("/dev", (req, res, next) => {
-	const devUser = req.header("x-dev-user");
-
-	if (!devUser) {
-		return res.status(401).json({ error: "Unauthorized" });
-	}
-	req.user = {
-		id: "dev-123",
-		email: `${devUser}@local.dev`,
-		username: devUser,
-		role: "user",
-	};
-
-	res.json(req.user);
-});
-
 module.exports = router;
