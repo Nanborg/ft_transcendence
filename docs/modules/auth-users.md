@@ -25,12 +25,20 @@
 
 Signup:
 
+- user signup with 42
+
+or
+
 - user submits username, email and password;
 - backend creates a `User`;
 - password is hashed;
 - user is stored in PostgreSQL.
 
 Login:
+
+- user login with 42
+
+or
 
 - user submits username and password;
 - backend checks the user;
@@ -44,6 +52,10 @@ Session:
 - Socket.IO uses the access token.
 - frontend refreshes expired sessions when possible;
 - logout revokes the refresh token server-side.
+
+
+<br>
+<br>
 
 ```mermaid
 sequenceDiagram
