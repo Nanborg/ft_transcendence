@@ -389,10 +389,7 @@ export function GamePage({
                         goldFeedbacks={goldFeedbacks}
                         socket={socket}
                     />
-                    <section
-                        className="game-end-overlay"
-                        aria-label="Game result"
-                    >
+                    <section className="game-end-overlay" aria-label="Game result">
                         <div className="game-panel game-end-card">
                             <h2>{gameResult.win ? 'Mission completed' : 'Mission failed'}</h2>
                             <div className="game-hud">
