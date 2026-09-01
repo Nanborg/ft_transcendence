@@ -64,13 +64,28 @@ export function ProfilePage({
         <>
           <ProfileDetails profileUser={profileUser} />
           <form className="profile-edit-form" onSubmit={handleSubmit}>
-            <label>
+            <label htmlFor="profile-username">
               Username
-              <input className="form-control" value={username} onChange={event => setUsername(event.target.value)}></input>
+              <input
+                id="profile-username"
+                name="username"
+                className="form-control"
+                value={username}
+                onChange={event => setUsername(event.target.value)}
+                autoComplete="username"
+                required>
+              </input>
             </label>
-            <label>
+            <label htmlFor="profile-avatar-url">
               Avatar URL
-              <input className="form-control" value={avatar} onChange={event => setAvatar(event.target.value)}></input>
+              <input
+                id="profile-avatar-url"
+                name="avatarUrl"
+                className="form-control"
+                value={avatar}
+                onChange={event => setAvatar(event.target.value)}
+                autoComplete="url">
+              </input>
             </label>
             <button className="btn btn-success" type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
               {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}

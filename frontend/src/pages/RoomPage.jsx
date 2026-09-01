@@ -123,11 +123,14 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 <label className="form-label" htmlFor="room-chat-message">Message</label>
                 <input
                   id="room-chat-message"
+                  name="message"
                   className="form-control"
                   type="text"
                   value={chatInput}
                   onChange={event => setChatInput(event.target.value)}
                   placeholder="write a message"
+                  autoComplete="off"
+                  required
                   disabled={isDisabled}
                 />
                 <button className="btn btn-primary" type="submit" disabled={isDisabled || !chatInput.trim()}>
