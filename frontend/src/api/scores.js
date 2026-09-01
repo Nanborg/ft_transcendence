@@ -1,10 +1,10 @@
 import { apiRequest } from "./apiReq";
 
-export async function fetchMatchHistory(accessToken) {
+export async function fetchMatchHistory() {
 	try{
 		return await apiRequest(`/api/scores/history`, {});
 	} catch (err) {
-		if (err.message === "Session expired")
+		if (err.status === 401 || err.status === 403)
 			throw err;
 		throw new Error("Unable to load match history");
 	}
