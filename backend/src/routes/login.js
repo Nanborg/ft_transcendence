@@ -1,13 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const { OAuth } = require("../middlewares/OAuth");
 router.use(express.json());
 const prisma = require('../db');
 const {generateAccessToken} = require('../middlewares/OAuth');
 const jwt = require("jsonwebtoken");
 const crypto = require('crypto');
+const bcrypt = require("bcrypt");
 const loginLimiter = require('../middlewares/rateLimit');
-require("../middlewares/OAuth");
 
 
 
@@ -33,20 +32,63 @@ require("../middlewares/OAuth");
 //	note: the access token is valid for 15 min (we can change it) and need to be refreshed with the refresh token (see token.js)
 
 
-router.post("/", loginLimiter, OAuth);
+router.post("/", loginLimiter, async (req, res) => {
+	try {
+        const { username, password } = req.body;
+
+        if (!username || !password)
+            return res.status(400).json({ error: "Missing username or password" });
+
+        const user = await prisma.user.findUnique({
+            where: { username: username }
+        });
+
+        if (!user) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+        return loginUser(user, res, "Dev login success", 200);
+    }
+	catch (err) {
+        console.error("Login error:", err);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+function getOAuth42Config() {
+	const clientId = process.env.OAUTH42_CLIENT_ID;
+	const clientSecret = process.env.OAUTH42_CLIENT_SECRET;
+	const redirectUri = process.env.OAUTH42_REDIRECT_URI;
+
+	if (!clientId || !clientSecret || !redirectUri) {
+		return null;
+	}
+	return { clientId, clientSecret, redirectUri };
+}
 
 router.get("/42", (req, res) => {
-	const url =
-		"https://api.intra.42.fr/oauth/authorize" +
-		"?client_id=" + process.env.OAUTH42_CLIENT_ID +
-		"&redirect_uri=" + encodeURIComponent("https://localhost:4242/api/login/42/callback") +
-		"&response_type=code";
+	const config = getOAuth42Config();
+
+	if (!config) {
+		return res.status(503).json({ error: "OAuth 42 is not configured" });
+	}
+
+	const params = new URLSearchParams({
+		client_id: config.clientId,
+		redirect_uri: config.redirectUri,
+		response_type: "code",
+	});
+	const url = `https://api.intra.42.fr/oauth/authorize?${params.toString()}`;
 
 	return res.redirect(url);
 });
 
 
-async function loginUser(user, res, mess, code) {
+async function loginUser(user, res, mess, code, isOAuth = false) {
 	const payload = {
 		id: user.id,
 		username: user.username
@@ -61,19 +103,36 @@ async function loginUser(user, res, mess, code) {
 		data: { token: refreshToken, userId: user.id, expiresAt: expiresAt }
 	});
 
-	const params = new URLSearchParams({
-		oauth: "42",
-		accessToken,
-		refreshToken,
-	});
+	res.cookie('accessToken', accessToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000
+    });
 
-	return res.redirect(`/#/login?${params.toString()}`);
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+	if (isOAuth) {
+        return res.redirect('/#/login?oauth=success');
+    }
+	else {
+        return res.status(code || 200).json({ message: mess, user: { id: user.id, username: user.username } });
+    }
 }
 
 
 
 router.get("/42/callback", async (req, res) => {
 	try{
+		const config = getOAuth42Config();
+		if (!config) {
+			return res.status(500).json({ error: "OAuth 42 is not configured" });
+		}
 		const code = req.query.code;
 
 		if (!code || typeof req.query.code !== "string") {
@@ -84,20 +143,20 @@ router.get("/42/callback", async (req, res) => {
 		const response = await fetch("https://api.intra.42.fr/oauth/token", {
 			method: "POST",
 			headers: {
-				"Content-Type": "application/json",
+				"Content-Type": "application/x-www-form-urlencoded",
 			},
-			body: JSON.stringify({
+			body: new URLSearchParams({
 				grant_type: "authorization_code",
-				client_id: process.env.OAUTH42_CLIENT_ID,
-				client_secret: process.env.OAUTH42_CLIENT_SECRET,
+				client_id: config.clientId,
+				client_secret: config.clientSecret,
 				code: code,
-				redirect_uri: "https://localhost:4242/api/login/42/callback",
+				redirect_uri: config.redirectUri,
 			}),
 		});
 		let body = await response.text();
 		if (!response.ok) {
-			console.error(body);
-			return res.status(response.status).send(body);
+			console.error("42 token exchange failed:", response.status);
+			return res.status(response.status).send("42 token exchange failed");
 		}
 
 		const data = JSON.parse(body);
@@ -129,7 +188,7 @@ router.get("/42/callback", async (req, res) => {
 		});
 
 		if (user)
-			return loginUser(user, res, "Connection success", 200);
+			return loginUser(user, res, "Connection success", 200, true);
 
 		user = await prisma.user.findUnique({
 			where: { email: userData.email }
@@ -146,7 +205,7 @@ router.get("/42/callback", async (req, res) => {
 					}
 				});
 			}
-			return loginUser(user, res, "Connection success", 200);
+			return loginUser(user, res, "Connection success", 200, true);
 		}
 		try {
 
@@ -171,7 +230,7 @@ router.get("/42/callback", async (req, res) => {
 				}
 			});
 
-			return loginUser(created, res, "Register and Connection success", 201);
+			return loginUser(created, res, "Register and Connection success", 201, true);
 		}
 		catch (err){
 				if (err.code === 'P2002') {

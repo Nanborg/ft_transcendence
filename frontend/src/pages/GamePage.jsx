@@ -397,9 +397,9 @@ export function GamePage({
                                     <th>Total gold earned</th>
                                     <th>Life</th>
                                     <th>Connection</th>
-                                    <th>Melee</th>
-                                    <th>Ranged</th>
-                                    <th>Shield</th>
+                                    <th>  Melee   </th>
+                                    <th>  Ranged  </th>
+                                    <th>  Shield  </th>
                                 </tr>
                             </thead>
 
@@ -413,9 +413,9 @@ export function GamePage({
                                         <td>{player.goldEarned ?? 0}</td>
                                         <td>{player.alive ? 'Alive' : 'Dead'}</td>
                                         <td>{player.disconnected ? 'Disconnected' : 'Connected'}</td>
-                                        <td>Level {player.upgrades?.melee ?? 0} / {player.cooldowns?.melee ?? 0} ticks</td>
-                                        <td>Level {player.upgrades?.ranged ?? 0} / {player.cooldowns?.ranged ?? 0} ticks</td>
-                                        <td>Level {player.upgrades?.shield ?? 0} / {player.cooldowns?.shield ?? 0} ticks</td>
+                                        <td>Lvl <br />{player.upgrades?.melee ?? 0} / 3</td>
+                                        <td>Lvl <br />{player.upgrades?.ranged ?? 0} / 3</td>
+                                        <td>Lvl <br />{player.upgrades?.shield ?? 0} / 3</td>
                                     </tr>
                                 ))}
                             </tbody>

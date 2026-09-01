@@ -1,52 +1,60 @@
-import { refreshAccessToken } from "./tokenRefresh";
-import { clearStoredAuthSession, getStoredAuthSession, storeAuthSession, } from '../features/auth/devUserStorage';
+import { apiError, refreshAccessToken } from "./tokenRefresh";
+import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession } from '../features/auth/devUserStorage';
 
-//call refreshAccessToken if the access token is no more valid(401/403)
-//send an error or store new tokens if valids and then do their action if store
+let sessionExpiredHandled = false;
 
-export async function apiRequest(endpoint, opt, onSessionExpired = null)
-{
+if (typeof window !== 'undefined') {
+	window.addEventListener(AUTH_SESSION_CHANGED_EVENT, (event) => {
+		if (event.detail) {
+			sessionExpiredHandled = false;
+		}
+	});
+}
 
-	let session = getStoredAuthSession();
+function expireSession(onSessionExpired, error) {
+	if (sessionExpiredHandled) {
+		return;
+	}
+	sessionExpiredHandled = true;
+	if (clearAuthSession() && onSessionExpired) {
+		onSessionExpired(error.message || "Session expired. Login again.");
+	}
+}
 
-	if (!session)
-		throw new Error("No valid session")
+function fetchWithSession(endpoint, opt) {
+	return fetch(endpoint, {
+		...opt,
+		credentials: 'include',
+	});
+}
 
-	const headers = {...opt.headers, Authorization: `Bearer ${session.accessToken}`,}
-	let response = await fetch(endpoint, {...opt, headers})
-	if (response.status === 401)
-	{
-		try {
-			const newTokens = await refreshAccessToken(session.refreshToken);
-			const updatedSession = {...session, accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken};
-			storeAuthSession(updatedSession);
-			window.dispatchEvent(new CustomEvent('auth:session-refreshed', { detail: updatedSession }));
+export async function apiRequest(endpoint, opt = {}, onSessionExpired = null) {
+	let response = await fetchWithSession(endpoint, opt);
 
-			const newHeaders = {...opt.headers, Authorization: `Bearer ${newTokens.accessToken}`,}
-			response = await fetch(endpoint, {...opt, headers: newHeaders})
-			if (response.status === 401)
-			{
-				if (onSessionExpired)
-					onSessionExpired("Session expired. Login again.");
-				const error = new Error("Session expired");
-				error.status = 401;
-				throw error;
-			}
-		} catch (err) {
-			clearStoredAuthSession()
-			if (onSessionExpired)
-				onSessionExpired("Session expired. Login again.");
-			const error = new Error("Session expired");
-			error.status = 401;
+	if (response.status === 401) {
+		const error = await apiError(response);
+		if (error.code !== "ACCESS_TOKEN_EXPIRED") {
+			expireSession(onSessionExpired, error);
 			throw error;
 		}
-	}
-	if (!response.ok)
-	{
-		const err = new Error(`Api error: ${response.status}`);
-		err.status = response.status;
-		throw err;
+		try {
+			await refreshAccessToken();
+			response = await fetchWithSession(endpoint, opt);
+		} catch (refreshError) {
+			expireSession(onSessionExpired, refreshError);
+			throw refreshError;
+		}
 	}
 
-	return (response.json());
+	if (response.status === 401 || response.status === 403) {
+		const error = await apiError(response);
+		expireSession(onSessionExpired, error);
+		throw error;
+	}
+
+	if (!response.ok) {
+		throw await apiError(response);
+	}
+
+	return response.json();
 }
