@@ -7,6 +7,8 @@ export class ApiError extends Error {
 	}
 }
 
+let refreshPromise = null;
+
 export async function apiError(response) {
 	let body = null;
 	try {
@@ -22,14 +24,21 @@ export async function apiError(response) {
 }
 
 export async function refreshAccessToken() {
-	const response = await fetch('/api/token', {
-		method: 'POST',
-		credentials: 'include',
-	});
-
-	if (!response.ok) {
-		throw await apiError(response);
+	if (!refreshPromise) {
+		refreshPromise = fetch('/api/token', {
+			method: 'POST',
+			credentials: 'include',
+		})
+			.then(async (response) => {
+				if (!response.ok) {
+					throw await apiError(response);
+				}
+				return response.json();
+			})
+			.finally(() => {
+				refreshPromise = null;
+			});
 	}
 
-	return response.json();
+	return refreshPromise;
 }
