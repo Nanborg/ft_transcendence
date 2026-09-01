@@ -30,10 +30,14 @@ router.post ("/", async (req, res) => {
 	try {
 			if (!req.body || !req.body.username || !req.body.password || !req.body.email)
 				return res.status(400).json({ error: 'Missing required fields' });
+			if (typeof req.body.username !== 'string' || typeof req.body.email !== 'string')
+				return res.status(400).json({ error: 'Invalid required fields' });
 			const cleanName = cleanInput(req.body.username.trim());
 			const cleanEmail = cleanInput(req.body.email.trim());
 			if (cleanName === '')
 				return res.status(400).json({ error: 'userName is empty' });
+			if (cleanEmail === '')
+				return res.status(400).json({ error: 'email is empty' });
 			const existingUser = await prisma.user.findUnique({
 				where: { username: cleanName }
 			});
