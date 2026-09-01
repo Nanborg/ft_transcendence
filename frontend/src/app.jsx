@@ -20,6 +20,9 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { LegalPage } from './pages/LegalPage';
+import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
+import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -330,8 +333,22 @@ function App() {
               currentPageId={currentPage.id}
             />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id === 'privacy' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={privacyPolicy}
+            />
+          )}
+          {currentPage.id === 'terms' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={termsOfService}
+            />
           )}
           {currentPage.id === 'profile' && (
             <ProfilePage
