@@ -19,7 +19,7 @@ Main goal:
 | yaoberso | Backend API, database, Prisma |
 | mm-furi | WebSocket, rooms, multiplayer sync |
 | ylabussi | Gameplay, C++ simulation |
-| malapoug | Auth, users, scores |
+| malapoug | Auth, Backend API, users, scores |
 
 ## Run
 
@@ -38,33 +38,37 @@ cp .env.example .env
 ```
 
 Then:
-
 - fill required secrets;
 - never commit `.env`.
 
-Create HTTPS certs:
-
+Build the project:
 ```bash
-sh scripts/generate-dev-cert.sh
-```
-
-Start:
-
-```bash
-docker compose up -d --build
+make
 ```
 
 Open:
-
 ```txt
 https://localhost:4242
 ```
 
 Stop:
-
 ```bash
-docker compose down
+make down
 ```
+<br>
+
+#### Makefile description
+
+|Command | Description|
+|--|--|
+|make |	Generates the development SSL certificate and starts all Docker services in detached mode with a rebuild.
+|make up |	Starts all Docker services in the foreground.
+|make down |	Stops and removes all Docker Compose services.
+|make logs |	Follows the logs of all Docker Compose services.
+|make fclean |	Stops the services and removes all unused Docker resources.
+|make re |	Performs a full cleanup and then rebuilds/restarts the project.
+|make ps |	Lists all Docker containers, including stopped containers.
+
 
 ## Technologies
 
@@ -94,7 +98,7 @@ No custom module outside the subject list is claimed.
 | Frontend + backend framework | Major | 2 | React frontend, Express backend and Prisma database layer. |
 | Real-time WebSocket | Major | 2 | Socket.IO synchronizes rooms, chat and gameplay. |
 | User interaction | Major | 2 | Profiles, friends, chat and rooms. |
-| Standard user management | Major | 2 | Register, login, protected sessions, profile data and OAuth 42. |
+| Standard user management | Major | 2 | Register, login, protected sessions, profile data. |
 | Game stats + history | Minor | 1 | Saved match history, leaderboard and profile statistics. |
 | OAuth 42 | Minor | 1 | Additional login method using 42 OAuth. |
 | ORM | Minor | 1 | Prisma schema, migrations and typed database access. |
@@ -174,7 +178,7 @@ Main trade-offs:
 - validation consistency is manual;
 - socket lifecycle must be verified in Chrome;
 - C++ engine state must stay aligned with backend and frontend state;
-- local HTTPS certificates may need browser acceptance.
+- local self signed HTTPS certificates will need browser acceptance.
 
 ## Database Schema
 
@@ -251,6 +255,5 @@ Used for:
 Team responsibility:
 
 - final features were chosen by the team;
-- code was adapted to our project;
 - final code must be understood by the team;
 - the team remains responsible for the final project.
