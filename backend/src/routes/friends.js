@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
+const { isConnected } = require("./connections");
 
 router.get("/", authToken, async (req, res) => {
     try {
@@ -19,8 +20,8 @@ router.get("/", authToken, async (req, res) => {
         if (!userData)
             return res.status(404).json({ error: "User not found" });
         const friends = [
-            ...userData.sentRequests.filter(f => f.status === "ACCEPTED").map(f => f.friend),
-            ...userData.receivedRequests.filter(f => f.status === "ACCEPTED").map(f => f.user)
+            ...userData.sentRequests.filter(f => f.status === "ACCEPTED").map(f => ({ ...f.friend, isConnected: isConnected(f.friend.id)})),
+            ...userData.receivedRequests.filter(f => f.status === "ACCEPTED").map(f => ({ ...f.user, isConnected: isConnected(f.user.id)}))
         ];
         const pendingSent = userData.sentRequests.filter(f => f.status === "PENDING").map(f => f.friend);
         const pendingReceived = userData.receivedRequests.filter(f => f.status === "PENDING").map(f => f.user);

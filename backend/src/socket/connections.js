@@ -21,6 +21,10 @@ function addConnection(userId, socket) {
     });
 }
 
+function isConnected(userId) {
+    return connections.has(userId);
+}
+
 function removeConnection(userId, socketId) {
     const existingConnection = getConnection(userId);
 
@@ -73,5 +77,6 @@ module.exports = {
     addConnection,
     removeConnection,
     getConnection,
-    scheduleDisconnect
+    scheduleDisconnect,
+    isConnected
 };

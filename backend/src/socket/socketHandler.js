@@ -188,6 +188,10 @@ module.exports = (io) => {
 	io.on("connection", async (socket) => {
 		console.log(`socket connected: ${socket.id}`);
 		addConnection(socket.user.id, socket);
+		io.emit("user_status", {
+    		userId: socket.user.id,
+    		isConnected: true
+		});
 		const existingRoom = await getRoomsByUserId(socket.user.id);
 
 		for (const room of existingRoom) {
@@ -723,6 +727,10 @@ module.exports = (io) => {
 					socket.id,
 					async () => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
+						io.emit("user_status", {
+    						userId: socket.user.id,
+    						isConnected: false
+						});
 						for (const room of userRooms) {
 							try {
 								const engineSession = gameEngineService.getSession(room.id);
