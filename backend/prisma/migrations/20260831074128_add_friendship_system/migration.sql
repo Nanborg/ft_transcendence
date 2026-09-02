@@ -11,16 +11,13 @@ CREATE TABLE "Friendship" (
 -- CreateIndex
 CREATE UNIQUE INDEX "Friendship_userId_friendId_key" ON "Friendship"("userId", "friendId");
 
--- test-nico-friends-begin
 -- Preserve existing friends as accepted friendships before dropping the old join table.
 INSERT INTO "Friendship" ("userId", "friendId", "status")
 SELECT LEAST("A", "B"), GREATEST("A", "B"), 'ACCEPTED'
 FROM "_UserFriends"
 WHERE "A" <> "B"
 ON CONFLICT ("userId", "friendId") DO NOTHING;
--- test-nico-friends-end
 
--- test-nico-friends-begin
 -- DropForeignKey
 ALTER TABLE "_UserFriends" DROP CONSTRAINT "_UserFriends_A_fkey";
 
@@ -29,7 +26,6 @@ ALTER TABLE "_UserFriends" DROP CONSTRAINT "_UserFriends_B_fkey";
 
 -- DropTable
 DROP TABLE "_UserFriends";
--- test-nico-friends-end
 
 -- AddForeignKey
 ALTER TABLE "Friendship" ADD CONSTRAINT "Friendship_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE; -- test-nico-friends
