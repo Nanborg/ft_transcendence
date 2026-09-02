@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { acceptFriends, addFriend, fetchFriends, removeFriend } from '../../api/friends'; //test-nico-friends
 
-export function useFriends(currentUser, onSessionExpired) {
+export function useFriends(socket, currentUser, onSessionExpired) {
     const [friends, setFriends] = useState([]);
     const [friendIdInput, setFriendIdInput] = useState('');
     const [friendsStatus, setFriendsStatus] = useState('idle');
@@ -35,6 +35,28 @@ export function useFriends(currentUser, onSessionExpired) {
     useEffect(() => {
         loadFriends();
     }, [loadFriends]);
+
+    useEffect(() => {
+        if(!socket)
+            return;
+        function handleUserStatus(payload)
+        {
+            setFriends((curList) => {
+                if (!curList || !curList.friends)
+                    return curList;
+                const newFriends = curList.friends.map((friend) => {
+                    if(friend.id === payload.userId)
+                        return { ...friend, isConnected: payload.isConnected };
+                    return friend;
+                });
+                return { ...curList, friends: newFriends };
+            });
+        }
+        socket.on('user_status', handleUserStatus);
+        return () => {
+            socket.off('user_status', handleUserStatus);
+        };
+    }, [socket]);
 
     async function submitAddFriend(event) {
         event.preventDefault();
