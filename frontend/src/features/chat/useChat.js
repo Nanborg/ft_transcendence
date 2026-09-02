@@ -33,6 +33,7 @@ export function useChat(socket, currentUser, currentRoom)
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [chatError, setChatError] = useState('');
+    const [liveMessageCount, setLiveMessageCount] = useState(0);
     const currentRoomIdRef = useRef(null);
 
     useEffect(() => {
@@ -43,6 +44,7 @@ export function useChat(socket, currentUser, currentRoom)
             setChatMessages([]);
             setChatInput('');
             setChatError('');
+            setLiveMessageCount(0);
         }
     }, [currentRoom?.id]);
 
@@ -61,6 +63,7 @@ export function useChat(socket, currentUser, currentRoom)
                     [chatMessage]
                 )
             );
+            setLiveMessageCount(previousCount => previousCount + 1);
         }
 
         function handleChatHistory(payload)
@@ -119,6 +122,7 @@ export function useChat(socket, currentUser, currentRoom)
         setChatMessages([]);
         setChatInput('');
         setChatError('');
+        setLiveMessageCount(0);
     }, [currentUser]);
 
     function sendChatMessage(event)
@@ -142,6 +146,7 @@ export function useChat(socket, currentUser, currentRoom)
         setChatInput,
         chatMessages,
         chatError,
+        liveMessageCount,
         sendChatMessage,
     };
 }

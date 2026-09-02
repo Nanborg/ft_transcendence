@@ -146,8 +146,9 @@ export function GamePage({
     const [goldFeedbacks, setGoldFeedbacks] = useState([]);
     const [isCheckpointMenuOpen, setIsCheckpointMenuOpen] = useState(false);
     const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isChatInputFocused, setIsChatInputFocused] = useState(false);
     const [unreadChatCount, setUnreadChatCount] = useState(0);
-    const previousChatMessageCountRef = useRef(chat.chatMessages.length);
+    const previousLiveMessageCountRef = useRef(chat.liveMessageCount);
 
     function renderUpgradeButton(skill, label, hotkey)
     {
@@ -307,10 +308,10 @@ export function GamePage({
     }
 
     useEffect(() => {
-        const currentMessageCount = chat.chatMessages.length;
-        const previousMessageCount = previousChatMessageCountRef.current;
+        const currentMessageCount = chat.liveMessageCount;
+        const previousMessageCount = previousLiveMessageCountRef.current;
         const newMessageCount = Math.max(0, currentMessageCount - previousMessageCount);
-        previousChatMessageCountRef.current = currentMessageCount;
+        previousLiveMessageCountRef.current = currentMessageCount;
         if (isChatOpen)
         {
             setUnreadChatCount(0);
@@ -318,7 +319,7 @@ export function GamePage({
         }
         if (newMessageCount > 0)
             setUnreadChatCount(previousCount => previousCount + newMessageCount);
-    }, [chat.chatMessages.length, isChatOpen]);
+    }, [chat.liveMessageCount, isChatOpen]);
 
     useEffect(() => {
         function handleChatShortcut(event)
@@ -334,6 +335,7 @@ export function GamePage({
             {
                 event.preventDefault();
                 setIsChatOpen(false);
+                setIsChatInputFocused(false);
             }
         }
         window.addEventListener('keydown', handleChatShortcut);
@@ -345,15 +347,15 @@ export function GamePage({
     usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady && !isChatOpen,
-        actionsEnabled: !isChatOpen,
+        enabled: isGameReady && !isChatInputFocused,
+        actionsEnabled: !isChatInputFocused,
     });
 
     useEffect(() =>
     {
         function handleKeyDown(event)
         {
-            if (!isAtCheckpoint || isChatOpen)
+            if (!isAtCheckpoint || isChatInputFocused)
                 return;
             if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
                 setIsCheckpointMenuOpen(true);
@@ -387,7 +389,7 @@ export function GamePage({
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isAtCheckpoint, isCheckpointMenuOpen, isChatOpen, currentGold, skillLevels, selectCheckpointUpgrade]);
+    }, [isAtCheckpoint, isCheckpointMenuOpen, isChatInputFocused, currentGold, skillLevels, selectCheckpointUpgrade]);
 
     if (!hasRoom)
     {
@@ -566,7 +568,12 @@ export function GamePage({
                     type="button"
                     className="game-chat-toggle btn btn-primary"
                     onClick={() =>{
-                        setIsChatOpen(previousValue => !previousValue);
+                        setIsChatOpen(previousValue => {
+                            const nextValue = !previousValue;
+                            if (!nextValue)
+                                setIsChatInputFocused(false);
+                            return nextValue;
+                        });
                         setUnreadChatCount(0);
                     }}
                     aria-expanded={isChatOpen}
@@ -585,6 +592,7 @@ export function GamePage({
                         <ChatPanel
                             chat={chat}
                             compact
+                            onInputFocusChange={setIsChatInputFocused}
                         />
                     </div>
                 )}
