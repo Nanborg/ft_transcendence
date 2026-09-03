@@ -38,6 +38,10 @@ export function LoginPage({
       {currentUser && (
         <CurrentUserCard currentUser={currentUser} onLogout={onLogout} />
       )}
+      <nav className="legal-links" aria-label="Legal links">
+        <a href="#/privacy">Privacy</a>
+        <a href="#/terms">Terms</a>
+      </nav>
     </div>
   );
 }

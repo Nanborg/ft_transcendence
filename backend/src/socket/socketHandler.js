@@ -2,6 +2,7 @@ const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom
 const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
+const { cleanInput } = require('../services/sanitize');
 
 const processingGameEnds = new Set();
 
@@ -665,7 +666,8 @@ module.exports = (io) => {
 			}
 			try {
 				const { roomId, message } = payload;
-				if (!message || !message.trim()) {
+				const safeMessage = cleanInput(message.trim());
+				if (!safeMessage || safeMessage === '') {
 					socket.emit("room:error", {
 						event: "chat:message",
 						message: "Message cannot be empty",
@@ -693,7 +695,7 @@ module.exports = (io) => {
 						id: player.id,
 						name: player.name,
 					},
-					message: message.trim(),
+					message: safeMessage,
 					timestamp: Date.now(),
 				};
 				io.to(roomId).emit("chat:message", chatMessage);

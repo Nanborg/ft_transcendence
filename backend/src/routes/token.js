@@ -26,8 +26,23 @@ function verifyRefreshToken(refreshToken) {
 	}
 }
 
+function setAuthCookies(res, accessToken, refreshToken) {
+	res.cookie('accessToken', accessToken, {
+		httpOnly: true,
+		secure: true,
+		sameSite: 'strict',
+		maxAge: 15 * 60 * 1000,
+	});
+	res.cookie('refreshToken', refreshToken, {
+		httpOnly: true,
+		secure: true,
+		sameSite: 'strict',
+		maxAge: 7 * 24 * 60 * 60 * 1000,
+	});
+}
+
 router.post("/", async (req, res) => {
-	const refreshToken = req.body?.token;
+	const refreshToken = req.cookies?.refreshToken;
 
 	if (!refreshToken) {
 		return res.status(401).json({
@@ -97,10 +112,8 @@ router.post("/", async (req, res) => {
 			};
 		});
 
-		return res.json({
-			message: "Access granted",
-			...tokens
-		});
+		setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+		return res.json({ message: "Access granted" });
 	} catch (error) {
 		if (error instanceof AuthRefreshError) {
 			return res.status(error.status).json({

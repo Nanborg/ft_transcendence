@@ -4,7 +4,6 @@ import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
-import { refreshAuthSession } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -20,6 +19,9 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { LegalPage } from './pages/LegalPage';
+import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
+import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -33,7 +35,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
-  const sessionExpiredRef = useRef(false); //test-nico
+  const sessionExpiredRef = useRef(false);
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
@@ -49,7 +51,7 @@ function App() {
     }
   }, [currentUser]);
 
-  useEffect(() => { //test-nico
+  useEffect(() => {
     function applySession(session) {
       setAuthSession(session);
       setCurrentUser(session?.user || null);
@@ -89,7 +91,7 @@ function App() {
   const currentPage = useMemo(() => {
     return pages.find(page => page.path === currentPath) || pages[0];
   }, [currentPath]);
-  const handleSessionExpired = useCallback((message) => { //test-nico
+  const handleSessionExpired = useCallback((message) => {
     if (sessionExpiredRef.current) {
       return;
     }
@@ -111,25 +113,21 @@ function App() {
     }
 
     const params = new URLSearchParams(hash.slice(queryIndex + 1));
-    const isFortyTwoOauth = params.get('oauth') === '42';
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+    const isFortyTwoOauth = params.get('oauth') === 'success';
 
-    if (!isFortyTwoOauth || !accessToken || !refreshToken) {
+    if (!isFortyTwoOauth) {
       return;
     }
-    window.history.replaceState(null, '', '#/login'); //test-nico
+    window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
         setAuthError('');
       try {
-        const pendingSession = { accessToken, refreshToken };
-        writeAuthSession(pendingSession); //test-nico
-        const user = await fetchCurrentUser(accessToken);
-        const session = { ...pendingSession, user };
+        const user = await fetchCurrentUser();
+        const session = { user };
 
-        writeAuthSession(session); //test-nico
+        writeAuthSession(session);
         setCurrentUser(user);
         setAuthStatus('authenticated');
         window.location.hash = '#/profile';
@@ -146,26 +144,15 @@ function App() {
     finishFortyTwoLogin();
   }, []);
 
-  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
+  const friends = useFriends(currentUser, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
     currentUser,
-    authSession?.accessToken,
     handleSessionExpired,
   );
 
-  useEffect(() => { //test-nico
-    if (!socket || !authSession?.accessToken) {
-      return;
-    }
-    socket.auth = {
-      ...(socket.auth || {}),
-      token: authSession.accessToken,
-    };
-  }, [socket, authSession?.accessToken]);
-
-  useEffect(() => { //test-nico
-    if (!currentUser || !authSession?.accessToken) {
+  useEffect(() => {
+    if (!currentUser) {
       setSocket(null);
       setSocketStatus('disconnected');
       return undefined;
@@ -173,12 +160,9 @@ function App() {
     const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
-      auth: {
-        token: authSession.accessToken,
-      },
+      withCredentials: true,
     });
     let connectionReplacedMessage = '';
-    let reconnectAfterRefresh = false;
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
@@ -205,41 +189,17 @@ function App() {
         }
     });
 
-    nextSocket.on('connect_error', async (error) => { //test-nico
+    nextSocket.on('connect_error', (error) => {
       setSocketStatus(`connection error: ${error.message}`);
-      const code = error.data?.code;
-      if (code === 'TOKEN_INVALID' || code === 'TOKEN_MISSING') {
+      if (error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
         handleSessionExpired(error.message);
-        return;
-      }
-      if (code !== 'TOKEN_EXPIRED' || reconnectAfterRefresh) {
-        return;
-      }
-      reconnectAfterRefresh = true;
-      try {
-        const latestSession = getStoredAuthSession();
-        if (!latestSession?.accessToken) {
-          handleSessionExpired(error.message);
-          return;
-        }
-        let nextSession = latestSession;
-        if (latestSession.accessToken === nextSocket.auth?.token) {
-          nextSession = await refreshAuthSession(latestSession);
-        }
-        nextSocket.auth = {
-          ...(nextSocket.auth || {}),
-          token: nextSession.accessToken,
-        };
-        nextSocket.connect();
-      } catch (refreshError) {
-        handleSessionExpired(refreshError.message);
       }
     });
     return () => {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, [currentUser?.id, Boolean(authSession?.accessToken), handleSessionExpired]);
+  }, [currentUser, handleSessionExpired]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
@@ -251,20 +211,12 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      const tokens = await loginUser(trimmedName, password);
-      const pendingSession = {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      };
-      writeAuthSession(pendingSession); //test-nico
-      const user = await fetchCurrentUser(tokens.accessToken);
+      await loginUser(trimmedName, password);
+      const user = await fetchCurrentUser();
 
-      const session = {
-        ...pendingSession,
-        user,
-      };
+      const session = { user };
 
-      writeAuthSession(session); //test-nico
+      writeAuthSession(session);
       setCurrentUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
@@ -304,9 +256,8 @@ function App() {
   }
 
   async function handleLogout() {
-    const session = getStoredAuthSession();
     try {
-      await logoutUser(session?.refreshToken); //test-nico
+      await logoutUser();
     } catch {
       // Local logout must complete even when the network request fails.
     }
@@ -330,21 +281,34 @@ function App() {
               currentPageId={currentPage.id}
             />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id === 'privacy' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={privacyPolicy}
+            />
+          )}
+          {currentPage.id === 'terms' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={termsOfService}
+            />
           )}
           {currentPage.id === 'profile' && (
             <ProfilePage
               profileStatus={profileStatus}
               profileError={profileError}
               profileUser={profileUser}
-              accessToken={authSession?.accessToken}
               onSessionExpired={handleSessionExpired}
               onProfileUpdated={(user) => {
                 setCurrentUser(user);
                 const latestSession = getStoredAuthSession();
                 if (latestSession) {
-                  writeAuthSession({ ...latestSession, user }); //test-nico
+                  writeAuthSession({ ...latestSession, user });
                 }
               }}
               onUpdateProfile={updateCurrentUser}
@@ -422,7 +386,6 @@ function App() {
             <MatchHistoryPage
               title={currentPage.title}
               description={currentPage.description}
-              accessToken={authSession?.accessToken}
             />
           )}
         </section>
