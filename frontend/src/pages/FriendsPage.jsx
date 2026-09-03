@@ -28,12 +28,15 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                             <label className="form-label" htmlFor="friend-id">User id</label>
                             <input
                                 id="friend-id"
+                                name="friendId"
                                 className="form-control"
                                 type="number"
                                 min="1"
                                 value={friendIdInput}
                                 onChange={event => setFriendIdInput(event.target.value)}
                                 placeholder="Enter user id"
+                                autoComplete="off"
+                                required
                                 disabled={isDisabled}
                             />
                             <button className="btn btn-primary" type="submit" disabled={isDisabled || !friendIdInput.trim()}>
