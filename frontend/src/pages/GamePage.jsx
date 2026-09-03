@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
 import goldIcon from '../assets/game/gold/gold_icon.png';
 import healIcon from '../assets/game/checkpoint/heal.png';
+import { ChatPanel } from '../features/chat/ChatPanel';
 
 function formatDuration(totalSeconds)
 {
@@ -106,6 +107,7 @@ export function GamePage({
     gamePlayerData,
     gameResult,
     socket,
+    chat,
     currentRoom,
     gameStarted,
     gameError,
@@ -143,6 +145,10 @@ export function GamePage({
     const previousGoldRef = useRef(null);
     const [goldFeedbacks, setGoldFeedbacks] = useState([]);
     const [isCheckpointMenuOpen, setIsCheckpointMenuOpen] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [isChatInputFocused, setIsChatInputFocused] = useState(false);
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
+    const previousLiveMessageCountRef = useRef(chat.liveMessageCount);
 
     function renderUpgradeButton(skill, label, hotkey)
     {
@@ -301,18 +307,55 @@ export function GamePage({
         });
     }
 
+    useEffect(() => {
+        const currentMessageCount = chat.liveMessageCount;
+        const previousMessageCount = previousLiveMessageCountRef.current;
+        const newMessageCount = Math.max(0, currentMessageCount - previousMessageCount);
+        previousLiveMessageCountRef.current = currentMessageCount;
+        if (isChatOpen)
+        {
+            setUnreadChatCount(0);
+            return;
+        }
+        if (newMessageCount > 0)
+            setUnreadChatCount(previousCount => previousCount + newMessageCount);
+    }, [chat.liveMessageCount, isChatOpen]);
+
+    useEffect(() => {
+        function handleChatShortcut(event)
+        {
+            if (event.key === 'Enter' && !isChatOpen && !isCheckpointMenuOpen)
+            {
+                event.preventDefault();
+                setIsChatOpen(true);
+                setUnreadChatCount(0);
+                return;
+            }
+            if (event.key === 'Escape' && isChatOpen)
+            {
+                event.preventDefault();
+                setIsChatOpen(false);
+                setIsChatInputFocused(false);
+            }
+        }
+        window.addEventListener('keydown', handleChatShortcut);
+        return () => {
+            window.removeEventListener('keydown', handleChatShortcut);
+        };
+    }, [isChatOpen, isCheckpointMenuOpen]);
+
     usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady,
-        actionsEnabled: true,
+        enabled: isGameReady && !isChatInputFocused,
+        actionsEnabled: !isChatInputFocused,
     });
 
     useEffect(() =>
     {
         function handleKeyDown(event)
         {
-            if (!isAtCheckpoint)
+            if (!isAtCheckpoint || isChatInputFocused)
                 return;
             if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
                 setIsCheckpointMenuOpen(true);
@@ -346,7 +389,7 @@ export function GamePage({
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isAtCheckpoint, isCheckpointMenuOpen, currentGold, skillLevels, selectCheckpointUpgrade]);
+    }, [isAtCheckpoint, isCheckpointMenuOpen, isChatInputFocused, currentGold, skillLevels, selectCheckpointUpgrade]);
 
     if (!hasRoom)
     {
@@ -538,6 +581,39 @@ export function GamePage({
                     goldFeedbacks={goldFeedbacks}
                     socket={socket}
                 />
+                <button
+                    type="button"
+                    className="game-chat-toggle btn btn-primary"
+                    onClick={() =>{
+                        setIsChatOpen(previousValue => {
+                            const nextValue = !previousValue;
+                            if (!nextValue)
+                                setIsChatInputFocused(false);
+                            return nextValue;
+                        });
+                        setUnreadChatCount(0);
+                    }}
+                    aria-expanded={isChatOpen}
+                    aria-controls="game-chat-panel"
+                >
+                    {isChatOpen ? 'Close chat' : 'Chat'}
+                    {unreadChatCount > 0 && (
+                        <span className="game-chat-unread">
+                            {unreadChatCount}
+                        </span>
+                    )}
+                </button>
+
+                {isChatOpen && (
+                    <div id="game-chat-panel" className="game-chat-panel">
+                        <ChatPanel
+                            chat={chat}
+                            compact
+                            onInputFocusChange={setIsChatInputFocused}
+                        />
+                    </div>
+                )}
+
                 {isAtCheckpoint && !isCheckpointMenuOpen && (
                     <section
                         className="checkpoint-upgrade"

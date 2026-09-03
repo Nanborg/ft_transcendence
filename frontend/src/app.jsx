@@ -20,6 +20,7 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { useChat } from './features/chat/useChat';
 import { LegalPage } from './pages/LegalPage';
 import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
 import termsOfService from 'legal-docs/terms-of-service.md?raw';
@@ -40,6 +41,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+  const chat = useChat(socket, currentUser, room.currentRoom);
 
 
   const [authMode, setAuthMode] = useState('login');
@@ -336,6 +338,7 @@ function App() {
               socket={socket}
               currentUser={currentUser}
               room={room}
+              chat={chat}
             />
           )}
           {currentPage.id === 'game' && (
@@ -351,6 +354,7 @@ function App() {
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
+              chat={chat}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
               onLeaveGame={room.leaveGame}

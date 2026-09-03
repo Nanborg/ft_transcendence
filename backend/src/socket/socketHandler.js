@@ -3,14 +3,31 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 const { cleanInput } = require('../services/sanitize');
+const { ChatServiceError, createRoomMessage, getRoomHistory, } = require("../services/chatService");
 
 const processingGameEnds = new Set();
+function emitChatError(socket, event, error)
+{
+	const isExpectedError = error instanceof ChatServiceError;
+	if (!isExpectedError)
+		console.error(`Unable to process ${event}:`, error);
+	socket.emit("chat:error", {
+		event,
+		code: isExpectedError
+			? error.code
+			: "CHAT_INTERNAL_ERROR",
+		message: isExpectedError
+			? error.message
+			: "Unable to process chat request",
+	});
+}
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
 // invalid payloads, disconnects, and multi-room isolation.
 // These tests should cover create, join, ready, start, input, state, end,
 // leave, reconnect, and room deletion.
+
 function normalizeEngineEntity(entity)
 {
 	const normalizedEntity = {
@@ -653,57 +670,51 @@ module.exports = (io) => {
 			}
 		});
 
-		socket.on("chat:message", async (payload) => {
-			if (!payload ||
-				typeof payload.roomId !== "string" ||
-				typeof payload.message !== "string"
-			) {
-				socket.emit("room:error", {
-					event: "chat:message",
-					message: "Invalid payload",
-				});
-				return;
-			}
+		socket.on("chat:message", async (payload = {}) => {
+            try {
+                    const rawMessage = payload?.message;
+                    const content = typeof rawMessage === "string"
+                            ? cleanInput(rawMessage.trim())
+                            : rawMessage;
+                    const chatMessage = await createRoomMessage({
+                            roomId: payload?.roomId,
+                            senderId: socket.user.id,
+                            content,
+                    });
+                     io.to(chatMessage.roomId).emit(
+                            "chat:message",
+                            chatMessage
+                    );
+            } catch (error) {
+                emitChatError(
+                        socket,
+                        "chat:message",
+                        error
+                );
+            }
+        });
+
+		socket.on("chat:history:request", async (payload = {}) => {
 			try {
-				const { roomId, message } = payload;
-				const safeMessage = cleanInput(message.trim());
-				if (!safeMessage || safeMessage === '') {
-					socket.emit("room:error", {
-						event: "chat:message",
-						message: "Message cannot be empty",
-					});
-					return;
-				}
-				const room = await getRoom(roomId);
-				if (!room) {
-					socket.emit("room:error", {
-						event: "chat:message",
-						message: "Room not found",
-					});
-					return;
-				}
-				const player = await getPlayerInRoom(roomId, socket.user.id);
-				if (!player) {
-					socket.emit("room:error", {
-						event: "chat:message",
-						message: "Player is not in room",
-					});
-					return;
-				}
-				const chatMessage = {
-					author: {
-						id: player.id,
-						name: player.name,
-					},
-					message: safeMessage,
-					timestamp: Date.now(),
-				};
-				io.to(roomId).emit("chat:message", chatMessage);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "chat:message",
-					message: error.message,
+				const messages = await getRoomHistory({
+					roomId: payload.roomId,
+					userId: socket.user.id,
+					beforeId: payload.beforeId,
+					limit: payload.limit,
 				});
+				socket.emit("chat:history", {
+					scope: "room",
+					roomId: typeof payload.roomId === "string"
+						? payload.roomId.trim()
+						: "",
+					messages,
+				});
+			} catch (error) {
+				emitChatError(
+					socket,
+					"chat:history:request",
+					error
+				);
 			}
 		});
 

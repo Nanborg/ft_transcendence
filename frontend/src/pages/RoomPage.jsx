@@ -1,16 +1,13 @@
 import { PageHeading } from '../components/PageHeading';
+import { ChatPanel } from '../features/chat/ChatPanel';
 
-export function RoomPage({ title, description, socket, currentUser, room, }) {
+export function RoomPage({ title, description, socket, currentUser, room, chat}) {
   const {
     currentRoom,
     roomStatus,
     roomError,
     leaveRoom,
     toggleReady,
-    chatInput,
-    setChatInput,
-    chatMessages,
-    sendChatMessage,
     startGame,
     gameStarted,
     gameStartInfo,
@@ -102,42 +99,10 @@ export function RoomPage({ title, description, socket, currentUser, room, }) {
                 Game starting: {gameStartInfo.status}
               </p>
             )}
-            <div className="room-chat">
-              <h3>Chat</h3>
-              {chatMessages.length === 0 && (
-                <p className="room-muted">No messages yet.</p>
-              )}
-              <ul className="room-chat-messages">
-                {chatMessages.map(chatMessage => (
-                  <li key={`${chatMessage.timestamp}-${chatMessage.author.id}`}>
-                    <span className="room-chat-author">
-                      {chatMessage.author.name}:
-                    </span>
-                    <span className="room-chat-message">
-                      {chatMessage.message}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <form className="room-chat-form" onSubmit={sendChatMessage}>
-                <label className="form-label" htmlFor="room-chat-message">Message</label>
-                <input
-                  id="room-chat-message"
-                  name="message"
-                  className="form-control"
-                  type="text"
-                  value={chatInput}
-                  onChange={event => setChatInput(event.target.value)}
-                  placeholder="write a message"
-                  autoComplete="off"
-                  required
-                  disabled={isDisabled}
-                />
-                <button className="btn btn-primary" type="submit" disabled={isDisabled || !chatInput.trim()}>
-                  Send
-                </button>
-              </form>
-            </div>
+            <ChatPanel
+              chat={chat}
+              disabled={isDisabled}
+            />
           </div>
         ) : (
           <div className="room-empty">
