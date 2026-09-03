@@ -29,8 +29,8 @@ model User {
   refreshTokens           RefreshToken[]
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
-  friends                 User[]           @relation("UserFriends")
-  friendOf                User[]           @relation("UserFriends")
+  sentRequests            Friendship[]     @relation("SentRequests")
+  receivedRequests        Friendship[]     @relation("ReceivedRequests")
   playerStats             PlayerRunStats[]
   sentChatMessages        ChatMessage[]    @relation("ChatMessageSender")
   receivedChatMessages    ChatMessage[]    @relation("ChatMessageRecipient")
@@ -167,4 +167,16 @@ model GameInvitation {
   @@index([recipientId, status, createdAt])
   @@index([senderId, createdAt])
   @@index([roomId])
+}
+
+model Friendship {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  friendId  Int
+  status    String   @default("PENDING")
+
+  user      User     @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade) //test-nico-friends
+  friend    User     @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade) //test-nico-friends
+
+  @@unique([userId, friendId])
 }
