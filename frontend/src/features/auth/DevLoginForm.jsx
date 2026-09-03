@@ -19,32 +19,41 @@ export function DevLoginForm({
       <label className="form-label" htmlFor="dev-user-name">Username</label>
       <input
         id="dev-user-name"
+        name="username"
         className="form-control"
         type="text"
         value={devUserName}
         onChange={(event) => onDevUserNameChange(event.target.value)}
         placeholder="Username"
+        autoComplete="username"
+        required
       />
       {authMode === 'register' && (
         <>
           <label className="form-label" htmlFor="email">Email</label>
           <input
             id="email"
+            name="email"
             className="form-control"
             type="email"
             value={email}
             onChange={event => onEmailChange(event.target.value)}
             placeholder="Email"
+            autoComplete="email"
+            required
           />
         </>
       )}
       <label className="form-label" htmlFor="password">Password</label>
       <input
         id="password"
+        name="password"
         className="form-control"
         type="password"
         value={password}
         onChange={event => onPasswordChange(event.target.value)}
+        autoComplete={authMode === 'register' ? 'new-password' : 'current-password'}
+        required
       />
       <button
         className="btn btn-outline-info"

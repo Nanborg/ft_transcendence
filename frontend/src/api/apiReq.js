@@ -33,7 +33,8 @@ export async function apiRequest(endpoint, opt = {}, onSessionExpired = null) {
 
 	if (response.status === 401) {
 		const error = await apiError(response);
-		if (error.code !== "ACCESS_TOKEN_EXPIRED") {
+		if (error.code !== "ACCESS_TOKEN_EXPIRED" && error.code !== "ACCESS_TOKEN_MISSING")
+		{
 			expireSession(onSessionExpired, error);
 			throw error;
 		}
