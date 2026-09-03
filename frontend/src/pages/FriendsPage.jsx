@@ -1,16 +1,20 @@
+import { useEffect, useState } from 'react';
 import { PageHeading } from '../components/PageHeading';
+import { apiRequest } from '../api/apiReq';
+import { addFriend } from '../api/friends';
 
 export function FriendsPage({ title, description, currentUser, friends }) {
     const {
         friends: friendsData, //test-nico-friends
-        friendIdInput,
-        setFriendIdInput,
         friendsStatus,
         friendsError,
-        submitAddFriend,
         submitAcceptFriend, //test-nico-friends
         submitRemoveFriend,
     } = friends;
+    const [friendSearchInput, setFriendSearchInput] = useState('');
+    const [friendSearchResults, setFriendSearchResults] = useState([]);
+    const [friendSearchStatus, setFriendSearchStatus] = useState('idle');
+    const [friendSearchError, setFriendSearchError] = useState('');
 
     //test-nico-friends-begin
     const friendList = friendsData?.friends || [];
@@ -18,6 +22,55 @@ export function FriendsPage({ title, description, currentUser, friends }) {
     const pendingSent = friendsData?.pendingSent || [];
     //test-nico-friends-end
     const isDisabled = friendsStatus === 'loading';
+
+    useEffect(() => {
+        const search = friendSearchInput.trim();
+        if (!currentUser || search.length < 2) {
+            setFriendSearchResults([]);
+            setFriendSearchStatus('idle');
+            setFriendSearchError('');
+            return undefined;
+        }
+
+        let cancelled = false;
+        setFriendSearchStatus('loading');
+        setFriendSearchError('');
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                const params = new URLSearchParams({ search });
+                const results = await apiRequest(`/api/users/search?${params.toString()}`, {});
+                if (!cancelled) {
+                    setFriendSearchResults(results.filter(user => user.id !== currentUser.id));
+                    setFriendSearchStatus('loaded');
+                }
+            } catch (error) {
+                if (cancelled) {
+                    return;
+                }
+                setFriendSearchResults([]);
+                setFriendSearchStatus(error.status === 404 ? 'loaded' : 'error');
+                setFriendSearchError(error.status === 404 ? '' : error.message);
+            }
+        }, 250);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(timeoutId);
+        };
+    }, [currentUser, friendSearchInput]);
+
+    async function submitSearchFriend(friendId) {
+        try {
+            setFriendSearchError('');
+            await addFriend(friendId);
+            setFriendSearchInput('');
+            setFriendSearchResults([]);
+            await friends.loadFriends();
+        } catch (error) {
+            setFriendSearchError(error.message);
+        }
+    }
 
     return (
         <>
@@ -30,25 +83,38 @@ export function FriendsPage({ title, description, currentUser, friends }) {
 
                 {currentUser && (
                     <>
-                        <form className="friends-form" onSubmit={submitAddFriend}>
-                            <label className="form-label" htmlFor="friend-id">User id</label>
+                        <div className="friends-form">
+                            <label className="form-label" htmlFor="friend-search">Search users</label>
                             <input
-                                id="friend-id"
-                                name="friendId"
+                                id="friend-search"
+                                name="friendSearch"
                                 className="form-control"
-                                type="number"
-                                min="1"
-                                value={friendIdInput}
-                                onChange={event => setFriendIdInput(event.target.value)}
-                                placeholder="Enter user id"
+                                type="search"
+                                value={friendSearchInput}
+                                onChange={event => setFriendSearchInput(event.target.value)}
+                                placeholder="Search by username"
                                 autoComplete="off"
-                                required
                                 disabled={isDisabled}
                             />
-                            <button className="btn btn-primary" type="submit" disabled={isDisabled || !friendIdInput.trim()}>
-                                Add friend
-                            </button>
-                        </form>
+                            {friendSearchStatus === 'loading' && (<p className="friends-muted">Searching...</p>)}
+                            {friendSearchError && (<p className="form-error alert alert-danger" role="alert">{friendSearchError}</p>)}
+                            {friendSearchInput.trim().length >= 2 && friendSearchStatus === 'loaded' && friendSearchResults.length === 0 && (
+                                <p className="friends-muted">No users found.</p>
+                            )}
+                            {friendSearchResults.length > 0 && (
+                                <ul className="friends-list">
+                                    {friendSearchResults.map(user => (
+                                        <li key={user.id} className="friends-item">
+                                            <span>{user.username}</span>
+                                            <span className="friends-meta badge text-bg-info">#{user.id}</span>
+                                            <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>
+                                                Add
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                         {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
                         {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
                         {/* //test-nico-friends-begin */}
