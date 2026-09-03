@@ -4,6 +4,7 @@ import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
+import { refreshAccessToken } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -163,6 +164,7 @@ function App() {
       withCredentials: true,
     });
     let connectionReplacedMessage = '';
+    let reconnectAfterRefresh = false;
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
@@ -176,6 +178,7 @@ function App() {
         );
     });
     nextSocket.on('connect', () => {
+      reconnectAfterRefresh = false;
       setSocketStatus(`connected: ${nextSocket.id}`);
     });
 
@@ -189,10 +192,22 @@ function App() {
         }
     });
 
-    nextSocket.on('connect_error', (error) => {
+    nextSocket.on('connect_error', async (error) => {
       setSocketStatus(`connection error: ${error.message}`);
-      if (error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
+      if (error.data?.code !== 'ACCESS_TOKEN_EXPIRED' && error.data?.code !== 'ACCESS_TOKEN_MISSING') {
         handleSessionExpired(error.message);
+        return;
+      }
+      if (reconnectAfterRefresh) {
+        handleSessionExpired(error.message);
+        return;
+      }
+      reconnectAfterRefresh = true;
+      try {
+        await refreshAccessToken();
+        nextSocket.connect();
+      } catch (refreshError) {
+        handleSessionExpired(refreshError.message);
       }
     });
     return () => {
