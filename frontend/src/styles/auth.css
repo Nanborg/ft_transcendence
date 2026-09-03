@@ -61,3 +61,14 @@
 .current-user-card p {
   margin: 0;
 }
+
+.legal-links {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.legal-links a {
+  color: var(--color-cyan);
+  font-weight: 700;
+}
