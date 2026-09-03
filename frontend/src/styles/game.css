@@ -259,6 +259,38 @@
   bottom: 24px;
 }
 
+.game-end-overlay {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: auto;
+}
+
+.game-end-card {
+  justify-items: center;
+  width: min(92vw, 900px);
+  max-height: 82vh;
+  padding: 22px;
+  overflow: auto;
+  text-align: center;
+  background: rgba(10, 20, 30, 0.9);
+}
+
+.game-end-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.game-end-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
 .game-fullscreen .checkpoint-upgrade {
   position: absolute;
   z-index: 3;
@@ -482,6 +514,14 @@
 }
 
 @media (max-width: 720px) {
+  .game-end-overlay {
+    padding: 14px;
+  }
+
+  .game-end-card {
+    padding: 16px;
+  }
+
   .game-fullscreen .checkpoint-upgrade {
     bottom: 64px;
   }

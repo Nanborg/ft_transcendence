@@ -377,53 +377,70 @@ export function GamePage({
     if (gameResult)
     {
         return (
-            <>
+            <div className="game-fullscreen">
                 <PageHeading title={title} description={description} />
-                <div className="game-panel">
-                    <h2>{gameResult.win ? 'Mission completed' : 'Mission failed'}</h2>
-                    <div className="game-hud">
-                        <p>Reason: {gameResult.reason}</p>
-                        <p>Duration: {typeof gameResult.durationSeconds === 'number' ? `${gameResult.durationSeconds} seconds` : 'Unavailable'}</p>
-                    </div>
-                    <h3>Player statistics</h3>
-                    {playerStats.length > 0 ? (
-                        <table className="game-stats-table table table-dark table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Player</th>
-                                    <th>Deaths</th>
-                                    <th>Damage dealt</th>
-                                    <th>Damage received</th>
-                                    <th>Total gold earned</th>
-                                    <th>Life</th>
-                                    <th>Connection</th>
-                                    <th>  Melee   </th>
-                                    <th>  Ranged  </th>
-                                    <th>  Shield  </th>
-                                </tr>
-                            </thead>
+                <div className="game-fullscreen-panel">
+                    <GameCanvas
+                        currentPlayerId={currentPlayerId}
+                        gameMap={gameMap}
+                        gameEntities={gameEntities}
+                        deletedGameEntities={deletedGameEntities}
+                        gamePlayerData={gamePlayerData}
+                        goldFeedbacks={goldFeedbacks}
+                        socket={socket}
+                    />
+                    <section className="game-end-overlay" aria-label="Game result">
+                        <div className="game-panel game-end-card">
+                            <h2>{gameResult.win ? 'Mission completed' : 'Mission failed'}</h2>
+                            <div className="game-hud">
+                                <p>Reason: {gameResult.reason}</p>
+                                <p>Duration: {typeof gameResult.durationSeconds === 'number' ? `${gameResult.durationSeconds} seconds` : 'Unavailable'}</p>
+                            </div>
+                            <h3>Player statistics</h3>
+                            {playerStats.length > 0 ? (
+                                <div className="game-end-table-wrap">
+                                    <table className="game-stats-table table table-dark table-hover align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Player</th>
+                                                <th>Deaths</th>
+                                                <th>Damage dealt</th>
+                                                <th>Damage received</th>
+                                                <th>Total gold earned</th>
+                                                <th>Life</th>
+                                                <th>Connection</th>
+                                                <th>  Melee   </th>
+                                                <th>  Ranged  </th>
+                                                <th>  Shield  </th>
+                                            </tr>
+                                        </thead>
 
-                            <tbody>
-                                {playerStats.map((player) => (
-                                    <tr key={player.playerId}>
-                                        <td>{player.username ?? `Player ${player.playerId}`}</td>
-                                        <td>{player.deaths ?? 0}</td>
-                                        <td>{player.damageDealt ?? 0}</td>
-                                        <td>{player.damageReceived ?? 0}</td>
-                                        <td>{player.goldEarned ?? 0}</td>
-                                        <td>{player.alive ? 'Alive' : 'Dead'}</td>
-                                        <td>{player.disconnected ? 'Disconnected' : 'Connected'}</td>
-                                        <td>Lvl <br />{player.upgrades?.melee ?? 0} / 3</td>
-                                        <td>Lvl <br />{player.upgrades?.ranged ?? 0} / 3</td>
-                                        <td>Lvl <br />{player.upgrades?.shield ?? 0} / 3</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    ) : <p className="game-muted">No player statistics received.</p>}
-                    <button type="button" onClick={() => { window.location.hash = '#/room'; }}>Back to room</button>
+                                        <tbody>
+                                            {playerStats.map((player) => (
+                                                <tr key={player.playerId}>
+                                                    <td>{player.username ?? `Player ${player.playerId}`}</td>
+                                                    <td>{player.deaths ?? 0}</td>
+                                                    <td>{player.damageDealt ?? 0}</td>
+                                                    <td>{player.damageReceived ?? 0}</td>
+                                                    <td>{player.goldEarned ?? 0}</td>
+                                                    <td>{player.alive ? 'Alive' : 'Dead'}</td>
+                                                    <td>{player.disconnected ? 'Disconnected' : 'Connected'}</td>
+                                                    <td>Lvl <br />{player.upgrades?.melee ?? 0} / 3</td>
+                                                    <td>Lvl <br />{player.upgrades?.ranged ?? 0} / 3</td>
+                                                    <td>Lvl <br />{player.upgrades?.shield ?? 0} / 3</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : <p className="game-muted">No player statistics received.</p>}
+                            <div className="game-end-actions">
+                                <button type="button" onClick={() => { window.location.hash = '#/room'; }}>Back to room</button>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-            </>
+            </div>
         );
     }
     if (isStarting)
