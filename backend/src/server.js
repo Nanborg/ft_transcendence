@@ -13,6 +13,7 @@ const { gameEngineService } = require("./services/gameEngineService");
 const port = Number(process.env.BACKEND_PORT || 3000);
 
 const app = express();
+app.set('trust proxy', 1);
 app.use(express.json());
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());

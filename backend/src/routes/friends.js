@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
-const { isConnected } = require("./connections");
+const { isConnected } = require("../socket/connections");
 
 router.get("/", authToken, async (req, res) => {
     try {
