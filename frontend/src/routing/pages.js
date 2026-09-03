@@ -14,6 +14,20 @@ export const pages = [
     description: 'Login to your account',
   },
   {
+    id: 'privacy',
+    path: '/privacy',
+    label: 'Privacy',
+    title: 'Privacy Policy',
+    description: 'How this project handles data',
+  },
+  {
+    id: 'terms',
+    path: '/terms',
+    label: 'Terms',
+    title: 'Terms of Service',
+    description: 'Rules for using this project',
+  },
+  {
     id: 'profile',
     path: '/profile',
     label: 'Profile',

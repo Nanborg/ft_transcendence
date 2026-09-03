@@ -4,6 +4,7 @@ import { pages } from './routing/pages';
 import { getCurrentPath } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
+import { refreshAccessToken } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -19,6 +20,10 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { useChat } from './features/chat/useChat';
+import { LegalPage } from './pages/LegalPage';
+import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
+import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -36,6 +41,7 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+  const chat = useChat(socket, currentUser, room.currentRoom);
 
 
   const [authMode, setAuthMode] = useState('login');
@@ -160,6 +166,7 @@ function App() {
       withCredentials: true,
     });
     let connectionReplacedMessage = '';
+    let reconnectAfterRefresh = false;
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
@@ -173,6 +180,7 @@ function App() {
         );
     });
     nextSocket.on('connect', () => {
+      reconnectAfterRefresh = false;
       setSocketStatus(`connected: ${nextSocket.id}`);
     });
 
@@ -186,10 +194,22 @@ function App() {
         }
     });
 
-    nextSocket.on('connect_error', (error) => {
+    nextSocket.on('connect_error', async (error) => {
       setSocketStatus(`connection error: ${error.message}`);
-      if (error.message === 'Auth token missing' || error.message === 'Invalid auth token') {
+      if (error.data?.code !== 'ACCESS_TOKEN_EXPIRED' && error.data?.code !== 'ACCESS_TOKEN_MISSING') {
         handleSessionExpired(error.message);
+        return;
+      }
+      if (reconnectAfterRefresh) {
+        handleSessionExpired(error.message);
+        return;
+      }
+      reconnectAfterRefresh = true;
+      try {
+        await refreshAccessToken();
+        nextSocket.connect();
+      } catch (refreshError) {
+        handleSessionExpired(refreshError.message);
       }
     });
     return () => {
@@ -278,8 +298,22 @@ function App() {
               currentPageId={currentPage.id}
             />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id === 'privacy' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={privacyPolicy}
+            />
+          )}
+          {currentPage.id === 'terms' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={termsOfService}
+            />
           )}
           {currentPage.id === 'profile' && (
             <ProfilePage
@@ -304,6 +338,7 @@ function App() {
               socket={socket}
               currentUser={currentUser}
               room={room}
+              chat={chat}
             />
           )}
           {currentPage.id === 'game' && (
@@ -319,6 +354,7 @@ function App() {
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
+              chat={chat}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
               onLeaveGame={room.leaveGame}
