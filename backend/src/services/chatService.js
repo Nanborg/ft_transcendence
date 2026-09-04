@@ -414,6 +414,91 @@ async function getBlockedUsers(userId) {
     }));
 }
 
+async function getDirectConversations(userId)
+{
+    requireUserId(userId);
+    const conversations = await prisma.$queryRaw`
+        WITH direct_messages As (
+            SELECT
+                message.*,
+                CASE
+                    WHEN message."senderId" = ${userId}
+                    THEN message."recipientId"
+                    ELSE message."senderId"
+                END AS "otherUserId"
+            FROM "ChatMessage" AS message
+            WHERE
+                message."senderId" IS NOT NULL
+                AND message."recipientId" IS NOT NULL
+                AND (
+                    message."senderId" = ${userId}
+                    OR message."recipientId" = ${userId}
+                )
+        ),
+        latest_messages AS (
+            SELECT DISTINCT ON ("otherUserId")
+                *
+            FROM direct_messages
+            ORDER BY "otherUserId", "id" DESC
+        ),
+        unread_counts AS (
+            SELECT
+                "senderId" AS "otherUserId",
+                COUNT(*)::INTEGER AS "unreadCount"
+            FROM "ChatMessage"
+            WHERE
+                "recipientId" = ${userId}
+                AND "senderId" IS NOT NULL
+                AND "readAt" IS NULL
+            GROUP BY "senderId"
+        )
+        SELECT
+            latest."otherUserId",
+            latest."id" AS "messageId",
+            latest."type",
+            latest."content",
+            latest."senderId",
+            latest."createdAt",
+            latest."readAt",
+            COALESCE(unread."unreadCount", 0)::INTEGER AS "unreadCount"
+        FROM latest_messages AS latest
+        LEFT JOIN unread_counts AS unread
+            ON unread."otherUserId" = latest."otherUserId"
+        ORDER BY latest."id" DESC
+        LIMIT 100
+    `;
+    const otherUserIds = conversations.map(conversation => conversation.otherUserId);
+    const users = await prisma.user.findMany({
+        where: {
+            id: {
+                in: otherUserIds,
+            },
+        },
+        select: {
+            id: true,
+            username: true,
+            avatar: true,
+        },
+    });
+    const userById = new Map(users.map(user => [user.id, user]));
+    return conversations
+        .filter(conversation => userById.has(conversation.otherUserId))
+        .map(conversation => ({
+            user: serializeUser(userById.get(conversation.otherUserId)),
+            unreadCount: conversation.unreadCount,
+            lastMessage: {
+                id: conversation.messageId,
+                type: conversation.type,
+                message: conversation.content,
+                senderId: conversation.senderId,
+                timestamp: conversation.createdAt.getTime(),
+                readAt: conversation.readAt
+                    ? conversation.readAt.getTime()
+                    : null,
+            },
+        }));
+}
+
 module.exports = {
     MAX_CHAT_MESSAGE_LENGTH,
     ChatServiceError,
@@ -424,6 +509,7 @@ module.exports = {
     createDirectMessage,
     getRoomHistory,
     getDirectHistory,
+    getDirectConversations,
     markDirectMessagesRead,
     blockUser,
     unblockUser,
