@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { acceptFriends, addFriend, fetchFriends, removeFriend } from '../../api/friends'; //test-nico-friends
+import { acceptFriends, addFriend, fetchFriends, removeFriend } from '../../api/friends';
 
 export function useFriends(socket, currentUser, onSessionExpired) {
     const [friends, setFriends] = useState([]);
@@ -99,7 +99,6 @@ export function useFriends(socket, currentUser, onSessionExpired) {
         }
     }
 
-    //test-nico-friends-begin
     async function submitAcceptFriend(friendId) {
         setFriendsStatus('loading');
         setFriendsError('');
@@ -115,7 +114,6 @@ export function useFriends(socket, currentUser, onSessionExpired) {
             setFriendsError(error.message);
         }
     }
-    //test-nico-friends-end
     return {
         friends,
         friendIdInput,
@@ -124,7 +122,7 @@ export function useFriends(socket, currentUser, onSessionExpired) {
         friendsError,
         loadFriends,
         submitAddFriend,
-        submitAcceptFriend, //test-nico-friends
+        submitAcceptFriend,
         submitRemoveFriend,
     };
 }

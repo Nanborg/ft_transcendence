@@ -2,26 +2,24 @@ import { PageHeading } from '../components/PageHeading';
 
 export function FriendsPage({ title, description, currentUser, friends }) {
     const {
-        friends: friendsData, //test-nico-friends
+        friends: friendsData,
         friendIdInput,
         setFriendIdInput,
         friendsStatus,
         friendsError,
         submitAddFriend,
-        submitAcceptFriend, //test-nico-friends
+        submitAcceptFriend,
         submitRemoveFriend,
     } = friends;
 
-    //test-nico-friends-begin
     const friendList = friendsData?.friends || [];
     const pendingReceived = friendsData?.pendingReceived || [];
     const pendingSent = friendsData?.pendingSent || [];
-    //test-nico-friends-end
     const isDisabled = friendsStatus === 'loading';
 
     return (
         <>
-            <PageHeading title={title} description={description} /> {/* //test-nico-friends */}
+            <PageHeading title={title} description={description} />
 
             <div className="friends-panel">
                 {!currentUser && (
@@ -48,7 +46,6 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                         </form>
                         {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
                         {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
-                        {/* //test-nico-friends-begin */}
                         {pendingReceived.length > 0 && (
                             <>
                                 <h2 className="h5 mt-4">Friend requests</h2>
@@ -84,8 +81,7 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                                 </ul>
                             </>
                         )}
-                        {/* //test-nico-friends-end */}
-                        <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
+                        <h2 className="h5 mt-4">Friends</h2>
                         {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
                             <ul className="friends-list">
                                 {friendList.map(friend => (
