@@ -3,7 +3,7 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 const { cleanInput } = require('../services/sanitize');
-const { ChatServiceError, createRoomMessage, createDirectMessage, getRoomHistory, getDirectHistory, getDirectConversations, blockUser, unblockUser, getBlockedUsers } = require("../services/chatService");
+const { ChatServiceError, createRoomMessage, createDirectMessage, getRoomHistory, getDirectHistory, getDirectConversations, blockUser, unblockUser, getBlockedUsers, markDirectMessagesRead, } = require("../services/chatService");
 
 const processingGameEnds = new Set();
 
@@ -763,6 +763,17 @@ module.exports = (io) => {
 				});
 			} catch (error) {
 				emitChatError(socket, "chat:direct:history:request", error);
+			}
+		});
+
+		socket.on("chat:direct:read", async (payload = {}) => {
+			try {
+				const otherUserId = Number(payload?.userId);
+				const result = await markDirectMessagesRead({userId: socket.user.id, otherUserId,});
+				const readUpdate = { readerId: socket.user.id, otherUserId, ...result, };
+				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(otherUserId)).emit("chat:direct:read", readUpdate);
+			} catch (error) {
+				emitChatError(socket, "chat:direct:read", error);
 			}
 		});
 
