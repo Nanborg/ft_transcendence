@@ -3,7 +3,7 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
-export function FriendsPage({ title, description, currentUser, friends }) {
+export function FriendsPage({ title, description, currentUser, friends, directChat, }) {
     const {
         friends: friendsData, //test-nico-friends
         friendsStatus,
@@ -72,6 +72,11 @@ export function FriendsPage({ title, description, currentUser, friends }) {
         }
     }
 
+    function openDirectChat(user)
+    {
+        directChat.openConversation(user);
+    }
+
     return (
         <>
             <PageHeading title={title} description={description} /> {/* //test-nico-friends */}
@@ -107,6 +112,9 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                                         <li key={user.id} className="friends-item">
                                             <span>{user.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{user.id}</span>
+                                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>
+                                                Message
+                                            </button>
                                             <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>
                                                 Add
                                             </button>
@@ -161,6 +169,13 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                                     <li key={friend.id} className="friends-item">
                                         <span>{friend.username}</span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
+                                        <button
+                                            className="btn btn-outline-primary"
+                                            type="button"
+                                            onClick={() => openDirectChat(friend)}
+                                        >
+                                            Message
+                                        </button>
                                         <button
                                             className="btn btn-outline-warning"
                                             type="button"

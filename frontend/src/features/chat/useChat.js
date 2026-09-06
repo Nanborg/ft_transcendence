@@ -28,13 +28,14 @@ function mergeChatMessages(...messageLists)
     });
 }
 
-export function useChat(socket, currentUser, currentRoom)
+export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 {
     const [chatInput, setChatInput] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [chatError, setChatError] = useState('');
     const [liveMessageCount, setLiveMessageCount] = useState(0);
     const currentRoomIdRef = useRef(null);
+    const blockedUserIdsRef = useRef(new Set());
 
     useEffect(() => {
         const nextRoomId = currentRoom?.id ?? null;
@@ -49,6 +50,14 @@ export function useChat(socket, currentUser, currentRoom)
     }, [currentRoom?.id]);
 
     useEffect(() => {
+        const nextBlockedUserIds = new Set(
+            blockedUserIds.map(userId => Number(userId)).filter(userId => Number.isInteger(userId))
+        );
+        blockedUserIdsRef.current = nextBlockedUserIds;
+        setChatMessages(previousMessages => previousMessages.filter(message => !nextBlockedUserIds.has(Number(message.author?.id))));
+    }, [blockedUserIds]);
+
+    useEffect(() => {
         if (!socket)
             return undefined;
 
@@ -56,7 +65,8 @@ export function useChat(socket, currentUser, currentRoom)
         {
             if (!chatMessage || chatMessage.roomId !== currentRoomIdRef.current)
                 return;
-
+            if (blockedUserIdsRef.current.has(Number(chatMessage.author?.id)))
+                return;
             setChatMessages(previousMessages =>
                 mergeChatMessages(
                     previousMessages,
@@ -70,10 +80,10 @@ export function useChat(socket, currentUser, currentRoom)
         {
             if (!payload || payload.scope !== 'room' || payload.roomId !== currentRoomIdRef.current || !Array.isArray(payload.messages))
                 return;
-
+            const visibleMessages = payload.messages.filter(message => !blockedUserIdsRef.current.has(Number(message.author?.id)));
             setChatMessages(previousMessages =>
                 mergeChatMessages(
-                    payload.messages,
+                    visibleMessages,
                     previousMessages
                 )
             );

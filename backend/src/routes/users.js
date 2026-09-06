@@ -62,7 +62,7 @@ router.get("/search", authToken, async (req, res) => {
                     mode: 'insensitive'
                 }
             },
-            select: { id: true, username: true, email: true, avatar: true}
+            select: { id: true, username: true, avatar: true}
         });
         if (userProfile.length === 0) {
             return res.status(404).json({ error: "not found" });
@@ -74,7 +74,101 @@ router.get("/search", authToken, async (req, res) => {
     }
 });
 
+router.get("/:userId", authToken, async (req, res) => {
+    try {
+        const userId = Number(req.params.userId);
 
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({
+                error: "invalid user id",
+            });
+        }
+
+        const userProfile = await prisma.user.findUnique({
+            where: {
+                id: userId,
+            },
+            select: {
+                id: true,
+                username: true,
+                avatar: true,
+                playerStats: {
+                    select: {
+                        deaths: true,
+                        damageDealt: true,
+                        damageReceived: true,
+                        goldEarned: true,
+                        gameRun: {
+                            select: {
+                                won: true,
+                                lost: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        if (!userProfile) {
+            return res.status(404).json({
+                error: "not found",
+            });
+        }
+
+        const wins = userProfile.playerStats.filter(
+            stat => stat.gameRun.won
+        ).length;
+
+        const losses = userProfile.playerStats.filter(
+            stat => stat.gameRun.lost
+        ).length;
+
+        const gamesPlayed = userProfile.playerStats.length;
+
+        const totals = userProfile.playerStats.reduce(
+            (sum, stat) => ({
+                deaths: sum.deaths + stat.deaths,
+                damageDealt:
+                    sum.damageDealt + stat.damageDealt,
+                damageReceived:
+                    sum.damageReceived + stat.damageReceived,
+                goldEarned:
+                    sum.goldEarned + stat.goldEarned,
+            }),
+            {
+                deaths: 0,
+                damageDealt: 0,
+                damageReceived: 0,
+                goldEarned: 0,
+            }
+        );
+
+        return res.json({
+            id: userProfile.id,
+            username: userProfile.username,
+            avatar: userProfile.avatar,
+            stats: {
+                wins,
+                losses,
+                gamesPlayed,
+                winRate: gamesPlayed > 0
+                    ? Math.round((wins / gamesPlayed) * 100)
+                    : 0,
+                totalDeaths: totals.deaths,
+                totalDamageDealt: totals.damageDealt,
+                totalDamageReceived: totals.damageReceived,
+                totalGoldEarned: totals.goldEarned,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Unable to load public profile:", error);
+
+        return res.status(500).json({
+            error: "internal error",
+        });
+    }
+});
 
 // route to get your informations (profile page maybe ?)
 
