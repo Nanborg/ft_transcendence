@@ -107,7 +107,7 @@ async function loginUser(user, res, mess, code, isOAuth = false) {
         httpOnly: true,
         secure: true,
         sameSite: 'strict',
-        maxAge: 15 * 60 * 1000
+        maxAge: 20 * 60 * 1000
     });
 
     res.cookie('refreshToken', refreshToken, {
@@ -268,22 +268,5 @@ router.get("/42/callback", async (req, res) => {
 //		eep-Alive: timeout=5
 
 //		{"id":"dev-123","email":"maxime@local.dev","name":"maxime","role":"user"}%
-
-
-router.post("/dev", (req, res, next) => {
-	const devUser = req.header("x-dev-user");
-
-	if (!devUser) {
-		return res.status(401).json({ error: "Unauthorized" });
-	}
-	req.user = {
-		id: "dev-123",
-		email: `${devUser}@local.dev`,
-		username: devUser,
-		role: "user",
-	};
-
-	res.json(req.user);
-});
 
 module.exports = router;

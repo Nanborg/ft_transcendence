@@ -5,6 +5,10 @@ services:
     build:
       context: ./frontend
     container_name: ft_frontend
+    environment:
+      LEGAL_DOCS_DIR: /docs
+    volumes:
+      - ./docs:/docs:ro
     expose:
       - "5173"
     networks:
