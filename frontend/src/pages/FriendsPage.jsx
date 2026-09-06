@@ -3,9 +3,6 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
-export function FriendsPage({ title, description, currentUser, friends }) {
-    const {
-        friends: friendsData,
 export function FriendsPage({ title, description, currentUser, friends, directChat, }) {
     const {
         friends: friendsData, //test-nico-friends
@@ -74,9 +71,6 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         }
     }
 
-    return (
-        <>
-            <PageHeading title={title} description={description} />
     function openDirectChat(user)
     {
         directChat.openConversation(user);
@@ -166,17 +160,14 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                 </ul>
                             </>
                         )}
-                        <h2 className="h5 mt-4">Friends</h2>
                         {/* //test-nico-friends-end */}
                         <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
                         {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
                             <ul className="friends-list">
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
-                                        <span>{friend.username}</span> <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
-                                        <span className="friends-meta badge text-bg-info">#{friend.id}</span>
-                                        <button
                                         <span>{friend.username}</span>
+                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                         <button
                                             className="btn btn-outline-primary"

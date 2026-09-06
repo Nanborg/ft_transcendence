@@ -1,5 +1,5 @@
 const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, markGamePlaying, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
-const { addConnection, removeConnection, getConnection, scheduleDisconnect } = require("./connections");
+const { addConnection, removeConnection, getConnection, scheduleDisconnect, isConnected } = require("./connections");
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 const { cleanInput } = require('../services/sanitize');
@@ -895,10 +895,12 @@ module.exports = (io) => {
 					socket.id,
 					async () => {
 						const userRooms = await getRoomsByUserId(socket.user.id);
+						if (!isConnected(socket.user.id)) {
 						io.emit("user_status", {
     						userId: socket.user.id,
     						isConnected: false
 						});
+						}
 						for (const room of userRooms) {
 							try {
 								const engineSession = gameEngineService.getSession(room.id);

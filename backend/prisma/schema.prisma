@@ -180,8 +180,6 @@ model Friendship {
   friendId Int
   status   FriendshipStatus @default(PENDING)
 
-  user      User     @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
-  friend    User     @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
   user   User @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
   friend User @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
 

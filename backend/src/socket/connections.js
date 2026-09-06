@@ -22,7 +22,7 @@ function addConnection(userId, socket) {
 }
 
 function isConnected(userId) {
-    return connections.has(userId);
+    return connections.get(userId)?.socket?.connected === true;
 }
 
 function removeConnection(userId, socketId) {
