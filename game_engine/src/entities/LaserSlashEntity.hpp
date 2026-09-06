@@ -2,7 +2,6 @@
 #define LASERSLASHENTITY_HPP
 
 #include <AbstractHitboxEntity.hpp>
-#include <GameEngine.hpp>
 
 class LaserSlashEntity: public AbstractHitboxEntity {
 public:

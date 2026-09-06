@@ -1,4 +1,5 @@
 #include "TankGoobEntity.hpp"
+#include <GameEngine.hpp>
 
 const float		TankGoobEntity::_aggroRange = 8.f;
 const float		TankGoobEntity::_aggroLoseRange = 14.f;
@@ -25,16 +26,14 @@ TankGoobEntity::TankGoobEntity(int posX, int posY):
 
 TankGoobEntity::~TankGoobEntity( void ) {}
 
-void TankGoobEntity::_clearTarget(void)
-{
+void	TankGoobEntity::_clearTarget( void ) {
 	_targetEntityId = -1;
 	_velX = 0;
 	_velY = 0;
 	_state["action"] = "idle";
 }
 
-void TankGoobEntity::_updateDirection(const AbstractEntity* target)
-{
+void	TankGoobEntity::_updateDirection( const AbstractEntity* target ) {
 	const long dx = target->getPosX() - _posX;
 	const long dy = target->getPosY() - _posY;
 	if (dx == 0 && dy == 0)
@@ -55,21 +54,19 @@ void TankGoobEntity::_updateDirection(const AbstractEntity* target)
 	_state["dirY"] = _dirY;
 }
 
-void TankGoobEntity::_startSlam( void )
-{
-    _velX = 0;
-    _velY = 0;
-    _slamFrame = 0;
+void	TankGoobEntity::_startSlam( void ) {
+	_velX = 0;
+	_velY = 0;
+	_slamFrame = 0;
 	_slamPhaseTicks = 0;
 
-    _state["action"] = "slam";
-    _state["slamFrame"] = _slamFrame;
+	_state["action"] = "slam";
+	_state["slamFrame"] = _slamFrame;
 }
 
-bool TankGoobEntity::_tickSlam( void )
-{
-    _velX = 0;
-    _velY = 0;
+bool	TankGoobEntity::_tickSlam( void ) {
+	_velX = 0;
+	_velY = 0;
 	int frameDuration = _slamRecoveryTicks;
 	if (_slamFrame == 0)
 		frameDuration = _slamPrepareTicks;
@@ -77,33 +74,33 @@ bool TankGoobEntity::_tickSlam( void )
 		frameDuration = _slamChargeTicks;
 	else if (_slamFrame == 2)
 		frameDuration = _slamImpactTicks;
-    _slamPhaseTicks++;
+	_slamPhaseTicks++;
 	if (_slamPhaseTicks < frameDuration)
 		return false;
 	_slamPhaseTicks = 0;
 	_slamFrame++;
-    if (_slamFrame == 2)
-    {
-        g_game->spawnEntity(
-                new EnemyMeleeEntity(
-                    _posX,
-                    _posY,
-                    _id,
-                    _slamDamage,
-                    _slamHitboxScale
-            )
-        );
-    }
-    if (_slamFrame >= _slamAnimationFrames)
-    {
-        _slamFrame = -1;
-        _slamCooldown = _slamCooldownTicks;
-        _state["action"] = "idle";
-        _state["slamFrame"] = -1;
-        return true;
-    }
-    _state["slamFrame"] = _slamFrame;
-    return true;
+	if (_slamFrame == 2)
+	{
+		g_game->spawnEntity(
+				new EnemyMeleeEntity(
+					_posX,
+					_posY,
+					_id,
+					_slamDamage,
+					_slamHitboxScale
+			)
+		);
+	}
+	if (_slamFrame >= _slamAnimationFrames)
+	{
+		_slamFrame = -1;
+		_slamCooldown = _slamCooldownTicks;
+		_state["action"] = "idle";
+		_state["slamFrame"] = -1;
+		return true;
+	}
+	_state["slamFrame"] = _slamFrame;
+	return true;
 }
 
 bool	TankGoobEntity::tick( void ) {

@@ -2,8 +2,8 @@
 #define PLAYERENTITY_HPP
 
 #include <AbstractMovingEntity.hpp>
-#include <GameEngine.hpp>
 #include <json.hpp>
+#include <enumInputTypes.h>
 
 class PlayerEntity: public AbstractMovingEntity
 {

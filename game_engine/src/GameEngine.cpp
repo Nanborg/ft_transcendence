@@ -2,6 +2,9 @@
 #include "AbstractHitboxEntity.hpp"
 #include "entities/WalkingGoobEntity.hpp"
 #include "enumEntityTypes.h"
+#include <fstream> // line 225
+#include <ControllerIO.hpp>
+#include <iostream>
 
 GameEngine::GameEngine( const std::string& roomId ):
 	_roomId(roomId),
@@ -129,8 +132,7 @@ GameEngine::PlayerData*	GameEngine::getPlayerData( int playerId ) {
 	return nullptr;
 }
 
-GameEngine::PlayerData* GameEngine::getPlayerDataByEntityId(int entityId)
-{
+GameEngine::PlayerData* GameEngine::getPlayerDataByEntityId( int entityId ) {
 	for (size_t i = 0; i < _playerData.size(); i++)
 	{
 		if (_playerData[i].playerEntityId == entityId)
@@ -139,8 +141,7 @@ GameEngine::PlayerData* GameEngine::getPlayerDataByEntityId(int entityId)
 	return nullptr;
 }
 
-void GameEngine::markPlayerDead(AbstractEntity* entity)
-{
+void GameEngine::markPlayerDead( AbstractEntity* entity ) {
 	if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
 		return;
 	PlayerData* player = getPlayerDataByEntityId(entity->getId());
@@ -170,8 +171,7 @@ void	GameEngine::disconnectPlayerData( int playerId ) {
 	}
 }
 
-json GameEngine::getAllPlayerDataAsJson( void )
-{
+json GameEngine::getAllPlayerDataAsJson( void ) {
 	json allPlayers = json::array();
 	for (size_t i = 0; i < _playerData.size(); i++)
 	{
@@ -201,15 +201,10 @@ json GameEngine::getAllPlayerDataAsJson( void )
 	return allPlayers;
 }
 
-int		GameEngine::newId( void ) { return _nextEntityId++; }
-
-bool			GameEngine::isRunning( void ) const { return _running; }
-
-unsigned int	GameEngine::getScale( void ) const { return _scale; }
-
-const GameEngine::entityList_t&	GameEngine::getEntityList(void) const {
-	return _entities;
-}
+int								GameEngine::newId( void ) { return _nextEntityId++; }
+bool							GameEngine::isRunning( void ) const { return _running; }
+unsigned int					GameEngine::getScale( void ) const { return _scale; }
+const GameEngine::entityList_t&	GameEngine::getEntityList(void) const {	return _entities; }
 
 bool	GameEngine::_invalid_entity( const json& in ) {
 	if (!in["typeId"].is_number_integer())
@@ -299,12 +294,12 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 		player->damageReceived += damage;
 	}
 	if (attackerId != -1)
-    {
-        PlayerData* attacker = getPlayerDataByEntityId(attackerId);
-        if (attacker) {
-            attacker->damageDealt += damage;
-        }
-    }
+	{
+		PlayerData* attacker = getPlayerDataByEntityId(attackerId);
+		if (attacker) {
+			attacker->damageDealt += damage;
+		}
+	}
 	int nextHealth = entity->getHealth() - damage;
 	if (nextHealth <= 0)
 	{
@@ -471,7 +466,7 @@ void	GameEngine::spawnEntity( AbstractEntity *entity ) {
 	sendEntityUpdate(entity);
 }
 
-AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
+AbstractEntity*		GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
 	AbstractEntity*		min = NULL;
 	unsigned int		dist, distmin = 0xFFFFFFFF;
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
@@ -486,8 +481,7 @@ AbstractEntity*						GameEngine::getNearestEntityOfType( int typeId, int posX, i
 	return min;
 }
 
-GameEngine::entityList_t::iterator	GameEngine::getEntityIterator(int entityId)
-{
+GameEngine::entityList_t::iterator	GameEngine::getEntityIterator( int entityId ) {
 	return std::find_if(_entities.begin(), _entities.end(), [entityId](const auto &e){return e->getId() == entityId;});
 }
 

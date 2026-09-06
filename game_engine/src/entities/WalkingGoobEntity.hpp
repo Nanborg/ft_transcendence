@@ -2,7 +2,6 @@
 #define WALKINGGOOBENTITY_HPP
 
 #include <AbstractMovingEntity.hpp>
-#include <GameEngine.hpp>
 
 class WalkingGoobEntity: public AbstractMovingEntity
 {

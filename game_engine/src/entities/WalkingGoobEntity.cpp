@@ -1,4 +1,5 @@
 #include "WalkingGoobEntity.hpp"
+#include <GameEngine.hpp>
 
 const float	WalkingGoobEntity::_aggroRange = 5.f;
 const float	WalkingGoobEntity::_aggroLose = 10.f;
@@ -16,7 +17,7 @@ WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
 	_attackDirX(0),
 	_attackDirY(1)
 {
-  setGold(10);
+	setGold(10);
 	_state["action"] = "idle";
 	_state["attackFrame"] = -1;
 	_state["dirX"] = _attackDirX;
@@ -25,107 +26,105 @@ WalkingGoobEntity::WalkingGoobEntity( int posX, int posY ):
 
 WalkingGoobEntity::~WalkingGoobEntity( void ) {}
 
-bool WalkingGoobEntity::canPassThroughPlayer( void ) const
-{
-        return _attackFrame >= 1 && _attackFrame <= 3;
+bool WalkingGoobEntity::canPassThroughPlayer( void ) const {
+	return _attackFrame >= 1 && _attackFrame <= 3;
 }
 
-void WalkingGoobEntity::_start_attack( const AbstractEntity* target )
-{
-        const long dx = target->getPosX() - _posX;
-        const long dy = target->getPosY() - _posY;
-        const long absDx = dx < 0 ? -dx : dx;
-        const long absDy = dy < 0 ? -dy : dy;
+void WalkingGoobEntity::_start_attack( const AbstractEntity* target ) {
+	const long dx = target->getPosX() - _posX;
+	const long dy = target->getPosY() - _posY;
+	const long absDx = dx < 0 ? -dx : dx;
+	const long absDy = dy < 0 ? -dy : dy;
 
-        if (absDx > absDy)
-        {
-                _attackDirX = dx < 0 ? -1 : 1;
-                _attackDirY = 0;
-        }
-        else
-        {
-                _attackDirX = 0;
-                _attackDirY = dy < 0 ? -1 : 1;
-        }
+	if (absDx > absDy)
+	{
+		_attackDirX = dx < 0 ? -1 : 1;
+		_attackDirY = 0;
+	}
+	else
+	{
+		_attackDirX = 0;
+		_attackDirY = dy < 0 ? -1 : 1;
+	}
 
-        _velX = 0;
-        _velY = 0;
-        _attackFrame = 0;
+	_velX = 0;
+	_velY = 0;
+	_attackFrame = 0;
 
-        _state["action"] = "charge";
-        _state["attackFrame"] = _attackFrame;
-        _state["dirX"] = _attackDirX;
-        _state["dirY"] = _attackDirY;
+	_state["action"] = "charge";
+	_state["attackFrame"] = _attackFrame;
+	_state["dirX"] = _attackDirX;
+	_state["dirY"] = _attackDirY;
 }
 
-bool WalkingGoobEntity::_tick_attack( void )
-{
-        const bool chargeWasBlocked =
-                _attackFrame >= 1 &&
-                _attackFrame <= 3 &&
-                _velX == 0 &&
-                _velY == 0;
-        if (chargeWasBlocked)
-        {
-                _attackFrame = 4;
-                _velX = 0;
-                _velY = 0;
-                _state["attackFrame"] = _attackFrame;
-                return true;
-        }
-        _attackFrame++;
-        if (_attackFrame >= 1 && _attackFrame <= 3)
-        {
-               const int chargeVelocity = static_cast<int>(static_cast<float>(g_game->getScale()) * _chargeSpeed);
-               _velX = _attackDirX * chargeVelocity;
-               _velY = _attackDirY * chargeVelocity;
-        }
-        else
-        {
-                _velX = 0;
-                _velY = 0;
-        }
+bool WalkingGoobEntity::_tick_attack( void ) {
+	const bool chargeWasBlocked =
+		_attackFrame >= 1 &&
+		_attackFrame <= 3 &&
+		_velX == 0 &&
+		_velY == 0;
+	if (chargeWasBlocked)
+	{
+		_attackFrame = 4;
+		_velX = 0;
+		_velY = 0;
+		_state["attackFrame"] = _attackFrame;
+		return true;
+	}
+	_attackFrame++;
+	if (_attackFrame >= 1 && _attackFrame <= 3)
+	{
+		const int chargeVelocity = static_cast<int>(static_cast<float>(g_game->getScale()) * _chargeSpeed);
+		_velX = _attackDirX * chargeVelocity;
+		_velY = _attackDirY * chargeVelocity;
+	}
+	else
+	{
+		_velX = 0;
+		_velY = 0;
+	}
 
-        if (_attackFrame >= 5)
-        {
-                _velX = 0;
-                _velY = 0;
-                _attackFrame = -1;
-                _attackCooldown = _attackCooldownTicks;
-                _state["action"] = "idle";
-                _state["attackFrame"] = -1;
-                return true;
-        }
+	if (_attackFrame >= 5)
+	{
+		_velX = 0;
+		_velY = 0;
+		_attackFrame = -1;
+		_attackCooldown = _attackCooldownTicks;
+		_state["action"] = "idle";
+		_state["attackFrame"] = -1;
+		return true;
+	}
 
-        _state["attackFrame"] = _attackFrame;
+	_state["attackFrame"] = _attackFrame;
 
-        if (_attackFrame == 2)
-        {
-                const int hitboxOffeset = static_cast<int>(
-                        static_cast<float>(g_game->getScale()) * 0.75f
-                );
-                const long hitboxPosX =
-                        _posX + static_cast<long>(
-                                _attackDirX *
-                                hitboxOffeset
-                        );
-                const long hitboxPosY =
-                        _posY + static_cast<long>(
-                                _attackDirY *
-                                hitboxOffeset
-                        );
+	if (_attackFrame == 2)
+	{
+		const int hitboxOffeset = static_cast<int>(
+			static_cast<float>(g_game->getScale()) * 0.75f
+		);
+		const long hitboxPosX =
+			_posX + static_cast<long>(
+				_attackDirX *
+				hitboxOffeset
+			);
+		const long hitboxPosY =
+			_posY + static_cast<long>(
+				_attackDirY *
+				hitboxOffeset
+			);
 
-                g_game->spawnEntity(
-                        new EnemyMeleeEntity(
-                                hitboxPosX,
-                                hitboxPosY,
-                                _id,
-                                _attackDamage
-                        )
-                );
-        }
+		g_game->spawnEntity(
+			new EnemyMeleeEntity(
+				hitboxPosX,
+				hitboxPosY,
+				_id,
+				_attackDamage,
+				g_game->getScale() * 0.9f
+			)
+		);
+	}
 
-        return true;
+	return true;
 }
 
 bool WalkingGoobEntity::tick( void ) {
@@ -153,18 +152,18 @@ bool WalkingGoobEntity::tick( void ) {
 			_velY = 0;
 			return true;
 		}
-                if (dist <= g_game->getScale() * _attackRange)
-                {
-                        const bool wasMoving = _velX != 0 || _velY != 0;
-                        _velX = 0;
-                        _velY = 0;
-                        if (_attackCooldown == 0)
-                        {
-                                _start_attack(target);
-                                return true;
-                        }
-                        return wasMoving;
-                }
+		if (dist <= g_game->getScale() * _attackRange)
+		{
+			const bool wasMoving = _velX != 0 || _velY != 0;
+			_velX = 0;
+			_velY = 0;
+			if (_attackCooldown == 0)
+			{
+				_start_attack(target);
+				return true;
+			}
+			return wasMoving;
+		}
 		const int oldVelX = _velX;
 		const int oldVelY = _velY;
 		long dx = target->getPosX() - _posX;

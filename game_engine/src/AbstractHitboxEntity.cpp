@@ -1,5 +1,5 @@
 #include "AbstractHitboxEntity.hpp"
-#include "enumEntityTypes.h"
+#include <enumEntityTypes.h>
 #include <GameEngine.hpp>
 
 AbstractHitboxEntity::AbstractHitboxEntity( EntityTypes type, int size, int posX, int posY, int velX, int velY, int health, int ownerId, int damage):
@@ -42,6 +42,4 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 	return ret;
 }
 
-bool	AbstractHitboxEntity::tick( void ) {
-	return false;
-}
+bool	AbstractHitboxEntity::tick( void ) { return false; }

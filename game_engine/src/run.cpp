@@ -2,6 +2,7 @@
 #include <string>
 #include <queue>
 
+#include <iostream>
 #include <json.hpp>
 #include <GameEngine.hpp>
 #include <ControllerIO.hpp>

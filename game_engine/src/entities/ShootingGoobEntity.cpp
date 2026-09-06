@@ -1,4 +1,5 @@
 #include "ShootingGoobEntity.hpp"
+#include <GameEngine.hpp>
 
 const float	ShootingGoobEntity::_fleeDist = 5.f;
 const float	ShootingGoobEntity::_range = 10.f;
@@ -46,24 +47,24 @@ void ShootingGoobEntity::_updateDirection (const AbstractEntity* target)
 
 void ShootingGoobEntity::_shoot( const AbstractEntity* target )
 {
-        const long dx = target->getPosX() - _posX;
-        const long dy = target->getPosY() - _posY;
-        const unsigned int dist = target->distance(_posX, _posY);
+	const long dx = target->getPosX() - _posX;
+	const long dy = target->getPosY() - _posY;
+	const unsigned int dist = target->distance(_posX, _posY);
 
-        if (dist == 0)
-                return;
+	if (dist == 0)
+		return;
 
-        const double velocityScale =
-                static_cast<double>(g_game->getScale()) *
-                _projectileSpeed /
-                static_cast<double>(dist);
+	const double velocityScale =
+		static_cast<double>(g_game->getScale()) *
+		_projectileSpeed /
+		static_cast<double>(dist);
 
-        const int projectileVelX = static_cast<int>(
-                static_cast<double>(dx) * velocityScale
-        );
-        const int projectileVelY = static_cast<int>(
-                static_cast<double>(dy) * velocityScale
-        );
+	const int projectileVelX = static_cast<int>(
+		static_cast<double>(dx) * velocityScale
+	);
+	const int projectileVelY = static_cast<int>(
+		static_cast<double>(dy) * velocityScale
+	);
 
 		const double scale = static_cast<double>(g_game->getScale());
 		long muzzlePosX = _posX;
@@ -86,18 +87,18 @@ void ShootingGoobEntity::_shoot( const AbstractEntity* target )
 			muzzlePosY -= static_cast<long>(scale * 0.45);
 		}
 
-        g_game->spawnEntity(
-                new EnemyProjectileEntity(
-                        muzzlePosX,
-                        muzzlePosY,
-                        projectileVelX,
-                        projectileVelY,
-                        _id,
-                        _projectileDamage
-                )
-        );
+	g_game->spawnEntity(
+		new EnemyProjectileEntity(
+			muzzlePosX,
+			muzzlePosY,
+			projectileVelX,
+			projectileVelY,
+			_id,
+			_projectileDamage
+		)
+	);
 
-        _shootCooldown = _shootCooldownTicks;
+	_shootCooldown = _shootCooldownTicks;
 		_shootFrame = 0;
 		_state["action"] = "shoot";
 		_state["shootFrame"] = _shootFrame;
@@ -121,64 +122,64 @@ bool ShootingGoobEntity::tick( void )
 			_state["shootFrame"] = _shootFrame;
 		}
 	}
-    if (_shootCooldown > 0)
-            _shootCooldown--;
-    AbstractEntity* nearest =
-            g_game->getNearestEntityOfType(
-                    EntityTypes::PLAYERENTITY,
-                    _posX,
-                    _posY
-            );
-    if (!nearest)
-    {
+	if (_shootCooldown > 0)
+		_shootCooldown--;
+	AbstractEntity* nearest =
+		g_game->getNearestEntityOfType(
+			EntityTypes::PLAYERENTITY,
+			_posX,
+			_posY
+		);
+	if (!nearest)
+	{
 		const bool animationChanged = oldShootFrame != _shootFrame;
-        const bool wasMoving = _velX != 0 || _velY != 0;
-        _velX = 0;
-        _velY = 0;
-        return wasMoving || animationChanged;
-    }
+	const bool wasMoving = _velX != 0 || _velY != 0;
+	_velX = 0;
+	_velY = 0;
+	return wasMoving || animationChanged;
+	}
 
 	const int oldDirX = _dirX;
 	const int oldDirY = _dirY;
 	_updateDirection(nearest);
-    const unsigned int dist =
-            nearest->distance(_posX, _posY);
-    const int oldVelX = _velX;
-    const int oldVelY = _velY;
-    const unsigned int fleeDistance =
-            static_cast<unsigned int>(
-                    static_cast<float>(g_game->getScale()) *
-                    _fleeDist
-            );
-    if (dist < fleeDistance && dist != 0)
-    {
-            const long dx = _posX - nearest->getPosX();
-            const long dy = _posY - nearest->getPosY();
+	const unsigned int dist =
+		nearest->distance(_posX, _posY);
+	const int oldVelX = _velX;
+	const int oldVelY = _velY;
+	const unsigned int fleeDistance =
+		static_cast<unsigned int>(
+			static_cast<float>(g_game->getScale()) *
+			_fleeDist
+		);
+	if (dist < fleeDistance && dist != 0)
+	{
+		const long dx = _posX - nearest->getPosX();
+		const long dy = _posY - nearest->getPosY();
 
-            const double velocityScale =
-                    static_cast<double>(g_game->getScale()) *
-                    _fleeSpeed /
-                    static_cast<double>(dist);
+		const double velocityScale =
+			static_cast<double>(g_game->getScale()) *
+			_fleeSpeed /
+			static_cast<double>(dist);
 
-            _velX = static_cast<int>(
-                    static_cast<double>(dx) * velocityScale
-            );
-            _velY = static_cast<int>(
-                    static_cast<double>(dy) * velocityScale
-            );
-    }
-    else
-    {
-            _velX = 0;
-            _velY = 0;
-    }
-    const unsigned int attackRange =
-            static_cast<unsigned int>(
-                    static_cast<float>(g_game->getScale()) *
-                    _range
-            );
-    if (dist <= attackRange && _shootCooldown == 0)
-            _shoot(nearest);
+		_velX = static_cast<int>(
+			static_cast<double>(dx) * velocityScale
+		);
+		_velY = static_cast<int>(
+			static_cast<double>(dy) * velocityScale
+		);
+	}
+	else
+	{
+		_velX = 0;
+		_velY = 0;
+	}
+	const unsigned int attackRange =
+		static_cast<unsigned int>(
+			static_cast<float>(g_game->getScale()) *
+			_range
+		);
+	if (dist <= attackRange && _shootCooldown == 0)
+		_shoot(nearest);
 	const bool velocityChanged = oldVelX != _velX || oldVelY != _velY;
 	const bool directionChanged = oldDirX != _dirX || oldDirY != _dirY;
 	const bool animationChanged = oldShootFrame != _shootFrame;

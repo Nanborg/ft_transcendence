@@ -2,15 +2,12 @@
 #define ENEMYMELEEENTITY_HPP
 
 #include <AbstractHitboxEntity.hpp>
-#include <GameEngine.hpp>
 
 class EnemyMeleeEntity: public AbstractHitboxEntity
 {
 public:
-        EnemyMeleeEntity(int posX, int posY, int ownerId, int damage, float sizeScale = 0.9f);
-        ~EnemyMeleeEntity( void );
-private:
-        static const int _lifetimeTicks;
+	EnemyMeleeEntity( int posX, int posY, int ownerId, int damage, int size );
+	~EnemyMeleeEntity( void );
 };
 
 #endif

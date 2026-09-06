@@ -1,5 +1,7 @@
 #include "PlayerEntity.hpp"
 #include <cmath>
+#include <GameEngine.hpp>
+#include <iostream>
 
 const float	PlayerEntity::_slashDist = 0.5f;
 const int	PlayerEntity::_meleeCooldownTicks = 7;
@@ -24,8 +26,6 @@ PlayerEntity::~PlayerEntity( void ) {}
 
 bool	PlayerEntity::tick( void ) {
 	_check_shield_state();
-	// TODO(neon-05): Finalize player state for game_state serialization:
-	// HP, score, XP/level, alive/dead state, arena bounds, and input effects.
 	if (_receivedInput) {
 		_receivedInput = false;
 		return true;
@@ -53,8 +53,7 @@ void PlayerEntity::movementInput( int velX, int velY ) {
 	}
 }
 
-void PlayerEntity::_check_shield_state(void)
-{
+void	PlayerEntity::_check_shield_state( void ) {
 	if (_curAction != PlayerActions::SHIELD || _shieldEntityId < 0)
 		return;
 	if (g_game->getEntityIterator(_shieldEntityId) != g_game->getEntityList().end())
@@ -62,11 +61,11 @@ void PlayerEntity::_check_shield_state(void)
 	_finish_shield();
 }
 
-void PlayerEntity::playerAction( const json& in ) {
+void	PlayerEntity::playerAction( const json& in ) {
 	PlayerActions action = in["action"];
 	switch (action)
 	{
-	case PlayerActions::NOACTION:
+	case PlayerActions::NOACTION: // TODO ewww
 		if (_curAction == PlayerActions::SHIELD)
 			_finish_shield();
 		else
@@ -90,8 +89,7 @@ void PlayerEntity::playerAction( const json& in ) {
 	}
 }
 
-bool PlayerEntity::_is_valid_attack_direction( const json& in ) const
-{
+bool	PlayerEntity::_is_valid_attack_direction( const json& in ) const {
 	if (in.count("dirX") == 0 || in.count("dirY") == 0)
 		return false;
 	if (!in["dirX"].is_number_integer() || !in["dirY"].is_number_integer())
@@ -100,7 +98,7 @@ bool PlayerEntity::_is_valid_attack_direction( const json& in ) const
 	const int dirY = in["dirY"];
 	if (dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
 		return false;
-	return dirX != 0 || dirY != 0;
+	return !(dirX == 0 && dirY == 0);
 }
 
 void	PlayerEntity::_action_melee( const json& in ) {
@@ -147,50 +145,48 @@ void	PlayerEntity::_action_range( const json& in ) {
 	_curAction = PlayerActions::NOACTION;
 }
 
-void PlayerEntity::_action_shield(const json& in)
-{
-    (void)in;
+void	PlayerEntity::_action_shield( const json& in ) {
+	(void)in;
 
-    if (_curAction != PlayerActions::NOACTION)
-        return;
-    GameEngine::PlayerData* playerData =
-        g_game->getPlayerData(_playerId);
-    if (!playerData ||
-        playerData->cooldowns.shield > 0)
-        return;
-    const int shieldHealth =
-        _shieldBaseHealth +
-        playerData->upgrades.shield *
-            _shieldHealthPerLevel;
-    LaserShieldEntity* shield =
-        new LaserShieldEntity(
-            _posX,
-            _posY,
-            shieldHealth,
-            _id,
-            0
-        );
-    _shieldEntityId = shield->getId();
-    _curAction = PlayerActions::SHIELD;
-    g_game->spawnEntity(shield);
+	if (_curAction != PlayerActions::NOACTION)
+		return;
+	GameEngine::PlayerData* playerData =
+		g_game->getPlayerData(_playerId);
+	if (!playerData ||
+		playerData->cooldowns.shield > 0)
+		return;
+	const int shieldHealth =
+		_shieldBaseHealth +
+		playerData->upgrades.shield *
+			_shieldHealthPerLevel;
+	LaserShieldEntity* shield =
+		new LaserShieldEntity(
+			_posX,
+			_posY,
+			shieldHealth,
+			_id,
+			0
+		);
+	_shieldEntityId = shield->getId();
+	_curAction = PlayerActions::SHIELD;
+	g_game->spawnEntity(shield);
 }
 
-void PlayerEntity::_finish_shield(void)
-{
-    if (_shieldEntityId >= 0)
-    {
-        GameEngine::entityList_t::iterator shieldIt =
-            g_game->getEntityIterator(_shieldEntityId);
-        if (shieldIt != g_game->getEntityList().end())
-            g_game->deleteEntity(shieldIt);
-    }
-    _shieldEntityId = -1;
-    _curAction = PlayerActions::NOACTION;
-    GameEngine::PlayerData* playerData =
-        g_game->getPlayerData(_playerId);
-    if (!playerData)
-        return;
-    playerData->cooldowns.shield =
-        _shieldCooldownTicks;
-    g_game->sendPlayerStateUpdate(*playerData);
+void	PlayerEntity::_finish_shield( void ) {
+	if (_shieldEntityId >= 0)
+	{
+		GameEngine::entityList_t::iterator shieldIt =
+			g_game->getEntityIterator(_shieldEntityId);
+		if (shieldIt != g_game->getEntityList().end())
+			g_game->deleteEntity(shieldIt);
+	}
+	_shieldEntityId = -1;
+	_curAction = PlayerActions::NOACTION;
+	GameEngine::PlayerData* playerData =
+		g_game->getPlayerData(_playerId);
+	if (!playerData)
+		return;
+	playerData->cooldowns.shield =
+		_shieldCooldownTicks;
+	g_game->sendPlayerStateUpdate(*playerData);
 }

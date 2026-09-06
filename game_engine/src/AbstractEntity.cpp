@@ -1,7 +1,7 @@
 #include "AbstractEntity.hpp"
-#include "GameEngine.hpp"
-#include "enumEntityTypes.h"
-#include <iostream>
+#include <cstdint>
+#include <GameEngine.hpp>
+#include <enumEntityTypes.h>
 
 AbstractEntity::AbstractEntity( EntityTypes type, int size, int posX, int posY, int health, bool passableHitBox, int gold ):
 	_typeId(type),

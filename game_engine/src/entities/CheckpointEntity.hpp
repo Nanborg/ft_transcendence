@@ -2,7 +2,6 @@
 #define CHECKPOINTENTITY_HPP
 
 #include <AbstractEntity.hpp>
-#include <GameEngine.hpp>
 
 class CheckpointEntity: public AbstractEntity
 {

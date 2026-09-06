@@ -1,4 +1,5 @@
 #include <GameEngine.hpp>
+#include <ControllerIO.hpp>
 
 void	GameEngine::_input_ping( const json& in ) {
 	json out;
@@ -27,8 +28,6 @@ void	GameEngine::_input_sync( const json& in ) {
 }
 
 void	GameEngine::_input_join( const json& in ) {
-	// TODO(neon-05): Align player_join payload with the backend player mapping
-	// and the final enginePlayerId contract.
 	if (!in["playerId"].is_number())
 		return;
 
@@ -48,8 +47,6 @@ void	GameEngine::_input_join( const json& in ) {
 }
 
 void	GameEngine::_input_leave( const json& in ) {
-	// TODO(neon-05): Keep leave/disconnect behavior aligned with backend
-	// in-game disconnect handling.
 	if (!in["playerId"].is_number())
 		return;
 
@@ -61,8 +58,6 @@ void	GameEngine::_input_leave( const json& in ) {
 }
 
 void	GameEngine::_input_move( const json& in ) {
-	// TODO(neon-05): Map this MOVE input to the final player_input contract
-	// and keep movement deterministic for the engine tick.
 	if (!in["playerId"].is_number())
 		return;
 	if (!in["velX"].is_number())
@@ -81,14 +76,14 @@ void	GameEngine::_input_move( const json& in ) {
 	}
 }
 
-const int MAX_UPGRADE_LEVEL = 3;
-const int UPGRADE_COST_MELEE = 100;
-const int UPGRADE_COST_RANGED = 100;
-const int UPGRADE_COST_SHIELD = 100;
-const int UPGRADE_COST_HEALTH = 50;
-const int UPGRADE_HEALTH_BONUS = 10;
-
 void	GameEngine::_input_action( const json& in ) {
+	const int MAX_UPGRADE_LEVEL = 3;
+	const int UPGRADE_COST_MELEE = 100;
+	const int UPGRADE_COST_RANGED = 100;
+	const int UPGRADE_COST_SHIELD = 100;
+	const int UPGRADE_COST_HEALTH = 50;
+	const int UPGRADE_HEALTH_BONUS = 10;
+
 	if (!in["playerId"].is_number_integer())
 		return;
 	PlayerData *player_data = getPlayerData(in["playerId"]);

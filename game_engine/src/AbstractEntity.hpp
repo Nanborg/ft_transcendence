@@ -1,8 +1,7 @@
 #ifndef ABSTRACT_HPP
 #define ABSTRACT_HPP
-#include <cstdint>
-#include <enumEntityTypes.h>
 #include <json.hpp>
+#include <enumEntityTypes.h>
 
 #define INVINCIBLE_HEALTH (0x7FFFFFFF)
 
@@ -48,6 +47,7 @@ public:
 	unsigned int	distance( int posX, int posY ) const;
 
 	protected:
+	// DO NOT OVERRIDE THIS IN LEAVES
 	virtual bool _templateTick( void );
 
 	json				_state;

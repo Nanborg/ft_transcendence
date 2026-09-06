@@ -2,7 +2,6 @@
 #define BOSSPROJECTILEENTITY_HPP
 
 #include <AbstractHitboxEntity.hpp>
-#include <GameEngine.hpp>
 
 class BossProjectileEntity: public AbstractHitboxEntity {
 public:

@@ -4,13 +4,7 @@
 #include <list>
 #include <map>
 #include <queue>
-#include <iostream>
 #include <memory>
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-
-#include <ControllerIO.hpp>
 #include <AbstractEntity.hpp>
 #include <json.hpp>
 #include <enumInputTypes.h>
@@ -59,27 +53,27 @@ public:
 	void	tick( void );
 
 	struct PlayerUpgrades {
-        int melee;
-        int ranged;
-        int shield;
-    };
+		int melee;
+		int ranged;
+		int shield;
+	};
 
-    struct PlayerCooldowns {
-        int melee;
-        int ranged;
-        int shield;
-    };
+	struct PlayerCooldowns {
+		int melee;
+		int ranged;
+		int shield;
+	};
 
 	struct PlayerData {
-        int         playerId;
-        int         playerEntityId;
-        std::string username;
-        int         deaths;
+		int			playerId;
+		int			playerEntityId;
+		std::string	username;
+		int			deaths;
 		int			death_posX;
 		int			death_posY;
-        bool        alive;
+		bool		alive;
 		bool		respawnPending;
-        bool        atACheckpoint;
+		bool		atACheckpoint;
 		int			death_cooldowns;
 		int			invulnerability_cooldowns;
 		int			gold;
@@ -87,9 +81,9 @@ public:
 		int			damageDealt;
 		int			damageReceived;
 
-        PlayerUpgrades  upgrades;
-        PlayerCooldowns cooldowns;
-    };
+		PlayerUpgrades	upgrades;
+		PlayerCooldowns	cooldowns;
+	};
 
 
 	void		sendPlayerStateUpdate( const PlayerData& playerData );
@@ -122,7 +116,7 @@ private:
 	entityList_t			_entities;
 	playerIds_t				_playerIds;
 	playerInput_t			_playerInputs;
-	std::vector<PlayerData> _playerData;
+	std::vector<PlayerData>	_playerData;
 	const std::string		_roomId;
 };
 
