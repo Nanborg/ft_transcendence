@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChatPanel } from './ChatPanel';
 import { DirectChatPanel } from './DirectChatPanel';
+import { InvitationPanel } from './InvitationPanel';
 
 export function GlobalChatDock({
     currentUser,
@@ -12,13 +13,8 @@ export function GlobalChatDock({
 })
 {
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState(
-        currentRoom?.id ? 'room' : 'private'
-    );
-    const [seenRoomMessageCount, setSeenRoomMessageCount] = useState(
-        roomChat.liveMessageCount
-    );
-
+    const [activeTab, setActiveTab] = useState(currentRoom?.id ? 'room' : 'private');
+    const [seenRoomMessageCount, setSeenRoomMessageCount] = useState(roomChat.liveMessageCount);
     const directUnreadCount = useMemo(
         () => directChat.conversations.reduce(
             (total, conversation) =>
@@ -27,13 +23,16 @@ export function GlobalChatDock({
         ),
         [directChat.conversations]
     );
-
+    const pendingReceivedInvitationCount = directChat.invitations.filter(message =>
+        Number(message.recipient?.id) === Number(currentUser?.id) &&
+        message.invitation?.status === 'PENDING'
+    ).length;
+    const invitationCount = pendingReceivedInvitationCount + directChat.unreadInvitationResponseCount;
     const roomUnreadCount = Math.max(
         0,
         roomChat.liveMessageCount - seenRoomMessageCount
     );
-
-    const totalUnreadCount = roomUnreadCount + directUnreadCount;
+    const totalUnreadCount = roomUnreadCount + directUnreadCount + invitationCount;
 
     useEffect(() => {
         if (!currentRoom?.id)
@@ -51,20 +50,9 @@ export function GlobalChatDock({
     }, [directChat.openRequestId]);
 
     useEffect(() => {
-        if (
-            isOpen &&
-            activeTab === 'room' &&
-            currentRoom?.id
-        )
-        {
+        if (isOpen && activeTab === 'room' && currentRoom?.id)
             setSeenRoomMessageCount(roomChat.liveMessageCount);
-        }
-    }, [
-        isOpen,
-        activeTab,
-        currentRoom?.id,
-        roomChat.liveMessageCount,
-    ]);
+    }, [isOpen, activeTab, currentRoom?.id, roomChat.liveMessageCount, ]);
 
     useEffect(() => {
         if (!keyboardShortcutEnabled)
@@ -76,6 +64,7 @@ export function GlobalChatDock({
             if (event.key === 'Enter' && !isOpen && !isTyping)
             {
                 event.preventDefault();
+                directChat.refreshDirectOverview();
                 setActiveTab(currentRoom?.id ? 'room' : 'private');
                 setIsOpen(true);
                 return;
@@ -91,15 +80,20 @@ export function GlobalChatDock({
         return () => {
             window.removeEventListener('keydown', handleChatShortcut);
         };
-    }, [keyboardShortcutEnabled, isOpen, currentRoom?.id, onInputFocusChange,])
+    }, [keyboardShortcutEnabled, isOpen, currentRoom?.id, onInputFocusChange,]);
+
+    useEffect(() => {
+        if (isOpen && activeTab === 'notifications' && directChat.unreadInvitationResponseCount > 0)
+            directChat.markInvitationResponsesSeen();
+    }, [isOpen, activeTab, directChat.unreadInvitationResponseCount,]);
 
     if (!currentUser)
         return null;
 
     function openDock()
     {
+        directChat.refreshDirectOverview();
         setIsOpen(true);
-
         if (!currentRoom?.id)
             setActiveTab('private');
     }
@@ -114,7 +108,6 @@ export function GlobalChatDock({
     {
         if (!currentRoom?.id)
             return;
-
         onInputFocusChange?.(false);
         setActiveTab('room');
         setSeenRoomMessageCount(roomChat.liveMessageCount);
@@ -123,7 +116,16 @@ export function GlobalChatDock({
     function selectPrivateTab()
     {
         onInputFocusChange?.(false);
+        directChat.refreshDirectOverview();
         setActiveTab('private');
+    }
+
+    function selectNotificationsTab()
+    {
+        onInputFocusChange?.(false);
+        directChat.markInvitationResponsesSeen();
+        directChat.refreshDirectOverview();
+        setActiveTab('notification');
     }
 
     return (
@@ -233,12 +235,22 @@ export function GlobalChatDock({
                         <button
                             type="button"
                             role="tab"
-                            className="global-chat-tab"
-                            aria-selected="false"
-                            disabled
-                            title="Available in a future update"
+                            className={
+                                activeTab === 'notification'
+                                    ? 'global-chat-tab global-chat-tab-active'
+                                    : 'global-chat-tab'
+                            }
+                            aria-selected={activeTab === 'notification'}
+                            onClick={selectNotificationsTab}
                         >
-                            Notifications
+                            <span>Notifications</span>
+                            {invitationCount > 0 && (
+                                <span className='global-chat-tab-badge'>
+                                    {invitationCount > 99
+                                        ? '99+'
+                                        : invitationCount}
+                                </span>
+                            )}
                         </button>
                     </nav>
 
@@ -254,8 +266,16 @@ export function GlobalChatDock({
                         {activeTab === 'private' && (
                             <DirectChatPanel
                                 currentUser={currentUser}
+                                currentRoom={currentRoom}
                                 directChat={directChat}
                                 onInputFocusChange={onInputFocusChange}
+                            />
+                        )}
+
+                        {activeTab === 'notification' && (
+                            <InvitationPanel
+                                currentUser={currentUser}
+                                directChat={directChat}
                             />
                         )}
                     </div>

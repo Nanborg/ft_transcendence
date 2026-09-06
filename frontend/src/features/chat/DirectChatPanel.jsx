@@ -1,4 +1,6 @@
 import { MAX_CHAT_MESSAGE_LENGTH } from './useChat';
+import { useEffect, useState } from 'react';
+import { PublicProfilePanel } from './PublicProfilePanel';
 
 function formatMessageTime(timestamp)
 {
@@ -14,6 +16,7 @@ function formatMessageTime(timestamp)
 
 export function DirectChatPanel({
     currentUser,
+    currentRoom,
     directChat,
     onInputFocusChange,
 })
@@ -30,10 +33,24 @@ export function DirectChatPanel({
         openConversation,
         closeConversation,
         sendDirectMessage,
+        sendGameInvitation,
         blockSelectedUser,
         unblockSelectedUser,
     } = directChat;
 
+    const [isProfileOpen, setIsprofileOpen] = useState(false);
+    useEffect(() => {
+        setIsprofileOpen(false);
+    }, [selectedUser?.id]);
+    if (selectedUser && isProfileOpen)
+    {
+        return (
+            <PublicProfilePanel
+                user={selectedUser}
+                onBack={() => setIsprofileOpen(false)}
+            />
+        );
+    }
     if (!selectedUser)
     {
         return (
@@ -116,27 +133,50 @@ export function DirectChatPanel({
                 </button>
 
                 <div>
-                    <h3>{selectedUser.name}</h3>
+                    <h3>
+                        <button
+                            type="button"
+                            className="direct-chat-profile-button"
+                            onClick={() => setIsprofileOpen(true)}
+                            aria-label={`View ${selectedUser.name}'s profile`}
+                        >
+                            {selectedUser.name}
+                        </button>
+                    </h3>
                     <span>#{selectedUser.id}</span>
                 </div>
 
-                {isSelectedUserBlocked ? (
-                    <button
-                        type="button"
-                        className="btn btn-outline-success"
-                        onClick={unblockSelectedUser}
-                    >
-                        Unblock
-                    </button>
-                ) : (
-                    <button
-                        type="button"
-                        className="btn btn-outline-danger"
-                        onClick={blockSelectedUser}
-                    >
-                        Block
-                    </button>
-                )}
+                <div className="direct-chat-header-actions">
+                    {currentRoom?.id &&
+                        currentRoom.status === 'waiting' &&
+                        !isSelectedUserBlocked && (
+                            <button
+                                type="button"
+                                className="btn btn-outline-primary"
+                                onClick={() => sendGameInvitation(currentRoom.id)}
+                            >
+                                Invite
+                            </button>
+                        )}
+
+                    {isSelectedUserBlocked ? (
+                        <button
+                            type="button"
+                            className="btn btn-outline-success"
+                            onClick={unblockSelectedUser}
+                        >
+                            Unblock
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            className="btn btn-outline-danger"
+                            onClick={blockSelectedUser}
+                        >
+                            Block
+                        </button>
+                    )}
+                </div>
             </header>
 
             <ul

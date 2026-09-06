@@ -548,3 +548,126 @@
     display: none;
   }
 }
+
+.direct-chat-profile-name {
+  max-width: 100%;
+  padding: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 800;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.direct-chat-profile-name:hover {
+  color: var(--color-cyan);
+  text-decoration: underline;
+}
+
+.direct-chat-profile-name:focus-visible {
+  color: var(--color-cyan);
+  outline: 2px solid var(--color-cyan);
+  outline-offset: 2px;
+}
+
+.chat-invitations {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.chat-invitations h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.chat-invitation-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.chat-invitation-card {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface-strong);
+}
+
+.chat-invitation-details {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.chat-invitation-details span {
+  overflow-wrap: anywhere;
+}
+
+.chat-invitation-details small {
+  color: var(--color-text-muted);
+}
+
+.chat-invitation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.chat-invitation-actions button {
+  min-width: 0;
+}
+
+.direct-chat-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.direct-chat-header-actions button {
+  min-width: 0;
+  padding-inline: 10px;
+}
+
+@media (max-width: 420px) {
+  .direct-chat-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.chat-invitation-status {
+  display: inline-flex;
+  justify-self: start;
+  padding: 5px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.chat-invitation-status--pending {
+  color: var(--color-cyan);
+}
+
+.chat-invitation-status--accepted {
+  color: #5ee58a;
+}
+
+.chat-invitation-status--declined,
+.chat-invitation-status--expired,
+.chat-invitation-status--cancelled {
+  color: var(--color-red);
+}

@@ -3,7 +3,7 @@ const { addConnection, removeConnection, getConnection, scheduleDisconnect } = r
 const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
 const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
 const { cleanInput } = require('../services/sanitize');
-const { ChatServiceError, createRoomMessage, createDirectMessage, getRoomHistory, getDirectHistory, getDirectConversations, blockUser, unblockUser, getBlockedUsers, markDirectMessagesRead, } = require("../services/chatService");
+const { ChatServiceError, createRoomMessage, createDirectMessage, getRoomHistory, getDirectHistory, getDirectConversations, blockUser, unblockUser, getBlockedUsers, markDirectMessagesRead, createGameInvitation, getPendingGameInvitation, getPendingGameInvitations, respondToGameInvitation, } = require("../services/chatService");
 
 const processingGameEnds = new Set();
 
@@ -726,6 +726,73 @@ module.exports = (io) => {
 				socket.emit("chat:direct:conversations", {conversations});
 			} catch (error) {
 				emitChatError(socket, "chat:direct:conversations:request", error);
+			}
+		});
+
+		socket.on("chat:invitation:send", async (payload = {}) => {
+			try {
+				const invitationMessage =
+					await createGameInvitation({
+						senderId: socket.user.id,
+						recipientId: Number(payload?.recipientId),
+						roomId: payload?.roomId,
+					});
+				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(
+					invitationMessage.recipient.id
+				)).emit("chat:direct:message", invitationMessage);
+				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(invitationMessage.recipient.id)).emit(
+					"chat:invitation:update", {
+						invitation: invitationMessage,
+					}
+				);
+			} catch (error) {
+				emitChatError(socket, "chat:invitation:send", error);
+			}
+		});
+
+		socket.on("chat:invitation:list:request", async () => {
+			try {
+				const invitations = await getPendingGameInvitations(socket.user.id);
+				socket.emit("chat:invitation:list", {invitations,});
+			} catch (error) {
+				emitChatError(socket, "chat:invitation:list:request", error);
+			}
+		});
+
+		socket.on("chat:invitation:respond", async (payload = {}) => {
+			try {
+				const invitationId = Number(payload?.invitationId);
+				const response = typeof payload?.response === "string"
+					? payload.response.trim().toUpperCase()
+					: "";
+				const pendingInvitation = await getPendingGameInvitation({
+					invitationId, recipientId: socket.user.id,
+				});
+				let joinedRoom = null;
+				if (response === "ACCEPTED") {
+					const joinResult = await joinRoom(pendingInvitation.roomId, socket.user.id);
+					if (joinResult.error)
+						throw new ChatServiceError(joinResult.error.code, joinResult.error.message);
+					joinedRoom = joinResult.room;
+				}
+				const invitationMessage = await respondToGameInvitation({
+					invitationId,
+					recipientId:socket.user.id,
+					response,
+				});
+				if (joinedRoom) {
+					await socket.join(joinedRoom.id);
+					io.to(joinedRoom.id).emit("room:update", joinedRoom);
+				}
+				const updatePayload = {
+					invitation: invitationMessage,
+					room: joinedRoom,
+				};
+				io.to(getUserSocketRoom(socket.user.id)).emit("chat:invitation:update", updatePayload);
+				if (pendingInvitation.senderId)
+					io.to(getUserSocketRoom(pendingInvitation.senderId)).emit("chat:invitation:update", updatePayload);
+			} catch (error) {
+				emitChatError(socket, "chat:invitation:respond", error);
 			}
 		});
 
