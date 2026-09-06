@@ -96,19 +96,31 @@ export function drawWalkingRobotSprite({
         anchorYs = WALKING_ROBOT_CHARGE_ANCHOR_Y;
         const engineFrame = Number(entity.state?.attackFrame);
         if (Number.isInteger(engineFrame))
+        {
             frame = Math.max(0, Math.min(WALKING_ROBOT_FRAME_COUNT - 1, engineFrame));
+        }
         else
+        {
             frame = 0;
+        }
         const dirX = Number(entity.state?.dirX);
         const dirY = Number(entity.state?.dirY);
         if (dirX < 0)
+        {
             renderDirectionRow = 1;
+        }
         else if (dirX > 0)
+        {
             renderDirectionRow = 2;
+        }
         else if (dirY < 0)
+        {
             renderDirectionRow = 3;
+        }
         else
+        {
             renderDirectionRow = 0;
+        }
     }
     else if (isMoving)
     {
@@ -207,13 +219,21 @@ export function drawShootingRobotSprite({
     const stateDirY = Number(entity.state?.dirY);
 
     if (stateDirX < 0)
+    {
         renderDirectionRow = 1;
+    }
     else if (stateDirX > 0)
+    {
         renderDirectionRow = 2;
+    }
     else if (stateDirY < 0)
+    {
         renderDirectionRow = 3;
+    }
     else if (stateDirY > 0)
+    {
         renderDirectionRow = 0;
+    }
 
     if (isShooting)
     {
@@ -226,9 +246,13 @@ export function drawShootingRobotSprite({
         const engineFrame = Number(entity.state?.shootFrame);
 
         if (Number.isInteger(engineFrame))
+        {
             frame = Math.max(0, Math.min(SHOOTING_ROBOT_FRAME_COUNT - 1, engineFrame));
+        }
         else
+        {
             frame = 0;
+        }
     }
     else if (isMoving)
     {
@@ -258,7 +282,9 @@ export function drawShootingRobotSprite({
     let spriteHeight = tilePixels * 1.6;
 
     if (isShooting && renderDirectionRow === 3)
+    {
         spriteHeight = tilePixels * 1.9;
+    }
 
     const spriteWidth =
         spriteHeight *
@@ -386,23 +412,37 @@ export function drawTankRobotSprite({
     const slamFrameValue = Number(entity.state?.slamFrame);
     let slamFrame = 0;
     if (Number.isInteger(slamFrameValue))
+    {
         slamFrame = Math.max(0, Math.min(TANK_ROBOT_FRAME_COUNT - 1, slamFrameValue));
+    }
     let renderDirectionRow = directionRow;
     const stateDirX = Number(entity.state?.dirX);
     const stateDirY = Number(entity.state?.dirY);
     if (stateDirX < 0)
+    {
         renderDirectionRow = 1;
+    }
     else if (stateDirX > 0)
+    {
         renderDirectionRow = 2;
+    }
     else if (stateDirY < 0)
+    {
         renderDirectionRow = 3;
+    }
     else if (stateDirY > 0)
+    {
         renderDirectionRow = 0;
+    }
     let sprite = tankRobotIdleSprite;
     if (isSlamming)
+    {
         sprite = tankRobotSlamSprite;
+    }
     else if (isFlying)
+    {
         sprite = tankRobotFlySprite;
+    }
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
     let columns = TANK_ROBOT_SOURCE_COLUMNS;
@@ -419,10 +459,14 @@ export function drawTankRobotSprite({
     }
     let frameDuration = TANK_ROBOT_FRAME_DURATION_MS;
     if (isFlying)
+    {
         frameDuration = TANK_ROBOT_FLY_FRAME_DURATION_MS;
+    }
     let frame = Math.floor(now / frameDuration) % TANK_ROBOT_FRAME_COUNT;
     if (isSlamming)
+    {
         frame = slamFrame;
+    }
     const sourceColumn =
         columns[frame] ??
         columns[0];
@@ -442,7 +486,9 @@ export function drawTankRobotSprite({
     const centerY = screen.y;
     let anchorY = 0.5;
     if (isFlying)
+    {
         anchorY = 0.43;
+    }
     if (isSlamming)
     {
         drawTankSlamWave({
@@ -466,35 +512,51 @@ export function drawTankRobotSprite({
     return true;
 }
 
-export function drawLordGoobSprite({context, entity, screen, tilePixels, now, directionRow})
+export function drawLordGoobSprite({ context, entity, screen, tilePixels, now, directionRow })
 {
     const isAttacking = entity.state?.action === 'attack';
     let attackType = 'idle';
     if (isAttacking)
+    {
         attackType = entity.state?.attackType;
+    }
     const useMagicAnimation = attackType === 'magicFan' || attackType === 'radial';
     const useCannonAnimation = attackType === 'cannonFan';
     const useLaserAnimation = attackType === 'laser';
     let sprite = lordGoobIdleSprite;
     if (useLaserAnimation)
+    {
         sprite = lordGoobPhaseThreeSprite;
+    }
     else if (useCannonAnimation)
+    {
         sprite = lordGoobPhaseTwoSprite;
+    }
     else if (useMagicAnimation)
+    {
         sprite = lordGoobPhaseOneSprite;
+    }
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
     let renderDirectionRow = directionRow;
     const stateDirX = Number(entity.state?.dirX);
     const stateDirY = Number(entity.state?.dirY);
     if (stateDirX < 0)
+    {
         renderDirectionRow = 1;
+    }
     else if (stateDirX > 0)
+    {
         renderDirectionRow = 2;
+    }
     else if (stateDirY < 0)
+    {
         renderDirectionRow = 3;
+    }
     else if (stateDirY > 0)
+    {
         renderDirectionRow = 0;
+    }
     let frame;
     let columns;
     let rows;
@@ -505,9 +567,13 @@ export function drawLordGoobSprite({context, entity, screen, tilePixels, now, di
     {
         const engineFrame = Number(entity.state?.attackFrame);
         if (Number.isInteger(engineFrame))
+        {
             frame = Math.max(0, Math.min(LORD_GOOB_PHASE_THREE_FRAME_COUNT - 1, engineFrame));
+        }
         else
+        {
             frame = 0;
+        }
         columns = LORD_GOOB_PHASE_THREE_COLUMNS;
         rows = LORD_GOOB_PHASE_THREE_ROWS;
         anchorYs = LORD_GOOB_PHASE_THREE_ANCHOR_Y;
@@ -517,9 +583,13 @@ export function drawLordGoobSprite({context, entity, screen, tilePixels, now, di
     {
         const engineFrame = Number(entity.state?.attackFrame);
         if (Number.isInteger(engineFrame))
+        {
             frame = Math.max(0, Math.min(LORD_GOOB_PHASE_TWO_FRAME_COUNT - 1, engineFrame));
+        }
         else
+        {
             frame = 0;
+        }
         columns = LORD_GOOB_PHASE_TWO_COLUMNS;
         rows = LORD_GOOB_PHASE_TWO_ROWS;
         anchorYs = LORD_GOOB_PHASE_TWO_ANCHOR_Y;
@@ -529,9 +599,13 @@ export function drawLordGoobSprite({context, entity, screen, tilePixels, now, di
     {
         const engineFrame = Number(entity.state?.attackFrame);
         if (Number.isInteger(engineFrame))
+        {
             frame = Math.max(0, Math.min(LORD_GOOB_FRAME_COUNT - 1, engineFrame));
+        }
         else
+        {
             frame = 0;
+        }
         columns = SOURCE_GRID_1254_COLUMNS;
         rows = SOURCE_GRID_1254_ROWS;
         spriteSize = tilePixels * 3.7;
@@ -557,7 +631,9 @@ export function drawLordGoobSprite({context, entity, screen, tilePixels, now, di
     const renderHeight = spriteSize;
     let renderWidth = spriteSize;
     if (useLaserAnimation)
+    {
         renderWidth = renderHeight * source.width / source.height;
+    }
     context.drawImage(
         sprite,
         source.x,

@@ -91,7 +91,7 @@ export function drawPlayerSpriteImage({
 
         const tintContext = tintedFrame.getContext(
             '2d',
-            {willReadFrequently: true}
+            { willReadFrequently: true }
         );
 
         tintContext.drawImage(
@@ -123,7 +123,9 @@ export function drawPlayerSpriteImage({
             const alpha = pixels[index + 3];
 
             if (alpha === 0)
+            {
                 continue;
+            }
 
             const brightest = Math.max(red, green, blue);
             const darkest = Math.min(red, green, blue);
@@ -136,7 +138,9 @@ export function drawPlayerSpriteImage({
                 colorDifference <= 55;
 
             if (!isLightArmor)
+            {
                 continue;
+            }
 
             const shade = (red + green + blue) / (3 * 255);
             const strength = tint.strength;
@@ -158,7 +162,9 @@ export function drawPlayerSpriteImage({
         tintContext.putImageData(imageData, 0, 0);
 
         if (playerTintFrameCache.size >= 256)
+        {
             playerTintFrameCache.clear();
+        }
         playerTintFrameCache.set(cacheKey, tintedFrame);
     }
     context.drawImage(
@@ -170,7 +176,7 @@ export function drawPlayerSpriteImage({
     );
 }
 
-export function drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow = 0, playerSpriteTint = null})
+export function drawPlayerAttackSprite({ context, screen, tilePixels, now, attack, directionRow = 0, playerSpriteTint = null })
 {
     if (!attack)
         return false;
@@ -182,13 +188,17 @@ export function drawPlayerAttackSprite({context, screen, tilePixels, now, attack
 
     let sprite = playerRangedAttackSprite;
     if (isMelee)
+    {
         sprite = playerMeleeAttackSprite;
+    }
     if (!sprite.complete || sprite.naturalWidth === 0)
         return false;
 
     let frameDuration = PLAYER_RANGED_FRAME_DURATION_MS;
     if (isMelee)
+    {
         frameDuration = PLAYER_MELEE_FRAME_DURATION_MS;
+    }
     const elapsed = now - attack.startedAt;
     const duration = getPlayerAttackDuration(attack.action);
     if (elapsed < 0 || elapsed >= duration)
@@ -226,7 +236,7 @@ export function drawPlayerAttackSprite({context, screen, tilePixels, now, attack
     return true;
 }
 
-export function drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow = 0, playerSpriteTint = null})
+export function drawPlayerWalkSprite({ context, entity, screen, tilePixels, now, directionRow = 0, playerSpriteTint = null })
 {
     const isMoving = entity.velX !== 0 || entity.velY !== 0;
     let sprite = playerIdleSprite;

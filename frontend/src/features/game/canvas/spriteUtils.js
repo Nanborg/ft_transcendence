@@ -1,13 +1,20 @@
-export function getEntityType(entity) { return entity.typeId ?? entity.entityTypeId; }
+export function getEntityType(entity)
+{
+    return entity.typeId ?? entity.entityTypeId;
+}
 
 export function getPlayerDirectionRow(entity, fallbackRow = 0)
 {
     let velocityX = 0;
     if (typeof entity.velX === 'number')
+    {
         velocityX = entity.velX;
+    }
     let velocityY = 0;
     if (typeof entity.velY === 'number')
+    {
         velocityY = entity.velY;
+    }
 
     if (Math.abs(velocityX) > Math.abs(velocityY))
     {
@@ -57,7 +64,7 @@ export function getDirectionRowToward(sourcePosition, targetPosition, fallbackRo
 }
 
 
-export function getSpriteSource({columns, rows, frame, directionRow, anchorXs = null, anchorYs = null})
+export function getSpriteSource({ columns, rows, frame, directionRow, anchorXs = null, anchorYs = null })
 {
     const column = columns[frame] ?? columns[0];
     const row = rows[directionRow] ?? rows[0];

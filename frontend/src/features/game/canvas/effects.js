@@ -1,7 +1,7 @@
 import { SHIELD_BREAK_DURATION_MS } from './spriteAssets';
 import { getInterpolatedPosition, worldToScreen } from './cameraUtils';
 
-export function drawGoldFeedbacks({context, tracks, feedbacks, camera, now})
+export function drawGoldFeedbacks({ context, tracks, feedbacks, camera, now })
 {
     if (!Array.isArray(feedbacks) || feedbacks.length === 0)
         return;
@@ -10,7 +10,7 @@ export function drawGoldFeedbacks({context, tracks, feedbacks, camera, now})
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.font = '700 18px Arial';
-    feedbacks.forEach(feedback =>
+    feedbacks.forEach((feedback) =>
     {
         const track = tracks.get(feedback.playerEntityId);
         if (!track)
@@ -82,14 +82,16 @@ export function drawDiamond(context, x, y, radius, color)
     context.fill();
 }
 
-export function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef})
+export function drawHealthBar({ context, screen, entity, tilePixels, maxHealthRef })
 {
     const health = Number(entity.health);
     if (!Number.isFinite(health))
         return;
     const entityId = entity.entityId ?? entity.id;
     if (!maxHealthRef.current.has(entityId))
+    {
         maxHealthRef.current.set(entityId, health);
+    }
     const maxHealth = maxHealthRef.current.get(entityId);
     const ratio = Math.max(0, Math.min(1, health / maxHealth));
     const width = tilePixels * 0.9;
@@ -100,17 +102,25 @@ export function drawHealthBar({context, screen, entity, tilePixels, maxHealthRef
     context.fillStyle = 'rgba(15, 20, 42, 0.9)';
     context.fillRect(x, y, width, height);
     if (ratio > 0.85)
-        context.fillStyle = "#22c55e";
+    {
+        context.fillStyle = '#22c55e';
+    }
     else if (ratio > 0.66)
-        context.fillStyle = "#eab308";
+    {
+        context.fillStyle = '#eab308';
+    }
     else if (ratio > 0.33)
-        context.fillStyle = "#f97316";
+    {
+        context.fillStyle = '#f97316';
+    }
     else
-        context.fillStyle = "#ef4444";
+    {
+        context.fillStyle = '#ef4444';
+    }
     context.fillRect(x, y, width * ratio, height);
 }
 
-export function drawShieldBreakEffects({context, effects, camera, now})
+export function drawShieldBreakEffects({ context, effects, camera, now })
 {
     effects.forEach((effect, entityId) =>
     {
@@ -122,7 +132,7 @@ export function drawShieldBreakEffects({context, effects, camera, now})
         }
         const progress = elapsed / SHIELD_BREAK_DURATION_MS;
         const screen = worldToScreen(
-            {x: effect.posX, y: effect.posY},
+            { x: effect.posX, y: effect.posY },
             camera
         );
         const tilePixels = camera.tileSize * camera.scale;

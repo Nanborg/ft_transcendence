@@ -11,7 +11,7 @@ import {
     drawLordGoobSprite,
 } from './enemySprites';
 
-export function drawEntity({context, entity, position, camera, now, attack, directionRow = 0, playerSpriteTint = null, maxHealthRef})
+export function drawEntity({ context, entity, position, camera, now, attack, directionRow = 0, playerSpriteTint = null, maxHealthRef })
 {
     const type = getEntityType(entity);
     const screen = worldToScreen(position, camera);
@@ -25,7 +25,8 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
 
     context.save();
 
-    switch (type) {
+    switch (type)
+    {
         case ENTITY_TYPE.WALL:
             context.fillStyle = '#334155';
             context.strokeStyle = '#64748b';
@@ -45,10 +46,14 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             break;
 
         case ENTITY_TYPE.PLAYER:
-            if (drawPlayerAttackSprite({context, screen, tilePixels, now, attack, directionRow, playerSpriteTint}))
+            if (drawPlayerAttackSprite({ context, screen, tilePixels, now, attack, directionRow, playerSpriteTint }))
+            {
                 break;
-            if (drawPlayerWalkSprite({context, entity, screen, tilePixels, now, directionRow, playerSpriteTint}))
+            }
+            if (drawPlayerWalkSprite({ context, entity, screen, tilePixels, now, directionRow, playerSpriteTint }))
+            {
                 break;
+            }
             context.shadowColor = '#22c55e';
             context.shadowBlur = 12;
             context.fillStyle = '#22c55e';
@@ -64,7 +69,7 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             break;
 
         case ENTITY_TYPE.WALKING_ROBOT:
-            if (drawWalkingRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawWalkingRobotSprite({ context, entity, screen, tilePixels, now, directionRow }))
             {
                 break;
             }
@@ -78,7 +83,7 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             break;
 
         case ENTITY_TYPE.SHOOTING_ROBOT:
-            if (drawShootingRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawShootingRobotSprite({ context, entity, screen, tilePixels, now, directionRow }))
             {
                 break;
             }
@@ -92,7 +97,7 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             break;
 
         case ENTITY_TYPE.TANK_ROBOT:
-            if (drawTankRobotSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawTankRobotSprite({ context, entity, screen, tilePixels, now, directionRow }))
             {
                 break;
             }
@@ -114,7 +119,7 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             break;
 
         case ENTITY_TYPE.BOSS:
-            if (drawLordGoobSprite({context, entity, screen, tilePixels, now, directionRow}))
+            if (drawLordGoobSprite({ context, entity, screen, tilePixels, now, directionRow }))
             {
                 break;
             }
@@ -266,7 +271,9 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             const platformHeight = platformWidth* checkpointPlatformSprite.naturalHeight / checkpointPlatformSprite.naturalWidth;
             let animationTime = 0;
             if (Number.isFinite(now))
+            {
                 animationTime = now;
+            }
             const pulse = (Math.sin(animationTime / 320) + 1) / 2;
             const ringCenterY = screen.y + platformHeight * 0.05;
 
@@ -359,23 +366,25 @@ export function drawEntity({context, entity, position, camera, now, attack, dire
             );
             context.fill();
     }
-    if (type === ENTITY_TYPE.PLAYER || type === ENTITY_TYPE.WALKING_ROBOT  || type === ENTITY_TYPE.SHOOTING_ROBOT || type === ENTITY_TYPE.TANK_ROBOT || type === ENTITY_TYPE.BOSS)
-        drawHealthBar({context, screen, entity, tilePixels, maxHealthRef});
+    if (type === ENTITY_TYPE.PLAYER || type === ENTITY_TYPE.WALKING_ROBOT || type === ENTITY_TYPE.SHOOTING_ROBOT || type === ENTITY_TYPE.TANK_ROBOT || type === ENTITY_TYPE.BOSS)
+    {
+        drawHealthBar({ context, screen, entity, tilePixels, maxHealthRef });
+    }
     context.restore();
 }
 
-export function drawStaticMapEntities({context, gameMap, camera, now})
+export function drawStaticMapEntities({ context, gameMap, camera, now })
 {
     if (!Array.isArray(gameMap?.entities))
         return;
-    gameMap.entities.forEach(entity =>
+    gameMap.entities.forEach((entity) =>
     {
         if (!entity || !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
             return;
         drawEntity({
             context,
             entity,
-            position: {x: entity.posX, y: entity.posY},
+            position: { x: entity.posX, y: entity.posY },
             camera,
             now,
         });

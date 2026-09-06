@@ -31,7 +31,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     const width = CANVAS_WIDTH;
     let mapAspectRatio = 0.5625;
     if (gameMap?.width > 0 && gameMap?.height > 0)
+    {
         mapAspectRatio = gameMap.height / gameMap.width;
+    }
 
     const height = Math.max(MIN_CANVAS_HEIGHT, Math.min(MAX_CANVAS_HEIGHT, Math.round(width * mapAspectRatio)));
 
@@ -42,9 +44,13 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         goldFeedbacks: [],
     };
     if (Array.isArray(gamePlayerData))
+    {
         renderDataRef.current.gamePlayerData = gamePlayerData;
+    }
     if (Array.isArray(goldFeedbacks))
+    {
         renderDataRef.current.goldFeedbacks = goldFeedbacks;
+    }
 
     useEffect(() =>
     {
@@ -54,10 +60,10 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 return;
 
             const players = renderDataRef.current.gamePlayerData;
-            const myPlayer = players.find(p => String(p.playerId) === String(currentPlayerId));
+            const myPlayer = players.find((p) => String(p.playerId) === String(currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
-                const alivePlayers = players.filter(p => p.alive === true);
+                const alivePlayers = players.filter((p) => p.alive === true);
 
                 if (alivePlayers.length > 0)
                 {
@@ -65,13 +71,17 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                     {
                         spectatorIndexRef.current += 1;
                         if (alivePlayers.length <= spectatorIndexRef.current)
+                        {
                             spectatorIndexRef.current = 0;
+                        }
                     }
                     if (event.key === 'a' || event.key === 'A')
                     {
                         spectatorIndexRef.current -= 1;
                         if (spectatorIndexRef.current < 0)
+                        {
                             spectatorIndexRef.current = alivePlayers.length - 1;
+                        }
                     }
                 }
             }
@@ -112,7 +122,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             return;
         }
         const now = performance.now();
-        deletedGameEntities.forEach(entity =>
+        deletedGameEntities.forEach((entity) =>
         {
             if (
                 !entity ||
@@ -143,9 +153,11 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         const receivedEntityIds = new Set();
         let teleportDistance = 150;
         if (gameMap?.scale > 0)
+        {
             teleportDistance = gameMap.scale * 3;
+        }
 
-        gameEntities.forEach(entity =>
+        gameEntities.forEach((entity) =>
         {
             if (!entity || typeof entity.entityId !== 'number' || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
                 return;
@@ -175,7 +187,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             const directionRow = getPlayerDirectionRow(entity, previousTrack?.directionRow ?? 0);
             let duration = INTERPOLATION_DURATION_MS;
             if (mustTeleport)
+            {
                 duration = 0;
+            }
 
             let fromX = currentPosition.x;
             let fromY = currentPosition.y;
@@ -199,7 +213,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         entityTracksRef.current.forEach((track, entityId) =>
         {
             if (!receivedEntityIds.has(entityId))
+            {
                 entityTracksRef.current.delete(entityId);
+            }
         });
     }, [gameEntities, gameMap?.scale]);
 
@@ -221,7 +237,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             }
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
-            const localPlayer = renderData.gamePlayerData.find(player => String(player.playerId) === String(renderData.currentPlayerId));
+            const localPlayer = renderData.gamePlayerData.find((player) => String(player.playerId) === String(renderData.currentPlayerId));
             let localEntityId = localPlayer?.playerEntityId;
             if (typeof localEntityId !== 'number')
             {
@@ -257,23 +273,29 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 camera,
                 now,
             });
-            const orderedPlayerIds = Array.from(entityTracksRef.current.values()).filter(track =>
+            const orderedPlayerIds = Array.from(entityTracksRef.current.values()).filter((track) =>
                 getEntityType(track.entity) === ENTITY_TYPE.PLAYER
-            ).map(track => String(track.entity.entityId)).sort((firstId, secondId) =>
-                firstId.localeCompare(secondId, 'en', {numeric: true}));
-            entityTracksRef.current.forEach(track =>
+            ).map((track) => String(track.entity.entityId)).sort((firstId, secondId) =>
+                firstId.localeCompare(secondId, 'en', { numeric: true }));
+            entityTracksRef.current.forEach((track) =>
             {
                 const entityType = getEntityType(track.entity);
-                const playerData = renderData.gamePlayerData.find(player => String(player.playerEntityId) === String(track.entity.entityId));
+                const playerData = renderData.gamePlayerData.find((player) => String(player.playerEntityId) === String(track.entity.entityId));
                 let playerId = playerData?.playerId ?? null;
                 if (playerId === null && track.entity.entityId === localEntityId)
+                {
                     playerId = renderData.currentPlayerId;
+                }
                 let playerSpriteTint = null;
                 if (entityType === ENTITY_TYPE.PLAYER)
+                {
                     playerSpriteTint = getPlayerSpriteTint(track.entity.entityId, orderedPlayerIds);
+                }
                 let attack = null;
                 if (playerId !== null)
+                {
                     attack = playerAttackRef.current.get(String(playerId));
+                }
                 if (attack && now - attack.startedAt >= getPlayerAttackDuration(attack.action))
                 {
                     playerAttackRef.current.delete(String(playerId));
@@ -283,12 +305,16 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 const facesPlayer = entityType === ENTITY_TYPE.TANK_ROBOT || entityType === ENTITY_TYPE.BOSS;
                 let renderDirectionRow = track.directionRow;
                 if (facesPlayer)
+                {
                     renderDirectionRow = getDirectionRowToward(position, focusPosition, track.directionRow);
+                }
                 let spriteDirectionRow = renderDirectionRow;
                 if (attack)
                 {
                     if (!Number.isInteger(attack.directionRow))
+                    {
                         attack.directionRow = renderDirectionRow;
+                    }
                     spriteDirectionRow = attack.directionRow;
                 }
                 drawEntity({
@@ -310,8 +336,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 now,
             });
             drawDebugHitboxesIfEnabled(debugHitboxesRef, context, entityTracksRef.current, renderData.gameMap, camera, now, worldToScreen, getInterpolatedPosition); //test-nico-hitbox
-            drawGoldFeedbacks({context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now});
-            const myPlayer = renderData.gamePlayerData.find(p => String(p.playerId) === String(renderData.currentPlayerId));
+            drawGoldFeedbacks({ context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now });
+            const myPlayer = renderData.gamePlayerData.find((p) => String(p.playerId) === String(renderData.currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
                 context.fillStyle = 'red';

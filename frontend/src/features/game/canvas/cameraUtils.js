@@ -5,7 +5,7 @@ import { getEntityType } from './spriteUtils';
 export function getInterpolatedPosition(track, now)
 {
     if (track.duration === 0)
-        return {x: track.targetX, y: track.targetY};
+        return { x: track.targetX, y: track.targetY };
 
     const progress = Math.min(1, (now - track.startedAt) / track.duration);
 
@@ -15,16 +15,18 @@ export function getInterpolatedPosition(track, now)
     };
 }
 
-export function getFocusPosition({tracks, playerData, currentPlayerId, now, gameMap, spectatorIndex})
+export function getFocusPosition({ tracks, playerData, currentPlayerId, now, gameMap, spectatorIndex })
 {
-    const localPlayer = playerData.find(player => String(player.playerId) === String(currentPlayerId));
+    const localPlayer = playerData.find((player) => String(player.playerId) === String(currentPlayerId));
     if (localPlayer && localPlayer.alive === false)
     {
         const playerTracks = [];
         for (const track of tracks.values())
         {
             if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
+            {
                 playerTracks.push(track);
+            }
         }
         if (playerTracks.length > 0)
         {
@@ -48,20 +50,26 @@ export function getFocusPosition({tracks, playerData, currentPlayerId, now, game
         if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
             return getInterpolatedPosition(track, now);
     }
-    return {x: (gameMap?.width ?? 0) / 2, y: (gameMap?.height ?? 0) / 2};
+    return { x: (gameMap?.width ?? 0) / 2, y: (gameMap?.height ?? 0) / 2 };
 }
 
-export function getCamera({canvas, gameMap, focusPosition})
+export function getCamera({ canvas, gameMap, focusPosition })
 {
     let worldWidth = canvas.width;
     if (gameMap?.width > 0)
+    {
         worldWidth = gameMap.width;
+    }
     let worldHeight = canvas.height;
     if (gameMap?.height > 0)
+    {
         worldHeight = gameMap.height;
+    }
     let tileSize = Math.max(1, worldWidth / 50);
     if (gameMap?.scale > 0)
+    {
         tileSize = gameMap.scale;
+    }
     const wantedViewWidth = Math.min(worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
     const wantedViewHeight = wantedViewWidth * (canvas.height / canvas.width);
     const scale = Math.min(canvas.width / wantedViewWidth, canvas.height / wantedViewHeight);
