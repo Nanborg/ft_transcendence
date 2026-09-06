@@ -44,12 +44,13 @@ or
 - backend checks the user;
 - backend compares password hash;
 - backend returns tokens.
+- backend stores tokens in HTTP-only cookies.
 
 Session:
 
 - frontend stores session data;
-- API requests use bearer token;
-- Socket.IO uses the access token.
+- API requests use HTTP-only auth cookies;
+- Socket.IO uses the access token cookie.
 - frontend refreshes expired sessions when possible;
 - logout revokes the refresh token server-side.
 
@@ -68,8 +69,8 @@ sequenceDiagram
   Backend->>Database: Create or check user
   Backend->>Database: Store refresh token
   Backend-->>Frontend: Access + refresh token
-  Frontend->>Backend: API bearer token
-  Frontend->>Backend: Socket auth token
+  Frontend->>Backend: API request with auth cookies
+  Frontend->>Backend: Socket request with auth cookies
   Frontend->>Backend: Refresh token request
   Backend->>Database: Rotate refresh token
   Backend-->>Frontend: New access + refresh token
@@ -110,6 +111,7 @@ Automatic checks:
 - refresh token exists in database;
 - refresh token is not revoked;
 - Socket.IO token verification.
+- API requests use `credentials: include`.
 
 ## Manual Checks
 

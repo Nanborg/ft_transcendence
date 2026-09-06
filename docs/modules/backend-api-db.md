@@ -46,6 +46,7 @@
 - `PATCH /api/users/me`
 - `GET /api/friends`
 - `POST /api/friends/:id`
+- `PATCH /api/friends/:id/accept`
 - `DELETE /api/friends/:id`
 - `GET /api/scores/history`
 - `GET /api/scores/leaderboard`

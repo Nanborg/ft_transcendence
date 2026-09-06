@@ -19,7 +19,9 @@
 - badge sprite sheet;
 - public profile panel from chat/friends context;
 - friends list;
+- friend online status;
 - add friend;
+- accept friend request;
 - remove friend.
 
 ## Flow
@@ -42,6 +44,7 @@ Friends:
 
 - user enters friend id;
 - backend connects or disconnects relation;
+- backend returns accepted friends, pending requests and `isConnected`;
 - frontend reloads friends list.
 
 ## Key Files
@@ -62,6 +65,7 @@ Friends:
 - `GET /api/users/search`
 - `GET /api/friends`
 - `POST /api/friends/:id`
+- `PATCH /api/friends/:id/accept`
 - `DELETE /api/friends/:id`
 
 ## Validation
@@ -89,11 +93,11 @@ Automatic checks:
 - update username;
 - update avatar;
 - add friend;
+- accept friend request;
 - remove friend;
 - test invalid friend id;
 - check profile stats.
 
 ## Current Limitations
 
-- avatar is URL only;
-- friend online status is not implemented.
+- avatar is URL only.

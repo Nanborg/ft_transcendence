@@ -97,7 +97,7 @@ No custom module outside the subject list is claimed.
 | Multiplayer 3+ | Major | 2 | Rooms support up to 4 players. |
 | Frontend + backend framework | Major | 2 | React frontend, Express backend and Prisma database layer. |
 | Real-time WebSocket | Major | 2 | Socket.IO synchronizes rooms, chat and gameplay. |
-| User interaction | Major | 2 | Profiles, friends, chat and rooms. |
+| User interaction | Major | 2 | Profiles, friends, room chat, direct chat, invitations and rooms. |
 | Standard user management | Major | 2 | Register, login, protected sessions, profile data. |
 | Game stats + history | Minor | 1 | Saved match history, leaderboard and profile statistics. |
 | OAuth 42 | Minor | 1 | Additional login method using 42 OAuth. |
@@ -112,6 +112,9 @@ Possible static total:
 - Total possible = 19 pts.
 
 ## Project Documentation
+
+This README gives the project overview, setup and claimed modules.
+Detailed implementation notes are kept in `docs/modules/` to avoid duplicating module details here.
 
 - [Auth and User Management](docs/modules/auth-users.md)
 - [Backend API and Database](docs/modules/backend-api-db.md)
@@ -194,6 +197,10 @@ Models:
 - `RefreshToken`: token, expiry, revoked flag.
 - `GameRun`: result, duration, room.
 - `PlayerRunStats`: deaths, damage, gold, upgrades.
+- `Friendship`: friend requests and accepted relations.
+- `ChatMessage`: room and direct chat messages.
+- `UserBlock`: blocked users for direct chat.
+- `GameInvitation`: game invitations sent through chat.
 
 ## Validation and Security
 
@@ -213,6 +220,7 @@ Module details:
 - [Privacy Policy](docs/privacy-policy.md)
 - [Terms of Service](docs/terms-of-service.md)
 - [Privacy/Terms module notes](docs/modules/privacy-terms.md)
+- In-app pages: `#/privacy` and `#/terms`.
 
 ## Branch Workflow
 
