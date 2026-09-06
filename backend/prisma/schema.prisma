@@ -169,14 +169,21 @@ model GameInvitation {
   @@index([roomId])
 }
 
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+
 model Friendship {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  friendId  Int
-  status    String   @default("PENDING")
+  id       Int              @id @default(autoincrement())
+  userId   Int
+  friendId Int
+  status   FriendshipStatus @default(PENDING)
 
   user      User     @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
   friend    User     @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
+  user   User @relation("SentRequests", fields: [userId], references: [id], onDelete: Cascade)
+  friend User @relation("ReceivedRequests", fields: [friendId], references: [id], onDelete: Cascade)
 
   @@unique([userId, friendId])
 }

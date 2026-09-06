@@ -10,4 +10,5 @@
 @import './styles/lobby.css';
 @import './styles/leaderboard.css';
 @import './styles/match-history.css';
+@import './styles/direct-chat.css';
 @import './styles/responsive.css';

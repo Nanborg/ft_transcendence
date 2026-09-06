@@ -6,6 +6,9 @@ import { addFriend } from '../api/friends';
 export function FriendsPage({ title, description, currentUser, friends }) {
     const {
         friends: friendsData,
+export function FriendsPage({ title, description, currentUser, friends, directChat, }) {
+    const {
+        friends: friendsData, //test-nico-friends
         friendsStatus,
         friendsError,
         submitAcceptFriend,
@@ -16,6 +19,7 @@ export function FriendsPage({ title, description, currentUser, friends }) {
     const [friendSearchStatus, setFriendSearchStatus] = useState('idle');
     const [friendSearchError, setFriendSearchError] = useState('');
 
+    //test-nico-friends-begin
     const friendList = friendsData?.friends || [];
     const pendingReceived = friendsData?.pendingReceived || [];
     const pendingSent = friendsData?.pendingSent || [];
@@ -73,6 +77,14 @@ export function FriendsPage({ title, description, currentUser, friends }) {
     return (
         <>
             <PageHeading title={title} description={description} />
+    function openDirectChat(user)
+    {
+        directChat.openConversation(user);
+    }
+
+    return (
+        <>
+            <PageHeading title={title} description={description} /> {/* //test-nico-friends */}
 
             <div className="friends-panel">
                 {!currentUser && (
@@ -105,6 +117,9 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                                         <li key={user.id} className="friends-item">
                                             <span>{user.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{user.id}</span>
+                                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>
+                                                Message
+                                            </button>
                                             <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>
                                                 Add
                                             </button>
@@ -115,6 +130,7 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                         </div>
                         {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
                         {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
+                        {/* //test-nico-friends-begin */}
                         {pendingReceived.length > 0 && (
                             <>
                                 <h2 className="h5 mt-4">Friend requests</h2>
@@ -151,12 +167,24 @@ export function FriendsPage({ title, description, currentUser, friends }) {
                             </>
                         )}
                         <h2 className="h5 mt-4">Friends</h2>
+                        {/* //test-nico-friends-end */}
+                        <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
                         {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
                             <ul className="friends-list">
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
                                         <span>{friend.username}</span> <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
+                                        <button
+                                        <span>{friend.username}</span>
+                                        <span className="friends-meta badge text-bg-info">#{friend.id}</span>
+                                        <button
+                                            className="btn btn-outline-primary"
+                                            type="button"
+                                            onClick={() => openDirectChat(friend)}
+                                        >
+                                            Message
+                                        </button>
                                         <button
                                             className="btn btn-outline-warning"
                                             type="button"

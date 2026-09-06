@@ -22,6 +22,8 @@ import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
 import { useChat } from './features/chat/useChat';
 import { LegalPage } from './pages/LegalPage';
+import { useDirectChat } from './features/chat/useDirectChat';
+import { GlobalChatDock } from './features/chat/GlobalChatDock';
 import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
 import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
@@ -41,7 +43,9 @@ function App() {
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
-  const chat = useChat(socket, currentUser, room.currentRoom);
+  const directChat = useDirectChat(socket, currentUser);
+  const chat = useChat(socket, currentUser, room.currentRoom, directChat.blockedUserIds);
+  const [isGlobalChatInputFocused, setIsGlobalChatInputFocused] = useState(false);
 
 
   const [authMode, setAuthMode] = useState('login');
@@ -360,7 +364,7 @@ function App() {
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
-              chat={chat}
+              chatInputFocused={isGlobalChatInputFocused}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
               onLeaveGame={room.leaveGame}
@@ -390,6 +394,7 @@ function App() {
               description={currentPage.description}
               currentUser={currentUser}
               friends={friends}
+              directChat={directChat}
             />
           )}
           {currentPage.id === 'lobby' && (
@@ -416,6 +421,14 @@ function App() {
         </section>
         {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
+      <GlobalChatDock
+        currentUser={currentUser}
+        currentRoom={room.currentRoom}
+        roomChat={chat}
+        directChat={directChat}
+        onInputFocusChange={setIsGlobalChatInputFocused}
+        keyboardShortcutEnabled={currentPage.id === 'game'}
+      />
     </div>
   );
 }
