@@ -13,7 +13,7 @@ function getGameEngineStartMessage(errorCode)
 
 function getPayloadRoomId(payload)
 {
-    if (payload?.roomId)
+    if (payload?.roomId !== null && payload?.roomId !== undefined)
         return payload.roomId;
     return '';
 }
@@ -87,7 +87,9 @@ function registerGameHandlers(io, socket)
             });
             const initialState = gameEngineService.getStateSnapshot(roomId);
             if (initialState)
+            {
                 io.to(roomId).emit('game:state:init', initialState);
+            }
             console.log(`game starting in room ${room.id}`);
         }
         catch (error)

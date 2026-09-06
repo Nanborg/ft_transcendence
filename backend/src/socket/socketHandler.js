@@ -173,10 +173,7 @@ module.exports = (io) =>
                 win,
                 reason: message.reason,
                 durationSeconds,
-                playerData: playerData.map((p) =>
-                {
-                    return getEnginePayloadPlayer(p, session);
-                }),
+                playerData: playerData.map((p) => getEnginePayloadPlayer(p, session)),
             };
             const dbData = adaptPayloadForDB(enginePayload);
             // TEMP: Saving stats immediately here. Logic might change when real win conditions are implemented.
@@ -186,15 +183,15 @@ module.exports = (io) =>
             {
                 roomToUpdate = await resetGameStart(roomId);
             }
-            catch (err)
+            catch (error)
             {
-                if (err.code === 'P2025')
+                if (error.code === 'P2025')
                 {
                     console.log(`Room ${roomId} has already been deleted.`);
                 }
                 else
                 {
-                    throw err;
+                    throw error;
                 }
             }
             io.to(roomId).emit('game:end', {

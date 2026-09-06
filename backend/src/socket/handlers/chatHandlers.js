@@ -84,20 +84,17 @@ function registerChatHandlers(io, socket)
     {
         try
         {
-            const invitationMessage =
-                await createGameInvitation({
-                    senderId: socket.user.id,
-                    recipientId: Number(payload?.recipientId),
-                    roomId: payload?.roomId,
-                });
+            const invitationMessage = await createGameInvitation({
+                senderId: socket.user.id,
+                recipientId: Number(payload?.recipientId),
+                roomId: payload?.roomId,
+            });
             io.to(getUserSocketRoom(socket.user.id))
                 .to(getUserSocketRoom(invitationMessage.recipient.id))
                 .emit('chat:direct:message', invitationMessage);
             io.to(getUserSocketRoom(socket.user.id))
                 .to(getUserSocketRoom(invitationMessage.recipient.id))
-                .emit('chat:invitation:update', {
-                    invitation: invitationMessage,
-                });
+                .emit('chat:invitation:update', { invitation: invitationMessage });
         }
         catch (error)
         {
@@ -133,7 +130,9 @@ function registerChatHandlers(io, socket)
             {
                 const joinResult = await joinRoom(pendingInvitation.roomId, socket.user.id);
                 if (joinResult.error)
+                {
                     throw new ChatServiceError(joinResult.error.code, joinResult.error.message);
+                }
                 joinedRoom = joinResult.room;
             }
             const invitationMessage = await respondToGameInvitation({

@@ -70,14 +70,10 @@ function registerConnectionHandlers(io, socket)
                     }
                     for (const roomId of removedRoomIds)
                     {
-                        io.to(roomId).emit('room:removed', {
-                            roomId,
-                        });
+                        io.to(roomId).emit('room:removed', { roomId });
                     }
                     removeConnection(socket.user.id, socket.id);
-                    console.log(
-                        `user ${socket.user.id} removed after reconnect timeout`
-                    );
+                    console.log(`user ${socket.user.id} removed after reconnect timeout`);
                 },
                 keepOnReconnect
             );
