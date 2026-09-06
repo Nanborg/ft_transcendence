@@ -1,31 +1,14 @@
-const { createRoom, joinRoom, leaveRoom, leaveAllRooms, getPlayerInRoom, getRoom, setPlayerReady, startGame, markGamePlaying, setPlayerInput, getRoomsByUserId, resetGameStart } = require("./rooms");
-const { addConnection, removeConnection, getConnection, scheduleDisconnect, isConnected } = require("./connections");
-const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE, } = require("../services/gameEngineService");
-const { adaptPayloadForDB, saveGameResults } = require("../services/gameService");
-const { cleanInput } = require('../services/sanitize');
-const { ChatServiceError, createRoomMessage, createDirectMessage, getRoomHistory, getDirectHistory, getDirectConversations, blockUser, unblockUser, getBlockedUsers, markDirectMessagesRead, createGameInvitation, getPendingGameInvitation, getPendingGameInvitations, respondToGameInvitation, } = require("../services/chatService");
+const { addConnection } = require('./connections');
+const { getRoomsByUserId, resetGameStart } = require('./rooms');
+const { gameEngineService } = require('../services/gameEngineService');
+const { adaptPayloadForDB, saveGameResults } = require('../services/gameService');
+const { registerConnectionHandlers } = require('./handlers/connectionHandlers');
+const { registerRoomHandlers } = require('./handlers/roomHandlers');
+const { registerGameHandlers } = require('./handlers/gameHandlers');
+const { registerChatHandlers } = require('./handlers/chatHandlers');
+const { getUserSocketRoom, normalizeEngineEntity } = require('./socketUtils');
 
 const processingGameEnds = new Set();
-
-function getUserSocketRoom(userId)
-{
-	return `user:${userId}`;
-}
-function emitChatError(socket, event, error)
-{
-	const isExpectedError = error instanceof ChatServiceError;
-	if (!isExpectedError)
-		console.error(`Unable to process ${event}:`, error);
-	socket.emit("chat:error", {
-		event,
-		code: isExpectedError
-			? error.code
-			: "CHAT_INTERNAL_ERROR",
-		message: isExpectedError
-			? error.message
-			: "Unable to process chat request",
-	});
-}
 
 //Princiamf2
 // TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
@@ -33,128 +16,185 @@ function emitChatError(socket, event, error)
 // These tests should cover create, join, ready, start, input, state, end,
 // leave, reconnect, and room deletion.
 
-function normalizeEngineEntity(entity)
+function getMessageRoomId(message)
 {
-	const normalizedEntity = {
-		...entity,
-	};
-	if (typeof normalizedEntity.typeId !== "number" && typeof normalizedEntity.entityTypeId === "number")
-		normalizedEntity.typeId = normalizedEntity.entityTypeId;
-	delete normalizedEntity.entityTypeId;
-	return normalizedEntity;
+    if (message?.roomId !== undefined && message?.roomId !== null)
+        return message.roomId;
+    return message?.room;
 }
-module.exports = (io) => {
-	gameEngineService.on("playerUpdate", message => {
-		const roomId = message?.roomId ?? message?.room;
-		if (
-			!message ||
-			typeof roomId !== "string" ||
-			!message.playerData ||
-			typeof message.playerData !== "object" ||
-			Array.isArray(message.playerData)
-		) {
-			console.error("Invalid playerUpdate received from game engine:", message);
-			return;
-		}
-		const normalizedPlayer = gameEngineService.cachePlayerUpdate(
-			roomId,
-			message.playerData,
-			message.tick
-		);
-		if (!normalizedPlayer) {
-			console.error(`Unable to map playerupdate for room ${roomId}:`, message.playerData);
-			return;
-		}
-		const session = gameEngineService.getSession(roomId);
-		io.to(roomId).emit("game:state:update", {
-			roomId,
-			tick:
-				typeof message.tick === "number"
-					? message.tick
-					: session?.tick ?? 0,
-			end: false,
-			entityUpdate: [],
-			entityDelete: [],
-			playerData: [normalizedPlayer],
-		});
-	});
-	gameEngineService.on("entityUpdate", (message) => {
-		const roomId = message?.roomId ?? message?.room;
-		if (
-			!message ||
-			typeof roomId !== "string" ||
-			typeof message.entity !== "object" ||
-			message.entity === null
-		) {
-			console.error(
-				"Invalid entityUpdate received from game engine:",
-				message
-			);
-			return;
-		}
-		const entity = normalizeEngineEntity(message.entity);
-		gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
-		io.to(roomId).emit("game:state:update", {
-			roomId,
-			tick: message.tick,
-			end: false,
-			entityUpdate: [ entity ],
-			entityDelete: [],
-			playerData: [],
-		});
-	});
-	gameEngineService.on("gameEnd", async (message) => {
-		const roomId = message?.roomId ?? message?.room;
-		if (!message || typeof roomId !== "string" || typeof message.reason !== "string")
-		{
-			console.error("Invalid gameEnd received from game engine:", message);
-			return;
-		}
-		if (processingGameEnds.has(roomId))
-		{
+
+function getMessageTick(message, session)
+{
+    if (typeof message.tick === 'number')
+        return message.tick;
+    return session?.tick ?? 0;
+}
+
+function getGameEndDurationSeconds(serverStartedAt, endedAt)
+{
+    if (typeof serverStartedAt === 'number')
+        return Math.max(0, Math.floor((endedAt - serverStartedAt) / 1000));
+    return 0;
+}
+
+function getGameEndEntities(message, snapshot)
+{
+    if (Array.isArray(message.entities))
+        return message.entities.map(normalizeEngineEntity);
+    return snapshot?.entities ?? [];
+}
+
+function getGameEndPlayerData(message, snapshot)
+{
+    if (Array.isArray(message.playerData))
+        return message.playerData;
+    return snapshot?.playerData ?? [];
+}
+
+function getGameEndTick(message, snapshot)
+{
+    if (typeof message.tick === 'number')
+        return message.tick;
+    return snapshot?.tick ?? 0;
+}
+
+function getGameEndWin(message)
+{
+    if (typeof message.win === 'boolean')
+        return message.win;
+    return message.victory === true;
+}
+
+function getEnginePayloadPlayer(player, session)
+{
+    const sessionPlayer = session?.players.find((sp) => sp.enginePlayerId === player.playerId);
+    if (sessionPlayer)
+    {
+        return {
+            ...player,
+            playerId: sessionPlayer.userId,
+        };
+    }
+    return {
+        ...player,
+        playerId: player.playerId,
+    };
+}
+
+module.exports = (io) =>
+{
+    gameEngineService.on('playerUpdate', (message) =>
+    {
+        const roomId = getMessageRoomId(message);
+        if (
+            !message ||
+            typeof roomId !== 'string' ||
+            !message.playerData ||
+            typeof message.playerData !== 'object' ||
+            Array.isArray(message.playerData)
+        )
+        {
+            console.error('Invalid playerUpdate received from game engine:', message);
+            return;
+        }
+        const normalizedPlayer = gameEngineService.cachePlayerUpdate(
+            roomId,
+            message.playerData,
+            message.tick
+        );
+        if (!normalizedPlayer)
+        {
+            console.error(`Unable to map playerupdate for room ${roomId}:`, message.playerData);
+            return;
+        }
+        const session = gameEngineService.getSession(roomId);
+        io.to(roomId).emit('game:state:update', {
+            roomId,
+            tick: getMessageTick(message, session),
+            end: false,
+            entityUpdate: [],
+            entityDelete: [],
+            playerData: [normalizedPlayer],
+        });
+    });
+
+    gameEngineService.on('entityUpdate', (message) =>
+    {
+        const roomId = getMessageRoomId(message);
+        if (
+            !message ||
+            typeof roomId !== 'string' ||
+            typeof message.entity !== 'object' ||
+            message.entity === null
+        )
+        {
+            console.error('Invalid entityUpdate received from game engine:', message);
+            return;
+        }
+        const entity = normalizeEngineEntity(message.entity);
+        gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
+        io.to(roomId).emit('game:state:update', {
+            roomId,
+            tick: message.tick,
+            end: false,
+            entityUpdate: [ entity ],
+            entityDelete: [],
+            playerData: [],
+        });
+    });
+
+    gameEngineService.on('gameEnd', async (message) =>
+    {
+        const roomId = getMessageRoomId(message);
+        if (!message || typeof roomId !== 'string' || typeof message.reason !== 'string')
+        {
+            console.error('Invalid gameEnd received from game engine:', message);
+            return;
+        }
+        if (processingGameEnds.has(roomId))
+        {
             console.log(`[GameEnd] Duplicate event ignored for room: ${roomId}`);
             return;
         }
-		processingGameEnds.add(roomId);
-		const snapshot = gameEngineService.getStateSnapshot(roomId);
-		const endedAt = Date.now();
-		const serverStartedAt = snapshot?.serverStartedAt;
-		const durationSeconds = typeof serverStartedAt === "number" ? Math.max(0, Math.floor((endedAt - serverStartedAt) / 1000)) : 0;
-		const entities = Array.isArray(message.entities) ? message.entities.map(normalizeEngineEntity) : snapshot?.entities ?? [];
-		const playerData = Array.isArray(message.playerData) ? message.playerData : snapshot?.playerData ?? [];
-		const tick = typeof message.tick === "number" ? message.tick : snapshot?.tick ?? 0;
-		const win = typeof message.win === "boolean" ? message.win : message.victory === true;
-		try{
-			const session = gameEngineService.getSession(roomId);
+        processingGameEnds.add(roomId);
+        const snapshot = gameEngineService.getStateSnapshot(roomId);
+        const endedAt = Date.now();
+        const serverStartedAt = snapshot?.serverStartedAt;
+        const durationSeconds = getGameEndDurationSeconds(serverStartedAt, endedAt);
+        const entities = getGameEndEntities(message, snapshot);
+        const playerData = getGameEndPlayerData(message, snapshot);
+        const tick = getGameEndTick(message, snapshot);
+        const win = getGameEndWin(message);
+        try
+        {
+            const session = gameEngineService.getSession(roomId);
             const enginePayload = {
-                roomId: roomId,
-                win: win,
+                roomId,
+                win,
                 reason: message.reason,
-                durationSeconds: durationSeconds,
-                playerData: playerData.map(p => {
-                    const sessionPlayer = session?.players.find(sp => sp.enginePlayerId === p.playerId);
-                    return {
-                        ...p,
-                        playerId: sessionPlayer ? sessionPlayer.userId : p.playerId
-                    };
-                })
+                durationSeconds,
+                playerData: playerData.map((p) => getEnginePayloadPlayer(p, session)),
             };
             const dbData = adaptPayloadForDB(enginePayload);
-			// TEMP: Saving stats immediately here. Logic might change when real win conditions are implemented.
+            // TEMP: Saving stats immediately here. Logic might change when real win conditions are implemented.
             await saveGameResults(dbData);
-			let roomToUpdate = null;
-			try {
+            let roomToUpdate = null;
+            try
+            {
                 roomToUpdate = await resetGameStart(roomId);
             }
-			catch (err) {
-                if (err.code === 'P2025') {
+            catch (error)
+            {
+                if (error.code === 'P2025')
+                {
                     console.log(`Room ${roomId} has already been deleted.`);
                 }
-				else {
-                    throw err;
+                else
+                {
+                    throw error;
                 }
             }
-            io.to(roomId).emit("game:end", {
+            io.to(roomId).emit('game:end', {
                 roomId,
                 tick,
                 durationSeconds,
@@ -164,781 +204,75 @@ module.exports = (io) => {
                 entities,
                 playerData,
             });
-            if (roomToUpdate) {
-                io.to(roomId).emit("room:update", roomToUpdate);
+            if (roomToUpdate)
+            {
+                io.to(roomId).emit('room:update', roomToUpdate);
             }
-		}
-		catch (error) {
-			console.error(`Unable to complete game end for room ${roomId};`, error);
-			io.to(roomId).emit("game:error", {
-				roomId,
-				code: "GAME_END_PROCESSING_FAILED",
-				message: "Unable to complete the game end",
-			});
-		}
-		finally {
-			processingGameEnds.delete(roomId);
+        }
+        catch (error)
+        {
+            console.error(`Unable to complete game end for room ${roomId};`, error);
+            io.to(roomId).emit('game:error', {
+                roomId,
+                code: 'GAME_END_PROCESSING_FAILED',
+                message: 'Unable to complete the game end',
+            });
+        }
+        finally
+        {
+            processingGameEnds.delete(roomId);
             console.log(`[GameEnd] Lock released for room: ${roomId}`);
-		}
-		await gameEngineService.destroyGame(roomId);
-	});
-	gameEngineService.on("entityDelete", (message) => {
-		const roomId = message?.roomId ?? message?.room;
-		if (
-			!message ||
-			typeof roomId !== "string" ||
-			typeof message.entity !== "object" ||
-			message.entity === null ||
-			typeof message.entity.entityId !== "number"
-		) {
-			console.error(
-				"Invalid entityDelete received from game engine:",
-				message
-			);
-			return;
-		}
-		const deletedEntity = normalizeEngineEntity(message.entity);
-		gameEngineService.cacheEntityDelete(roomId, deletedEntity.entityId, message.tick);
-		io.to(roomId).emit("game:state:update", {
-			roomId,
-			tick: message.tick,
-			end: false,
-			entityUpdate: [],
-			entityDelete: [deletedEntity],
-			playerData: [],
-		});
-	});
-	io.on("connection", async (socket) => {
-		console.log(`socket connected: ${socket.id}`);
-		addConnection(socket.user.id, socket);
-		io.emit("user_status", {
-    		userId: socket.user.id,
-    		isConnected: true
-		});
-		socket.join(getUserSocketRoom(socket.user.id));
-		const existingRoom = await getRoomsByUserId(socket.user.id);
+        }
+        await gameEngineService.destroyGame(roomId);
+    });
 
-		for (const room of existingRoom) {
-			socket.join(room.id);
-			socket.emit("room:update", room);
-			io.to(room.id).emit("room:update", room);
-		}
-
-		socket.on("debug:latency:check", ({clientSentAt }) => {
-
-			if (!clientSentAt || typeof clientSentAt !== "number")
-				return ;
-
-			socket.emit("debug:latency:result", {
-				clientSentAt,
-				backendReceivedAt: Date.now(),
-			});
-		});
-
-		socket.on("room:create", async ({ roomName } = {}) => {
-			try {
-				const { room, error } = await createRoom(socket.user.id, roomName);
-				if (error) {
-					socket.emit("room:error", {
-						event: "room:create",
-						code: error.code,
-						message: error.message,
-					});
-					return;
-				}
-				socket.join(room.id);
-				console.log(`room created: ${room.id} by user ${socket.user.id}`);
-				socket.emit("room:created", room);
-				io.to(room.id).emit("room:update", room);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "room:create",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("room:join", async (payload) => {
-			if (!payload || typeof payload.roomId !== "string") {
-				socket.emit("room:error", {
-					event: "room:join",
-					code: "INVALID_PAYLOAD",
-					message: "Invalid payload",
-				});
-				return;
-			}
-			try {
-				const { roomId } = payload;
-				const { room, error } = await joinRoom(roomId, socket.user.id);
-				if (error) {
-					socket.emit("room:error", {
-						event: "room:join",
-						code: error.code,
-						message: error.message,
-					});
-					return;
-				}
-				socket.join(room.id);
-				console.log(`socket ${socket.user.id} joined room ${room.id}`);
-				io.to(room.id).emit("room:update", room);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "room:join",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("game:start", async (payload) => {
-			if (!payload || typeof payload.roomId !== "string") {
-				socket.emit("room:error", {
-					event: "game:start",
-					message: "Invalid payload",
-				});
-				return;
-			}
-			try {
-				const { roomId } = payload;
-				let { room, error } = await startGame(roomId, socket.user.id);
-				if (error) {
-					socket.emit("room:error", {
-						event: "game:start",
-						message: error,
-					});
-					return;
-				}
-				let engineSession;
-				io.to(roomId).emit("room:update", room);
-
-				try {
-					engineSession = await gameEngineService.startGame(room);
-				} catch (error) {
-					console.error("Unable to start game engine session:", error);
-					const restoredRoom = await resetGameStart(roomId);
-					io.to(roomId).emit("room:update", restoredRoom);
-					const errorCode =
-						error?.code === "ROOM_READY_TIMEOUT"
-							? "GAME_ENGINE_ROOM_READY_TIMEOUT"
-							: error?.code === "ROOM_INIT_FAILED"
-								? "GAME_ENGINE_INIT_FAILED"
-								: "GAME_ENGINE_START_FAILED";
-					socket.emit("room:error", {
-						event: "game:start",
-						code: errorCode,
-						message: errorCode === "GAME_ENGINE_ROOM_READY_TIMEOUT"
-							? "Game engine did not confirm room readiness in time"
-							: errorCode === "GAME_ENGINE_INIT_FAILED"
-								? "Game engine failed while loading the map"
-								: "Unable to start the game engine",
-					});
-					return;
-				}
-				room = await markGamePlaying(roomId);
-
-				io.to(roomId).emit("room:update", room);
-				io.to(roomId).emit("game:start", {
-					roomId: room.id,
-					status: room.status,
-					players: room.players,
-					enginePlayers: engineSession.players,
-					timestamp: Date.now(),
-				});
-				const initialState = gameEngineService.getStateSnapshot(roomId);
-				if (initialState)
-					io.to(roomId).emit("game:state:init", initialState);
-				console.log(`game starting in room ${room.id}`);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "game:start",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("game:resync", async (payload) => {
-			if (!payload || typeof payload.roomId !== "string")
-			{
-				socket.emit("game:error", {
-					roomId: payload?.roomId ?? "",
-					code: "INVALID_PAYLOAD",
-					message: "Invalid game resync payload",
-				});
-				return;
-			}
-			const { roomId } = payload;
-			try {
-				const player = await getPlayerInRoom(roomId, socket.user.id);
-				if (!player) {
-					socket.emit("game:error", {
-						roomId,
-						code: "PLAYER_NOT_IN_ROOM",
-						message: "Player is not in room",
-					});
-					return;
-				}
-				const snapshot = gameEngineService.getStateSnapshot(roomId);
-				if (!snapshot) {
-					socket.emit("game:error", {
-						roomId,
-						code: "GAME_NOT_RUNNING",
-						message: "Game is not running",
-					});
-					return;
-				}
-				const room = await getRoom(roomId);
-				const engineSession = gameEngineService.getSession(room.id);
-				const connection = getConnection(socket.user.id);
-				if (connection?.reconnectTimer && connection.keepOnReconnect) {
-					clearTimeout(connection.reconnectTimer);
-					connection.reconnectTimer = null;
-					connection.keepOnReconnect = false;
-					connection.disconnectedAt = null;
-				}
-				socket.emit("game:start", {
-					roomId: room.id,
-					status: room.status,
-					players: room.players,
-					enginePlayers: engineSession.players,
-					timestamp: Date.now(),
-				});
-				socket.emit("game:state:init", snapshot);
-			} catch (error) {
-				console.error(`Unable to resync game state for room ${roomId}:`, error);
-				socket.emit("game:error", {
-					roomId,
-					code: "GAME_RESYNC_FAILED",
-					message: "Unable to resync game state",
-				});
-			}
-		});
-
-		socket.on("player:input", async (payload) => {
-			if (
-				!payload ||
-				typeof payload.roomId !== "string" ||
-				typeof payload.input !== "object" ||
-				payload.input === null ||
-				Array.isArray(payload.input)
-			) {
-				socket.emit("room:error", {
-					event: "player:input",
-					message: "Invalid payload",
-				});
-				return;
-			}
-			try {
-				const { roomId, input } = payload;
-				const movementKeys = ["up", "down", "left", "right"];
-				const validKeys = [...movementKeys, "action", "dirX", "dirY"];
-				const inputKeys = Object.keys(input);
-				const hasMovement = movementKeys.some((key) => Object.hasOwn(input, key));
-				const hasAction = Object.hasOwn(input, "action");
-				const hasDirection = Object.hasOwn(input, "dirX") || Object.hasOwn(input, "dirY");
-				const hasInvalidKey = inputKeys.some((key) => !validKeys.includes(key));
-				const hasInvalidMovement = hasMovement && movementKeys.some((key) => typeof input[key] !== "boolean");
-				const normalizedAction =
-					typeof input.action === "boolean"
-						? input.action
-							? PLAYER_ACTION.MELEE
-							: PLAYER_ACTION.NONE
-						: input.action;
-				const requiresDirection =
-					hasAction &&
-					(
-						normalizedAction === PLAYER_ACTION.MELEE ||
-						normalizedAction === PLAYER_ACTION.RANGED
-					);
-				const hasInvalidDirection =
-                    hasDirection &&
-                    (
-                        !Number.isInteger(input.dirX) ||
-						!Number.isInteger(input.dirY) ||
-						input.dirX < -1 ||
-						input.dirX > 1 ||
-						input.dirY < -1 ||
-						input.dirY > 1 ||
-						(input.dirX === 0 && input.dirY === 0)
-                    );
-				const hasMissingDirection = requiresDirection && !hasDirection;
-				const hasInvalidAction = hasAction && !Object.values(PLAYER_ACTION).includes(normalizedAction);
-				if (
-					inputKeys.length === 0 ||
-					(!hasMovement && !hasAction) ||
-					hasInvalidKey ||
-					hasInvalidMovement ||
-					hasInvalidDirection ||
-					hasMissingDirection ||
-					hasInvalidAction
-				) {
-					socket.emit("room:error", {
-						event: "player:input",
-						message: "Invalid input",
-					});
-					return;
-				}
-				const normalizedInput = {
-					...(hasMovement && {
-						up: input.up,
-						down: input.down,
-						left: input.left,
-						right: input.right,
-					}),
-					...(hasAction && {
-						action: normalizedAction,
-					}),
-					...(hasDirection && {
-                        dirX: input.dirX,
-                        dirY: input.dirY,
-                    }),
-				};
-				const { error } = await setPlayerInput(roomId, socket.user.id, normalizedInput);
-				if (error) {
-					socket.emit("room:error", {
-						event: "player:input",
-						message: error,
-					});
-					return;
-				}
-				try {
-					if (hasMovement) {
-						await gameEngineService.sendPlayerInput(
-							roomId,
-							socket.user.id,
-							normalizedInput
-						);
-					}
-					if (hasAction) {
-						await gameEngineService.sendPlayerAction(
-							roomId,
-							socket.user.id,
-							normalizedAction,
-                            {
-                                dirX: normalizedInput.dirX,
-                                dirY: normalizedInput.dirY,
-                            }
-						);
-					}
-				} catch (error) {
-					console.error("Unable to send player input to game engine:", error);
-					socket.emit("room:error", {
-						event: "player:input",
-						message: "Game engine unavailable",
-					});
-					return;
-				}
-				io.to(roomId).emit("player:input", {
-					playerId: socket.user.id,
-					input: normalizedInput,
-					timestamp: Date.now(),
-				});
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "player:input",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("checkpoint:upgrade", async payload => {
-			if (
-				!payload ||
-				typeof payload.roomId !== "string" ||
-				!Object.values(PLAYER_UPGRADE).includes(payload.upgrade)
-			) {
-				socket.emit("checkpoint:error", {
-					roomId: payload?.roomId ?? "",
-					code: "INVALID_PAYLOAD",
-					message: "Invalid checkpoint upgrade payload",
-				});
-				return;
-			}
-			const { roomId, upgrade } = payload;
-			try {
-				const player = await getPlayerInRoom(roomId, socket.user.id);
-				if (!player) {
-					socket.emit("checkpoint:error", {
-						roomId,
-						code: "PLAYER_NOT_IN_ROOM",
-						message: "Player is not in room",
-					});
-					return;
-				}
-				const playerData = gameEngineService.getPlayerData(roomId, socket.user.id);
-				if (!playerData) {
-					socket.emit("checkpoint:error", {
-						roomId,
-						code: "PLAYER_DATA_UNAVAILABLE",
-						message: "Player data is unavailable",
-					});
-					return;
-				}
-				if (playerData.atACheckpoint !== true) {
-					socket.emit("checkpoint:error", {
-						roomId,
-						code: "PLAYER_NOT_AT_CHECKPOINT",
-						message: "Player is not at a checkpoint",
-					});
-					return;
-				}
-				await gameEngineService.sendCheckpointUpgrade(
-					roomId,
-					socket.user.id,
-					playerData,
-					upgrade
-				);
-			} catch (error) {
-				console.error(`Unable to upgrade ${upgrade} for user ${socket.user.id}:`, error);
-				socket.emit("checkpoint:error", {
-					roomId,
-					code: "CHECKPOINT_UPGRADE_FAILED",
-					message: "Unable to upgrade ability",
-				});
-			}
-		});
-
-		socket.on("room:leave", async (payload) => {
-			if (!payload || typeof payload.roomId !== "string") {
-				socket.emit("room:error", {
-					event: "room:leave",
-					message: "Invalid payload",
-				});
-				return;
-			}
-			try {
-				const { roomId } = payload;
-				const roomBeforeLeave = await getRoom(roomId);
-				const isLastPlayer =
-					roomBeforeLeave &&
-					roomBeforeLeave.players.length === 1 &&
-					String(roomBeforeLeave.players[0].id) ===
-						String(socket.user.id);
-				try {
-					if (isLastPlayer) {
-						await gameEngineService.stopGame(roomId, "all_players_left");
-					} else {
-						await gameEngineService.removePlayer(roomId, socket.user.id);
-					}
-				} catch (error) {
-					console.error(`Unable to remove user ${socket.user.id} from engine room ${roomId}:`, error);
-				}
-				const room = await leaveRoom(roomId, socket.user.id);
-				socket.leave(roomId);
-				console.log(`socket ${socket.user.id} left room ${roomId}`);
-				if (room) {
-					io.to(roomId).emit("room:update", room);
-				} else {
-					io.to(roomId).emit("room:removed", { roomId });
-					console.log(`room removed: ${roomId}`);
-				}
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "room:leave",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("player:ready", async (payload) => {
-			if (!payload || typeof payload.roomId !== "string") {
-				socket.emit("room:error", {
-					event: "player:ready",
-					code: "INVALID_PAYLOAD",
-					message: "Invalid payload",
-				});
-				return;
-			}
-			try {
-				const { roomId } = payload;
-				const result = await setPlayerReady(roomId, socket.user.id);
-				if (!result) {
-					socket.emit("room:error", {
-						event: "player:ready",
-						code: "PLAYER_NOT_IN_ROOM",
-						message: "Player is not in room",
-					});
-					return;
-				}
-				const { room, error } = result;
-				if (error) {
-					socket.emit("room:error", {
-						event: "player:ready",
-						code: error.code,
-						message: error.message,
-					});
-					return;
-				}
-				io.to(roomId).emit("room:update", room);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "player:ready",
-					message: error.message,
-				});
-			}
-		});
-
-		socket.on("chat:message", async (payload = {}) => {
-            try {
-                    const rawMessage = payload?.message;
-                    const content = typeof rawMessage === "string"
-                            ? cleanInput(rawMessage.trim())
-                            : rawMessage;
-                    const chatMessage = await createRoomMessage({
-                            roomId: payload?.roomId,
-                            senderId: socket.user.id,
-                            content,
-                    });
-                     io.to(chatMessage.roomId).emit(
-                            "chat:message",
-                            chatMessage
-                    );
-            } catch (error) {
-                emitChatError(
-                        socket,
-                        "chat:message",
-                        error
-                );
-            }
+    gameEngineService.on('entityDelete', (message) =>
+    {
+        const roomId = getMessageRoomId(message);
+        if (
+            !message ||
+            typeof roomId !== 'string' ||
+            typeof message.entity !== 'object' ||
+            message.entity === null ||
+            typeof message.entity.entityId !== 'number'
+        )
+        {
+            console.error('Invalid entityDelete received from game engine:', message);
+            return;
+        }
+        const deletedEntity = normalizeEngineEntity(message.entity);
+        gameEngineService.cacheEntityDelete(roomId, deletedEntity.entityId, message.tick);
+        io.to(roomId).emit('game:state:update', {
+            roomId,
+            tick: message.tick,
+            end: false,
+            entityUpdate: [],
+            entityDelete: [deletedEntity],
+            playerData: [],
         });
+    });
 
-		socket.on("chat:history:request", async (payload = {}) => {
-			try {
-				const messages = await getRoomHistory({
-					roomId: payload.roomId,
-					userId: socket.user.id,
-					beforeId: payload.beforeId,
-					limit: payload.limit,
-				});
-				socket.emit("chat:history", {
-					scope: "room",
-					roomId: typeof payload.roomId === "string"
-						? payload.roomId.trim()
-						: "",
-					messages,
-				});
-			} catch (error) {
-				emitChatError(
-					socket,
-					"chat:history:request",
-					error
-				);
-			}
-		});
+    io.on('connection', async (socket) =>
+    {
+        console.log(`socket connected: ${socket.id}`);
+        addConnection(socket.user.id, socket);
+        io.emit('user_status', {
+            userId: socket.user.id,
+            isConnected: true,
+        });
+        socket.join(getUserSocketRoom(socket.user.id));
+        const existingRoom = await getRoomsByUserId(socket.user.id);
 
-		socket.on("chat:direct:conversations:request", async () => {
-			try {
-				const conversations = await getDirectConversations(socket.user.id);
-				socket.emit("chat:direct:conversations", {conversations});
-			} catch (error) {
-				emitChatError(socket, "chat:direct:conversations:request", error);
-			}
-		});
+        for (const room of existingRoom)
+        {
+            socket.join(room.id);
+            socket.emit('room:update', room);
+            io.to(room.id).emit('room:update', room);
+        }
 
-		socket.on("chat:invitation:send", async (payload = {}) => {
-			try {
-				const invitationMessage =
-					await createGameInvitation({
-						senderId: socket.user.id,
-						recipientId: Number(payload?.recipientId),
-						roomId: payload?.roomId,
-					});
-				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(
-					invitationMessage.recipient.id
-				)).emit("chat:direct:message", invitationMessage);
-				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(invitationMessage.recipient.id)).emit(
-					"chat:invitation:update", {
-						invitation: invitationMessage,
-					}
-				);
-			} catch (error) {
-				emitChatError(socket, "chat:invitation:send", error);
-			}
-		});
-
-		socket.on("chat:invitation:list:request", async () => {
-			try {
-				const invitations = await getPendingGameInvitations(socket.user.id);
-				socket.emit("chat:invitation:list", {invitations,});
-			} catch (error) {
-				emitChatError(socket, "chat:invitation:list:request", error);
-			}
-		});
-
-		socket.on("chat:invitation:respond", async (payload = {}) => {
-			try {
-				const invitationId = Number(payload?.invitationId);
-				const response = typeof payload?.response === "string"
-					? payload.response.trim().toUpperCase()
-					: "";
-				const pendingInvitation = await getPendingGameInvitation({
-					invitationId, recipientId: socket.user.id,
-				});
-				let joinedRoom = null;
-				if (response === "ACCEPTED") {
-					const joinResult = await joinRoom(pendingInvitation.roomId, socket.user.id);
-					if (joinResult.error)
-						throw new ChatServiceError(joinResult.error.code, joinResult.error.message);
-					joinedRoom = joinResult.room;
-				}
-				const invitationMessage = await respondToGameInvitation({
-					invitationId,
-					recipientId:socket.user.id,
-					response,
-				});
-				if (joinedRoom) {
-					await socket.join(joinedRoom.id);
-					io.to(joinedRoom.id).emit("room:update", joinedRoom);
-				}
-				const updatePayload = {
-					invitation: invitationMessage,
-					room: joinedRoom,
-				};
-				io.to(getUserSocketRoom(socket.user.id)).emit("chat:invitation:update", updatePayload);
-				if (pendingInvitation.senderId)
-					io.to(getUserSocketRoom(pendingInvitation.senderId)).emit("chat:invitation:update", updatePayload);
-			} catch (error) {
-				emitChatError(socket, "chat:invitation:respond", error);
-			}
-		});
-
-		socket.on("chat:direct:message", async (payload = {}) => {
-			try {
-				const rawMessage = payload?.message;
-				const content = typeof rawMessage === "string"
-					? cleanInput(rawMessage.trim())
-					: rawMessage;
-				const chatMessage = await createDirectMessage({
-					senderId: socket.user.id,
-					recipientId: Number(payload?.recipientId),
-					content,
-				});
-				io.to(getUserSocketRoom(socket.user.id))
-					.to(getUserSocketRoom(chatMessage.recipient.id))
-					.emit("chat:direct:message", chatMessage);
-			} catch (error) {
-				emitChatError(socket, "chat:direct:message", error);
-			}
-		});
-
-		socket.on("chat:direct:history:request", async (payload = {}) => {
-			try {
-				const otherUserId = Number(payload?.userId);
-				const messages = await getDirectHistory({
-					userId: socket.user.id,
-					otherUserId,
-					beforeId: payload?.beforeId,
-					limit: payload?.limit,
-				});
-				socket.emit("chat:direct:history", {
-					userId: otherUserId,
-					messages,
-				});
-			} catch (error) {
-				emitChatError(socket, "chat:direct:history:request", error);
-			}
-		});
-
-		socket.on("chat:direct:read", async (payload = {}) => {
-			try {
-				const otherUserId = Number(payload?.userId);
-				const result = await markDirectMessagesRead({userId: socket.user.id, otherUserId,});
-				const readUpdate = { readerId: socket.user.id, otherUserId, ...result, };
-				io.to(getUserSocketRoom(socket.user.id)).to(getUserSocketRoom(otherUserId)).emit("chat:direct:read", readUpdate);
-			} catch (error) {
-				emitChatError(socket, "chat:direct:read", error);
-			}
-		});
-
-		socket.on("chat:block", async (payload = {}) => {
-			try {
-				const blockedId = Number(payload?.userId);
-				await blockUser({ blockerId: socket.user.id, blockedId });
-				socket.emit("chat:block:update", { userId: blockedId, blocked: true });
-			} catch (error) {
-				emitChatError(socket, "chat:block", error);
-			}
-		});
-
-		socket.on("chat:unblock", async (payload = {}) => {
-			try {
-				const blockedId = Number(payload?.userId);
-				await unblockUser({blockerId: socket.user.id, blockedId});
-				socket.emit("chat:block:update", {userId: blockedId, blocked: false,});
-			} catch (error) {
-				emitChatError(socket, "chat:unblock", error);
-			}
-		});
-
-		socket.on("chat:blocked:request", async () => {
-			try {
-				const users = await getBlockedUsers(socket.user.id);
-				socket.emit("chat:blocked", {users});
-			} catch (error) {
-				emitChatError(socket, "chat:blocked:request", error);
-			}
-		});
-
-		socket.on("disconnect", async () => {
-			try {
-				const stopInput = {
-    				up: false,
-    				down: false,
-    				left: false,
-    				right: false
-				};
-				const userRooms = await getRoomsByUserId(socket.user.id);
-				const keepOnReconnect = userRooms.some((room) => gameEngineService.getSession(room.id));
-				for (const room of userRooms) {
-                	await gameEngineService.sendPlayerInput(room.id, socket.user.id, stopInput);
-                }
-				scheduleDisconnect(
-					socket.user.id,
-					socket.id,
-					async () => {
-						const userRooms = await getRoomsByUserId(socket.user.id);
-						if (!isConnected(socket.user.id)) {
-						io.emit("user_status", {
-    						userId: socket.user.id,
-    						isConnected: false
-						});
-						}
-						for (const room of userRooms) {
-							try {
-								const engineSession = gameEngineService.getSession(room.id);
-								if (!engineSession || room.players.length <= 1) {
-									await gameEngineService.stopGame(room.id, "all_players_left");
-								}
-								else {
-									await gameEngineService.removePlayer(room.id, socket.user.id);
-								}
-							} catch (error) {
-								console.error(
-									`Unable to remove user ${socket.user.id} from engine room ${room.id}:`,
-									error
-								);
-							}
-						}
-						const { updatedRooms, removedRoomIds } = await leaveAllRooms(socket.user.id);
-						for (const room of updatedRooms) {
-							io.to(room.id).emit("room:update", room);
-						}
-						for (const roomId of removedRoomIds) {
-							io.to(roomId).emit("room:removed", {
-								roomId,
-							});
-						}
-						removeConnection(socket.user.id, socket.id);
-						console.log(
-							`user ${socket.user.id} removed after reconnect timeout`
-						);
-					},
-					keepOnReconnect
-				);
-			} catch (error) {
-				socket.emit("room:error", {
-					event: "disconnect",
-					message: error.message,
-				});
-			}
-		});
-	});
+        registerConnectionHandlers(io, socket);
+        registerRoomHandlers(io, socket);
+        registerGameHandlers(io, socket);
+        registerChatHandlers(io, socket);
+    });
 };
