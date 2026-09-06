@@ -151,7 +151,7 @@ function App() {
     finishFortyTwoLogin();
   }, []);
 
-  const friends = useFriends(currentUser, handleSessionExpired,);
+  const friends = useFriends(socket, currentUser, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
     currentUser,
@@ -168,6 +168,7 @@ function App() {
       path: '/socket.io',
       transports: ['websocket'],
       withCredentials: true,
+      forceNew: true,
     });
     let connectionReplacedMessage = '';
     let reconnectAfterRefresh = false;
@@ -202,10 +203,12 @@ function App() {
       setSocketStatus(`connection error: ${error.message}`);
       if (error.data?.code !== 'ACCESS_TOKEN_EXPIRED' && error.data?.code !== 'ACCESS_TOKEN_MISSING') {
         handleSessionExpired(error.message);
+        nextSocket.disconnect();
         return;
       }
       if (reconnectAfterRefresh) {
         handleSessionExpired(error.message);
+        nextSocket.disconnect();
         return;
       }
       reconnectAfterRefresh = true;
@@ -214,6 +217,7 @@ function App() {
         nextSocket.connect();
       } catch (refreshError) {
         handleSessionExpired(refreshError.message);
+        nextSocket.disconnect();
       }
     });
     return () => {
@@ -282,6 +286,8 @@ function App() {
     } catch {
       // Local logout must complete even when the network request fails.
     }
+    if (socket)
+      socket.disconnect();
     setCurrentUser(null);
     setAuthSession(null);
     clearAuthSession();

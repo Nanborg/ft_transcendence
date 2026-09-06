@@ -8,7 +8,7 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         friends: friendsData, //test-nico-friends
         friendsStatus,
         friendsError,
-        submitAcceptFriend, //test-nico-friends
+        submitAcceptFriend,
         submitRemoveFriend,
     } = friends;
     const [friendSearchInput, setFriendSearchInput] = useState('');
@@ -20,7 +20,6 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
     const friendList = friendsData?.friends || [];
     const pendingReceived = friendsData?.pendingReceived || [];
     const pendingSent = friendsData?.pendingSent || [];
-    //test-nico-friends-end
     const isDisabled = friendsStatus === 'loading';
 
     useEffect(() => {
@@ -168,6 +167,7 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
                                         <span>{friend.username}</span>
+                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                         <button
                                             className="btn btn-outline-primary"

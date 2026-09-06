@@ -34,3 +34,18 @@
   color: var(--color-muted);
 }
 
+.dot_status {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  border-radius: 50%;
+}
+
+.friend_online {
+  background-color: green;
+}
+
+.friend_offline {
+  background-color: red;
+}
+
