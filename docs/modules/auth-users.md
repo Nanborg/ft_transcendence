@@ -87,6 +87,8 @@ sequenceDiagram
 - `backend/src/middlewares/authToken.js`
 - `backend/src/middlewares/socketAuth.js`
 - `frontend/src/features/auth/DevLoginForm.jsx`
+- `frontend/src/features/auth/devUserStorage.js`
+- `frontend/src/api/tokenRefresh.js`
 - `frontend/src/api/users.js`
 
 ## API Contracts
@@ -96,6 +98,7 @@ sequenceDiagram
 - `POST /api/token`
 - `DELETE /api/logout`
 - `GET /api/users/me`
+- `GET /api/users/:userId`
 
 ## Validation
 

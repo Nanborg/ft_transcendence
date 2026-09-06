@@ -17,7 +17,7 @@
 - match history page;
 - leaderboard page;
 - profile aggregate stats;
-- detailed stored stats: deaths, damage dealt, damage received and gold earned.
+- detailed stored stats: deaths, damage dealt, damage received, gold earned and upgrades.
 
 ## Flow
 
@@ -49,6 +49,7 @@ Leaderboard:
 - `frontend/src/pages/LeaderboardPage.jsx`
 - `frontend/src/pages/MatchHistoryPage.jsx`
 - `frontend/src/features/profile/ProfileDetails.jsx`
+- `frontend/src/api/scores.js`
 
 ## API Contracts
 

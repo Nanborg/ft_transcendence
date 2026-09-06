@@ -11,6 +11,7 @@
 
 - Privacy Policy Markdown file;
 - Terms of Service Markdown file;
+- frontend legal page rendering both Markdown files;
 - README links to both files.
 
 ## Key Files
@@ -18,6 +19,8 @@
 - `docs/privacy-policy.md`
 - `docs/terms-of-service.md`
 - `README.md`
+- `frontend/src/pages/LegalPage.jsx`
+- `frontend/src/routing/pages.js`
 
 ## Manual Checks
 
@@ -29,6 +32,4 @@
 
 ## Current Limitations
 
-- policies are docs only;
-- app UI does not expose them yet.
-
+- policy content must be rechecked if stored data changes again.

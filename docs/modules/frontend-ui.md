@@ -16,6 +16,9 @@
 - feature hooks;
 - Bootstrap;
 - custom CSS;
+- split CSS files by feature/page;
+- legal pages;
+- global direct chat dock;
 - canvas game rendering.
 
 ## Flow
@@ -36,6 +39,8 @@
 - `frontend/src/features/`
 - `frontend/src/styles.css`
 - `frontend/src/styles/`
+- `frontend/src/features/chat/`
+- `frontend/src/features/game/canvas/`
 
 ## Manual Checks
 
@@ -53,5 +58,4 @@
 
 - form attributes need review;
 - browser console must be cleaned;
-- Privacy/Terms pages are not integrated in UI yet.
-
+- final console and form review still needed before evaluation.

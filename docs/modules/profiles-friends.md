@@ -17,6 +17,7 @@
 - progression display;
 - badges;
 - badge sprite sheet;
+- public profile panel from chat/friends context;
 - friends list;
 - add friend;
 - remove friend.
@@ -51,10 +52,12 @@ Friends:
 - `frontend/src/pages/FriendsPage.jsx`
 - `frontend/src/features/profile/`
 - `frontend/src/features/friends/`
+- `frontend/src/features/chat/PublicProfilePanel.jsx`
 
 ## API Contracts
 
 - `GET /api/users/me`
+- `GET /api/users/:userId`
 - `PATCH /api/users/me`
 - `GET /api/users/search`
 - `GET /api/friends`

@@ -44,7 +44,7 @@ sequenceDiagram
   Frontend->>Backend: player input
   Backend->>Engine: engine command
   Engine-->>Backend: game state
-  Backend-->>Frontend: game update
+  Backend-->>Frontend: game:state:init/update
   Engine-->>Backend: game end
   Backend->>Database: save stats
 ```
@@ -52,11 +52,14 @@ sequenceDiagram
 ## Key Files
 
 - `game_engine/src/`
+- `game_engine/src/entities/`
 - `backend/src/services/gameEngineService.js`
 - `backend/src/services/gameService.js`
 - `backend/src/socket/socketHandler.js`
+- `backend/src/socket/handlers/gameHandlers.js`
 - `frontend/src/pages/GamePage.jsx`
 - `frontend/src/features/game/`
+- `frontend/src/features/game/canvas/`
 - `frontend/src/assets/game/`
 
 ## Socket Events

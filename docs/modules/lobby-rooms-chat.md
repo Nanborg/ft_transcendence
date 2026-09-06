@@ -17,6 +17,10 @@
 - max 4 players;
 - ready toggle;
 - room chat;
+- room chat history;
+- direct chat;
+- game invitations;
+- user blocking for direct chat;
 - leave room;
 - room cleanup.
 
@@ -53,8 +57,9 @@ sequenceDiagram
   Frontend->>Backend: room event
   Backend->>Database: Save room state
   Backend-->>Frontend: room:update
-  User->>Frontend: Ready / chat / start
+  User->>Frontend: Ready / room chat / direct chat / invite / start
   Frontend->>Backend: Socket event
+  Backend->>Database: Save chat or invitation when needed
   Backend-->>Frontend: Room update
 ```
 
@@ -62,7 +67,11 @@ sequenceDiagram
 
 - `backend/src/socket/rooms.js`
 - `backend/src/socket/socketHandler.js`
+- `backend/src/socket/handlers/roomHandlers.js`
+- `backend/src/socket/handlers/chatHandlers.js`
+- `backend/src/services/chatService.js`
 - `frontend/src/features/room/useRoom.js`
+- `frontend/src/features/chat/`
 - `frontend/src/pages/LobbyPage.jsx`
 - `frontend/src/pages/RoomPage.jsx`
 
@@ -77,6 +86,23 @@ sequenceDiagram
 - `room:removed`
 - `player:ready`
 - `chat:message`
+- `chat:history:request`
+- `chat:history`
+- `chat:direct:message`
+- `chat:direct:history:request`
+- `chat:direct:history`
+- `chat:direct:conversations:request`
+- `chat:direct:conversations`
+- `chat:invitation:send`
+- `chat:invitation:list:request`
+- `chat:invitation:list`
+- `chat:invitation:respond`
+- `chat:invitation:update`
+- `chat:block`
+- `chat:unblock`
+- `chat:blocked:request`
+- `chat:blocked`
+- `chat:block:update`
 - `game:start`
 
 ## Validation
@@ -89,6 +115,7 @@ Automatic checks:
 - duplicate room membership is handled;
 - chat requires room membership;
 - empty chat message is rejected.
+- direct chat rejects blocked users.
 
 ## Manual Checks
 

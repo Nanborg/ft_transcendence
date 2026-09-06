@@ -17,6 +17,9 @@
 - user routes;
 - friend routes;
 - score routes.
+- room persistence;
+- chat messages;
+- direct messages, blocks and game invitations.
 
 ## Flow
 
@@ -31,6 +34,8 @@
 - `backend/src/server.js`
 - `backend/src/db.js`
 - `backend/src/routes/`
+- `backend/src/services/`
+- `backend/src/socket/`
 - `backend/prisma/schema.prisma`
 - `backend/prisma/migrations/`
 
@@ -71,4 +76,3 @@ Automatic checks:
 - migrations on clean database;
 - API errors in demo flow;
 - database persistence after restart.
-
