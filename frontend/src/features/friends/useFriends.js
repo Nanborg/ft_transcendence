@@ -39,7 +39,7 @@ export function useFriends(socket, currentUser, onSessionExpired) {
     useEffect(() => {
         if(!socket)
             return;
-        function handleUserStatus(payload)
+        async function handleUserStatus(payload)
         {
             setFriends((curList) => {
                 if (!curList || !curList.friends)
@@ -52,9 +52,15 @@ export function useFriends(socket, currentUser, onSessionExpired) {
                 return { ...curList, friends: newFriends };
             });
         }
-        socket.on('user_status', handleUserStatus);
+        async function handleFriendUpdate(payload)
+        {
+            await loadFriends();
+        }
+        socket.on('user:status', handleUserStatus);
+        socket.on('friend:update', handleFriendUpdate);
         return () => {
-            socket.off('user_status', handleUserStatus);
+            socket.off('user:status', handleUserStatus);
+            socket.off('friend:update', handleFriendUpdate);
         };
     }, [socket]);
 

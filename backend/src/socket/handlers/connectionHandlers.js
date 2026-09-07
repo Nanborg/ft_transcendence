@@ -39,7 +39,7 @@ function registerConnectionHandlers(io, socket)
                     const userRooms = await getRoomsByUserId(socket.user.id);
                     if (!isConnected(socket.user.id))
                     {
-                        io.emit('user_status', {
+                        io.emit('user:status', {
                             userId: socket.user.id,
                             isConnected: false,
                         });

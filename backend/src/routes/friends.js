@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
-const { isConnected } = require("../socket/connections");
+const { getConnection, isConnected } = require("../socket/connections");
 
 router.get("/", authToken, async (req, res) => {
     try {
@@ -80,6 +80,9 @@ router.post("/:id", authToken, async (req, res) => {
                 status: "PENDING"
             }
         })
+        const Connection = getConnection(friendId);
+        if(Connection)
+            Connection.socket.emit("friend:update");
         res.status(200).json({ message: "POST friends succes" });
     }
     catch (error) {
@@ -114,6 +117,9 @@ router.patch("/:id/accept", authToken, async (req, res) => {
             where: { id: requestToAccept.id},
             data: { status: "ACCEPTED" }
         });
+        const Connection = getConnection(friendId);
+        if(Connection)
+            Connection.socket.emit("friend:update");
         res.status(200).json({ message: "PATCH friends succes" })
     }
     catch (error) {
@@ -147,6 +153,9 @@ router.delete("/:id", authToken, async (req, res) => {
             await prisma.friendship.delete({
                 where: { id: existingFriendship.id }
             });
+            const Connection = getConnection(friendId);
+            if(Connection)
+                Connection.socket.emit("friend:update");
             return res.status(200).json({ message: "DELETE friends succes" });
         }
         return res.status(404).json({ error: "no relationship found" });
