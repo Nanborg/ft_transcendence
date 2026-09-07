@@ -52,7 +52,7 @@ function ProgressRow({ label, value, target })
   );
 }
 
-export function ProfileDetails({ profileUser }) {
+export function ProfileDetails({ profileUser, editForm = null }) {
   const stats = profileUser.stats ?? {};
   const gamesPlayed = stats.gamesPlayed ?? 0;
   const wins = stats.wins ?? 0;
@@ -89,13 +89,16 @@ export function ProfileDetails({ profileUser }) {
         <ProgressRow label="Damage received" value={damageReceived} target={getMilestone(damageReceived, [1000, 5000, 15000])} />
         <ProgressRow label="Gold earned" value={goldEarned} target={getMilestone(goldEarned, [1000, 5000, 15000])} />
       </dl>
-      <dl className="profile-performance shell-window">
-        <h2>Performance</h2>
-        <div>
-          <dt>Win rate</dt>
-          <dd>{stats.winRate ?? 0}%</dd>
-        </div>
-      </dl>
+      <div className="profile-utility-row">
+        <dl className="profile-performance shell-window">
+          <h2>Performance</h2>
+          <div>
+            <dt>Win rate</dt>
+            <dd>{stats.winRate ?? 0}%</dd>
+          </div>
+        </dl>
+        {editForm}
+      </div>
       <section className="profile-badges shell-window">
         <h2>Badges</h2>
         <div className="profile-badge-list">

@@ -132,6 +132,21 @@
   padding: 16px;
 }
 
+.profile-utility-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr);
+  gap: 14px;
+  padding: 0;
+}
+
+.profile-utility-row .profile-performance,
+.profile-utility-row .profile-edit-form {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
 .profile-badge-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
@@ -201,7 +216,8 @@
 .profile-edit-form {
   display: grid;
   gap: 8px;
-  width: min(520px, 100%);
+  align-content: start;
+  width: 100%;
   margin: 0;
   padding: 16px;
   opacity: 0.82;
@@ -218,6 +234,10 @@
 
 @media (max-width: 860px) {
   .profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-utility-row {
     grid-template-columns: 1fr;
   }
 }

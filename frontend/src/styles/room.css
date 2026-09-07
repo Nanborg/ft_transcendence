@@ -42,7 +42,7 @@
 .room-current {
   display: grid;
   grid-template-columns: minmax(280px, 0.75fr) minmax(360px, 1.25fr);
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 16px;
   min-height: inherit;
 }
@@ -54,18 +54,18 @@
 
 .room-players {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 3;
 }
 
 .room-current > .room-chat {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   min-height: 0;
 }
 
 .room-actions {
   grid-column: 1 / -1;
-  grid-row: 3;
+  grid-row: 2;
 }
 
 .room-started {
@@ -218,6 +218,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-start;
   padding: 12px;
 }
 

@@ -71,37 +71,41 @@ export function ProfilePage({
       )}
       {profileStatus === 'loaded' && profileUser && (
         <>
-          <ProfileDetails profileUser={profileUser} />
-          <form className="profile-edit-form shell-window" onSubmit={handleSubmit}>
-            <label htmlFor="profile-username">
-              Username
-              <input
-                id="profile-username"
-                name="username"
-                className="form-control"
-                value={username}
-                onChange={event => setUsername(event.target.value)}
-                autoComplete="username"
-                required>
-              </input>
-            </label>
-            <label htmlFor="profile-avatar-url">
-              Avatar URL
-              <input
-                id="profile-avatar-url"
-                name="avatarUrl"
-                className="form-control"
-                value={avatar}
-                onChange={event => setAvatar(event.target.value)}
-                autoComplete="url">
-              </input>
-            </label>
-            <button className="btn btn-success" type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
-              {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}
-            </button>
-            {saveStatus === 'saved' && <p className="alert alert-success">Profile saved.</p>}
-            {saveStatus === 'error' && <p className="alert alert-danger" role="alert">{saveError}</p>}
-          </form>
+          <ProfileDetails
+            profileUser={profileUser}
+            editForm={(
+              <form className="profile-edit-form shell-window" onSubmit={handleSubmit}>
+                <label htmlFor="profile-username">
+                  Username
+                  <input
+                    id="profile-username"
+                    name="username"
+                    className="form-control"
+                    value={username}
+                    onChange={event => setUsername(event.target.value)}
+                    autoComplete="username"
+                    required>
+                  </input>
+                </label>
+                <label htmlFor="profile-avatar-url">
+                  Avatar URL
+                  <input
+                    id="profile-avatar-url"
+                    name="avatarUrl"
+                    className="form-control"
+                    value={avatar}
+                    onChange={event => setAvatar(event.target.value)}
+                    autoComplete="url">
+                  </input>
+                </label>
+                <button className="btn btn-success" type="submit" disabled={saveStatus === 'loading' || !username.trim()}>
+                  {saveStatus === 'loading' ? 'Saving...' : 'Save Profile'}
+                </button>
+                {saveStatus === 'saved' && <p className="alert alert-success">Profile saved.</p>}
+                {saveStatus === 'error' && <p className="alert alert-danger" role="alert">{saveError}</p>}
+              </form>
+            )}
+          />
         </>
       )}
       </div>

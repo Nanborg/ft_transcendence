@@ -423,7 +423,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && currentPage.id !== 'profile' && currentPage.id !== 'login' && currentPage.id !== 'game' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id === 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
       <GlobalChatDock
         currentUser={currentUser}
