@@ -62,7 +62,6 @@ export function ProfilePage({
     <div className="shell-screen shell-screen--profile">
       <PageHeading
         title="Profile"
-        description="Player dossier"
         actions={[
           { label: 'Match History', href: '#/match-history' },
           { label: 'Back to Menu', href: '#/' },

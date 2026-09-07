@@ -9,7 +9,6 @@ import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
-import { AppHeader } from './components/AppHeader';
 import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -297,7 +296,6 @@ function App() {
 
   return (
     <div className="app-shell">
-      {currentPage.id !== 'home' && currentPage.id !== 'game' && (<AppHeader />)}
       <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (

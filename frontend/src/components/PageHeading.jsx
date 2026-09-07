@@ -9,14 +9,16 @@ export function PageHeading({ title, description, actions = [] })
       </nav>
     );
   }
+  let descriptionContent = null;
+  if (description)
+    descriptionContent = <p>{description}</p>;
 
   return (
     <header className="page-heading">
       <div>
-        <span className="page-heading-kicker">Command</span>
         <h1 id="page-title">{title}</h1>
       </div>
-      <p>{description}</p>
+      {descriptionContent}
       {actionNav}
     </header>
   );

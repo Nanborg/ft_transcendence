@@ -37,7 +37,6 @@ export function LobbyPage({ title, description, currentUser, socket, room, frien
             />
 
             <div className="lobby-panel">
-                <h2>Lobby terminal</h2>
                 {!currentUser && (
                     <p className="lobby-error">Login first to create or join a room.</p>
                 )}

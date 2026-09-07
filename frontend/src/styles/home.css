@@ -6,27 +6,16 @@
   overflow: hidden;
   border: 0;
   border-radius: 0;
-  background: #000000;
+  background: transparent;
 }
 
 .home-game-scene {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 45%, rgba(0, 255, 255, 0.12), transparent 18%),
-    radial-gradient(circle at 78% 28%, rgba(255, 153, 0, 0.16), transparent 16%),
-    linear-gradient(180deg, #111111, #000000);
-}
-
-.home-arena-grid {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(rgba(0, 255, 255, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.12) 1px, transparent 1px);
-  background-size: 48px 48px;
-  transform: perspective(520px) rotateX(58deg) scale(1.35);
-  transform-origin: center bottom;
+    radial-gradient(circle at 50% 45%, rgba(0, 255, 255, 0.08), transparent 24%),
+    radial-gradient(circle at 78% 28%, rgba(255, 153, 0, 0.10), transparent 22%),
+    rgba(0, 0, 0, 0.10);
 }
 
 .home-main-menu {
@@ -41,7 +30,7 @@
   padding: 18px;
   border: 1px solid rgba(100, 100, 100, 0.25);
   border-radius: 8px;
-  background: rgba(10, 20, 30, 0.52);
+  background: rgba(0, 0, 0, 0.30);
   text-align: center;
   transform: translate(-50%, -50%);
   backdrop-filter: blur(8px);
@@ -73,7 +62,7 @@
 
 .home-menu-card {
   display: grid;
-  gap: 6px;
+  place-items: center start;
   min-height: 94px;
   padding: 14px;
   color: var(--color-text);
@@ -81,7 +70,7 @@
   text-decoration: none;
   border: 1px solid rgba(0, 255, 255, 0.26);
   border-radius: var(--radius-panel);
-  background: rgba(0, 0, 0, 0.48);
+  background: rgba(0, 0, 0, 0.34);
   transition:
     transform 140ms ease,
     border-color 140ms ease,
@@ -104,11 +93,6 @@
 .home-menu-card strong {
   color: var(--color-cyan);
   font-size: 18px;
-}
-
-.home-menu-card span {
-  color: var(--color-muted);
-  font-size: 13px;
 }
 
 .home-menu-card--primary {
