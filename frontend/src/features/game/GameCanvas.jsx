@@ -28,6 +28,37 @@ function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
     context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 }
 
+function drawMapWalls(context, gameMap, camera)
+{
+    if (!Array.isArray(gameMap?.rows) || !(gameMap?.scale > 0))
+        return;
+    const tilePixels = gameMap.scale * camera.scale;
+    const firstRow = Math.max(0, Math.floor(camera.top / gameMap.scale));
+    const lastRow = Math.min(gameMap.rows.length - 1, Math.ceil(camera.bottom / gameMap.scale));
+
+    context.fillStyle = '#334155';
+    context.strokeStyle = '#64748b';
+    context.lineWidth = 1;
+    for (let row = firstRow; row <= lastRow; row++)
+    {
+        const line = gameMap.rows[row];
+        if (typeof line !== 'string')
+            continue;
+        const firstCol = Math.max(0, Math.floor(camera.left / gameMap.scale));
+        const lastCol = Math.min(line.length - 1, Math.ceil(camera.right / gameMap.scale));
+        for (let col = firstCol; col <= lastCol; col++)
+        {
+            if (line[col] !== '#' && line[col] !== 'X')
+                continue;
+            context.fillStyle = line[col] === 'X' ? '#000000' : '#334155';
+            const x = camera.offsetX + (col * gameMap.scale - camera.left) * camera.scale;
+            const y = camera.offsetY + (row * gameMap.scale - camera.top) * camera.scale;
+            context.fillRect(x, y, tilePixels, tilePixels);
+            context.strokeRect(x, y, tilePixels, tilePixels);
+        }
+    }
+}
+
 export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
@@ -296,6 +327,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             context.fillRect(0, 0, canvas.width, canvas.height);
             drawMapBackgroundImage(context, gameSoilImageRef.current, canvas, camera, renderData.gameMap);
             drawGrid(context, canvas, camera);
+            drawMapWalls(context, renderData.gameMap, camera);
             drawStaticMapEntities({
                 context,
                 gameMap: renderData.gameMap,

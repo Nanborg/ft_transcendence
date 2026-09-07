@@ -443,6 +443,7 @@ class GameEngineService extends EventEmitter {
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
+            rows: mapPayload.rows,
             spawnX: mapPayload.spawnX,
             spawnY: mapPayload.spawnY,
             entities: mapPayload.entities,

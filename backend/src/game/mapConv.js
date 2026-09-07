@@ -13,7 +13,7 @@ const CHAR_CONFIG = {
 };
 
 // Characters that are just terrain and should never become entities.
-const IGNORED_CHARS = new Set(['.', 'S']);
+const IGNORED_CHARS = new Set(['.', 'S', 'X']);
 
 // Reads map file and converts the entities to the JSON format.
 function mapConv(filePath, roomId) {
@@ -72,6 +72,7 @@ function mapConv(filePath, roomId) {
 		width,
 		height,
 		scale: SCALE,
+		rows: gridLines,
 		spawnX: spawn.x * SCALE + HALF_SCALE,
 		spawnY: spawn.y * SCALE + HALF_SCALE,
 		entities,
