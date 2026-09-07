@@ -72,7 +72,7 @@ export function ProfileDetails({ profileUser }) {
 
   return (
     <section className="profile-details">
-      <div>
+      <div className="profile-identity shell-window">
         <h2>Profile</h2>
         <span className="profile-avatar" aria-label={`${displayName} avatar`}>
           {avatarUrl && !avatarFailed ? ( <img src={avatarUrl} alt="" onError={() => setAvatarFailed(true)}/>
@@ -81,7 +81,7 @@ export function ProfileDetails({ profileUser }) {
         <p>{displayName}</p>
       </div>
 
-      <dl>
+      <dl className="profile-progression shell-window">
         <h2>Progression</h2>
         <ProgressRow label="Games played" value={gamesPlayed} target={getMilestone(gamesPlayed, [5, 20, 50, 200])} />
         <ProgressRow label="Wins" value={wins} target={getMilestone(wins, [3, 10, 25, 50])} />
@@ -89,14 +89,14 @@ export function ProfileDetails({ profileUser }) {
         <ProgressRow label="Damage received" value={damageReceived} target={getMilestone(damageReceived, [1000, 5000, 15000])} />
         <ProgressRow label="Gold earned" value={goldEarned} target={getMilestone(goldEarned, [1000, 5000, 15000])} />
       </dl>
-      <dl>
+      <dl className="profile-performance shell-window">
         <h2>Performance</h2>
         <div>
           <dt>Win rate</dt>
           <dd>{stats.winRate ?? 0}%</dd>
         </div>
       </dl>
-      <section className="profile-badges">
+      <section className="profile-badges shell-window">
         <h2>Badges</h2>
         <div className="profile-badge-list">
           {badges.map(badge => (

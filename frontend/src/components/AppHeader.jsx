@@ -1,13 +1,10 @@
-import { MainNav } from './MainNav';
-
-export function AppHeader({ pages, currentPageId }) {
+export function AppHeader() {
   return (
-    <header className="app-header navbar navbar-expand-lg">
+    <header className="app-header">
       <a className="brand" href="#/">
-        ft_transcendence
+        <span className="brand-mark" aria-hidden="true" />
+        <span>ft_transcendence</span>
       </a>
-
-      <MainNav pages={pages} currentPageId={currentPageId} />
     </header>
   );
 }

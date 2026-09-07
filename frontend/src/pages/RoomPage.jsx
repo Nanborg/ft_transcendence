@@ -20,8 +20,16 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
   const canStartGame = !isDisabled && currentRoom?.status === 'waiting' && allPlayersReady && !gameStarted;
 
   return (
-    <>
-      <PageHeading title={title} description={description} />
+    <div className="shell-screen shell-screen--room">
+      <PageHeading
+        title={title}
+        description={description}
+        actions={[
+          { label: 'Back to Lobby', href: '#/lobby' },
+          ...(currentRoom?.status === 'playing' || gameStarted ? [{ label: 'Enter Game', href: '#/game' }] : []),
+          { label: 'Main Menu', href: '#/' },
+        ]}
+      />
 
       <div className="room-panel">
         {!currentUser && (
@@ -30,7 +38,7 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
 
         {currentRoom ? (
           <div className="room-current">
-            <header className="room-summary">
+            <header className="room-summary shell-window">
               <div>
                 <h2>{currentRoom.name || 'Current room'}</h2>
                 <p className="room-muted">Room id: {currentRoom.id}</p>
@@ -40,7 +48,7 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
               </p>
             </header>
 
-            <div className="room-players">
+            <div className="room-players shell-window">
               <h3>Players</h3>
 
               {players.length > 0 ? (
@@ -61,7 +69,7 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
                 <p>No players yet.</p>
               )}
             </div>
-            <div className="room-actions">
+            <div className="room-actions shell-window">
               <button
                 type="button"
                 className="room-ready-button btn btn-success"
@@ -105,7 +113,7 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
             />
           </div>
         ) : (
-          <div className="room-empty">
+          <div className="room-empty shell-window">
             <h2>No active room</h2>
             <p>Create or join a room from the lobby first.</p>
             <button className="btn btn-primary" type="button" onClick={() => { window.location.hash = '#/lobby'; }}>
@@ -122,6 +130,6 @@ export function RoomPage({ title, description, socket, currentUser, room, chat})
           <p className="room-error alert alert-danger">{roomError}</p>
         )}
       </div>
-    </>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-export function MainNav({ pages, currentPageId }) {
+export function MainNav({ pages, currentPageId, onNavigate }) {
   return (
     <nav className="main-nav nav" aria-label="Main navigation">
       {pages.map((page) => (
@@ -7,6 +7,7 @@ export function MainNav({ pages, currentPageId }) {
           className="nav-link"
           href={`#${page.path}`}
           aria-current={currentPageId === page.id ? 'page' : undefined}
+          onClick={onNavigate}
         >
           {page.label}
         </a>

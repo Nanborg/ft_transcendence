@@ -125,7 +125,7 @@ function App() {
     if (!isFortyTwoOauth) {
       return;
     }
-    window.history.replaceState(null, '', '#/login');
+        window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
@@ -137,7 +137,7 @@ function App() {
         writeAuthSession(session);
         setCurrentUser(user);
         setAuthStatus('authenticated');
-        window.location.hash = '#/profile';
+        window.location.hash = '#/';
       } catch (error) {
         setCurrentUser(null);
         setAuthSession(null);
@@ -246,6 +246,7 @@ function App() {
       setAuthStatus('authenticated');
       setDevUserName('');
       setPassword('');
+      window.location.hash = '#/';
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
@@ -297,15 +298,16 @@ function App() {
 
   return (
     <div className="app-shell">
-      {currentPage.id !== 'home' && (<AppHeader pages={pages} currentPageId={currentPage.id} />)}
+      {currentPage.id !== 'home' && currentPage.id !== 'game' && (<AppHeader />)}
       <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (
             <HomePage
               title={currentPage.title}
               description={currentPage.description}
-              pages={pages}
-              currentPageId={currentPage.id}
+              currentUser={currentUser}
+              room={room}
+              onLogout={handleLogout}
             />
           )}
           {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
@@ -404,6 +406,8 @@ function App() {
               currentUser={currentUser}
               socket={socket}
               room={room}
+              friends={friends}
+              directChat={directChat}
             />
           )}
           {currentPage.id === 'leaderboard' && (
@@ -419,7 +423,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id !== 'home' && currentPage.id !== 'profile' && currentPage.id !== 'login' && currentPage.id !== 'game' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
       <GlobalChatDock
         currentUser={currentUser}

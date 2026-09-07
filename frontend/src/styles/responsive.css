@@ -2,17 +2,16 @@
 
 @media (max-width: 760px) {
   .app-header {
-    align-items: flex-start;
-    flex-direction: column;
+    display: contents;
   }
 
   .main-nav {
-    justify-content: flex-start;
+    grid-template-columns: 1fr;
   }
 
   .page-content {
     grid-template-columns: 1fr;
-    padding: 24px 16px;
+    padding: 66px 14px 92px;
   }
 
   .page-panel {
@@ -20,12 +19,48 @@
     padding: 24px;
   }
 
+  .page-heading {
+    grid-template-columns: 1fr;
+  }
+
+  .page-heading p {
+    justify-self: start;
+    text-align: left;
+  }
+
+  .page-heading-actions {
+    grid-column: auto;
+  }
+
+  .status-panel {
+    top: auto;
+    right: 10px;
+    bottom: 72px;
+    width: min(260px, calc(100vw - 20px));
+    max-height: 140px;
+    overflow: hidden;
+  }
+
   .home-game-window {
     min-height: 620px;
   }
 
-  .home-game-title {
+  .home-game-window .app-header {
+    position: relative;
+    inset: auto;
+    width: auto;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .home-main-menu {
+    left: 50%;
     width: calc(100% - 24px);
+  }
+
+  .home-menu-actions {
+    grid-template-columns: 1fr;
   }
 
   .leaderboard-table {
@@ -44,4 +79,25 @@
   h1 {
     font-size: 30px;
   }
+}
+
+@media (max-width: 520px) {
+  .page-content {
+    padding: 64px 10px 96px;
+  }
+
+  .page-panel,
+  .status-panel {
+    padding: 16px;
+  }
+
+  .brand {
+    font-size: 18px;
+  }
+
+  .main-nav a {
+    min-height: 50px;
+    padding: 10px;
+  }
+
 }

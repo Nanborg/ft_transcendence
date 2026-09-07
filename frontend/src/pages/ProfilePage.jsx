@@ -1,5 +1,6 @@
 import { ProfileDetails } from '../features/profile/ProfileDetails';
 import { useEffect, useState } from 'react';
+import { PageHeading } from '../components/PageHeading';
 
 export function ProfilePage({
   profileStatus,
@@ -46,7 +47,16 @@ export function ProfilePage({
     }
   }
   return (
-    <div className="profile-panel">
+    <div className="shell-screen shell-screen--profile">
+      <PageHeading
+        title="Profile"
+        description="Player dossier"
+        actions={[
+          { label: 'Match History', href: '#/match-history' },
+          { label: 'Back to Menu', href: '#/' },
+        ]}
+      />
+      <div className="profile-panel">
       {profileStatus === 'empty' && (
         <div className="profile-empty">
           <p>Login to view your profile.</p>
@@ -62,7 +72,7 @@ export function ProfilePage({
       {profileStatus === 'loaded' && profileUser && (
         <>
           <ProfileDetails profileUser={profileUser} />
-          <form className="profile-edit-form" onSubmit={handleSubmit}>
+          <form className="profile-edit-form shell-window" onSubmit={handleSubmit}>
             <label htmlFor="profile-username">
               Username
               <input
@@ -94,6 +104,7 @@ export function ProfilePage({
           </form>
         </>
       )}
+      </div>
     </div>
   );
 }

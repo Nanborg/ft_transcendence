@@ -77,8 +77,12 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
     }
 
     return (
-        <>
-            <PageHeading title={title} description={description} /> {/* //test-nico-friends */}
+        <div className="shell-screen shell-screen--friends">
+            <PageHeading
+                title={title}
+                description={description}
+                actions={[{ label: 'Back to Menu', href: '#/' }]}
+            /> {/* //test-nico-friends */}
 
             <div className="friends-panel">
                 {!currentUser && (
@@ -87,7 +91,7 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
 
                 {currentUser && (
                     <>
-                        <div className="friends-form">
+                        <div className="friends-form shell-window">
                             <label className="form-label" htmlFor="friend-search">Search users</label>
                             <input
                                 id="friend-search"
@@ -191,6 +195,6 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                     </>
                 )}
             </div>
-        </>
+        </div>
     );
 }

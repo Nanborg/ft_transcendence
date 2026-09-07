@@ -31,8 +31,16 @@ export function MatchHistoryPage({ title, description }) {
         };
     }, []);
     return (
+        <div className="shell-screen shell-screen--history">
         <div className="match-history-panel">
-            <PageHeading title={title} description={description} />
+            <PageHeading
+                title={title}
+                description={description}
+                actions={[
+                    { label: 'Leaderboard', href: '#/leaderboard' },
+                    { label: 'Back to Menu', href: '#/' },
+                ]}
+            />
             {status === 'loading' && <p className="alert alert-info">Loading match history...</p>}
             {status === 'error' && <p className="alert alert-danger" role="alert">{error}</p>}
             {status === 'loaded' && matches.length === 0 && (
@@ -41,7 +49,7 @@ export function MatchHistoryPage({ title, description }) {
             {status === 'loaded' && matches.length > 0 && (
                 <ul className="match-history-list">
                     {matches.map(match => (
-                        <li className="match-history-item" key={match.gameRunId}>
+                        <li className="match-history-item shell-window" key={match.gameRunId}>
                             <button className="match-history-summary btn btn-outline-info" type="button" onClick={() => setExpandedMatchId(expandedMatchId === match.gameRunId ? null : match.gameRunId)}>
                                 <span className="badge text-bg-info">{match.result}</span>
                                 <span>{match.durationSeconds} seconds</span>
@@ -63,6 +71,7 @@ export function MatchHistoryPage({ title, description }) {
                     ))}
                 </ul>
             )}
+        </div>
         </div>
     );
 }

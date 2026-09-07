@@ -2,17 +2,41 @@
 
 .friends-panel {
   display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 1rem;
+  min-height: calc(100vh - 250px);
+  margin-top: 0;
 }
 
 .friends-form {
   display: grid;
   gap: 0.75rem;
-  max-width: 360px;
+  align-content: start;
+  max-width: none;
+  padding: 16px;
+}
+
+.friends-panel > .form-error,
+.friends-panel > .friends-muted,
+.friends-panel > h2,
+.friends-panel > .friends-list {
+  grid-column: 2;
+}
+
+.friends-panel > h2 {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(100, 100, 100, 0.28);
+  border-radius: var(--radius-panel);
+  color: var(--color-green);
+  font-size: 14px;
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.32);
 }
 
 .friends-list {
   display: grid;
+  align-content: start;
   gap: 0.75rem;
   padding: 0;
   margin: 0;
@@ -21,7 +45,7 @@
 
 .friends-item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   gap: 0.75rem;
   align-items: center;
   padding: 0.75rem;
@@ -29,8 +53,16 @@
   border-radius: var(--radius-panel);
 }
 
+.friends-item > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
 .friend-meta,
-.friend-muted {
+.friends-meta,
+.friend-muted,
+.friends-muted {
   color: var(--color-muted);
 }
 
@@ -49,3 +81,23 @@
   background-color: red;
 }
 
+@media (max-width: 720px) {
+  .friends-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .friends-panel > .form-error,
+  .friends-panel > .friends-muted,
+  .friends-panel > h2,
+  .friends-panel > .friends-list {
+    grid-column: 1;
+  }
+
+  .friends-item {
+    grid-template-columns: 1fr auto;
+  }
+
+  .friends-item .btn {
+    width: 100%;
+  }
+}

@@ -5,6 +5,11 @@
   gap: 1rem;
 }
 
+.leaderboard-table-wrap {
+  overflow-x: auto;
+  padding: 10px;
+}
+
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
@@ -18,11 +23,12 @@
 }
 
 .leaderboard-table th {
+  color: var(--color-green);
   font-weight: 700;
+  text-transform: uppercase;
 }
 
 .leaderboard-table td:first-child,
 .leaderboard-table th:first-child {
   width: 72px;
 }
-

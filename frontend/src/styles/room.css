@@ -3,8 +3,8 @@
 .room-panel {
   display: grid;
   gap: 16px;
-  max-width: 500px;
-  margin-top: 24px;
+  min-height: calc(100vh - 250px);
+  margin-top: 0;
 }
 
 .room-form input {
@@ -41,12 +41,46 @@
 
 .room-current {
   display: grid;
-  gap: 12px;
+  grid-template-columns: minmax(280px, 0.75fr) minmax(360px, 1.25fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 16px;
+  min-height: inherit;
+}
+
+.room-summary {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.room-players {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.room-current > .room-chat {
+  grid-column: 2;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.room-actions {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.room-started {
+  grid-column: 1 / -1;
+  grid-row: 4;
 }
 
 .room-players {
   display: grid;
   gap: 8px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid rgba(100, 100, 100, 0.35);
+  border-radius: var(--radius-panel);
+  background: rgba(17, 17, 17, 0.62);
 }
 
 .room-players h3 {
@@ -63,8 +97,8 @@
 }
 
 .room-players li {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
@@ -73,6 +107,8 @@
 }
 
 .room-player-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-weight: 700;
 }
 
@@ -103,6 +139,10 @@
 .room-chat {
   display: grid;
   gap: 8px;
+  padding: 14px;
+  border: 1px solid rgba(100, 100, 100, 0.35);
+  border-radius: var(--radius-panel);
+  background: rgba(17, 17, 17, 0.62);
 }
 
 .room-chat h3 {
@@ -112,9 +152,10 @@
 
 .room-chat-messages {
   display: grid;
+  align-content: start;
   gap: 8px;
-  min-height: 80px;
-  max-height: 180px;
+  min-height: 140px;
+  max-height: none;
   padding: 0;
   margin: 0;
   overflow-y: auto;
@@ -165,6 +206,7 @@
   gap: 1rem;
   align-items: start;
   justify-content: space-between;
+  padding: 14px;
 }
 
 .room-status,
@@ -176,4 +218,30 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  padding: 12px;
+}
+
+@media (max-width: 620px) {
+  .room-summary {
+    flex-direction: column;
+  }
+
+  .room-current {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .room-summary,
+  .room-players,
+  .room-current > .room-chat,
+  .room-actions,
+  .room-started {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .room-players li {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }

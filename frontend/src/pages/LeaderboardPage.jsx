@@ -32,12 +32,21 @@ export function LeaderboardPage({ title, description }) {
 }, []);
 
 return (
+  <div className="shell-screen shell-screen--leaderboard">
   <div className="leaderboard-panel">
-    <PageHeading title={title} description={description} />
+    <PageHeading
+      title={title}
+      description={description}
+      actions={[
+        { label: 'Match History', href: '#/match-history' },
+        { label: 'Back to Menu', href: '#/' },
+      ]}
+    />
     {status === 'loading' && <p className="alert alert-info">Loading leaderboard...</p>}
     {status === 'error' && <p className="alert alert-danger" role="alert">{error}</p>}
     {status === 'loaded' && leaderboard.length === 0 && (<p>No leaderboard data yet.</p>)}
     {status === 'loaded' && leaderboard.length > 0 && (
+      <div className="leaderboard-table-wrap shell-window">
       <table className="leaderboard-table table table-dark table-hover align-middle">
         <thead>
           <tr>
@@ -58,7 +67,9 @@ return (
           ))}
         </tbody>
       </table>
+      </div>
     )}
+  </div>
   </div>
 );
 }

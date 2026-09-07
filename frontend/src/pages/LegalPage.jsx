@@ -37,9 +37,13 @@ function renderMarkdown(markdown) {
 
 export function LegalPage({ title, description, content }) {
 	return (
-		<div className="legal-page">
-			<PageHeading title={title} description={description} />
-			<div className="legal-content">{renderMarkdown(content)}</div>
+		<div className="shell-screen legal-page">
+			<PageHeading
+				title={title}
+				description={description}
+				actions={[{ label: 'Back to Menu', href: '#/' }]}
+			/>
+			<div className="legal-content shell-window">{renderMarkdown(content)}</div>
 		</div>
 	);
 }
