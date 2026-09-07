@@ -21,7 +21,7 @@ function addConnection(userId, socket) {
     });
 }
 
-function isConnected(userId) {
+function isOnline(userId) {
     return connections.get(userId)?.socket?.connected === true;
 }
 
@@ -78,5 +78,5 @@ module.exports = {
     removeConnection,
     getConnection,
     scheduleDisconnect,
-    isConnected
+    isOnline
 };

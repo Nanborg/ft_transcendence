@@ -46,7 +46,7 @@ export function useFriends(socket, currentUser, onSessionExpired) {
                     return curList;
                 const newFriends = curList.friends.map((friend) => {
                     if(friend.id === payload.userId)
-                        return { ...friend, isConnected: payload.isConnected };
+                        return { ...friend, isOnline: payload.isOnline };
                     return friend;
                 });
                 return { ...curList, friends: newFriends };

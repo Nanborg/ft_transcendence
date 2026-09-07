@@ -44,7 +44,7 @@ Friends:
 
 - user enters friend id;
 - backend connects or disconnects relation;
-- backend returns accepted friends, pending requests and `isConnected`;
+- backend returns accepted friends, pending requests and `isOnline`;
 - frontend reloads friends list.
 
 ## Key Files

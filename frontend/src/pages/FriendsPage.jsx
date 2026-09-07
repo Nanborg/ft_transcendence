@@ -167,7 +167,7 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
                                         <span>{friend.username}</span>
-                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
+                                        <span className={`dot_status ${friend.isOnline ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                         <button
                                             className="btn btn-outline-primary"

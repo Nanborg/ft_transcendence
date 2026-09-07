@@ -1,4 +1,4 @@
-const { removeConnection, scheduleDisconnect, isConnected } = require('../connections');
+const { removeConnection, scheduleDisconnect, isOnline } = require('../connections');
 const { leaveAllRooms, getRoomsByUserId } = require('../rooms');
 const { gameEngineService } = require('../../services/gameEngineService');
 
@@ -37,11 +37,11 @@ function registerConnectionHandlers(io, socket)
                 async () =>
                 {
                     const userRooms = await getRoomsByUserId(socket.user.id);
-                    if (!isConnected(socket.user.id))
+                    if (!isOnline(socket.user.id))
                     {
                         io.emit('user:status', {
                             userId: socket.user.id,
-                            isConnected: false,
+                            isOnline: false,
                         });
                     }
                     for (const room of userRooms)
