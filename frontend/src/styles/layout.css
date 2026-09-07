@@ -123,18 +123,15 @@
 }
 
 .page-panel {
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.page-panel {
   min-height: calc(100vh - 162px);
   min-width: 0;
   width: min(1360px, 100%);
   margin: 0 auto;
   padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .shell-screen {
@@ -218,19 +215,6 @@
   overflow-wrap: anywhere;
   white-space: normal;
   text-align: left;
-}
-
-.home-game-window .app-header {
-  display: contents;
-}
-
-.page-content--home {
-  grid-template-columns: 1fr;
-}
-
-.page-content--login,
-.page-content--profile {
-  grid-template-columns: 1fr;
 }
 
 .page-content--home .page-panel {

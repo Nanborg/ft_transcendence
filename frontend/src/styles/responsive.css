@@ -1,16 +1,11 @@
 /* Responsive (mobile) */
 
 @media (max-width: 760px) {
-  .app-header {
-    display: contents;
-  }
-
   .main-nav {
     grid-template-columns: 1fr;
   }
 
   .page-content {
-    grid-template-columns: 1fr;
     padding: 66px 14px 92px;
   }
 
@@ -43,15 +38,6 @@
 
   .home-game-window {
     min-height: 620px;
-  }
-
-  .home-game-window .app-header {
-    position: relative;
-    inset: auto;
-    width: auto;
-    border-right: 0;
-    border-left: 0;
-    border-radius: 0;
   }
 
   .home-main-menu {

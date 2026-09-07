@@ -67,18 +67,18 @@
 }
 
 .dot_status {
+  display: inline-block;
   width: 8px;
   height: 8px;
-  display: inline-block;
   border-radius: 50%;
 }
 
 .friend_online {
-  background-color: green;
+  background: green;
 }
 
 .friend_offline {
-  background-color: red;
+  background: red;
 }
 
 @media (max-width: 720px) {
