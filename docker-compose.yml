@@ -23,8 +23,9 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
+      - backend_node_modules:/app/node_modules
       - engine_map_payloads:/shared/game_maps
-    command: sh -c "npm install && npm run prisma"
+    command: npm run prisma
     environment:
       BACKEND_PORT: ${BACKEND_PORT:-3000}
       GAME_MAP_DIRECTORY: ${GAME_MAP_DIRECTORY:-/shared/game_maps}
@@ -44,6 +45,12 @@ services:
         #Neon-05
       gameplay-cpp:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
     networks:
       - app_net
 
@@ -56,8 +63,10 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./nginx/certs:/etc/nginx/certs:ro
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
     networks:
       - app_net
     restart: unless-stopped
@@ -87,8 +96,6 @@ services:
       context: ./game_engine
     container_name: ft_gameplay_cpp
     ports:
-# TODO(nanborg): Add a gameplay-cpp healthcheck and switch backend depends_on
-#to service_healthy.
       - "${GAMEPLAY_PORT:-7297}:7297/udp"
     volumes:
       - engine_map_payloads:/shared/game_maps:ro
@@ -96,6 +103,7 @@ services:
       - app_net
 
 volumes:
+  backend_node_modules:
   postgres_data:
   engine_map_payloads:
 
