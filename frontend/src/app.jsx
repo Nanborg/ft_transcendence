@@ -175,10 +175,9 @@ function App() {
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
-        connectionReplacedMessage =
-            typeof payload.message === 'string'
-                ? payload.message
-                : 'This account was opened in another tab or browser.';
+        connectionReplacedMessage = 'This account was opened in another tab or browser.';
+        if (typeof payload.message === 'string')
+            connectionReplacedMessage = payload.message;
 
         setSocketStatus(
             `connection replaced: ${connectionReplacedMessage}`

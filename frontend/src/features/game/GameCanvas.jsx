@@ -18,8 +18,12 @@ function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
 {
     if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
         return;
-    const worldWidth = gameMap?.width > 0 ? gameMap.width : canvas.width / camera.scale;
-    const worldHeight = gameMap?.height > 0 ? gameMap.height : canvas.height / camera.scale;
+    let worldWidth = canvas.width / camera.scale;
+    if (gameMap?.width > 0)
+        worldWidth = gameMap.width;
+    let worldHeight = canvas.height / camera.scale;
+    if (gameMap?.height > 0)
+        worldHeight = gameMap.height;
     const drawX = camera.offsetX - camera.left * camera.scale;
     const drawY = camera.offsetY - camera.top * camera.scale;
     const drawWidth = worldWidth * camera.scale;
@@ -50,7 +54,9 @@ function drawMapWalls(context, gameMap, camera)
         {
             if (line[col] !== '#' && line[col] !== 'X')
                 continue;
-            context.fillStyle = line[col] === 'X' ? '#000000' : '#334155';
+            context.fillStyle = '#334155';
+            if (line[col] === 'X')
+                context.fillStyle = '#000000';
             const x = camera.offsetX + (col * gameMap.scale - camera.left) * camera.scale;
             const y = camera.offsetY + (row * gameMap.scale - camera.top) * camera.scale;
             context.fillRect(x, y, tilePixels, tilePixels);

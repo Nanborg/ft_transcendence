@@ -12,12 +12,43 @@ export function HomePage({ title, description, currentUser, room, onLogout })
 {
   const displayName = currentUser?.username || currentUser?.name || 'Player';
   const currentRoom = room?.currentRoom;
-  const resumeAction = currentRoom?.status === 'playing'
-    ? { label: 'Resume Game', href: '#/game', meta: currentRoom.name || currentRoom.id }
-    : currentRoom
-      ? { label: 'Resume Room', href: '#/room', meta: currentRoom.name || currentRoom.id }
-      : null;
-  const actions = resumeAction ? [resumeAction, ...authenticatedActions] : authenticatedActions;
+  let resumeAction = null;
+  if (currentRoom?.status === 'playing')
+    resumeAction = { label: 'Resume Game', href: '#/game', meta: currentRoom.name || currentRoom.id };
+  else if (currentRoom)
+    resumeAction = { label: 'Resume Room', href: '#/room', meta: currentRoom.name || currentRoom.id };
+  let actions = authenticatedActions;
+  if (resumeAction)
+    actions = [resumeAction, ...authenticatedActions];
+  let sessionLabel = 'Session locked';
+  if (currentUser)
+    sessionLabel = `Session: ${displayName}`;
+  let menuContent = (
+    <div className="home-menu-actions home-menu-actions--locked">
+      <a className="home-menu-card home-menu-card--primary" href="#/login">
+        <strong>Login</strong>
+        <span>Open access panel</span>
+      </a>
+    </div>
+  );
+  if (currentUser)
+  {
+    menuContent = (
+      <nav className="home-menu-actions" aria-label="Main menu">
+        {actions.map((action) => (
+          <a className="home-menu-card" href={action.href} key={action.href}>
+            <strong>{action.label}</strong>
+            <span>{action.meta}</span>
+          </a>
+        ))}
+        <button className="home-menu-card home-menu-card--button" type="button" onClick={onLogout}>
+          <strong>Logout</strong>
+          <span>Close current session</span>
+        </button>
+      </nav>
+    );
+  }
+
   return (
     <section className="home-game-window">
       <AppHeader />
@@ -25,30 +56,10 @@ export function HomePage({ title, description, currentUser, room, onLogout })
         <div className="home-arena-grid" />
       </div>
       <div className="home-main-menu">
-        <p className="page-kicker">{currentUser ? `Session: ${displayName}` : 'Session locked'}</p>
+        <p className="page-kicker">{sessionLabel}</p>
         <h1 id="page-title">{title}</h1>
         <p>{description}</p>
-        {!currentUser ? (
-          <div className="home-menu-actions home-menu-actions--locked">
-            <a className="home-menu-card home-menu-card--primary" href="#/login">
-              <strong>Login</strong>
-              <span>Open access panel</span>
-            </a>
-          </div>
-        ) : (
-          <nav className="home-menu-actions" aria-label="Main menu">
-            {actions.map(action => (
-              <a className="home-menu-card" href={action.href} key={action.href}>
-                <strong>{action.label}</strong>
-                <span>{action.meta}</span>
-              </a>
-            ))}
-            <button className="home-menu-card home-menu-card--button" type="button" onClick={onLogout}>
-              <strong>Logout</strong>
-              <span>Close current session</span>
-            </button>
-          </nav>
-        )}
+        {menuContent}
       </div>
     </section>
   );

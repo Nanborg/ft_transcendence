@@ -3,7 +3,8 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
-export function FriendsPage({ title, description, currentUser, friends, directChat, }) {
+export function FriendsPage({ title, description, currentUser, friends, directChat })
+{
     const {
         friends: friendsData, //test-nico-friends
         friendsStatus,
@@ -22,9 +23,11 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
     const pendingSent = friendsData?.pendingSent || [];
     const isDisabled = friendsStatus === 'loading';
 
-    useEffect(() => {
+    useEffect(() =>
+    {
         const search = friendSearchInput.trim();
-        if (!currentUser || search.length < 2) {
+        if (!currentUser || search.length < 2)
+        {
             setFriendSearchResults([]);
             setFriendSearchStatus('idle');
             setFriendSearchError('');
@@ -35,38 +38,55 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         setFriendSearchStatus('loading');
         setFriendSearchError('');
 
-        const timeoutId = setTimeout(async () => {
-            try {
+        const timeoutId = setTimeout(async () =>
+        {
+            try
+            {
                 const params = new URLSearchParams({ search });
                 const results = await apiRequest(`/api/users/search?${params.toString()}`, {});
-                if (!cancelled) {
-                    setFriendSearchResults(results.filter(user => user.id !== currentUser.id));
+                if (!cancelled)
+                {
+                    setFriendSearchResults(results.filter((user) => user.id !== currentUser.id));
                     setFriendSearchStatus('loaded');
                 }
-            } catch (error) {
-                if (cancelled) {
+            }
+            catch (error)
+            {
+                if (cancelled)
                     return;
-                }
                 setFriendSearchResults([]);
-                setFriendSearchStatus(error.status === 404 ? 'loaded' : 'error');
-                setFriendSearchError(error.status === 404 ? '' : error.message);
+                if (error.status === 404)
+                {
+                    setFriendSearchStatus('loaded');
+                    setFriendSearchError('');
+                }
+                else
+                {
+                    setFriendSearchStatus('error');
+                    setFriendSearchError(error.message);
+                }
             }
         }, 250);
 
-        return () => {
+        return () =>
+        {
             cancelled = true;
             clearTimeout(timeoutId);
         };
     }, [currentUser, friendSearchInput]);
 
-    async function submitSearchFriend(friendId) {
-        try {
+    async function submitSearchFriend(friendId)
+    {
+        try
+        {
             setFriendSearchError('');
             await addFriend(friendId);
             setFriendSearchInput('');
             setFriendSearchResults([]);
             await friends.loadFriends();
-        } catch (error) {
+        }
+        catch (error)
+        {
             setFriendSearchError(error.message);
         }
     }
@@ -74,6 +94,34 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
     function openDirectChat(user)
     {
         directChat.openConversation(user);
+    }
+
+    let friendListContent = null;
+    if (friendList.length === 0 && friendsStatus !== 'loading')
+    {
+        friendListContent = <p className="friends-muted">No friends yet.</p>;
+    }
+    else
+    {
+        friendListContent = (
+            <ul className="friends-list">
+                {friendList.map((friend) =>
+                {
+                    let dotStatusClass = 'friend_offline';
+                    if (friend.isConnected)
+                        dotStatusClass = 'friend_online';
+                    return (
+                        <li key={friend.id} className="friends-item">
+                            <span>{friend.username}</span>
+                            <span className={`dot_status ${dotStatusClass}`}></span>
+                            <span className="friends-meta badge text-bg-info">#{friend.id}</span>
+                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(friend)}>Message</button>
+                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Remove</button>
+                        </li>
+                    );
+                })}
+            </ul>
+        );
     }
 
     return (
@@ -99,50 +147,42 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                 className="form-control"
                                 type="search"
                                 value={friendSearchInput}
-                                onChange={event => setFriendSearchInput(event.target.value)}
+                                onChange={(event) => setFriendSearchInput(event.target.value)}
                                 placeholder="Search by username"
                                 autoComplete="off"
                                 disabled={isDisabled}
                             />
-                            {friendSearchStatus === 'loading' && (<p className="friends-muted">Searching...</p>)}
-                            {friendSearchError && (<p className="form-error alert alert-danger" role="alert">{friendSearchError}</p>)}
+                            {friendSearchStatus === 'loading' && <p className="friends-muted">Searching...</p>}
+                            {friendSearchError && <p className="form-error alert alert-danger" role="alert">{friendSearchError}</p>}
                             {friendSearchInput.trim().length >= 2 && friendSearchStatus === 'loaded' && friendSearchResults.length === 0 && (
                                 <p className="friends-muted">No users found.</p>
                             )}
                             {friendSearchResults.length > 0 && (
                                 <ul className="friends-list">
-                                    {friendSearchResults.map(user => (
+                                    {friendSearchResults.map((user) => (
                                         <li key={user.id} className="friends-item">
                                             <span>{user.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{user.id}</span>
-                                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>
-                                                Message
-                                            </button>
-                                            <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>
-                                                Add
-                                            </button>
+                                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>Message</button>
+                                            <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>Add</button>
                                         </li>
                                     ))}
                                 </ul>
                             )}
                         </div>
-                        {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
-                        {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
+                        {friendsStatus === 'loading' && <p className="friends-muted alert alert-info">Loading friends...</p>}
+                        {friendsError && <p className="form-error alert alert-danger" role="alert">{friendsError}</p>}
                         {/* //test-nico-friends-begin */}
                         {pendingReceived.length > 0 && (
                             <>
                                 <h2 className="h5 mt-4">Friend requests</h2>
                                 <ul className="friends-list">
-                                    {pendingReceived.map(friend => (
+                                    {pendingReceived.map((friend) => (
                                         <li key={friend.id} className="friends-item">
                                             <span>{friend.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{friend.id}</span>
-                                            <button className="btn btn-outline-success" type="button" onClick={() => submitAcceptFriend(friend.id)} disabled={isDisabled}>
-                                                Accept
-                                            </button>
-                                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>
-                                                Decline
-                                            </button>
+                                            <button className="btn btn-outline-success" type="button" onClick={() => submitAcceptFriend(friend.id)} disabled={isDisabled}>Accept</button>
+                                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Decline</button>
                                         </li>
                                     ))}
                                 </ul>
@@ -152,13 +192,11 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                             <>
                                 <h2 className="h5 mt-4">Sent requests</h2>
                                 <ul className="friends-list">
-                                    {pendingSent.map(friend => (
+                                    {pendingSent.map((friend) => (
                                         <li key={friend.id} className="friends-item">
                                             <span>{friend.username}</span>
                                             <span className="friends-meta badge text-bg-secondary">Pending</span>
-                                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>
-                                                Cancel
-                                            </button>
+                                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Cancel</button>
                                         </li>
                                     ))}
                                 </ul>
@@ -166,32 +204,7 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                         )}
                         {/* //test-nico-friends-end */}
                         <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
-                        {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
-                            <ul className="friends-list">
-                                {friendList.map(friend => (
-                                    <li key={friend.id} className="friends-item">
-                                        <span>{friend.username}</span>
-                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
-                                        <span className="friends-meta badge text-bg-info">#{friend.id}</span>
-                                        <button
-                                            className="btn btn-outline-primary"
-                                            type="button"
-                                            onClick={() => openDirectChat(friend)}
-                                        >
-                                            Message
-                                        </button>
-                                        <button
-                                            className="btn btn-outline-warning"
-                                            type="button"
-                                            onClick={() => submitRemoveFriend(friend.id)}
-                                            disabled={isDisabled}
-                                        >
-                                            Remove
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
+                        {friendListContent}
                     </>
                 )}
             </div>

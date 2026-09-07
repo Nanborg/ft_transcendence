@@ -1,4 +1,5 @@
-export function AppHeader() {
+export function AppHeader()
+{
   return (
     <header className="app-header">
       <a className="brand" href="#/">
