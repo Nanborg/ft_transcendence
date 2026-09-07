@@ -12,10 +12,26 @@ import { getInterpolatedPosition, getFocusPosition, getCamera, worldToScreen } f
 import { getPlayerSpriteTint, getPlayerAttackDuration } from './canvas/playerSprite';
 import { drawGrid, drawGoldFeedbacks, drawShieldBreakEffects } from './canvas/effects';
 import { drawEntity, drawStaticMapEntities } from './canvas/entityRenderer';
+import gameSoilUrl from '../../assets/game/game_soil.png';
+
+function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
+{
+    if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
+        return;
+    const worldWidth = gameMap?.width > 0 ? gameMap.width : canvas.width / camera.scale;
+    const worldHeight = gameMap?.height > 0 ? gameMap.height : canvas.height / camera.scale;
+    const drawX = camera.offsetX - camera.left * camera.scale;
+    const drawY = camera.offsetY - camera.top * camera.scale;
+    const drawWidth = worldWidth * camera.scale;
+    const drawHeight = worldHeight * camera.scale;
+
+    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+}
 
 export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
+    const gameSoilImageRef = useRef(null);
     const entityTracksRef = useRef(new Map());
     const maxHealthRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
@@ -51,6 +67,18 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     {
         renderDataRef.current.goldFeedbacks = goldFeedbacks;
     }
+
+    useEffect(() =>
+    {
+        const image = new Image();
+        image.src = gameSoilUrl;
+        gameSoilImageRef.current = image;
+        return () =>
+        {
+            if (gameSoilImageRef.current === image)
+                gameSoilImageRef.current = null;
+        };
+    }, []);
 
     useEffect(() =>
     {
@@ -266,6 +294,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#020617';
             context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMapBackgroundImage(context, gameSoilImageRef.current, canvas, camera, renderData.gameMap);
             drawGrid(context, canvas, camera);
             drawStaticMapEntities({
                 context,
