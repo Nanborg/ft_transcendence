@@ -12,10 +12,63 @@ import { getInterpolatedPosition, getFocusPosition, getCamera, worldToScreen } f
 import { getPlayerSpriteTint, getPlayerAttackDuration } from './canvas/playerSprite';
 import { drawGrid, drawGoldFeedbacks, drawShieldBreakEffects } from './canvas/effects';
 import { drawEntity, drawStaticMapEntities } from './canvas/entityRenderer';
+import gameSoilUrl from '../../assets/game/game_soil.png';
+
+function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
+{
+    if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
+        return;
+    let worldWidth = canvas.width / camera.scale;
+    if (gameMap?.width > 0)
+        worldWidth = gameMap.width;
+    let worldHeight = canvas.height / camera.scale;
+    if (gameMap?.height > 0)
+        worldHeight = gameMap.height;
+    const drawX = camera.offsetX - camera.left * camera.scale;
+    const drawY = camera.offsetY - camera.top * camera.scale;
+    const drawWidth = worldWidth * camera.scale;
+    const drawHeight = worldHeight * camera.scale;
+
+    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawMapWalls(context, gameMap, camera)
+{
+    if (!Array.isArray(gameMap?.rows) || !(gameMap?.scale > 0))
+        return;
+    const tilePixels = gameMap.scale * camera.scale;
+    const firstRow = Math.max(0, Math.floor(camera.top / gameMap.scale));
+    const lastRow = Math.min(gameMap.rows.length - 1, Math.ceil(camera.bottom / gameMap.scale));
+
+    context.fillStyle = '#334155';
+    context.strokeStyle = '#64748b';
+    context.lineWidth = 1;
+    for (let row = firstRow; row <= lastRow; row++)
+    {
+        const line = gameMap.rows[row];
+        if (typeof line !== 'string')
+            continue;
+        const firstCol = Math.max(0, Math.floor(camera.left / gameMap.scale));
+        const lastCol = Math.min(line.length - 1, Math.ceil(camera.right / gameMap.scale));
+        for (let col = firstCol; col <= lastCol; col++)
+        {
+            if (line[col] !== '#' && line[col] !== 'X')
+                continue;
+            context.fillStyle = '#334155';
+            if (line[col] === 'X')
+                context.fillStyle = '#000000';
+            const x = camera.offsetX + (col * gameMap.scale - camera.left) * camera.scale;
+            const y = camera.offsetY + (row * gameMap.scale - camera.top) * camera.scale;
+            context.fillRect(x, y, tilePixels, tilePixels);
+            context.strokeRect(x, y, tilePixels, tilePixels);
+        }
+    }
+}
 
 export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
+    const gameSoilImageRef = useRef(null);
     const entityTracksRef = useRef(new Map());
     const maxHealthRef = useRef(new Map());
     const playerAttackRef = useRef(new Map());
@@ -51,6 +104,18 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     {
         renderDataRef.current.goldFeedbacks = goldFeedbacks;
     }
+
+    useEffect(() =>
+    {
+        const image = new Image();
+        image.src = gameSoilUrl;
+        gameSoilImageRef.current = image;
+        return () =>
+        {
+            if (gameSoilImageRef.current === image)
+                gameSoilImageRef.current = null;
+        };
+    }, []);
 
     useEffect(() =>
     {
@@ -266,7 +331,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#020617';
             context.fillRect(0, 0, canvas.width, canvas.height);
+            drawMapBackgroundImage(context, gameSoilImageRef.current, canvas, camera, renderData.gameMap);
             drawGrid(context, canvas, camera);
+            drawMapWalls(context, renderData.gameMap, camera);
             drawStaticMapEntities({
                 context,
                 gameMap: renderData.gameMap,

@@ -1,13 +1,20 @@
 /* Login */
 
 .login-panel {
-  max-width: 420px;
-  margin-top: 24px;
+  display: grid;
+  align-content: center;
+  max-width: 520px;
+  min-height: calc(100vh - 220px);
+  margin: 0 auto;
 }
 
 .login-form {
   display: grid;
-  gap: 10px;
+  gap: 12px;
+}
+
+.login-window {
+  padding: 22px;
 }
 
 .login-form label {
