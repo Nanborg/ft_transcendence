@@ -9,7 +9,6 @@ import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { useProfile } from './features/profile/useProfile';
-import { AppHeader } from './components/AppHeader';
 import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -125,7 +124,7 @@ function App() {
     if (!isFortyTwoOauth) {
       return;
     }
-    window.history.replaceState(null, '', '#/login');
+        window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
@@ -137,7 +136,7 @@ function App() {
         writeAuthSession(session);
         setCurrentUser(user);
         setAuthStatus('authenticated');
-        window.location.hash = '#/profile';
+        window.location.hash = '#/';
       } catch (error) {
         setCurrentUser(null);
         setAuthSession(null);
@@ -175,10 +174,9 @@ function App() {
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
-        connectionReplacedMessage =
-            typeof payload.message === 'string'
-                ? payload.message
-                : 'This account was opened in another tab or browser.';
+        connectionReplacedMessage = 'This account was opened in another tab or browser.';
+        if (typeof payload.message === 'string')
+            connectionReplacedMessage = payload.message;
 
         setSocketStatus(
             `connection replaced: ${connectionReplacedMessage}`
@@ -246,6 +244,7 @@ function App() {
       setAuthStatus('authenticated');
       setDevUserName('');
       setPassword('');
+      window.location.hash = '#/';
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
@@ -297,15 +296,15 @@ function App() {
 
   return (
     <div className="app-shell">
-      {currentPage.id !== 'home' && (<AppHeader pages={pages} currentPageId={currentPage.id} />)}
       <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (
             <HomePage
               title={currentPage.title}
               description={currentPage.description}
-              pages={pages}
-              currentPageId={currentPage.id}
+              currentUser={currentUser}
+              room={room}
+              onLogout={handleLogout}
             />
           )}
           {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
@@ -405,6 +404,8 @@ function App() {
               currentUser={currentUser}
               socket={socket}
               room={room}
+              friends={friends}
+              directChat={directChat}
             />
           )}
           {currentPage.id === 'leaderboard' && (
@@ -420,7 +421,7 @@ function App() {
             />
           )}
         </section>
-        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id === 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
       <GlobalChatDock
         currentUser={currentUser}
