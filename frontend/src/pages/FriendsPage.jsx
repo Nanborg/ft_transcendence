@@ -71,6 +71,17 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         }
     }
 
+    function getRelationStatus(user)
+    {
+        if(friendList.some(friend => { return (friend.id === user.id) }))
+            return ("friend");
+        if(pendingReceived.some(friend => { return (friend.id === user.id) }))
+            return ("accept");
+        if(pendingSent.some(friend => { return (friend.id === user.id) }))
+            return ("pending");
+        return ("none");
+    }
+
     function openDirectChat(user)
     {
         directChat.openConversation(user);
@@ -114,9 +125,10 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                             <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>
                                                 Message
                                             </button>
-                                            <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>
-                                                Add
-                                            </button>
+                                            {getRelationStatus(user) === "none" && (<button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}> add </button>)}
+                                            {getRelationStatus(user) === "accept" && (<button className="btn btn-outline-success" type="button" onClick={() => submitAcceptFriend(user.id)} disabled={isDisabled}> accept </button>)}
+                                            {getRelationStatus(user) === "pending" && (<span className="badge text-bg-secondary">Pending</span>)}
+                                            {getRelationStatus(user) === "friend" && (<button className="btn btn-primary" type="button" disabled={true}> friend </button>)}
                                         </li>
                                     ))}
                                 </ul>
