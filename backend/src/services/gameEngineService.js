@@ -191,15 +191,19 @@ class GameEngineService extends EventEmitter {
         const player = session.players.find(
             (entry) => entry.userId === userId
         );
-        return player ? player.enginePlayerId : null;
+        if (player)
+            return player.enginePlayerId;
+        return null;
     }
 
     getUserIdByEnginePlayerId(roomId, enginePlayerId) {
         const session = this.getSession(roomId);
         if (!session)
             return null;
-        const player = session.players.find(entry => entry.enginePlayerId === enginePlayerId);
-        return player ? player.userId : null;
+        const player = session.players.find((entry) => entry.enginePlayerId === enginePlayerId);
+        if (player)
+            return player.userId;
+        return null;
     }
 
     cachePlayerUpdate(roomId, playerData, tick) {
@@ -215,12 +219,12 @@ class GameEngineService extends EventEmitter {
         const userId = this.getUserIdByEnginePlayerId(roomId, enginePlayerId);
         if (userId === null)
             return null;
-        const previousIndex = session.playerData.findIndex(player =>
+        const previousIndex = session.playerData.findIndex((player) =>
             String(player.playerId) === String(userId)
         );
-        const previousPlayer = previousIndex >= 0
-            ? session.playerData[previousIndex]
-            : null;
+        let previousPlayer = null;
+        if (previousIndex >= 0)
+            previousPlayer = session.playerData[previousIndex];
         const normalizedPlayer = {
             ...previousPlayer,
             ...playerData,
@@ -253,15 +257,20 @@ class GameEngineService extends EventEmitter {
 
     sendPlayerInput(roomId, userId, input) {
         const enginePlayerId = this.getEnginePlayerId(roomId, userId);
-        if (enginePlayerId === null) {
+        if (enginePlayerId === null)
+        {
             throw new Error("Engine player mapping not found");
         }
-        const x =
-            (input.right === true ? 1 : 0) -
-            (input.left === true ? 1 : 0);
-        const y =
-            (input.down === true ? 1 : 0) -
-            (input.up === true ? 1 : 0);
+        let x = 0;
+        if (input.right === true)
+            x += 1;
+        if (input.left === true)
+            x -= 1;
+        let y = 0;
+        if (input.down === true)
+            y += 1;
+        if (input.up === true)
+            y -= 1;
         return this.send({
             type: ENGINE_INPUT_TYPE.MOVE,
             roomId,
@@ -443,6 +452,7 @@ class GameEngineService extends EventEmitter {
             width: mapPayload.width,
             height: mapPayload.height,
             scale: mapPayload.scale,
+            rows: mapPayload.rows,
             spawnX: mapPayload.spawnX,
             spawnY: mapPayload.spawnY,
             entities: mapPayload.entities,

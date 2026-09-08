@@ -28,29 +28,103 @@ function getInvitationStatusLabel(status)
     }
 }
 
-export function InvitationPanel({currentUser, directChat,})
+export function InvitationPanel({currentUser, directChat, friends})
 {
     const {invitations, respondToInvitation,} = directChat;
-
-    if (invitations.length === 0)
-    {
-        return (
-            <section className="chat-invitations">
-                <h3>Game invitations</h3>
-
-                <p className="room-muted">
-                    No invitations.
-                </p>
-            </section>
-        );
-    }
+    const { friends: friendsData, friendsStatus, friendsError, submitAcceptFriend, submitRemoveFriend } = friends;
+    const pendingFriendRequests = friendsData?.pendingReceived ?? [];
+    const pendingSentFriendRequests = friendsData?.pendingSent ?? [];
+    const isFriendActionLoading = friendsStatus === 'loading';
 
     return (
         <section
             className="chat-invitations"
-            aria-label="Game invitations"
+            aria-label="Notifications"
         >
+            <h3>Friend requests</h3>
+
+            {friendsError && (
+                <p className="alert alert-danger" role="alert">
+                    {friendsError}
+                </p>
+            )}
+            {pendingFriendRequests.length === 0 ? (
+                <p className="room-muted">
+                    No friend requests.
+                </p>
+            ) : (
+                <ul className="chat-invitation-list">
+                    {pendingFriendRequests.map(friend => (
+                        <li
+                            key={friend.id}
+                            className="chat-invitation-card"
+                        >
+                            <div className="chat-invitation-details">
+                                <strong>
+                                    {friend.username} sent you a friend request
+                                </strong>
+                                <span>
+                                    User #{friend.id}
+                                </span>
+                            </div>
+                            <div className="chat-invitation-actions">
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    disabled={isFriendActionLoading}
+                                    onClick={() => submitAcceptFriend(friend.id)}
+                                >
+                                    Accept
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-danger"
+                                    disabled={isFriendActionLoading}
+                                    onClick={() => submitRemoveFriend(friend.id)}
+                                >
+                                    Decline
+                                </button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
+            <h3>Sent friend request</h3>
+            {pendingSentFriendRequests.length === 0 ? (
+                <p className="room-muted">
+                    No sent friend requests.
+                </p>
+            ) : (
+                <ul className="chat-invitation-list">
+                    {pendingSentFriendRequests.map(friend => (
+                        <li
+                            key={friend.id}
+                            className="chat-invitation-card"
+                        >
+                            <div className="chat-invitation-details">
+                                <strong>
+                                    Friend request sent to {friend.username}
+                                </strong>
+                                <span>
+                                    User #{friend.id}
+                                </span>
+                            </div>
+                            <strong className="chat-invitation-status">
+                                Waiting for response
+                            </strong>
+                        </li>
+                    ))}
+                </ul>
+            )}
+
             <h3>Game invitations</h3>
+
+            {invitations.length === 0 && (
+                <p className="room-muted">
+                    No game invitations.
+                </p>
+            )}
 
             <ul className="chat-invitation-list">
                 {invitations.map(message => {

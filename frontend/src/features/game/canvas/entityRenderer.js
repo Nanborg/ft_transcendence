@@ -379,7 +379,7 @@ export function drawStaticMapEntities({ context, gameMap, camera, now })
         return;
     gameMap.entities.forEach((entity) =>
     {
-        if (!entity || !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
+        if (!entity || getEntityType(entity) === ENTITY_TYPE.WALL || !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
             return;
         drawEntity({
             context,

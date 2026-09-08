@@ -38,31 +38,31 @@ export function useFriends(socket, currentUser, onSessionExpired) {
 
     useEffect(() => {
         if(!socket)
-            return;
-        async function handleUserStatus(payload)
+            return undefined;
+        function handleUserStatus(payload)
         {
-            setFriends((curList) => {
-                if (!curList || !curList.friends)
-                    return curList;
-                const newFriends = curList.friends.map((friend) => {
-                    if(friend.id === payload.userId)
+            setFriends((currentFriends) => {
+                if (!currentFriends?.friends)
+                    return currentFriends;
+                const updatedFriends = currentFriends.friends.map((friend) => {
+                    if(Number(friend.id) === Number(payload?.userId))
                         return { ...friend, isOnline: payload.isOnline };
                     return friend;
                 });
-                return { ...curList, friends: newFriends };
+                return { ...currentFriends, friends: updatedFriends };
             });
         }
-        async function handleFriendUpdate(payload)
+        function handleFriendshipUpdate()
         {
-            await loadFriends();
+            loadFriends();
         }
         socket.on('user:status', handleUserStatus);
-        socket.on('friend:update', handleFriendUpdate);
+        socket.on('friends:update', handleFriendshipUpdate);
         return () => {
             socket.off('user:status', handleUserStatus);
-            socket.off('friend:update', handleFriendUpdate);
+            socket.off('friends:update', handleFriendshipUpdate);
         };
-    }, [socket]);
+    }, [socket, loadFriends]);
 
     async function submitAddFriend(event) {
         event.preventDefault();

@@ -1,7 +1,9 @@
 /* Profile */
 
 .profile-panel {
-  margin-top: 24px;
+  display: grid;
+  gap: 18px;
+  margin-top: 0;
 }
 
 .profile-empty,
@@ -28,17 +30,17 @@
 
 .profile-details {
   display: grid;
-  gap: 12px;
-  width: min(688px, 100%);
-  max-width: 688px;
-  margin: 0 auto;
+  grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 .profile-details div,
 .profile-progress-row {
   display: grid;
   gap: 4px;
-  padding: 12px 0;
 }
 
 .profile-details dt {
@@ -58,6 +60,7 @@
   display: grid;
   gap: 14px;
   margin: 0;
+  padding: 16px;
 }
 
 .profile-details h2 {
@@ -66,6 +69,8 @@
 
 .profile-details > div:first-child {
   justify-items: center;
+  align-content: center;
+  padding: 18px;
   text-align: center;
 }
 
@@ -96,7 +101,7 @@
 }
 
 .profile-avatar-fallback {
-  color : var(--color-cyan);
+  color: var(--color-cyan);
   font-size: 40px;
   font-weight: 700;
 }
@@ -120,37 +125,53 @@
 .profile-badges {
   display: grid;
   gap: 12px;
+  grid-column: 1 / -1;
+  padding: 16px;
+}
+
+.profile-utility-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.3fr);
+  gap: 14px;
+  padding: 0;
+}
+
+.profile-utility-row .profile-performance,
+.profile-utility-row .profile-edit-form {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
 }
 
 .profile-badge-list {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 128px));
-  column-gap: 2px;
-  row-gap: 3px;
-  justify-content: center;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 8px;
+  justify-content: stretch;
   width: 100%;
 }
 
 .badge-cell {
-  width: 128px;
-  height: 124px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  overflow: hidden;
   box-sizing: border-box;
+  width: 100%;
+  height: 124px;
+  overflow: hidden;
   background: var(--color-surface);
   text-align: center;
 }
 
 .badge-icon-wrapper {
+  display: block;
+  flex-shrink: 0;
   width: 64px;
   height: 64px;
   margin-top: 12px;
-  display: block;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .badge-icon {
@@ -192,8 +213,10 @@
 .profile-edit-form {
   display: grid;
   gap: 8px;
-  width: min(320px, 100%);
-  margin: 28px auto 0;
+  align-content: start;
+  width: 100%;
+  margin: 0;
+  padding: 16px;
   opacity: 0.82;
 }
 
@@ -204,6 +227,16 @@
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+@media (max-width: 860px) {
+  .profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-utility-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .profile-edit-form input {
