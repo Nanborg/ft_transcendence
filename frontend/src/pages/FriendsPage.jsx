@@ -3,7 +3,7 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
-export function FriendsPage({ title, description, currentUser, friends, directChat, }) {
+export function FriendsPage({ title, description, currentUser, currentRoom, friends, directChat, }) {
     const {
         friends: friendsData, //test-nico-friends
         friendsStatus,
@@ -76,6 +76,23 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         directChat.openConversation(user);
     }
 
+    function hasPendingInvitation(friendId)
+    {
+        return directChat.invitations.some(message =>
+            message.invitation?.status === 'PENDING' &&
+            Number(message.author?.id) === Number(currentUser?.id) &&
+            Number(message.recipient?.id) === Number(friendId) &&
+            String(message.invitation?.room?.id ?? '') === String(currentRoom?.id ?? '')
+        );
+    }
+
+    function inviteFriend(friendId)
+    {
+        directChat.sendGameInvitation(currentRoom.id, friendId);
+    }
+
+    const canInvite = currentRoom?.id && currentRoom.status === 'waiting';
+
     return (
         <>
             <PageHeading title={title} description={description} /> {/* //test-nico-friends */}
@@ -124,6 +141,11 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                         </div>
                         {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
                         {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
+                        {directChat.directError && (
+                            <p className="form-error alert alert-danger" role="alert">
+                                {directChat.directError}
+                            </p>
+                        )}
                         {/* //test-nico-friends-begin */}
                         {pendingReceived.length > 0 && (
                             <>
@@ -176,6 +198,19 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                         >
                                             Message
                                         </button>
+                                        {canInvite && (
+                                            <button
+                                                className="btn btn-outline-success"
+                                                type="button"
+                                                onClick={() => inviteFriend(friend.id)}
+                                                disabled={hasPendingInvitation(friend.id) ||
+                                                    directChat.blockedUserIds.includes(Number(friend.id))
+                                                }
+                                            >
+                                                {hasPendingInvitation(friend.id)
+                                                    ? 'invitation sent'
+                                                    : 'Invite'}
+                                            </button>                                        )}
                                         <button
                                             className="btn btn-outline-warning"
                                             type="button"
