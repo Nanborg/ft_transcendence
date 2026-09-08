@@ -2,8 +2,18 @@ const express = require("express");
 const router = express.Router();
 const authToken = require("../middlewares/authToken");
 const prisma = require('../db');
-const { isConnected } = require("../socket/connections");
+const { getConnection, isConnected } = require("../socket/connections");
 
+
+function notifyFriendshipUpdate(...userIds)
+{
+    const uniqueUserIds = new Set(userIds.map(userId => Number(userId)).filter(userId => Number.isInteger(userId)));
+    uniqueUserIds.forEach(userId => {
+        const connection = getConnection(userId);
+        if (connection?.socket?.connected)
+            connection.socket.emit("friends:update");
+    });
+}
 router.get("/", authToken, async (req, res) => {
     try {
         const userData = await prisma.user.findUnique({
@@ -70,17 +80,19 @@ router.post("/:id", authToken, async (req, res) => {
                     where: { id: existingFriendship.id },
                     data: { status: "ACCEPTED" }
                 });
+                notifyFriendshipUpdate(req.user.id, friendId);
                 return res.status(200).json({ message: "POST friends succes" });
             }
         }
         await prisma.friendship.create({
             data: {
                 userId: req.user.id,
-                friendId: friendId,
+                friendId,
                 status: "PENDING"
-            }
-        })
-        res.status(200).json({ message: "POST friends succes" });
+            },
+        });
+        notifyFriendshipUpdate(req.user.id, friendId);
+        return res.status(200).json({ message: "POST friends succes" });
     }
     catch (error) {
         console.error(error);
@@ -114,7 +126,8 @@ router.patch("/:id/accept", authToken, async (req, res) => {
             where: { id: requestToAccept.id},
             data: { status: "ACCEPTED" }
         });
-        res.status(200).json({ message: "PATCH friends succes" })
+        notifyFriendshipUpdate(req.user.id, friendId);
+        return res.status(200).json({ message: "PATCH friends succes" })
     }
     catch (error) {
         console.error(error);
@@ -147,6 +160,7 @@ router.delete("/:id", authToken, async (req, res) => {
             await prisma.friendship.delete({
                 where: { id: existingFriendship.id }
             });
+            notifyFriendshipUpdate(req.user.id, friendId);
             return res.status(200).json({ message: "DELETE friends succes" });
         }
         return res.status(404).json({ error: "no relationship found" });

@@ -345,13 +345,14 @@ export function useDirectChat(socket, currentUser)
         setUnreadInvitationResponseCount(0);
     }
 
-    function sendGameInvitation(roomId)
+    function sendGameInvitation(roomId, recipientId = selectedUser?.id)
     {
-        if (!socket || !selectedUser)
+        const normalizedRecipientId = Number(recipientId);
+        if (!socket || !Number.isInteger(normalizedRecipientId) || normalizedRecipientId <= 0)
             return;
         setDirectError('');
         socket.emit('chat:invitation:send', {
-            recipientId: selectedUser.id,
+            recipientId: normalizedRecipientId,
             roomId,
         });
     }

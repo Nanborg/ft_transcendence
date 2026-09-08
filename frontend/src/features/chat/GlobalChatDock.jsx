@@ -8,6 +8,7 @@ export function GlobalChatDock({
     currentRoom,
     roomChat,
     directChat,
+    friends,
     onInputFocusChange,
     keyboardShortcutEnabled = false,
 })
@@ -27,12 +28,13 @@ export function GlobalChatDock({
         Number(message.recipient?.id) === Number(currentUser?.id) &&
         message.invitation?.status === 'PENDING'
     ).length;
-    const invitationCount = pendingReceivedInvitationCount + directChat.unreadInvitationResponseCount;
+    const pendingFriendRequests = friends?.friends?.pendingReceived ?? [];
+    const notificationCount = pendingReceivedInvitationCount + directChat.unreadInvitationResponseCount + pendingFriendRequests.length;
     const roomUnreadCount = Math.max(
         0,
         roomChat.liveMessageCount - seenRoomMessageCount
     );
-    const totalUnreadCount = roomUnreadCount + directUnreadCount + invitationCount;
+    const totalUnreadCount = roomUnreadCount + directUnreadCount + notificationCount;
 
     useEffect(() => {
         if (!currentRoom?.id)
@@ -83,7 +85,7 @@ export function GlobalChatDock({
     }, [keyboardShortcutEnabled, isOpen, currentRoom?.id, onInputFocusChange,]);
 
     useEffect(() => {
-        if (isOpen && activeTab === 'notifications' && directChat.unreadInvitationResponseCount > 0)
+        if (isOpen && activeTab === 'notification' && directChat.unreadInvitationResponseCount > 0)
             directChat.markInvitationResponsesSeen();
     }, [isOpen, activeTab, directChat.unreadInvitationResponseCount,]);
 
@@ -244,11 +246,11 @@ export function GlobalChatDock({
                             onClick={selectNotificationsTab}
                         >
                             <span>Notifications</span>
-                            {invitationCount > 0 && (
+                            {notificationCount > 0 && (
                                 <span className='global-chat-tab-badge'>
-                                    {invitationCount > 99
+                                    {notificationCount > 99
                                         ? '99+'
-                                        : invitationCount}
+                                        : notificationCount}
                                 </span>
                             )}
                         </button>
@@ -276,6 +278,7 @@ export function GlobalChatDock({
                             <InvitationPanel
                                 currentUser={currentUser}
                                 directChat={directChat}
+                                friends={friends}
                             />
                         )}
                     </div>

@@ -392,6 +392,7 @@ function App() {
               title={currentPage.title}
               description={currentPage.description}
               currentUser={currentUser}
+              currentRoom={room.currentRoom}
               friends={friends}
               directChat={directChat}
             />
@@ -427,6 +428,7 @@ function App() {
         currentRoom={room.currentRoom}
         roomChat={chat}
         directChat={directChat}
+        friends={friends}
         onInputFocusChange={setIsGlobalChatInputFocused}
         keyboardShortcutEnabled={currentPage.id === 'game'}
       />

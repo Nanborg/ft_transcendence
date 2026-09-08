@@ -3,8 +3,7 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
-export function FriendsPage({ title, description, currentUser, friends, directChat })
-{
+export function FriendsPage({ title, description, currentUser, currentRoom, friends, directChat, }) {
     const {
         friends: friendsData, //test-nico-friends
         friendsStatus,
@@ -96,33 +95,22 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
         directChat.openConversation(user);
     }
 
-    let friendListContent = null;
-    if (friendList.length === 0 && friendsStatus !== 'loading')
+    function hasPendingInvitation(friendId)
     {
-        friendListContent = <p className="friends-muted">No friends yet.</p>;
-    }
-    else
-    {
-        friendListContent = (
-            <ul className="friends-list">
-                {friendList.map((friend) =>
-                {
-                    let dotStatusClass = 'friend_offline';
-                    if (friend.isConnected)
-                        dotStatusClass = 'friend_online';
-                    return (
-                        <li key={friend.id} className="friends-item">
-                            <span>{friend.username}</span>
-                            <span className={`dot_status ${dotStatusClass}`}></span>
-                            <span className="friends-meta badge text-bg-info">#{friend.id}</span>
-                            <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(friend)}>Message</button>
-                            <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Remove</button>
-                        </li>
-                    );
-                })}
-            </ul>
+        return directChat.invitations.some(message =>
+            message.invitation?.status === 'PENDING' &&
+            Number(message.author?.id) === Number(currentUser?.id) &&
+            Number(message.recipient?.id) === Number(friendId) &&
+            String(message.invitation?.room?.id ?? '') === String(currentRoom?.id ?? '')
         );
     }
+
+    function inviteFriend(friendId)
+    {
+        directChat.sendGameInvitation(currentRoom.id, friendId);
+    }
+
+    const canInvite = currentRoom?.id && currentRoom.status === 'waiting';
 
     return (
         <div className="shell-screen shell-screen--friends">
@@ -170,6 +158,13 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                                 </ul>
                             )}
                         </div>
+                        {friendsStatus === 'loading' && (<p className="friends-muted alert alert-info">Loading friends...</p>)}
+                        {friendsError && (<p className="form-error alert alert-danger" role="alert">{friendsError}</p>)}
+                        {directChat.directError && (
+                            <p className="form-error alert alert-danger" role="alert">
+                                {directChat.directError}
+                            </p>
+                        )}
                         {friendsStatus === 'loading' && <p className="friends-muted alert alert-info">Loading friends...</p>}
                         {friendsError && <p className="form-error alert alert-danger" role="alert">{friendsError}</p>}
                         {/* //test-nico-friends-begin */}
@@ -204,7 +199,45 @@ export function FriendsPage({ title, description, currentUser, friends, directCh
                         )}
                         {/* //test-nico-friends-end */}
                         <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
-                        {friendListContent}
+                        {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
+                            <ul className="friends-list">
+                                {friendList.map(friend => (
+                                    <li key={friend.id} className="friends-item">
+                                        <span>{friend.username}</span>
+                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
+                                        <span className="friends-meta badge text-bg-info">#{friend.id}</span>
+                                        <button
+                                            className="btn btn-outline-primary"
+                                            type="button"
+                                            onClick={() => openDirectChat(friend)}
+                                        >
+                                            Message
+                                        </button>
+                                        {canInvite && (
+                                            <button
+                                                className="btn btn-outline-success"
+                                                type="button"
+                                                onClick={() => inviteFriend(friend.id)}
+                                                disabled={hasPendingInvitation(friend.id) ||
+                                                    directChat.blockedUserIds.includes(Number(friend.id))
+                                                }
+                                            >
+                                                {hasPendingInvitation(friend.id)
+                                                    ? 'invitation sent'
+                                                    : 'Invite'}
+                                            </button>                                        )}
+                                        <button
+                                            className="btn btn-outline-warning"
+                                            type="button"
+                                            onClick={() => submitRemoveFriend(friend.id)}
+                                            disabled={isDisabled}
+                                        >
+                                            Remove
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </>
                 )}
             </div>
