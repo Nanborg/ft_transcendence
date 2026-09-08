@@ -25,10 +25,10 @@ import {
 } from './spriteAssets';
 import { getSpriteSource } from './spriteUtils';
 
-export function getPlayerSpriteTint(playerEntityId, orderedPlayerIds)
+export function getPlayerSpriteTint(playerId)
 {
-    const playerIndex = orderedPlayerIds.indexOf(String(playerEntityId));
-    if (playerIndex < 0)
+    const playerIndex = Number(playerId);
+    if (!Number.isInteger(playerIndex) || playerIndex < 0)
         return PLAYER_SPRITE_TINTS[0];
     return PLAYER_SPRITE_TINTS[playerIndex % PLAYER_SPRITE_TINTS.length];
 }

@@ -41,7 +41,7 @@ export function GlobalChatDock({
             setActiveTab('private');
 
         setSeenRoomMessageCount(roomChat.liveMessageCount);
-    }, [currentRoom?.id, roomChat.liveMessageCount]);
+    }, [currentRoom?.id]);
 
     useEffect(() => {
         if (!directChat.openRequestId)

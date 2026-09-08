@@ -340,10 +340,6 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 camera,
                 now,
             });
-            const orderedPlayerIds = Array.from(entityTracksRef.current.values()).filter((track) =>
-                getEntityType(track.entity) === ENTITY_TYPE.PLAYER
-            ).map((track) => String(track.entity.entityId)).sort((firstId, secondId) =>
-                firstId.localeCompare(secondId, 'en', { numeric: true }));
             entityTracksRef.current.forEach((track) =>
             {
                 const entityType = getEntityType(track.entity);
@@ -356,7 +352,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 let playerSpriteTint = null;
                 if (entityType === ENTITY_TYPE.PLAYER)
                 {
-                    playerSpriteTint = getPlayerSpriteTint(track.entity.entityId, orderedPlayerIds);
+                    playerSpriteTint = getPlayerSpriteTint(track.entity.state?.playerId);
                 }
                 let attack = null;
                 if (playerId !== null)
