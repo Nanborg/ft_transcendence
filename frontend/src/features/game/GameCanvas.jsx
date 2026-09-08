@@ -14,22 +14,35 @@ import { drawGrid, drawGoldFeedbacks, drawShieldBreakEffects } from './canvas/ef
 import { drawEntity, drawStaticMapEntities } from './canvas/entityRenderer';
 import gameSoilUrl from '../../assets/game/game_soil.png';
 
-function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
+function drawMapBackgroundImage(context, image, camera, gameMap)
 {
     if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
         return;
-    let worldWidth = canvas.width / camera.scale;
-    if (gameMap?.width > 0)
-        worldWidth = gameMap.width;
-    let worldHeight = canvas.height / camera.scale;
-    if (gameMap?.height > 0)
-        worldHeight = gameMap.height;
-    const drawX = camera.offsetX - camera.left * camera.scale;
-    const drawY = camera.offsetY - camera.top * camera.scale;
-    const drawWidth = worldWidth * camera.scale;
-    const drawHeight = worldHeight * camera.scale;
-
-    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+    if (!(gameMap?.scale > 0))
+        return;
+    const textureWorldSize = gameMap.scale * 16;
+    const texturePixls = textureWorldSize * camera.scale;
+    const firstCol = Math.floor(camera.left / textureWorldSize);
+    const lastCol = Math.floor(camera.right / textureWorldSize);
+    const firstRow = Math.floor(camera.top / textureWorldSize);
+    const lastRow = Math.floor(camera.bottom / textureWorldSize);
+    for (let row = firstRow; row <= lastRow; row++)
+    {
+        for (let col = firstCol; col <= lastCol; col++)
+        {
+            const worldX = col * textureWorldSize;
+            const worldY = row * textureWorldSize;
+            const drawX = camera.offsetX + (worldX - camera.left) * camera.scale;
+            const drawY = camera.offsetY + (worldY - camera.top) * camera.scale;
+            context.drawImage(
+                image,
+                drawX,
+                drawY,
+                texturePixls,
+                texturePixls
+            );
+        }
+    }
 }
 
 function drawMapWalls(context, gameMap, camera)
@@ -331,7 +344,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#020617';
             context.fillRect(0, 0, canvas.width, canvas.height);
-            drawMapBackgroundImage(context, gameSoilImageRef.current, canvas, camera, renderData.gameMap);
+            drawMapBackgroundImage(context, gameSoilImageRef.current, camera, renderData.gameMap);
             drawGrid(context, canvas, camera);
             drawMapWalls(context, renderData.gameMap, camera);
             drawStaticMapEntities({
