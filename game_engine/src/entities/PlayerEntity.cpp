@@ -16,9 +16,11 @@ PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY
 	_playerId(playerId),
 	_receivedInput(true),
 	_curAction(PlayerActions::NOACTION),
-	_shieldEntityId(-1) {
-			std::cout << "new player (id " << _playerId << ")\n";
-		}
+	_shieldEntityId(-1)
+{
+	_state["playerId"] = _playerId;
+	std::cout << "new player (id " << _playerId << ")\n";
+}
 
 PlayerEntity::~PlayerEntity( void ) {}
 
