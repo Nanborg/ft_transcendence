@@ -5,7 +5,7 @@ import { addFriend } from '../api/friends';
 
 export function FriendsPage({ title, description, currentUser, currentRoom, friends, directChat, }) {
     const {
-        friends: friendsData, //test-nico-friends
+        friends: friendsData,
         friendsStatus,
         friendsError,
         submitAcceptFriend,
@@ -16,7 +16,6 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
     const [friendSearchStatus, setFriendSearchStatus] = useState('idle');
     const [friendSearchError, setFriendSearchError] = useState('');
 
-    //test-nico-friends-begin
     const friendList = friendsData?.friends || [];
     const pendingReceived = friendsData?.pendingReceived || [];
     const pendingSent = friendsData?.pendingSent || [];
@@ -90,6 +89,17 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
         }
     }
 
+    function getRelationStatus(user)
+    {
+        if(friendList.some(friend => { return (friend.id === user.id) }))
+            return ("friend");
+        if(pendingReceived.some(friend => { return (friend.id === user.id) }))
+            return ("accept");
+        if(pendingSent.some(friend => { return (friend.id === user.id) }))
+            return ("pending");
+        return ("none");
+    }
+
     function openDirectChat(user)
     {
         directChat.openConversation(user);
@@ -118,7 +128,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                 title={title}
                 description={description}
                 actions={[{ label: 'Back to Menu', href: '#/' }]}
-            /> {/* //test-nico-friends */}
+            />
 
             <div className="friends-panel">
                 {!currentUser && (
@@ -152,7 +162,10 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                             <span>{user.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{user.id}</span>
                                             <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>Message</button>
-                                            <button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}>Add</button>
+                                            {getRelationStatus(user) === "none" && (<button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}> add </button>)}
+                                            {getRelationStatus(user) === "accept" && (<button className="btn btn-outline-success" type="button" onClick={() => submitAcceptFriend(user.id)} disabled={isDisabled}> accept </button>)}
+                                            {getRelationStatus(user) === "pending" && (<span className="badge text-bg-secondary">Pending</span>)}
+                                            {getRelationStatus(user) === "friend" && (<button className="btn btn-primary" type="button" disabled={true}> friend </button>)}
                                         </li>
                                     ))}
                                 </ul>
@@ -165,9 +178,6 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                 {directChat.directError}
                             </p>
                         )}
-                        {friendsStatus === 'loading' && <p className="friends-muted alert alert-info">Loading friends...</p>}
-                        {friendsError && <p className="form-error alert alert-danger" role="alert">{friendsError}</p>}
-                        {/* //test-nico-friends-begin */}
                         {pendingReceived.length > 0 && (
                             <>
                                 <h2 className="h5 mt-4">Friend requests</h2>
@@ -197,14 +207,13 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                 </ul>
                             </>
                         )}
-                        {/* //test-nico-friends-end */}
-                        <h2 className="h5 mt-4">Friends</h2> {/* //test-nico-friends */}
+                        <h2 className="h5 mt-4">Friends</h2>
                         {friendList.length === 0 && friendsStatus !== 'loading' ? (<p className="friends-muted">No friends yet.</p>) : (
                             <ul className="friends-list">
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
                                         <span>{friend.username}</span>
-                                        <span className={`dot_status ${friend.isConnected ? "friend_online" : "friend_offline"}`}></span>
+                                        <span className={`dot_status ${friend.isOnline ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                         <button
                                             className="btn btn-outline-primary"

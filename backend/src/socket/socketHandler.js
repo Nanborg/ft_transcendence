@@ -256,9 +256,9 @@ module.exports = (io) =>
     {
         console.log(`socket connected: ${socket.id}`);
         addConnection(socket.user.id, socket);
-        io.emit('user_status', {
+        io.emit('user:status', {
             userId: socket.user.id,
-            isConnected: true,
+            isOnline: true,
         });
         socket.join(getUserSocketRoom(socket.user.id));
         const existingRoom = await getRoomsByUserId(socket.user.id);

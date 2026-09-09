@@ -46,7 +46,7 @@ export function useFriends(socket, currentUser, onSessionExpired) {
                     return currentFriends;
                 const updatedFriends = currentFriends.friends.map((friend) => {
                     if(Number(friend.id) === Number(payload?.userId))
-                        return { ...friend, isConnected: payload.isConnected };
+                        return { ...friend, isOnline: payload.isOnline };
                     return friend;
                 });
                 return { ...currentFriends, friends: updatedFriends };
@@ -56,10 +56,10 @@ export function useFriends(socket, currentUser, onSessionExpired) {
         {
             loadFriends();
         }
-        socket.on('user_status', handleUserStatus);
+        socket.on('user:status', handleUserStatus);
         socket.on('friends:update', handleFriendshipUpdate);
         return () => {
-            socket.off('user_status', handleUserStatus);
+            socket.off('user:status', handleUserStatus);
             socket.off('friends:update', handleFriendshipUpdate);
         };
     }, [socket, loadFriends]);
