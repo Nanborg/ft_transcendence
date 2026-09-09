@@ -17,6 +17,7 @@ import lordGoobPhaseTwoSpriteUrl from '../../../assets/game/enemies/lord-goob-ph
 import lordGoobPhaseThreeSpriteUrl from '../../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../../assets/game/enemies/walking-robot-charge.png';
 import checkpointPlatformSpriteUrl from '../../../assets/game/checkpoint/checkpoint-platform.png';
+import wallRuinsSpriteUrl from '../../../assets/game/walls/wall-ruins-autotile.png';
 
 export const CANVAS_WIDTH = 800;
 export const MIN_CANVAS_HEIGHT = 450;
@@ -400,3 +401,6 @@ lordGoobPhaseTwoSprite.src = lordGoobPhaseTwoSpriteUrl;
 export const lordGoobPhaseThreeSprite = new Image();
 lordGoobPhaseThreeSprite.src = lordGoobPhaseThreeSpriteUrl;
 export const SHIELD_BREAK_DURATION_MS = 400;
+export const WALL_TILE_SOURCE_SIZE = 256;
+export const wallRuinsSprite = new Image();
+wallRuinsSprite.src = wallRuinsSpriteUrl;
