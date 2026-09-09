@@ -13,6 +13,7 @@ import {
     WALKING_ROBOT_AFTERIMAGES,
     SOURCE_GRID_1254_COLUMNS,
     SOURCE_GRID_1254_ROWS,
+    WALKING_ROBOT_WALK_ROWS,
     walkingRobotIdleSprite,
     walkingRobotSprite,
     walkingRobotChargeSprite,
@@ -126,7 +127,7 @@ export function drawWalkingRobotSprite({
     {
         sprite = walkingRobotSprite;
         columns = SOURCE_GRID_1254_COLUMNS;
-        rows = SOURCE_GRID_1254_ROWS;
+        rows = WALKING_ROBOT_WALK_ROWS;
         anchorXs = WALKING_ROBOT_WALK_ANCHOR_X;
         anchorYs = WALKING_ROBOT_WALK_ANCHOR_Y;
         frame = Math.floor(now / WALKING_ROBOT_FRAME_DURATION_MS) %
