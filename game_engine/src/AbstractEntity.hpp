@@ -17,7 +17,6 @@ public:
 	// return true to send updates to client
 	virtual bool tick( void );
 
-
 	bool doTick( void );
 
 	// true means collision, false means no collision
@@ -48,7 +47,7 @@ public:
 
 	protected:
 	// DO NOT OVERRIDE THIS IN LEAVES
-	virtual bool _templateTick( void );
+	virtual bool	_templateTick( void );
 
 	json				_state;
 	const unsigned int	_id, _typeId;

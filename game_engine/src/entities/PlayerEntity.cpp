@@ -19,8 +19,8 @@ PlayerEntity::PlayerEntity( int playerId, int posX, int posY, int velX, int velY
 	_receivedInput(true),
 	_curAction(PlayerActions::NOACTION),
 	_shieldEntityId(-1) {
-			std::cout << "new player (id " << _playerId << ")\n";
-		}
+	std::cout << "new player (id " << _playerId << ")\n";
+}
 
 PlayerEntity::~PlayerEntity( void ) {}
 
@@ -39,17 +39,13 @@ void PlayerEntity::movementInput( int velX, int velY ) {
 	_velY = velY * g_game->getScale();
 
 	int dist = distance(_posX + _velX, _posY + _velY);
-	if (dist > g_game->getScale() * _velCap)
+	if (dist > g_game->getScale() * _velCap && dist != 0)
 	{
 		long dx, dy;
-		dx = _velX;
-		dx *= g_game->getScale() * _velCap;
-		dy = _velY;
-		dy *= g_game->getScale() * _velCap;
-		if (dist != 0) {
-			_velX = dx / dist;
-			_velY = dy / dist;
-		}
+		dx = (long) _velX * g_game->getScale() * _velCap;
+		dy = (long) _velY * g_game->getScale() * _velCap;
+		_velX = dx / dist;
+		_velY = dy / dist;
 	}
 }
 
@@ -65,11 +61,8 @@ void	PlayerEntity::playerAction( const json& in ) {
 	PlayerActions action = in["action"];
 	switch (action)
 	{
-	case PlayerActions::NOACTION: // TODO ewww
-		if (_curAction == PlayerActions::SHIELD)
-			_finish_shield();
-		else
-			_curAction = PlayerActions::NOACTION;
+	case PlayerActions::NOACTION:
+		_action_melee(in);
 		break;
 
 	case PlayerActions::MELEEATT:
@@ -99,6 +92,13 @@ bool	PlayerEntity::_is_valid_attack_direction( const json& in ) const {
 	if (dirX < -1 || dirX > 1 || dirY < -1 || dirY > 1)
 		return false;
 	return !(dirX == 0 && dirY == 0);
+}
+
+void	PlayerEntity::_action_none( const json& in ) {
+	if (_curAction == PlayerActions::SHIELD)
+		_finish_shield();
+	else
+		_curAction = PlayerActions::NOACTION;
 }
 
 void	PlayerEntity::_action_melee( const json& in ) {
@@ -150,43 +150,27 @@ void	PlayerEntity::_action_shield( const json& in ) {
 
 	if (_curAction != PlayerActions::NOACTION)
 		return;
-	GameEngine::PlayerData* playerData =
-		g_game->getPlayerData(_playerId);
-	if (!playerData ||
-		playerData->cooldowns.shield > 0)
+	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
+	if (!playerData || playerData->cooldowns.shield > 0)
 		return;
-	const int shieldHealth =
-		_shieldBaseHealth +
-		playerData->upgrades.shield *
-			_shieldHealthPerLevel;
-	LaserShieldEntity* shield =
-		new LaserShieldEntity(
-			_posX,
-			_posY,
-			shieldHealth,
-			_id,
-			0
-		);
+	const int shieldHealth = _shieldBaseHealth + playerData->upgrades.shield * _shieldHealthPerLevel;
+	LaserShieldEntity* shield = new LaserShieldEntity(_posX, _posY, shieldHealth, _id, 0);
 	_shieldEntityId = shield->getId();
 	_curAction = PlayerActions::SHIELD;
 	g_game->spawnEntity(shield);
 }
 
 void	PlayerEntity::_finish_shield( void ) {
-	if (_shieldEntityId >= 0)
-	{
-		GameEngine::entityList_t::iterator shieldIt =
-			g_game->getEntityIterator(_shieldEntityId);
+	if (_shieldEntityId >= 0) {
+		GameEngine::entityList_t::iterator shieldIt = g_game->getEntityIterator(_shieldEntityId);
 		if (shieldIt != g_game->getEntityList().end())
 			g_game->deleteEntity(shieldIt);
 	}
 	_shieldEntityId = -1;
 	_curAction = PlayerActions::NOACTION;
-	GameEngine::PlayerData* playerData =
-		g_game->getPlayerData(_playerId);
+	GameEngine::PlayerData* playerData = g_game->getPlayerData(_playerId);
 	if (!playerData)
 		return;
-	playerData->cooldowns.shield =
-		_shieldCooldownTicks;
+	playerData->cooldowns.shield = _shieldCooldownTicks;
 	g_game->sendPlayerStateUpdate(*playerData);
 }

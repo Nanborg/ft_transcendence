@@ -14,7 +14,7 @@ public:
 
 private:
 		int		_getPhase( void ) const;
-		void	_updateDirection( const AbstractEntity* target );
+		void	_updateDirection( int diffX, int diffY );
 		void	_startPhaseOneAttack( const AbstractEntity* target );
 		void	_startPhaseTwoAttack( const AbstractEntity* target);
 		bool	_tickPhaseTwoAttack( void );
@@ -60,9 +60,9 @@ private:
 		static const int		_phaseThreeLaserDamage;
 		static const float		_phaseThreeLaserSpeed;
 		static const float		_phaseThreeLaserSpawnDistance;
-		static const double		_phaseThreeFanAngleStep;
-		static const double		_phaseTwoFanSpread;
-		static const double		_projectileSpread;
+		static const float		_phaseThreeFanAngleStep;
+		static const float		_phaseTwoFanSpread;
+		static const float		_projectileSpread;
 };
 
 #endif

@@ -64,6 +64,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
 	out["type"] = "playerUpdate";
 	out["roomId"] = _roomId;
 	out["tick"] = _tick;
+
 	json pData;
 	pData["playerId"] = playerData.playerId;
 	pData["playerEntityId"] = playerData.playerEntityId;
@@ -84,6 +85,7 @@ void GameEngine::sendPlayerStateUpdate( const PlayerData& playerData ) {
 	pData["goldEarned"] = playerData.goldEarned;
 	pData["damageDealt"] = playerData.damageDealt;
 	pData["damageReceived"] = playerData.damageReceived;
+
 	out["playerData"] = pData;
 	g_io->sendMsg(out.dump());
 }
@@ -225,21 +227,24 @@ bool	GameEngine::init( const json& in ) {
 	try {
 		std::cout << (std::string) in["entitiesFile"] << std::endl;
 		map = json::parse(std::ifstream((std::string) in["entitiesFile"]));
-	}
-	catch(const std::exception&)
-	{
+	} catch(const std::exception&) {
 		return false;
 	}
 
-	if ( !map["scale"].is_number_integer() || !map["spawnX"].is_number_integer() || !map["spawnY"].is_number_integer() || !map["entities"].is_array() )
+	if (!map["scale"].is_number_integer())
+		return false;
+	if (!map["spawnX"].is_number_integer())
+		return false;
+	if (!map["spawnY"].is_number_integer())
+		return false;
+	if (!map["entities"].is_array())
 		return false;
 
 	_scale = map["scale"];
 	_spawnX = map["spawnX"];
 	_spawnY = map["spawnY"];
 	json entities = map["entities"];
-	for (size_t i = 0; i < entities.size(); i++)
-	{
+	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))
 			continue;
 		std::cout << entities[i].dump() << std::endl;
@@ -249,8 +254,7 @@ bool	GameEngine::init( const json& in ) {
 }
 
 void	GameEngine::stop( const std::string &reason ) {
-	if (_running == false)
-	{
+	if (_running == false) {
 		return;
 	}
 	std::cout << "\nstop" << std::endl;
@@ -269,8 +273,7 @@ void	GameEngine::stop( const std::string &reason ) {
 }
 void	GameEngine::start( void ) { std::cout << "\nstart" << std::endl; _running = true; }
 
-bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const
-{
+bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity* target) const {
 	if (!attacker || !target)
 		return false;
 	const EntityFactions attackerFaction = attacker->getFaction();
@@ -280,27 +283,24 @@ bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity*
 	return attackerFaction != targetFaction;
 }
 
-void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
-{
+void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId) {
 	if (!entity || damage <= 0)
 		return;
 	if (entity->getHealth() == INVINCIBLE_HEALTH)
 		return;
-	if (entity->getType() == EntityTypes::PLAYERENTITY)
-	{
+	if (entity->getType() == EntityTypes::PLAYERENTITY) {
 		PlayerData* player = getPlayerDataByEntityId(entity->getId());
 		if (!player || player->alive == false || player->invulnerability_cooldowns > 0)
 			return;
 		player->damageReceived += damage;
 	}
-	if (attackerId != -1)
-	{
+	if (attackerId != -1) {
 		PlayerData* attacker = getPlayerDataByEntityId(attackerId);
 		if (attacker) {
 			attacker->damageDealt += damage;
 		}
 	}
-	int nextHealth = entity->getHealth() - damage;
+	int nextHealth = entity->getHealth() - damage;											// not touching that
 	if (nextHealth <= 0)
 	{
 		nextHealth = 0;
@@ -337,52 +337,27 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 }
 
 bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
-	// TODO(neon-05): Implement collision checks for solid entities and damage
-	// interactions before enabling Enemy/Projectile gameplay.
 	for (entityList_t::const_iterator it = _entities.begin(); it != _entities.end(); it++) {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
 		const bool entityIsPlayer = entity->getType() == EntityTypes::PLAYERENTITY;
 		const bool otherIsPlayer = other->getType() == EntityTypes::PLAYERENTITY;
-		const bool entityIsEnemy =
-			entity->getType() == EntityTypes::WALKINGGOOB ||
-			entity->getType() == EntityTypes::SHOOTINGGOOB ||
-			entity->getType() == EntityTypes::TANKGOOB ||
-			entity->getType() == EntityTypes::LORDGOOB;
-		const bool otherIsEnemy =
-			other->getType() == EntityTypes::WALKINGGOOB ||
-			other->getType() == EntityTypes::SHOOTINGGOOB ||
-			other->getType() == EntityTypes::TANKGOOB ||
-			other->getType() == EntityTypes::LORDGOOB;
-		if (
-			(entityIsPlayer && otherIsPlayer) ||
-			(entityIsPlayer && otherIsEnemy) ||
-			(entityIsEnemy && otherIsPlayer)
-		)
+		const bool entityIsEnemy = entity->getType() == EntityTypes::WALKINGGOOB || entity->getType() == EntityTypes::SHOOTINGGOOB || entity->getType() == EntityTypes::TANKGOOB || entity->getType() == EntityTypes::LORDGOOB;
+		const bool otherIsEnemy = other->getType() == EntityTypes::WALKINGGOOB || other->getType() == EntityTypes::SHOOTINGGOOB || other->getType() == EntityTypes::TANKGOOB || other->getType() == EntityTypes::LORDGOOB;
+		if ((entityIsPlayer && otherIsPlayer) || (entityIsPlayer && otherIsEnemy) || (entityIsEnemy && otherIsPlayer))
 			continue;
-		if (
-			entity->getType() == EntityTypes::WALKINGGOOB &&
-			other->getType() == EntityTypes::PLAYERENTITY
-		)
-		{
-			WalkingGoobEntity* walkingGoob =
-				static_cast<WalkingGoobEntity*>(entity);
+		if (entity->getType() == EntityTypes::WALKINGGOOB && other->getType() == EntityTypes::PLAYERENTITY) {
+			WalkingGoobEntity* walkingGoob = (WalkingGoobEntity*) entity;
 			if (walkingGoob->canPassThroughPlayer())
 				continue;
 		}
-		if (
-			entity->getType() == EntityTypes::PLAYERENTITY &&
-			other->getType() == EntityTypes::WALKINGGOOB
-		)
-		{
-			WalkingGoobEntity* walkingGoob =
-				static_cast<WalkingGoobEntity*>(other);
+		if (entity->getType() == EntityTypes::PLAYERENTITY && other->getType() == EntityTypes::WALKINGGOOB) {
+			WalkingGoobEntity* walkingGoob = (WalkingGoobEntity*) other;
 			if (walkingGoob->canPassThroughPlayer())
 				continue;
 		}
-		if (other->getType() == EntityTypes::LASERSHIELD)
-		{
+		if (other->getType() == EntityTypes::LASERSHIELD) {
 			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
 			if (shield->getOwnerId() == static_cast<int>(entity->getId()))
 				continue;

@@ -15,8 +15,7 @@ const int		TankGoobEntity::_slamImpactTicks = 2;
 const int		TankGoobEntity::_slamRecoveryTicks = 3;
 
 TankGoobEntity::TankGoobEntity(int posX, int posY):
-		AbstractMovingEntity(EntityTypes::TANKGOOB, g_game->getScale(), posX, posY, 0, 0, 900, false), _targetEntityId(-1), _dirX(0), _dirY(1), _slamFrame(-1), _slamCooldown(0), _slamPhaseTicks(0)
-{
+		AbstractMovingEntity(EntityTypes::TANKGOOB, g_game->getScale(), posX, posY, 0, 0, 900, false), _targetEntityId(-1), _dirX(0), _dirY(1), _slamFrame(-1), _slamCooldown(0), _slamPhaseTicks(0) {
 	setGold(20);
 	_state["action"] = "idle";
 	_state["dirX"] = _dirX;
@@ -34,21 +33,16 @@ void	TankGoobEntity::_clearTarget( void ) {
 }
 
 void	TankGoobEntity::_updateDirection( const AbstractEntity* target ) {
-	const long dx = target->getPosX() - _posX;
-	const long dy = target->getPosY() - _posY;
-	if (dx == 0 && dy == 0)
+	const int diffX = target->getPosX() - _posX;
+	const int diffY = target->getPosY() - _posY;
+	if (diffX == 0 && diffY == 0)
 		return;
-	const long absDx = dx < 0 ? -dx : dx;
-	const long absDy = dy < 0 ? -dy : dy;
-	if (absDx > absDy)
-	{
-		_dirX = dx < 0 ? -1 : 1;
+	if (abs(diffX) > abs(diffY)) {
+		_dirX = diffX < 0 ? -1 : 1;
 		_dirY = 0;
-	}
-	else
-	{
+	} else {
 		_dirX = 0;
-		_dirY = dy < 0 ? -1 : 1;
+		_dirY = diffY < 0 ? -1 : 1;
 	}
 	_state["dirX"] = _dirX;
 	_state["dirY"] = _dirY;
@@ -67,37 +61,33 @@ void	TankGoobEntity::_startSlam( void ) {
 bool	TankGoobEntity::_tickSlam( void ) {
 	_velX = 0;
 	_velY = 0;
-	int frameDuration = _slamRecoveryTicks;
-	if (_slamFrame == 0)
+	int frameDuration;
+	switch (_slamFrame) {
+	case 0:
 		frameDuration = _slamPrepareTicks;
-	else if (_slamFrame == 1)
+		break;
+	case 1:
 		frameDuration = _slamChargeTicks;
-	else if (_slamFrame == 2)
+		break;
+	case 2:
 		frameDuration = _slamImpactTicks;
+		break;
+	default:
+		frameDuration = _slamRecoveryTicks;
+		break;
+	}
 	_slamPhaseTicks++;
 	if (_slamPhaseTicks < frameDuration)
 		return false;
 	_slamPhaseTicks = 0;
 	_slamFrame++;
-	if (_slamFrame == 2)
-	{
-		g_game->spawnEntity(
-				new EnemyMeleeEntity(
-					_posX,
-					_posY,
-					_id,
-					_slamDamage,
-					_slamHitboxScale
-			)
-		);
+	if (_slamFrame == 2) {
+		g_game->spawnEntity(new EnemyMeleeEntity(_posX, _posY, _id, _slamDamage, _slamHitboxScale));
 	}
-	if (_slamFrame >= _slamAnimationFrames)
-	{
+	if (_slamFrame >= _slamAnimationFrames) {
 		_slamFrame = -1;
 		_slamCooldown = _slamCooldownTicks;
 		_state["action"] = "idle";
-		_state["slamFrame"] = -1;
-		return true;
 	}
 	_state["slamFrame"] = _slamFrame;
 	return true;
@@ -112,37 +102,30 @@ bool	TankGoobEntity::tick( void ) {
 	const int oldVelY = _velY;
 	const int oldDirX = _dirX;
 	const int oldDirY = _dirY;
-	if (_targetEntityId >= 0)
-	{
+	if (_targetEntityId >= 0) {
 		GameEngine::entityList_t::iterator targetIt = g_game->getEntityIterator(_targetEntityId);
-		if (targetIt == g_game->getEntityList().end())
-		{
+		if (targetIt == g_game->getEntityList().end()) {
 			_clearTarget();
 			return true;
 		}
 		AbstractEntity* target = targetIt->get();
 		const unsigned int dist = target->distance(_posX, _posY);
 		const unsigned int loseDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _aggroLoseRange);
-		if (dist > loseDistance)
-		{
+		if (dist > loseDistance) {
 			_clearTarget();
 			return true;
 		}
 		_updateDirection(target);
 		const unsigned int attackDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _attackRange);
-		if (dist <= attackDistance)
-		{
+		if (dist <= attackDistance) {
 			_velX = 0;
 			_velY = 0;
-			if (_slamCooldown == 0)
-			{
+			if (_slamCooldown == 0) {
 				_startSlam();
 				return true;
 			}
 			_state["action"] = "idle";
-		}
-		else if (dist != 0)
-		{
+		} else if (dist != 0) {
 			const long dx = target->getPosX() - _posX;
 			const long dy = target->getPosY() - _posY;
 			const double velocityScale = static_cast<double>(g_game->getScale()) * _moveSpeed / static_cast<double>(dist);
@@ -158,8 +141,7 @@ bool	TankGoobEntity::tick( void ) {
 	if (!nearest)
 		return false;
 	const unsigned int aggroDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _aggroRange);
-	if (nearest->distance(_posX, _posY) <= aggroDistance)
-	{
+	if (nearest->distance(_posX, _posY) <= aggroDistance) {
 		_targetEntityId = nearest->getId();
 		_updateDirection(nearest);
 		return true;

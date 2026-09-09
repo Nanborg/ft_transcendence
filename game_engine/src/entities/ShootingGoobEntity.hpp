@@ -12,8 +12,8 @@ public:
 	bool	tick( void ) override;
 
 private:
-	void				_shoot( const AbstractEntity* target);
-	void				_updateDirection( const AbstractEntity* target );
+	void				_shoot( int diffX, int diffY );
+	void				_updateDirection( int diffX, int diffY );
 
 	int					_shootCooldown;
 	int					_shootFrame;
