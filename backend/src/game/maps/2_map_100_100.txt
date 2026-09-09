@@ -93,10 +93,10 @@ XXXXXXXX#..........#X#.......3#XXXXXXXXX####............1..............#X#......
 XXXXXXXX#...........##..3....#XXXXXXXXXXXXXX##..................3......#XX#....................#XXXX
 XXXXXX##............##......#XXXXXXXXXXXXXXXX#......2...............2..#X#C..................##XXXXX
 XXXXX#....................##XXXXXXXXXXXXXXXXXX#.......................#XX#..................#XXXXXXX
-XXXXX#..................##XXXXXXXXXXXXXXXXXXXX#.......................#XX#..................#XXXXXXX
+XXXXX#..................##XXXXXXXXXXXXXXXXXXXX#.......................#XX#.........B........#XXXXXXX
 XXXXXX##.#............##XXXXXXXXXXXXXXXXXXXXXXX#....................##XXX#..................#XXXXXXX
 XXXXXXXX#X##..........#XXXXXXXXXXXXXXXXXXXXXXXXX####..........#.....#XXXXX#..................#XXXXXX
-XXXXXXXXXXXX###.#.#.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX##.1....##X##.##XXXXXXX###.#.#.#.#.....#B#XXXXXX
+XXXXXXXXXXXX###.#.#.##XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX##.1....##X##.##XXXXXXX###.#.#.#.#.....#.#XXXXXX
 XXXXXXXXXXXXXXX#X#X#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX######XXXXX#XXXXXXXXXXXX#X#X#X#X#####X#XXXXXXX
 
 Seed: 1791095845
