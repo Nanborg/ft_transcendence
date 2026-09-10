@@ -93,16 +93,7 @@ function drawMapWalls(context, gameMap, camera)
             const x = camera.offsetX + (col * gameMap.scale - camera.left) * camera.scale;
             const y = camera.offsetY + (row * gameMap.scale - camera.top) * camera.scale;
             if (cell === 'X')
-            {
-                context.fillStyle = '#000000';
-                context.fillRect(
-                    x,
-                    y,
-                    tilePixels,
-                    tilePixels
-                );
                 continue;
-            }
 
             if (cell !== '#')
                 continue;
