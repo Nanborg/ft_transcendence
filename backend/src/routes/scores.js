@@ -79,6 +79,46 @@ router.get('/history', authToken, async (req, res) => {
     }
 });
 
+router.get('/history/:userId', authToken, async (req, res) => {
+	try{
+        const userId = Number(req.params.userId);
+        if (!Number.isInteger(userId) || userId <= 0) {
+            return res.status(400).json({ error: "invalid user id" });
+        }
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true }
+        });
+        if (!user)
+            return res.status(404).json({ error: "not found" });
+        const gamesStats = await prisma.gameRun.findMany({
+            where: {
+				stats: {
+					some:
+					{
+						userId: userId
+					}
+				}
+			},
+            orderBy: {
+                createdAt: 'desc'
+            },
+            include: {
+                stats: {
+                    include: {
+                        user: true
+                    }
+                }
+            }
+        })
+        const cleanHistory = formatHistoryData(gamesStats);
+        res.json(cleanHistory);
+    }
+    catch (error) {
+        res.status(500).json({ error: "internal error" });
+    }
+});
+
 router.get("/leaderboard", async (req, res) => {
     try {
         const topGame = await prisma.gameRun.findMany({

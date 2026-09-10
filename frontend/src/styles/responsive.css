@@ -38,6 +38,7 @@
 
   .home-game-window {
     min-height: 620px;
+    overflow: visible;
   }
 
   .home-main-menu {
@@ -47,6 +48,11 @@
 
   .home-menu-actions {
     grid-template-columns: 1fr;
+  }
+
+  .home-menu-card {
+    min-height: 58px;
+    padding: 12px;
   }
 
   .leaderboard-table {
@@ -78,6 +84,15 @@
   }
 
   .main-nav a {
+    min-height: 50px;
+    padding: 10px;
+  }
+
+  .home-main-menu {
+    width: calc(100% - 12px);
+  }
+
+  .home-menu-card {
     min-height: 50px;
     padding: 10px;
   }
