@@ -13,6 +13,7 @@ import {
     WALKING_ROBOT_AFTERIMAGES,
     SOURCE_GRID_1254_COLUMNS,
     SOURCE_GRID_1254_ROWS,
+    WALKING_ROBOT_WALK_ROWS,
     walkingRobotIdleSprite,
     walkingRobotSprite,
     walkingRobotChargeSprite,
@@ -78,7 +79,9 @@ export function drawWalkingRobotSprite({
 })
 {
     const isCharging = entity.state?.action === 'charge';
-    const isMoving = !isCharging && (entity.velX !== 0 || entity.velY !== 0);
+    const velocityX = Number(entity.velX) || 0;
+    const velocityY = Number(entity.velY) || 0;
+    const isMoving = !isCharging && (velocityX !== 0 || velocityY !== 0);
     let sprite = walkingRobotIdleSprite;
     let columns = WALKING_ROBOT_IDLE_COLUMNS;
     let rows = WALKING_ROBOT_IDLE_ROWS;
@@ -126,7 +129,7 @@ export function drawWalkingRobotSprite({
     {
         sprite = walkingRobotSprite;
         columns = SOURCE_GRID_1254_COLUMNS;
-        rows = SOURCE_GRID_1254_ROWS;
+        rows = WALKING_ROBOT_WALK_ROWS;
         anchorXs = WALKING_ROBOT_WALK_ANCHOR_X;
         anchorYs = WALKING_ROBOT_WALK_ANCHOR_Y;
         frame = Math.floor(now / WALKING_ROBOT_FRAME_DURATION_MS) %
@@ -200,10 +203,9 @@ export function drawShootingRobotSprite({
 })
 {
     const isShooting = entity.state?.action === 'shoot';
-    const isMoving =
-        !isShooting &&
-        (entity.velX !== 0 || entity.velY !== 0);
-
+    const velocityX = Number(entity.velX) || 0;
+    const velocityY = Number(entity.velY) || 0;
+    const isMoving = !isShooting && (velocityX !== 0 || velocityY !== 0);
     let sprite = shootingRobotIdleSprite;
     let columns = SHOOTING_ROBOT_IDLE_COLUMNS;
     let rows = SHOOTING_ROBOT_IDLE_ROWS;
@@ -404,10 +406,12 @@ export function drawTankRobotSprite({
 })
 {
     const isSlamming = entity.state?.action === 'slam';
+    const velocityX = Number(entity.velX) || 0;
+    const velocityY = Number(entity.velY) || 0;
     const isFlying =
         !isSlamming && (
-            entity.velX !== 0 ||
-            entity.velY !== 0
+            velocityX !== 0 ||
+            velocityY !== 0
         );
     const slamFrameValue = Number(entity.state?.slamFrame);
     let slamFrame = 0;

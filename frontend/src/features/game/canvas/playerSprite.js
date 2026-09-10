@@ -238,7 +238,9 @@ export function drawPlayerAttackSprite({ context, screen, tilePixels, now, attac
 
 export function drawPlayerWalkSprite({ context, entity, screen, tilePixels, now, directionRow = 0, playerSpriteTint = null })
 {
-    const isMoving = entity.velX !== 0 || entity.velY !== 0;
+    const velocityX = Number(entity.velX) || 0;
+    const velocityY = Number(entity.velY) || 0;
+    const isMoving = velocityX !== 0 || velocityY !== 0;
     let sprite = playerIdleSprite;
     let frameDuration = PLAYER_IDLE_FRAME_DURATION_MS;
     let frameCount = PLAYER_IDLE_FRAME_COUNT;

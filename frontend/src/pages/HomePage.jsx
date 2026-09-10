@@ -1,3 +1,5 @@
+import playerIdleSpriteUrl from '../assets/game/player/player-idle.png';
+
 const authenticatedActions = [
   { label: 'Play', href: '#/lobby' },
   { label: 'Profile', href: '#/profile' },
@@ -37,6 +39,14 @@ export function HomePage({ title, description, currentUser, room, onLogout })
   return (
     <section className="home-game-window">
       <div className="home-game-scene" aria-hidden="true" />
+
+      <div
+        className="home-idle-players"
+        style={{'--home-player-idle-sprite': `url(${playerIdleSpriteUrl})`}}
+        aria-hidden="true"
+      >
+        <span className="home-idle-player" />
+      </div>
       <div className="home-main-menu">
         <h1 id="page-title">{title}</h1>
         {description && <p>{description}</p>}
