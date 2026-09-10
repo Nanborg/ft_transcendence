@@ -39,6 +39,11 @@
 - `frontend/src/features/`
 - `frontend/src/styles.css`
 - `frontend/src/styles/`
+- `frontend/src/styles/direct-chat.css`
+- `frontend/src/styles/direct-chat/global-chat-dock.css`
+- `frontend/src/styles/direct-chat/direct-messages.css`
+- `frontend/src/styles/direct-chat/room-chat.css`
+- `frontend/src/styles/direct-chat/chat-invitations.css`
 - `frontend/src/features/chat/`
 - `frontend/src/features/game/canvas/`
 
