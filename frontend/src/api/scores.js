@@ -1,6 +1,7 @@
 import { apiRequest } from "./apiReq";
 
-export async function fetchMatchHistory() {
+export async function fetchMatchHistory()
+{
 	try{
 		return await apiRequest(`/api/scores/history`, {});
 	} catch (err) {
@@ -10,7 +11,8 @@ export async function fetchMatchHistory() {
 	}
 }
 
-export async function fetchLeaderBoard() {
+export async function fetchLeaderBoard()
+{
 	try{
 		const response = await fetch('/api/scores/leaderboard');
 		if (!response.ok)
