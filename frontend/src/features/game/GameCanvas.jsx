@@ -6,6 +6,8 @@ import {
     MIN_CANVAS_HEIGHT,
     MAX_CANVAS_HEIGHT,
     INTERPOLATION_DURATION_MS,
+    WALL_TILE_SOURCE_SIZE,
+    wallRuinsSprite,
 } from './canvas/spriteAssets';
 import { getEntityType, getPlayerDirectionRow, getDirectionRowToward } from './canvas/spriteUtils';
 import { getInterpolatedPosition, getFocusPosition, getCamera, worldToScreen } from './canvas/cameraUtils';
@@ -14,53 +16,117 @@ import { drawGrid, drawGoldFeedbacks, drawShieldBreakEffects } from './canvas/ef
 import { drawEntity, drawStaticMapEntities } from './canvas/entityRenderer';
 import gameSoilUrl from '../../assets/game/game_soil.png';
 
-function drawMapBackgroundImage(context, image, canvas, camera, gameMap)
+function drawMapBackgroundImage(context, image, camera, gameMap)
 {
     if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
         return;
-    let worldWidth = canvas.width / camera.scale;
-    if (gameMap?.width > 0)
-        worldWidth = gameMap.width;
-    let worldHeight = canvas.height / camera.scale;
-    if (gameMap?.height > 0)
-        worldHeight = gameMap.height;
-    const drawX = camera.offsetX - camera.left * camera.scale;
-    const drawY = camera.offsetY - camera.top * camera.scale;
-    const drawWidth = worldWidth * camera.scale;
-    const drawHeight = worldHeight * camera.scale;
+    if (!(gameMap?.scale > 0))
+        return;
+    const textureWorldSize = gameMap.scale * 16;
+    const texturePixls = textureWorldSize * camera.scale;
+    const firstCol = Math.floor(camera.left / textureWorldSize);
+    const lastCol = Math.floor(camera.right / textureWorldSize);
+    const firstRow = Math.floor(camera.top / textureWorldSize);
+    const lastRow = Math.floor(camera.bottom / textureWorldSize);
+    for (let row = firstRow; row <= lastRow; row++)
+    {
+        for (let col = firstCol; col <= lastCol; col++)
+        {
+            const worldX = col * textureWorldSize;
+            const worldY = row * textureWorldSize;
+            const drawX = camera.offsetX + (worldX - camera.left) * camera.scale;
+            const drawY = camera.offsetY + (worldY - camera.top) * camera.scale;
+            context.drawImage(
+                image,
+                drawX,
+                drawY,
+                texturePixls,
+                texturePixls
+            );
+        }
+    }
+}
 
-    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+function isMapWall(rows, row, col)
+{
+    if (row < 0 || row >= rows.length)
+        return false;
+    const line = rows[row];
+    if (typeof line !== 'string')
+        return false;
+    return line[col] === '#';
+}
+
+function getMapWallMask(rows, row, col)
+{
+    let mask = 0;
+    if (isMapWall(rows, row - 1, col))
+        mask |= 1;
+    if (isMapWall(rows, row, col + 1))
+        mask |= 2;
+    if (isMapWall(rows, row + 1, col))
+        mask |= 4;
+    if (isMapWall(rows, row, col - 1))
+        mask |= 8;
+    return mask;
 }
 
 function drawMapWalls(context, gameMap, camera)
 {
     if (!Array.isArray(gameMap?.rows) || !(gameMap?.scale > 0))
         return;
+    const rows = gameMap.rows;
     const tilePixels = gameMap.scale * camera.scale;
     const firstRow = Math.max(0, Math.floor(camera.top / gameMap.scale));
-    const lastRow = Math.min(gameMap.rows.length - 1, Math.ceil(camera.bottom / gameMap.scale));
+    const lastRow = Math.min(rows.length - 1, Math.ceil(camera.bottom / gameMap.scale));
 
-    context.fillStyle = '#334155';
-    context.strokeStyle = '#64748b';
-    context.lineWidth = 1;
     for (let row = firstRow; row <= lastRow; row++)
     {
-        const line = gameMap.rows[row];
+        const line = rows[row];
         if (typeof line !== 'string')
             continue;
         const firstCol = Math.max(0, Math.floor(camera.left / gameMap.scale));
         const lastCol = Math.min(line.length - 1, Math.ceil(camera.right / gameMap.scale));
         for (let col = firstCol; col <= lastCol; col++)
         {
-            if (line[col] !== '#' && line[col] !== 'X')
-                continue;
-            context.fillStyle = '#334155';
-            if (line[col] === 'X')
-                context.fillStyle = '#000000';
+            const cell = line[col];
             const x = camera.offsetX + (col * gameMap.scale - camera.left) * camera.scale;
             const y = camera.offsetY + (row * gameMap.scale - camera.top) * camera.scale;
-            context.fillRect(x, y, tilePixels, tilePixels);
-            context.strokeRect(x, y, tilePixels, tilePixels);
+            if (cell === 'X')
+                continue;
+
+            if (cell !== '#')
+                continue;
+
+            if (!wallRuinsSprite.complete || wallRuinsSprite.naturalWidth <= 0)
+            {
+                context.fillStyle = '#334155';
+                context.fillRect(
+                    x,
+                    y,
+                    tilePixels,
+                    tilePixels
+                );
+                continue;
+            }
+
+            const mask = getMapWallMask(rows, row, col);
+            const sourceColumn = mask % 4;
+            const sourceRow = Math.floor(mask / 4);
+            const wallPixels = tilePixels * 2;
+            const wallOffset = (wallPixels - tilePixels) / 2;
+
+            context.drawImage(
+                wallRuinsSprite,
+                sourceColumn * WALL_TILE_SOURCE_SIZE,
+                sourceRow * WALL_TILE_SOURCE_SIZE,
+                WALL_TILE_SOURCE_SIZE,
+                WALL_TILE_SOURCE_SIZE,
+                x - wallOffset,
+                y - wallOffset,
+                wallPixels,
+                wallPixels
+            );
         }
     }
 }
@@ -331,7 +397,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.fillStyle = '#020617';
             context.fillRect(0, 0, canvas.width, canvas.height);
-            drawMapBackgroundImage(context, gameSoilImageRef.current, canvas, camera, renderData.gameMap);
+            drawMapBackgroundImage(context, gameSoilImageRef.current, camera, renderData.gameMap);
             drawGrid(context, canvas, camera);
             drawMapWalls(context, renderData.gameMap, camera);
             drawStaticMapEntities({
@@ -343,6 +409,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             entityTracksRef.current.forEach((track) =>
             {
                 const entityType = getEntityType(track.entity);
+                if  (entityType === ENTITY_TYPE.WALL || entityType === ENTITY_TYPE.CHECKPOINT || entityType === ENTITY_TYPE.SPAWN_POINT)
+                    return;
                 const playerData = renderData.gamePlayerData.find((player) => String(player.playerEntityId) === String(track.entity.entityId));
                 let playerId = playerData?.playerId ?? null;
                 if (playerId === null && track.entity.entityId === localEntityId)

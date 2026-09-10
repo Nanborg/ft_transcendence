@@ -17,6 +17,7 @@ import lordGoobPhaseTwoSpriteUrl from '../../../assets/game/enemies/lord-goob-ph
 import lordGoobPhaseThreeSpriteUrl from '../../../assets/game/enemies/lord-goob-phase-3.png';
 import walkingRobotChargeSpriteUrl from '../../../assets/game/enemies/walking-robot-charge.png';
 import checkpointPlatformSpriteUrl from '../../../assets/game/checkpoint/checkpoint-platform.png';
+import wallRuinsSpriteUrl from '../../../assets/game/walls/wall-ruins-autotile.png';
 
 export const CANVAS_WIDTH = 800;
 export const MIN_CANVAS_HEIGHT = 450;
@@ -101,6 +102,12 @@ export const SOURCE_GRID_1254_ROWS = Object.freeze([
     { y: 627, height: 314 },
     { y: 941, height: 313 },
 ]);
+export const WALKING_ROBOT_WALK_ROWS = Object.freeze([
+    { y: 0, height: 314 },
+    { y: 314, height: 313 },
+    { y: 627, height: 307 },
+    { y: 934, height: 320 },
+]);
 export const TANK_ROBOT_FLY_COLUMNS = Object.freeze([
     { x: 2, width: 310 },
     { x: 316, width: 309 },
@@ -135,7 +142,7 @@ export const WALKING_ROBOT_IDLE_COLUMNS = Object.freeze([
 export const WALKING_ROBOT_IDLE_ROWS = Object.freeze([
     { y: 0, height: 312 },
     { y: 312, height: 312 },
-    { y: 624, height: 311 },
+    { y: 624, height: 290 },
     { y: 935, height: 312 },
 ]);
 export const SHOOTING_ROBOT_IDLE_COLUMNS = Object.freeze([
@@ -166,13 +173,13 @@ export const PLAYER_WALK_ANCHOR_X = Object.freeze([
     [0.6499, 0.5378, 0.4552, 0.3688],
     [0.6463, 0.5391, 0.4398, 0.3738],
     [0.6302, 0.5247, 0.4322, 0.3585],
-    [0.6253, 0.5207, 0.4148, 0.3671],
+    [0.4782, 0.4782, 0.4767, 0.4800],
 ]);
 export const PLAYER_WALK_ANCHOR_Y = Object.freeze([
     [0.6074, 0.6059, 0.6099, 0.6070],
     [0.4883, 0.5090, 0.5099, 0.5107],
     [0.4227, 0.4383, 0.4345, 0.4337],
-    [0.3048, 0.3099, 0.3130, 0.3027],
+    [0.5483, 0.5419, 0.5483, 0.5419],
 ]);
 export const PLAYER_IDLE_ANCHOR_X = Object.freeze([
     [0.4930, 0.4766, 0.4771, 0.4810],
@@ -184,7 +191,7 @@ export const PLAYER_IDLE_ANCHOR_Y = Object.freeze([
     [0.5946, 0.5953, 0.5953, 0.5950],
     [0.4779, 0.4783, 0.4774, 0.4766],
     [0.4024, 0.4026, 0.4022, 0.4021],
-    [0.2929, 0.2935, 0.2938, 0.2934],
+    [0.6154, 0.6154, 0.6122, 0.6250],
 ]);
 export const PLAYER_MELEE_ANCHOR_X = Object.freeze([
     [0.6651, 0.5489, 0.4963, 0.4163],
@@ -400,3 +407,6 @@ lordGoobPhaseTwoSprite.src = lordGoobPhaseTwoSpriteUrl;
 export const lordGoobPhaseThreeSprite = new Image();
 lordGoobPhaseThreeSprite.src = lordGoobPhaseThreeSpriteUrl;
 export const SHIELD_BREAK_DURATION_MS = 400;
+export const WALL_TILE_SOURCE_SIZE = 256;
+export const wallRuinsSprite = new Image();
+wallRuinsSprite.src = wallRuinsSpriteUrl;

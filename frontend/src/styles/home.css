@@ -101,3 +101,58 @@
 .home-menu-card--primary {
   border-color: rgba(0, 255, 102, 0.45);
 }
+
+.home-idle-players {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-idle-player {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: clamp(250px, 22vw, 340px);
+  aspect-ratio: 1;
+  background-image: var(--home-player-idle-sprite);
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  background-position: 0 100%;
+  opacity: 0.88;
+  filter:
+    brightness(0.72)
+    saturate(0.82)
+    drop-shadow(0 12px 8px rgba(0, 0, 0, 0.72));
+  transform: translateX(-50%);
+  animation: home-player-idle-back 960ms infinite;
+}
+
+@keyframes home-player-idle-back {
+  0%,
+  24.99% {
+    background-position: -0.15% 100%;
+  }
+
+  25%,
+  49.99% {
+    background-position: 32.39% 100%;
+  }
+
+  50%,
+  74.99% {
+    background-position: 65.99% 99.89%;
+  }
+
+  75%,
+  100% {
+    background-position: 99.15% 100.32%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-idle-player {
+    animation: none;
+  }
+}
