@@ -53,7 +53,7 @@ bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
 		collisionX = o.getPosX() + (((__int128_t) velX * coef) / vel2); // cast to dodge the long overflow
 		collisionY = o.getPosY() + (((__int128_t) velY * coef) / vel2); // cast to dodge the long overflow
 	}
-	return distance(collisionX, collisionY) < dist;
+	return distance2(collisionX, collisionY) < (long) dist*dist;
 }
 
 json AbstractEntity::toJson( void ) const {
@@ -115,8 +115,11 @@ void	AbstractEntity::setHealth( int health ) { _health = health; }
 void	AbstractEntity::setGold( int gold ) { _gold = gold; }
 void	AbstractEntity::setPassableHitBox( bool passableHitBox ) { _passableHitBox = passableHitBox; }
 
-unsigned int AbstractEntity::distance( int posX, int posY ) const {
+unsigned long AbstractEntity::distance2( int posX, int posY ) const {
 	long diffX = _posX - posX, diffY = _posY - posY;
-	long dist2 = diffX*diffX + diffY*diffY;
-	return (sqrtl(dist2));
+	return diffX*diffX + diffY*diffY;
+}
+
+unsigned int AbstractEntity::distance( int posX, int posY ) const {
+	return std::sqrt(distance2(posX, posY));
 }

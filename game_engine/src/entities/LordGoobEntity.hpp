@@ -30,6 +30,8 @@ private:
 		void	_firePhaseThreeRadial( void );
 		void	_firePhaseThreeLaser( void );
 
+		void	_fanAttack( float dist, float interval, float offset, float speed, int shots );
+
 		int		_targetEntityId;
 		int		_attackCooldown;
 		int		_attackFrame;
@@ -39,8 +41,8 @@ private:
 		int		_phaseThreePattern;
 		int		_dirX;
 		int		_dirY;
-		long	_aimX;
-		long	_aimY;
+		int		_aimX;
+		int		_aimY;
 
 		static const float		_attackRange;
 		static const float		_projectileSpeed;

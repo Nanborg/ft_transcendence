@@ -341,6 +341,17 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
+
+		{
+			int diffX = entity->getPosX() - other->getPosX();
+			int diffY = entity->getPosY() - other->getPosY();
+			int minDist = entity->getSize() + other->getSize();
+			if (abs(diffX) > abs(entity->getVelX()) + minDist)
+				continue;
+			if (abs(diffY) > abs(entity->getVelY()) + minDist)
+				continue;
+		}
+
 		const bool entityIsPlayer = entity->getType() == EntityTypes::PLAYERENTITY;
 		const bool otherIsPlayer = other->getType() == EntityTypes::PLAYERENTITY;
 		const bool entityIsEnemy = entity->getType() == EntityTypes::WALKINGGOOB || entity->getType() == EntityTypes::SHOOTINGGOOB || entity->getType() == EntityTypes::TANKGOOB || entity->getType() == EntityTypes::LORDGOOB;
@@ -443,14 +454,14 @@ void	GameEngine::spawnEntity( AbstractEntity *entity ) {
 
 AbstractEntity*		GameEngine::getNearestEntityOfType( int typeId, int posX, int posY ) {
 	AbstractEntity*		min = NULL;
-	unsigned int		dist, distmin = 0xFFFFFFFF;
+	unsigned long		dist2, dist2min = 0xFFFFFFFFFFFFFFFF;
 	for (entityList_t::iterator it = _entities.begin(); it != _entities.end(); it++) {
 		if (it->get()->getType() != typeId)
 			continue;
-		dist = it->get()->distance(posX, posY);
-		if (dist < distmin) {
+		dist2 = it->get()->distance2(posX, posY);
+		if (dist2 < dist2min) {
 			min = it->get();
-			distmin = dist;
+			dist2min = dist2;
 		}
 	}
 	return min;

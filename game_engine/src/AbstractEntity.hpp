@@ -44,6 +44,7 @@ public:
 	void	setPassableHitBox( bool passableHitBox );
 
 	unsigned int	distance( int posX, int posY ) const;
+	unsigned long	distance2( int posX, int posY ) const;
 
 	protected:
 	// DO NOT OVERRIDE THIS IN LEAVES

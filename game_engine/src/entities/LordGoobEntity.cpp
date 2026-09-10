@@ -76,32 +76,46 @@ void	LordGoobEntity::_startPhaseOneAttack( const AbstractEntity* target ) {
 	_state["attackFrame"] = _attackFrame;
 }
 
-void	LordGoobEntity::_firePhaseOneAttack( void ) {
-	const double aimLength = std::sqrt(
-		static_cast<double>(_aimX) *
-		static_cast<double>(_aimX) +
-		static_cast<double>(_aimY) *
-		static_cast<double>(_aimY)
-	);
-	if (aimLength == 0.0)
+static void	normalize(double &aimX, double &aimY) {
+	if (aimX == 0 && aimY == 0)
 		return;
-	const double normalizedX = static_cast<double>(_aimX) / aimLength;
-	const double normalizedY = static_cast<double>(_aimY) / aimLength;
+	double len = std::sqrt(aimX * aimX + aimY * aimY);
+	aimX /= len;
+	aimY /= len;
+}
+
+void	LordGoobEntity::_fanAttack( float dist, float interval, float offset, float speed, int shots ) {
+	double normalizedX = _aimX;
+	double normalizedY = _aimY;
+	normalize(normalizedX, normalizedY);
+	double perpendicularX = -normalizedY;
+	double perpendicularY = normalizedX;
+	int spawnDistance = g_game->getScale() * dist;
+	int scaledOffset = g_game->getScale() * offset;
+	for (int i = 0; i < shots; i++) {
+		
+	}
+}
+
+void	LordGoobEntity::_firePhaseOneAttack( void ) {
+	double normalizedX = _aimX;
+	double normalizedY = _aimY;
+	normalize(normalizedX, normalizedY);
 	const double perpendicularX = -normalizedY;
 	const double perpendicularY = normalizedX;
-	const double spawnDistance =static_cast<double>(g_game->getScale()) * _projectileSpawnDistance;
-	const double handOffset = static_cast<double>(g_game->getScale()) * 0.45;
-	const double projectileVelocity = static_cast<double>(g_game->getScale()) * _projectileSpeed;
-	const double angles[3] = {-_projectileSpread, 0.0, _projectileSpread};
+	const double spawnDistance = g_game->getScale() * _projectileSpawnDistance;
+	const double handOffset = g_game->getScale() * 0.45;
+	const double projectileVelocity = g_game->getScale() * _projectileSpeed;
+	const float angles[3] = {-_projectileSpread, 0.0, _projectileSpread};
 	for (int i = 0; i < 3; i++) {
-		const double angle = angles[i];
-		const double rotatedX = normalizedX * std::cos(angle) - normalizedY * std::sin(angle);
-		const double rotatedY = normalizedX * std::sin(angle) + normalizedY * std::cos(angle);
+		const float angle = angles[i];
+		const float rotatedX = normalizedX * std::cos(angle) - normalizedY * std::sin(angle);
+		const float rotatedY = normalizedX * std::sin(angle) + normalizedY * std::cos(angle);
 		const double sideOffset = static_cast<double>(i - 1) * handOffset;
-		const int spawnX = static_cast<int>(static_cast<double>(_posX) + normalizedX * spawnDistance + perpendicularX * sideOffset);
-		const int spawnY = static_cast<int>(static_cast<double>(_posY) + normalizedY * spawnDistance + perpendicularY * sideOffset);
-		const int velocityX = static_cast<int>(rotatedX * projectileVelocity);
-		const int velocityY = static_cast<int>(rotatedY * projectileVelocity);
+		const int spawnX = _posX + normalizedX * spawnDistance + perpendicularX * sideOffset;
+		const int spawnY = _posY + normalizedY * spawnDistance + perpendicularY * sideOffset;
+		const int velocityX = rotatedX * projectileVelocity;
+		const int velocityY = rotatedY * projectileVelocity;
 		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velocityX, velocityY, _id, _projectileDamage));
 	}
 }
@@ -172,16 +186,9 @@ bool	LordGoobEntity::_tickPhaseTwoAttack( void ) {
 }
 
 void	LordGoobEntity::_firePhaseTwoFan( void ) {
-	const double aimLength = std::sqrt(
-		static_cast<double>(_aimX) *
-		static_cast<double>(_aimX) +
-		static_cast<double>(_aimY) *
-		static_cast<double>(_aimY)
-	);
-	if (aimLength == 0.0)
-		return;
-	const double normalizedX = static_cast<double>(_aimX) / aimLength;
-	const double normalizedY = static_cast<double>(_aimY) / aimLength;
+	double normalizedX = static_cast<double>(_aimX);
+	double normalizedY = static_cast<double>(_aimY);
+	normalize(normalizedX, normalizedY);
 	const double perpendicularX = -normalizedY;
 	const double perpendicularY = normalizedX;
 	const double spawnDistance = static_cast<double>(g_game->getScale()) * 1.25;
@@ -189,8 +196,7 @@ void	LordGoobEntity::_firePhaseTwoFan( void ) {
 	const double projectileVelocity = static_cast<double>(g_game->getScale()) * _projectileSpeed;
 	const double angles[3] = {-_phaseTwoFanSpread, 0.0, _phaseTwoFanSpread};
 	const double origins[3] = {-shoulderOffset, 0.0, shoulderOffset};
-	for (int i = 0; i < 3; i++)
-	{
+	for (int i = 0; i < 3; i++) {
 		const double cosine = std::cos(angles[i]);
 		const double sine = std::sin(angles[i]);
 		const double rotatedX = normalizedX * cosine - normalizedY * sine;
@@ -284,16 +290,9 @@ bool	LordGoobEntity::_tickPhaseThreeAttack( void ) {
 }
 
 void	LordGoobEntity::_firePhaseThreeFan( void ) {
-	const double aimLength = std::sqrt(
-			static_cast<double>(_aimX) *
-			static_cast<double>(_aimX) +
-			static_cast<double>(_aimY) *
-			static_cast<double>(_aimY)
-	);
-	if (aimLength == 0.0)
-		return;
-	const double normalizedX = static_cast<double>(_aimX) / aimLength;
-	const double normalizedY = static_cast<double>(_aimY) / aimLength;
+	double normalizedX = static_cast<double>(_aimX);
+	double normalizedY = static_cast<double>(_aimY);
+	normalize(normalizedX, normalizedY);
 	const double perpendicularX = -normalizedY;
 	const double perpendicularY = normalizedX;
 	const double spawnDistance = static_cast<double>(g_game->getScale()) * 1.25;
@@ -316,16 +315,9 @@ void	LordGoobEntity::_firePhaseThreeFan( void ) {
 }
 
 void	LordGoobEntity::_firePhaseThreeRadial( void ) {
-	const double aimLength = std::sqrt(
-			static_cast<double>(_aimX) *
-			static_cast<double>(_aimX) +
-			static_cast<double>(_aimY) *
-			static_cast<double>(_aimY)
-	);
-	if (aimLength == 0.0)
-		return;
-	const double normalizedX = static_cast<double>(_aimX) / aimLength;
-	const double normalizedY = static_cast<double>(_aimY) / aimLength;
+	double normalizedX = static_cast<double>(_aimX);
+	double normalizedY = static_cast<double>(_aimY);
+	normalize(normalizedX, normalizedY);
 	const double perpendicularX = -normalizedY;
 	const double perpendicularY = normalizedX;
 	const double forwardOffset = static_cast<double>(g_game->getScale()) * 0.5;
@@ -367,16 +359,9 @@ void	LordGoobEntity::_firePhaseThreeAttack( void ) {
 }
 
 void	LordGoobEntity::_firePhaseThreeLaser( void ) {
-	const double aimLength = std::sqrt(
-		static_cast<double>(_aimX) *
-		static_cast<double>(_aimX) +
-		static_cast<double>(_aimY) *
-		static_cast<double>(_aimY)
-	);
-	if (aimLength == 0.0)
-		return;
-	const double normalizedX = static_cast<double>(_aimX) / aimLength;
-	const double normalizedY = static_cast<double>(_aimY) / aimLength;
+	double normalizedX = static_cast<double>(_aimX);
+	double normalizedY = static_cast<double>(_aimY);
+	normalize(normalizedX, normalizedY);
 	const double spawnDistance = static_cast<double>(g_game->getScale()) * _phaseThreeLaserSpawnDistance;
 	const double projectileVelocity = static_cast<double>(g_game->getScale()) * _phaseThreeLaserSpeed;
 	const int	spawnX = static_cast<int>(static_cast<double>(_posX) + normalizedX * spawnDistance);
