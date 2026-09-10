@@ -54,6 +54,10 @@ sequenceDiagram
 - `game_engine/src/`
 - `game_engine/src/entities/`
 - `backend/src/services/gameEngineService.js`
+- `backend/src/services/gameEngine/constants.js`
+- `backend/src/services/gameEngine/mapFiles.js`
+- `backend/src/services/gameEngine/sessionStore.js`
+- `backend/src/services/gameEngine/roomReadyTracker.js`
 - `backend/src/services/gameService.js`
 - `backend/src/socket/socketHandler.js`
 - `backend/src/socket/handlers/gameHandlers.js`
