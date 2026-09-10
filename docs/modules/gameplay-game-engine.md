@@ -64,6 +64,11 @@ sequenceDiagram
 - `frontend/src/pages/GamePage.jsx`
 - `frontend/src/features/game/`
 - `frontend/src/features/game/canvas/`
+- `frontend/src/features/game/canvas/enemySprites.js`
+- `frontend/src/features/game/canvas/enemies/walkingRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/shootingRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/tankRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/lordGoobSprite.js`
 - `frontend/src/assets/game/`
 
 ## Socket Events
