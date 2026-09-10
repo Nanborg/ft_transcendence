@@ -38,6 +38,8 @@ router.post ("/", async (req, res) => {
 				return res.status(400).json({ error: 'userName is empty' });
 			if (cleanEmail === '')
 				return res.status(400).json({ error: 'email is empty' });
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
+				return res.status(400).json({ error: 'invalid email' });
 			const existingUser = await prisma.user.findUnique({
 				where: { username: cleanName }
 			});
