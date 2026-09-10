@@ -139,9 +139,8 @@ void	PlayerEntity::_action_range( const json& in ) {
 	_curAction = PlayerActions::RANGEATT;
 	const int dirX = in["dirX"];
 	const int dirY = in["dirY"];
-	const double directionLength = std::sqrt(static_cast<double>(dirX * dirX + dirY * dirY));
-	const long velX = static_cast<long>(dirX * g_game->getScale() / directionLength);
-	const long velY = static_cast<long>(dirY * g_game->getScale() / directionLength);
+	const long velX = dirX * g_game->getScale();
+	const long velY = dirY * g_game->getScale();
 	const int rangedDamage = _rangedBaseDamage + playerData->upgrades.ranged * _damagePerLevel;
 	g_game->spawnEntity(new LaserProjectileEntity(_posX, _posY, velX, velY, _id, rangedDamage));
 	playerData->cooldowns.ranged = _rangedCooldownTicks;
