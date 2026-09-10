@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchMatchHistory } from '../api/scores';
 import { PageHeading } from '../components/PageHeading';
 
-export function MatchHistoryPage({ title, description, loadMatches = fetchMatchHistory, compact = false })
+export function MatchHistoryPage({ title, description })
 {
     const [matches, setMatches] = useState([]);
     const [status, setStatus] = useState('loading');
@@ -17,7 +17,7 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
             setError('');
             try
             {
-                const data = await loadMatches();
+                const data = await fetchMatchHistory();
                 if (!cancelled)
                 {
                     let nextMatches = [];
@@ -41,7 +41,7 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
         {
             cancelled = true;
         };
-    }, [loadMatches]);
+    }, []);
     let matchList = null;
     if (status === 'loaded' && matches.length > 0)
     {
@@ -49,7 +49,6 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
             <ul className="match-history-list">
                 {matches.map((match) =>
                 {
-                    const resultClass = `match-history-result--${match.result}`;
                     let createdAtLabel = '-';
                     if (match.createdAt)
                         createdAtLabel = new Date(match.createdAt).toLocaleString();
@@ -63,22 +62,21 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
                             <ul className="match-history-players">
                                 {match.players.map((player) => (
                                     <li key={player.userId}>
-                                        <a className="match-history-player-name" href={`#/profile/${player.userId}`}>{player.username || `User #${player.userId}`}</a>
-                                        <span className="match-history-stat match-history-stat--danger">Deaths: {player.deaths ?? 0}</span>
-                                        <span className="match-history-stat match-history-stat--damage">Damage dealt: {player.damageDealt ?? 0}</span>
-                                        <span className="match-history-stat match-history-stat--shield">Damage received: {player.damageReceived ?? 0}</span>
-                                        <span className="match-history-stat match-history-stat--gold">Gold: {player.goldEarned ?? 0}</span>
+                                        <span>Deaths: {player.deaths ?? 0}</span>
+                                        <span>Damage dealt: {player.damageDealt ?? 0}</span>
+                                        <span>Damage received: {player.damageReceived ?? 0}</span>
+                                        <span>Gold: {player.goldEarned ?? 0}</span>
                                     </li>
                                 ))}
                             </ul>
                         );
                     }
                     return (
-                        <li className={`match-history-item shell-window ${resultClass}`} key={match.gameRunId}>
-                            <button className="match-history-summary" type="button" onClick={() => setExpandedMatchId(nextExpandedMatchId)}>
-                                <span className={`match-history-result ${resultClass}`}>{match.result}</span>
-                                <span className="match-history-duration">{match.durationSeconds} seconds</span>
-                                <span className="match-history-date">{createdAtLabel}</span>
+                        <li className="match-history-item shell-window" key={match.gameRunId}>
+                            <button className="match-history-summary btn btn-outline-info" type="button" onClick={() => setExpandedMatchId(nextExpandedMatchId)}>
+                                <span className="badge text-bg-info">{match.result}</span>
+                                <span>{match.durationSeconds} seconds</span>
+                                <span>{createdAtLabel}</span>
                             </button>
                             {playerList}
                         </li>
@@ -89,8 +87,8 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
     }
 
     return (
-        <div className={compact ? "match-history-embedded" : "shell-screen shell-screen--history"}>
-            <div className={compact ? "match-history-panel shell-window" : "match-history-panel"}>
+        <div className="shell-screen shell-screen--history">
+            <div className="match-history-panel">
                 <PageHeading
                     title={title}
                     description={description}

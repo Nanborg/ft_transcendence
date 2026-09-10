@@ -159,7 +159,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                 <ul className="friends-list">
                                     {friendSearchResults.map((user) => (
                                         <li key={user.id} className="friends-item">
-                                            <a href={`#/profile/${user.id}`}>{user.username}</a>
+                                            <span>{user.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{user.id}</span>
                                             <button className="btn btn-outline-primary" type="button" onClick={() => openDirectChat(user)}>Message</button>
                                             {getRelationStatus(user) === "none" && (<button className="btn btn-primary" type="button" onClick={() => submitSearchFriend(user.id)} disabled={isDisabled}> add </button>)}
@@ -184,7 +184,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                 <ul className="friends-list">
                                     {pendingReceived.map((friend) => (
                                         <li key={friend.id} className="friends-item">
-                                            <a href={`#/profile/${friend.id}`}>{friend.username}</a>
+                                            <span>{friend.username}</span>
                                             <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                             <button className="btn btn-outline-success" type="button" onClick={() => submitAcceptFriend(friend.id)} disabled={isDisabled}>Accept</button>
                                             <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Decline</button>
@@ -199,7 +199,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                                 <ul className="friends-list">
                                     {pendingSent.map((friend) => (
                                         <li key={friend.id} className="friends-item">
-                                            <a href={`#/profile/${friend.id}`}>{friend.username}</a>
+                                            <span>{friend.username}</span>
                                             <span className="friends-meta badge text-bg-secondary">Pending</span>
                                             <button className="btn btn-outline-warning" type="button" onClick={() => submitRemoveFriend(friend.id)} disabled={isDisabled}>Cancel</button>
                                         </li>
@@ -212,7 +212,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
                             <ul className="friends-list">
                                 {friendList.map(friend => (
                                     <li key={friend.id} className="friends-item">
-                                        <a href={`#/profile/${friend.id}`}>{friend.username}</a>
+                                        <span>{friend.username}</span>
                                         <span className={`dot_status ${friend.isOnline ? "friend_online" : "friend_offline"}`}></span>
                                         <span className="friends-meta badge text-bg-info">#{friend.id}</span>
                                         <button

@@ -38,7 +38,6 @@
 
   .home-game-window {
     min-height: max(620px, calc(100vh - 156px));
-    overflow: visible;
   }
 
   .home-main-menu {
@@ -60,7 +59,7 @@
   }
 
   .home-menu-card {
-    min-height: 58px;
+    min-height: 72px;
     padding: 12px;
   }
 
@@ -98,8 +97,9 @@
   }
 
   .home-main-menu {
-    width: calc(100% - 12px);
-  }     
+    gap: 8px;
+    padding: 12px;
+  }
 
   .home-menu-actions {
     grid-template-columns: 1fr;
@@ -107,10 +107,10 @@
   }
 
   .home-menu-card {
-    min-height: 50px;
+    min-height: 54px;
     padding: 10px;
   }
-  
+
   .home-menu-card strong {
     font-size: 16px;
   }
@@ -133,5 +133,4 @@
     min-height: 58px;
     padding: 10px;
   }
- 
 }
