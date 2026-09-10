@@ -92,32 +92,28 @@ void	LordGoobEntity::_fanAttack( float dist, float interval, float offset, float
 	double perpendicularY = normalizedX;
 	int spawnDistance = g_game->getScale() * dist;
 	int scaledOffset = g_game->getScale() * offset;
+	int projSpeed = g_game->getScale() * speed;
+	float shotOffset = ((float)(shots) - 1.f) / 2.f;
 	for (int i = 0; i < shots; i++) {
-		
+		float a = interval * ((float)i - shotOffset);
+		float sideOffset = scaledOffset * ((float)i - shotOffset);
+		float ca = std::cos(a);
+		float sa = std::sin(a);
+		int spawnX = _posX + normalizedX * spawnDistance + perpendicularX * sideOffset;
+		int spawnY = _posY + normalizedY * spawnDistance + perpendicularY * sideOffset;
+		int velX = (ca * normalizedX - sa * normalizedY) * projSpeed;
+		int velY = (sa * normalizedX + ca * normalizedY) * projSpeed;
+		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velX, velY, _id, _projectileDamage));
 	}
 }
 
+void	LordGoobEntity::_radialAttack( float speed, float dist, int shots ) {
+	float interval = 2. * M_PI / (float) shots;
+	_fanAttack(dist, interval, 0.f, speed, shots);
+}
+
 void	LordGoobEntity::_firePhaseOneAttack( void ) {
-	double normalizedX = _aimX;
-	double normalizedY = _aimY;
-	normalize(normalizedX, normalizedY);
-	const double perpendicularX = -normalizedY;
-	const double perpendicularY = normalizedX;
-	const double spawnDistance = g_game->getScale() * _projectileSpawnDistance;
-	const double handOffset = g_game->getScale() * 0.45;
-	const double projectileVelocity = g_game->getScale() * _projectileSpeed;
-	const float angles[3] = {-_projectileSpread, 0.0, _projectileSpread};
-	for (int i = 0; i < 3; i++) {
-		const float angle = angles[i];
-		const float rotatedX = normalizedX * std::cos(angle) - normalizedY * std::sin(angle);
-		const float rotatedY = normalizedX * std::sin(angle) + normalizedY * std::cos(angle);
-		const double sideOffset = static_cast<double>(i - 1) * handOffset;
-		const int spawnX = _posX + normalizedX * spawnDistance + perpendicularX * sideOffset;
-		const int spawnY = _posY + normalizedY * spawnDistance + perpendicularY * sideOffset;
-		const int velocityX = rotatedX * projectileVelocity;
-		const int velocityY = rotatedY * projectileVelocity;
-		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velocityX, velocityY, _id, _projectileDamage));
-	}
+	_fanAttack(_projectileSpawnDistance, _projectileSpread, 0.45f, _projectileSpeed, 3);
 }
 
 bool	LordGoobEntity::_tickPhaseOneAttack(void) {
@@ -186,44 +182,12 @@ bool	LordGoobEntity::_tickPhaseTwoAttack( void ) {
 }
 
 void	LordGoobEntity::_firePhaseTwoFan( void ) {
-	double normalizedX = static_cast<double>(_aimX);
-	double normalizedY = static_cast<double>(_aimY);
-	normalize(normalizedX, normalizedY);
-	const double perpendicularX = -normalizedY;
-	const double perpendicularY = normalizedX;
-	const double spawnDistance = static_cast<double>(g_game->getScale()) * 1.25;
-	const double shoulderOffset = static_cast<double>(g_game->getScale()) * 0.65;
-	const double projectileVelocity = static_cast<double>(g_game->getScale()) * _projectileSpeed;
-	const double angles[3] = {-_phaseTwoFanSpread, 0.0, _phaseTwoFanSpread};
-	const double origins[3] = {-shoulderOffset, 0.0, shoulderOffset};
-	for (int i = 0; i < 3; i++) {
-		const double cosine = std::cos(angles[i]);
-		const double sine = std::sin(angles[i]);
-		const double rotatedX = normalizedX * cosine - normalizedY * sine;
-		const double rotatedY = normalizedX * sine + normalizedY * cosine;
-		const int spawnX = static_cast<int>(static_cast<double>(_posX) + normalizedX * spawnDistance + perpendicularX * origins[i]);
-		const int spawnY = static_cast<int>(static_cast<double>(_posY) + normalizedY * spawnDistance + perpendicularY * origins[i]);
-		const int velocityX = static_cast<int>(rotatedX * projectileVelocity);
-		const int velocityY = static_cast<int>(rotatedY * projectileVelocity);
-		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velocityX, velocityY, _id, _projectileDamage));
-	}
+	_fanAttack(1.25f, _phaseTwoFanSpread, 0.65f, _projectileSpeed, 3);
 }
 
 void	LordGoobEntity::_firePhaseTwoRadial( void ) {
-	const double fullCircle = 2.0 * std::acos(-1.0);
-	const double spawnDistance = static_cast<double>(g_game->getScale()) * 1.25;
-	const double projectileVelocity = static_cast<double>(g_game->getScale()) * _projectileSpeed;
-	for (int i = 0; i < _phaseTwoRadialProjectileCount; i++)
-	{
-		const double angle = fullCircle * static_cast<double>(i) / static_cast<double>(_phaseTwoRadialProjectileCount);
-		const double directionX = std::cos(angle);
-		const double directionY = std::sin(angle);
-		const int	spawnX = static_cast<int>(static_cast<double>(_posX) + directionX * spawnDistance);
-		const int	spawnY = static_cast<int>(static_cast<double>(_posY) + directionY * spawnDistance);
-		const int	velocityX = static_cast<int>(directionX * projectileVelocity);
-		const int	velocityY = static_cast<int>(directionY * projectileVelocity);
-		g_game->spawnEntity(new BossProjectileEntity(spawnX, spawnY, velocityX, velocityY, _id, _projectileDamage));
-	}
+
+	_radialAttack(_projectileSpeed, 1.25f, _phaseTwoRadialProjectileCount);
 }
 
 void	LordGoobEntity::_firePhaseTwoAttack( void ) {

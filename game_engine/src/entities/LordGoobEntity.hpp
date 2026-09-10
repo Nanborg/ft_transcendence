@@ -31,6 +31,7 @@ private:
 		void	_firePhaseThreeLaser( void );
 
 		void	_fanAttack( float dist, float interval, float offset, float speed, int shots );
+		void	_radialAttack( float speed, float dist, int shots );
 
 		int		_targetEntityId;
 		int		_attackCooldown;
