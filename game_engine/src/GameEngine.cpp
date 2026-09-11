@@ -314,8 +314,7 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 					PlayerData& player = _playerData[i];
 					if (player.alive == false)
 						continue;
-					if (player.playerEntityId != -1)
-					{
+					if (player.playerEntityId != -1) {
 
 						auto entIt = getEntityIterator(player.playerEntityId);
 						if (entIt != _entities.end()) {
@@ -329,7 +328,7 @@ void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 					sendPlayerStateUpdate(player); // inform clients of the change
 				}
 			}
-			entity->setGold(0); //dans le doute de la dupli
+			entity->setGold(0); // dans le doute de la dupli
 		}
 	}
 	entity->setHealth(nextHealth);

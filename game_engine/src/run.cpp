@@ -1,8 +1,8 @@
 #include <signal.h>
 #include <string>
 #include <queue>
-
 #include <iostream>
+#include <chrono>
 #include <json.hpp>
 #include <GameEngine.hpp>
 #include <ControllerIO.hpp>
@@ -14,10 +14,11 @@ GameEngine *g_game;
 typedef std::map<std::string, GameEngine> games_list;
 bool running = true;
 
-static void sig_stop(int) { running = false; }
+static void sig_stop(int) {
+	running = false;
+}
 
-static void send_room_status(const std::string &roomId, const std::string &type)
-{
+static void send_room_status( const std::string &roomId, const std::string &type ) {
 	json out;
 	out["type"] = type;
 	out["roomId"] = roomId;
@@ -25,22 +26,18 @@ static void send_room_status(const std::string &roomId, const std::string &type)
 		g_io->sendMsg(out.dump());
 }
 
-void receive_inputs(ControllerIO &io, std::queue<json> &inputs)
-{
+void receive_inputs( ControllerIO &io, std::queue<json> &inputs ) {
 	while (io.pollApi() > 0)
 		inputs.push(io.getMsg());
 }
 
-static void input_r_create(games_list &games, const json &in)
-{
-	if (games.count(in["roomId"]) == 0)
-	{
+static void input_r_create( games_list &games, const json &in ) {
+	if (games.count(in["roomId"]) == 0) {
 		games_list::iterator it = games.emplace(in["roomId"], in["roomId"]).first;
 		g_game = &it->second;
 		bool initialized = it->second.init(in);
 		g_game = NULL;
-		if (!initialized)
-		{
+		if (!initialized) {
 			games.erase(in["roomId"]);
 			send_room_status(in["roomId"], "roomInitFailed");
 			std::cout << "room " << in["roomId"] << " init failed" << std::endl;
@@ -53,45 +50,37 @@ static void input_r_create(games_list &games, const json &in)
 		send_room_status(in["roomId"], "roomReady");
 }
 
-static void input_r_destroy(games_list &games, const json &in)
-{
-	if (games.count(in["roomId"]) > 0)
-	{
+static void input_r_destroy( games_list &games, const json &in ) {
+	if (games.count(in["roomId"]) > 0) {
 		games.erase(in["roomId"]);
 		std::cout << "roomId " << in["roomId"] << " deleted" << std::endl;
 	}
 }
 
-static void input_r_start(games_list &games, const json &in)
-{
-	if (games.count(in["roomId"]) > 0)
-	{
+static void input_r_start( games_list &games, const json &in ) {
+	if (games.count(in["roomId"]) > 0) {
 		games.at(in["roomId"]).start();
 		std::cout << "roomId " << in["roomId"] << " now running" << std::endl;
 	}
 }
 
-static void input_r_stop(games_list &games, const json &in)
-{
+static void input_r_stop( games_list &games, const json &in ) {
 	std::string reason = "engine_error";
 	if (in.contains("reason") && in["reason"].is_string()) {
 		reason = in["reason"];
 	}
-	if (games.count(in["roomId"]) > 0)
-	{
+	if (games.count(in["roomId"]) > 0) {
 		games.at(in["roomId"]).stop(reason);
 		std::cout << "roomId " << in["roomId"] << " now stopped" << std::endl;
 	}
 }
 
-static void input_r_distribute(games_list &games, const json &in)
-{
+static void input_r_distribute( games_list &games, const json &in ) {
 	if (games.count(in["roomId"]) > 0)
 		games.at(in["roomId"]).pushInput(in);
 }
 
-void handle_inputs(std::queue<json> &inputs, games_list &games)
-{
+void handle_inputs( std::queue<json> &inputs, games_list &games ) {
 	json in;
 	while (!inputs.empty())
 	{
@@ -101,8 +90,7 @@ void handle_inputs(std::queue<json> &inputs, games_list &games)
 		if (!in["type"].is_number() || !in["roomId"].is_string())
 			continue;
 		int type = in["type"];
-		switch (type)
-		{
+		switch (type) {
 		case InputTypes::R_CREATE:
 			input_r_create(games, in);
 			break;
@@ -126,8 +114,7 @@ void handle_inputs(std::queue<json> &inputs, games_list &games)
 	}
 }
 
-int main(int argc, char const *argv[])
-{
+int main( int argc, char const *argv[] ) {
 	int port = 7297;
 	if (argc > 1)
 		port = atoi(argv[1]);
@@ -141,13 +128,11 @@ int main(int argc, char const *argv[])
 	ControllerIO io(port);
 	g_io = &io;
 
-	while (running)
-	{
+	while (running) {
 		auto begin = std::chrono::steady_clock::now();
 		receive_inputs(io, inputs);
 		handle_inputs(inputs, games);
-		for (games_list::iterator it = games.begin(); it != games.end(); it++)
-		{
+		for (games_list::iterator it = games.begin(); it != games.end(); it++) {
 			if (it->second.isRunning())
 				it->second.tick();
 		}
