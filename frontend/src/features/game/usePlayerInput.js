@@ -1,52 +1,58 @@
 import { useEffect, useRef } from 'react';
 import { PLAYER_ACTION } from './gameProtocol';
 
-const INITIAL_MOVEMENT = Object.freeze({
-    up: false,
-    down: false,
-    left: false,
-    right: false,
+const INITIAL_MOVEMENT = Object.freeze(
+{
+	up: false,
+	down: false,
+	left: false,
+	right: false,
 });
 
-function mapKeyToMovement(code) {
-    switch (code) {
-        case 'ArrowUp':
-        case 'KeyW':
-            return 'up';
-        case 'ArrowDown':
-        case 'KeyS':
-            return 'down';
-        case 'ArrowLeft':
-        case 'KeyA':
-            return 'left';
-        case 'ArrowRight':
-        case 'KeyD':
-            return 'right';
-        default:
-            return null;
-    }
+function mapKeyToMovement(code)
+{
+	switch (code)
+	{
+		case 'ArrowUp':
+		case 'KeyW':
+			return 'up';
+		case 'ArrowDown':
+		case 'KeyS':
+			return 'down';
+		case 'ArrowLeft':
+		case 'KeyA':
+			return 'left';
+		case 'ArrowRight':
+		case 'KeyD':
+			return 'right';
+		default:
+			return null;
+	}
 }
 
-function mapKeyToAction(code) {
-    switch (code) {
-        case 'KeyJ':
-            return PLAYER_ACTION.MELEE;
-        case 'KeyK':
-            return PLAYER_ACTION.RANGED;
-        case 'KeyL':
-            return PLAYER_ACTION.SHIELD;
-        default:
-            return null;
-    }
+function mapKeyToAction(code)
+{
+	switch (code)
+	{
+		case 'KeyJ':
+			return PLAYER_ACTION.MELEE;
+		case 'KeyK':
+			return PLAYER_ACTION.RANGED;
+		case 'KeyL':
+			return PLAYER_ACTION.SHIELD;
+		default:
+			return null;
+	}
 }
 
-function areMovementsEqual(left, right) {
-    return (
-        left.up === right.up &&
-        left.down === right.down &&
-        left.left === right.left &&
-        left.right === right.right
-    );
+function areMovementsEqual(left, right)
+{
+	return (
+		left.up === right.up &&
+		left.down === right.down &&
+		left.left === right.left &&
+		left.right === right.right
+	);
 }
 
 function getDirectionFromMovement(movement, fallbackDirection)
