@@ -125,10 +125,13 @@ void GameEngine::_updateCheckpointProximity(void)
 		bool isAtCheckpoint = false;
 		if (nearestCheckpoint)
 		{
-			unsigned int distToCheckpoint = nearestCheckpoint->distance(
+			unsigned long long distToCheckpointSquared = nearestCheckpoint->distanceSquared(
 				playerEntity->getPosX(), playerEntity->getPosY());
 
-			isAtCheckpoint = (distToCheckpoint < checkpointRange);
+			isAtCheckpoint = (
+				distToCheckpointSquared <
+				static_cast<unsigned long long>(checkpointRange) * checkpointRange
+			);
 			// std::cout << "Is pthe player at a Checkpoint: " << isAtCheckpoint << std::endl;
 		}
 		player.atACheckpoint = isAtCheckpoint;

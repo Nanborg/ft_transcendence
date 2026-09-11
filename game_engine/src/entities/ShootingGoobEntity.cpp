@@ -141,8 +141,8 @@ bool ShootingGoobEntity::tick( void )
 	const int oldDirX = _dirX;
 	const int oldDirY = _dirY;
 	_updateDirection(nearest);
-    const unsigned int dist =
-            nearest->distance(_posX, _posY);
+    const unsigned long long distSquared =
+            nearest->distanceSquared(_posX, _posY);
     const int oldVelX = _velX;
     const int oldVelY = _velY;
     const unsigned int fleeDistance =
@@ -150,8 +150,14 @@ bool ShootingGoobEntity::tick( void )
                     static_cast<float>(g_game->getScale()) *
                     _fleeDist
             );
-    if (dist < fleeDistance && dist != 0)
+    if (
+            distSquared <
+            static_cast<unsigned long long>(fleeDistance) * fleeDistance &&
+            distSquared != 0
+    )
     {
+            const unsigned int dist =
+                    nearest->distance(_posX, _posY);
             const long dx = _posX - nearest->getPosX();
             const long dy = _posY - nearest->getPosY();
 
@@ -177,7 +183,11 @@ bool ShootingGoobEntity::tick( void )
                     static_cast<float>(g_game->getScale()) *
                     _range
             );
-    if (dist <= attackRange && _shootCooldown == 0)
+    if (
+            distSquared <=
+            static_cast<unsigned long long>(attackRange) * attackRange &&
+            _shootCooldown == 0
+    )
             _shoot(nearest);
 	const bool velocityChanged = oldVelX != _velX || oldVelY != _velY;
 	const bool directionChanged = oldDirX != _dirX || oldDirY != _dirY;

@@ -145,15 +145,17 @@ bool WalkingGoobEntity::tick( void ) {
 			return wasMoving;
 		}
 		AbstractEntity* target = targetIt->get();
-		const unsigned int dist = target->distance(_posX, _posY);
-		if (dist > g_game->getScale() * _aggroLose)
+		const unsigned long long distSquared = target->distanceSquared(_posX, _posY);
+		const unsigned int aggroLoseDistance = static_cast<unsigned int>(g_game->getScale() * _aggroLose);
+		if (distSquared > static_cast<unsigned long long>(aggroLoseDistance) * aggroLoseDistance)
 		{
 			_targetEntityId = -1;
 			_velX = 0;
 			_velY = 0;
 			return true;
 		}
-                if (dist <= g_game->getScale() * _attackRange)
+                const unsigned int attackDistance = static_cast<unsigned int>(g_game->getScale() * _attackRange);
+                if (distSquared <= static_cast<unsigned long long>(attackDistance) * attackDistance)
                 {
                         const bool wasMoving = _velX != 0 || _velY != 0;
                         _velX = 0;
@@ -167,6 +169,7 @@ bool WalkingGoobEntity::tick( void ) {
                 }
 		const int oldVelX = _velX;
 		const int oldVelY = _velY;
+		const unsigned int dist = target->distance(_posX, _posY);
 		long dx = target->getPosX() - _posX;
 		long dy = target->getPosY() - _posY;
 		dx *= g_game->getScale() * _moveSpeed;
@@ -181,7 +184,8 @@ bool WalkingGoobEntity::tick( void ) {
 	AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);
 	if (!nearest)
 		return false;
-	if (nearest->distance(_posX, _posY) < g_game->getScale() * _aggroRange)
+	const unsigned int aggroDistance = static_cast<unsigned int>(g_game->getScale() * _aggroRange);
+	if (nearest->distanceSquared(_posX, _posY) < static_cast<unsigned long long>(aggroDistance) * aggroDistance)
 	{
 		_targetEntityId = nearest->getId();
 	}

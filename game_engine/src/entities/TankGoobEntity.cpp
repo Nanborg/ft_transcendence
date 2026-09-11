@@ -124,16 +124,16 @@ bool	TankGoobEntity::tick( void ) {
 			return true;
 		}
 		AbstractEntity* target = targetIt->get();
-		const unsigned int dist = target->distance(_posX, _posY);
 		const unsigned int loseDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _aggroLoseRange);
-		if (dist > loseDistance)
+		const unsigned long long distSquared = target->distanceSquared(_posX, _posY);
+		if (distSquared > static_cast<unsigned long long>(loseDistance) * loseDistance)
 		{
 			_clearTarget();
 			return true;
 		}
 		_updateDirection(target);
 		const unsigned int attackDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _attackRange);
-		if (dist <= attackDistance)
+		if (distSquared <= static_cast<unsigned long long>(attackDistance) * attackDistance)
 		{
 			_velX = 0;
 			_velY = 0;
@@ -144,8 +144,11 @@ bool	TankGoobEntity::tick( void ) {
 			}
 			_state["action"] = "idle";
 		}
-		else if (dist != 0)
+		else
 		{
+			const unsigned int dist = target->distance(_posX, _posY);
+			if (dist == 0)
+				return oldVelX != _velX || oldVelY != _velY || oldDirX != _dirX || oldDirY != _dirY;
 			const long dx = target->getPosX() - _posX;
 			const long dy = target->getPosY() - _posY;
 			const double velocityScale = static_cast<double>(g_game->getScale()) * _moveSpeed / static_cast<double>(dist);
@@ -161,7 +164,7 @@ bool	TankGoobEntity::tick( void ) {
 	if (!nearest)
 		return false;
 	const unsigned int aggroDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _aggroRange);
-	if (nearest->distance(_posX, _posY) <= aggroDistance)
+	if (nearest->distanceSquared(_posX, _posY) <= static_cast<unsigned long long>(aggroDistance) * aggroDistance)
 	{
 		_targetEntityId = nearest->getId();
 		_updateDirection(nearest);

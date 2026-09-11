@@ -45,7 +45,8 @@ public:
 	void	setGold( int gold );
 	void	setPassableHitBox( bool passableHitBox );
 
-	unsigned int	distance( int posX, int posY ) const;
+	unsigned int		distance( int posX, int posY ) const;
+	unsigned long long	distanceSquared( int posX, int posY ) const;
 
 	protected:
 	virtual bool _templateTick( void );

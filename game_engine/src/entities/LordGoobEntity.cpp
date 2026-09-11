@@ -481,9 +481,12 @@ bool	LordGoobEntity::tick( void ) {
 	AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);
 	if (!nearest)
 		return phaseChanged;
-	const unsigned int distanceToPlayer = nearest->distance(_posX, _posY);
 	const unsigned int attackRange = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _attackRange);
-	if (distanceToPlayer <= attackRange && _attackCooldown == 0)
+	if (
+		nearest->distanceSquared(_posX, _posY) <=
+		static_cast<unsigned long long>(attackRange) * attackRange &&
+		_attackCooldown == 0
+	)
 	{
 		if (_currentPhase == 1)
 			_startPhaseOneAttack(nearest);

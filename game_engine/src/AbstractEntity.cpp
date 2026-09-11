@@ -53,7 +53,7 @@ bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
 		collisionX = o.getPosX() + (((__int128_t) velX * coef) / vel2); // cast to dodge the long overflow
 		collisionY = o.getPosY() + (((__int128_t) velY * coef) / vel2); // cast to dodge the long overflow
 	}
-	return distance(collisionX, collisionY) < dist;
+	return distanceSquared(collisionX, collisionY) < static_cast<unsigned long long>(dist) * dist;
 }
 
 json AbstractEntity::toJson( void ) const {
@@ -119,4 +119,9 @@ unsigned int AbstractEntity::distance( int posX, int posY ) const {
 	long diffX = _posX - posX, diffY = _posY - posY;
 	long dist2 = diffX*diffX + diffY*diffY;
 	return (sqrtl(dist2));
+}
+
+unsigned long long AbstractEntity::distanceSquared( int posX, int posY ) const {
+	long diffX = _posX - posX, diffY = _posY - posY;
+	return static_cast<unsigned long long>(diffX * diffX + diffY * diffY);
 }
