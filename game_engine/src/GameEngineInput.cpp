@@ -46,6 +46,7 @@ void	GameEngine::_input_join( const json& in ) {
 		{
 			player->setGold(pd->gold);
 			sendPlayerStateUpdate(*pd);
+			sendEntityUpdate(player);
 		}
 	}
 }
