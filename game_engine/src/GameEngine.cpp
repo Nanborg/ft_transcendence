@@ -285,6 +285,60 @@ bool GameEngine::canDamage(const AbstractEntity* attacker, const AbstractEntity*
 	return attackerFaction != targetFaction;
 }
 
+static bool	isEnemyType(unsigned int typeId)
+{
+	return typeId == EntityTypes::WALKINGGOOB ||
+		typeId == EntityTypes::SHOOTINGGOOB ||
+		typeId == EntityTypes::TANKGOOB ||
+		typeId == EntityTypes::LORDGOOB;
+}
+
+static bool	canBlockMovement(const AbstractEntity* entity, const AbstractEntity* other)
+{
+	if (other->getPassableHitBox())
+		return false;
+	const bool entityIsPlayer = entity->getType() == EntityTypes::PLAYERENTITY;
+	const bool otherIsPlayer = other->getType() == EntityTypes::PLAYERENTITY;
+	const bool entityIsEnemy = isEnemyType(entity->getType());
+	const bool otherIsEnemy = isEnemyType(other->getType());
+	if (
+		(entityIsPlayer && otherIsPlayer) ||
+		(entityIsPlayer && otherIsEnemy) ||
+		(entityIsEnemy && otherIsPlayer)
+	)
+		return false;
+	if (
+		entity->getType() == EntityTypes::WALKINGGOOB &&
+		other->getType() == EntityTypes::PLAYERENTITY
+	)
+	{
+		const WalkingGoobEntity* walkingGoob =
+			static_cast<const WalkingGoobEntity*>(entity);
+		if (walkingGoob->canPassThroughPlayer())
+			return false;
+	}
+	if (
+		entity->getType() == EntityTypes::PLAYERENTITY &&
+		other->getType() == EntityTypes::WALKINGGOOB
+	)
+	{
+		const WalkingGoobEntity* walkingGoob =
+			static_cast<const WalkingGoobEntity*>(other);
+		if (walkingGoob->canPassThroughPlayer())
+			return false;
+	}
+	if (other->getType() == EntityTypes::LASERSHIELD)
+	{
+		const AbstractHitboxEntity* shield = static_cast<const AbstractHitboxEntity*>(other);
+		if (shield->getOwnerId() == static_cast<int>(entity->getId()))
+			return false;
+		const AbstractHitboxEntity* movingHitbox = dynamic_cast<const AbstractHitboxEntity*>(entity);
+		if (movingHitbox && movingHitbox->getOwnerId() == shield->getOwnerId())
+			return false;
+	}
+	return true;
+}
+
 void	GameEngine::applyDamage(AbstractEntity* entity, int damage, int attackerId)
 {
 	if (!entity || damage <= 0)
@@ -348,54 +402,7 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 		AbstractEntity* other = it->get();
 		if (other->getId() == entity->getId())
 			continue;
-		const bool entityIsPlayer = entity->getType() == EntityTypes::PLAYERENTITY;
-		const bool otherIsPlayer = other->getType() == EntityTypes::PLAYERENTITY;
-		const bool entityIsEnemy =
-			entity->getType() == EntityTypes::WALKINGGOOB ||
-			entity->getType() == EntityTypes::SHOOTINGGOOB ||
-			entity->getType() == EntityTypes::TANKGOOB ||
-			entity->getType() == EntityTypes::LORDGOOB;
-		const bool otherIsEnemy =
-			other->getType() == EntityTypes::WALKINGGOOB ||
-			other->getType() == EntityTypes::SHOOTINGGOOB ||
-			other->getType() == EntityTypes::TANKGOOB ||
-			other->getType() == EntityTypes::LORDGOOB;
-		if (
-			(entityIsPlayer && otherIsPlayer) ||
-			(entityIsPlayer && otherIsEnemy) ||
-			(entityIsEnemy && otherIsPlayer)
-		)
-			continue;
-		if (
-			entity->getType() == EntityTypes::WALKINGGOOB &&
-			other->getType() == EntityTypes::PLAYERENTITY
-		)
-		{
-			WalkingGoobEntity* walkingGoob =
-				static_cast<WalkingGoobEntity*>(entity);
-			if (walkingGoob->canPassThroughPlayer())
-				continue;
-		}
-		if (
-			entity->getType() == EntityTypes::PLAYERENTITY &&
-			other->getType() == EntityTypes::WALKINGGOOB
-		)
-		{
-			WalkingGoobEntity* walkingGoob =
-				static_cast<WalkingGoobEntity*>(other);
-			if (walkingGoob->canPassThroughPlayer())
-				continue;
-		}
-		if (other->getType() == EntityTypes::LASERSHIELD)
-		{
-			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
-			if (shield->getOwnerId() == static_cast<int>(entity->getId()))
-				continue;
-			AbstractHitboxEntity* movingHitbox = dynamic_cast<AbstractHitboxEntity*>(entity);
-			if (movingHitbox && movingHitbox->getOwnerId() == shield->getOwnerId())
-				continue;
-		}
-		if (other->getPassableHitBox())
+		if (!canBlockMovement(entity, other))
 			continue;
 		if (other->checkCollision(*entity))
 			return true;

@@ -12,6 +12,24 @@ AbstractHitboxEntity::~AbstractHitboxEntity( void ) {}
 
 int AbstractHitboxEntity::getOwnerId(void) const { return _ownerId; }
 
+static bool	canHitboxTarget(unsigned int hitboxType, const AbstractEntity* entity)
+{
+	const EntityFactions targetFaction = entity->getFaction();
+
+	if (hitboxType == EntityTypes::LASERSLASH || hitboxType == EntityTypes::ENEMYMELEE)
+		return targetFaction != EntityFactions::NEUTRAL_FACTION;
+	if (
+		hitboxType == EntityTypes::LASERPROJECTILE ||
+		hitboxType == EntityTypes::BOSSPROJECTILE ||
+		hitboxType == EntityTypes::BOSSLASERPROJECTILE ||
+		hitboxType == EntityTypes::ENEMYPROJECTILE
+	)
+		return true;
+	if (hitboxType == EntityTypes::LASERSHIELD)
+		return targetFaction == EntityFactions::ENEMY_FACTION;
+	return true;
+}
+
 bool	AbstractHitboxEntity::_templateTick( void ) {
 	bool ret = false;
 
@@ -21,6 +39,8 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 	for (GameEngine::entityList_t::const_iterator it = entities.begin(); it != entities.end(); it++) {
 		AbstractEntity*	entity = it->get();
 		if (entity->getId() == _ownerId)				// do not hit owner
+			continue;
+		if (!canHitboxTarget(_typeId, entity))
 			continue;
 		const EntityFactions hitboxFaction = getFaction();
 		const EntityFactions targetFaction = entity->getFaction();
