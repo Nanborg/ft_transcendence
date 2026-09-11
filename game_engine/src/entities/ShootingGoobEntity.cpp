@@ -2,8 +2,8 @@
 
 const float	ShootingGoobEntity::_fleeDist = 5.f;
 const float	ShootingGoobEntity::_range = 10.f;
-const float ShootingGoobEntity::_fleeSpeed = 0.17f;
-const float ShootingGoobEntity::_projectileSpeed = 0.58f;
+const float ShootingGoobEntity::_fleeSpeed = 0.11f;
+const float ShootingGoobEntity::_projectileSpeed = 0.22f;
 const int	ShootingGoobEntity::_projectileDamage = 1;
 const int	ShootingGoobEntity::_shootCooldownTicks = 16;
 const int	ShootingGoobEntity::_shootAnimationFrames = 4;

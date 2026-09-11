@@ -70,6 +70,10 @@ sequenceDiagram
 - `backend/src/socket/handlers/roomHandlers.js`
 - `backend/src/socket/handlers/chatHandlers.js`
 - `backend/src/services/chatService.js`
+- `backend/src/services/chat/shared.js`
+- `backend/src/services/chat/blocking.js`
+- `backend/src/services/chat/messages.js`
+- `backend/src/services/chat/gameInvitations.js`
 - `frontend/src/features/room/useRoom.js`
 - `frontend/src/features/chat/`
 - `frontend/src/pages/LobbyPage.jsx`

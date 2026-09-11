@@ -55,112 +55,118 @@ function areMovementsEqual(left, right)
 	);
 }
 
-export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true })
+function getDirectionFromMovement(movement, fallbackDirection)
 {
-	const movementRef = useRef(INITIAL_MOVEMENT);
-	const actionRef = useRef(PLAYER_ACTION.NONE);
-	const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
+    const dirX = Number(movement.right) - Number(movement.left);
+    const dirY = Number(movement.down) - Number(movement.up);
 
-	useEffect(() =>
-	{
-		if (!socket || !roomId || !enabled)
-		{
-			movementRef.current = INITIAL_MOVEMENT;
-			actionRef.current = PLAYER_ACTION.NONE;
-			return undefined;
-		}
+    if (dirX === 0 && dirY === 0)
+        return fallbackDirection;
+    if (Math.abs(dirX) > Math.abs(dirY))
+        return { dirX: Math.sign(dirX), dirY: 0 };
+    if (Math.abs(dirY) > Math.abs(dirX))
+        return { dirX: 0, dirY: Math.sign(dirY) };
+    return { dirX: Math.sign(dirX), dirY: Math.sign(dirY) };
+}
 
-		function updateLastDirection(movementKey)
-		{
-			if (movementKey === 'up')
-				lastDirectionRef.current = { dirX: 0, dirY: -1 };
-			else if (movementKey === 'down')
-				lastDirectionRef.current = { dirX: 0, dirY: 1 };
-			else if (movementKey === 'left')
-				lastDirectionRef.current = { dirX: -1, dirY: 0 };
-			else if (movementKey === 'right')
-				lastDirectionRef.current = { dirX: 1, dirY: 0 };
-		}
+export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true }) {
+    const movementRef = useRef(INITIAL_MOVEMENT);
+    const actionRef = useRef(PLAYER_ACTION.NONE);
+    const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
 
-		function emitMovement(nextMovement)
-		{
-			if (areMovementsEqual(movementRef.current, nextMovement))
-				return;
+    useEffect(() => {
+        if (!socket || !roomId || !enabled) {
+            movementRef.current = INITIAL_MOVEMENT;
+            actionRef.current = PLAYER_ACTION.NONE;
+            return undefined;
+        }
 
-			movementRef.current = nextMovement;
-			socket.emit('player:input', { roomId, input: nextMovement, });
-		}
+        function emitMovement(nextMovement) {
+            if (areMovementsEqual(movementRef.current, nextMovement))
+                return;
 
-		function emitAction(nextAction)
-		{
-			if (actionRef.current === nextAction)
-				return;
+            movementRef.current = nextMovement;
+            lastDirectionRef.current = getDirectionFromMovement(nextMovement, lastDirectionRef.current);
+            socket.emit('player:input', {
+                roomId,
+                input: nextMovement,
+            });
+        }
 
-			actionRef.current = nextAction;
-			socket.emit('player:input', { roomId, input: { action: nextAction, ...lastDirectionRef.current, }, });
-		}
+        function emitAction(nextAction) {
+            if (actionRef.current === nextAction)
+                return;
 
-		function handleKeyDown(event)
-		{
-			const movementKey = mapKeyToMovement(event.code);
+            actionRef.current = nextAction;
+            socket.emit('player:input', {
+                roomId,
+                input: {
+                    action: nextAction,
+                    ...lastDirectionRef.current,
+                },
+            });
+        }
 
-			if (movementKey)
-			{
-				event.preventDefault();
-				updateLastDirection(movementKey);
-				emitMovement({ ...movementRef.current, [movementKey]: true, });
-				return;
-			}
+        function handleKeyDown(event) {
+            const movementKey = mapKeyToMovement(event.code);
 
-			const action = mapKeyToAction(event.code);
+            if (movementKey) {
+                event.preventDefault();
+                emitMovement({
+                    ...movementRef.current,
+                    [movementKey]: true,
+                });
+                return;
+            }
 
-			if (action === null || !actionsEnabled)
-				return;
+            const action = mapKeyToAction(event.code);
 
-			event.preventDefault();
+            if (action === null || !actionsEnabled)
+                return;
 
-			if (!event.repeat)
-				emitAction(action);
-		}
+            event.preventDefault();
 
-		function handleKeyUp(event)
-		{
-			const movementKey = mapKeyToMovement(event.code);
+            if (!event.repeat)
+                emitAction(action);
+        }
 
-			if (movementKey)
-			{
-				event.preventDefault();
-				emitMovement({ ...movementRef.current, [movementKey]: false, });
-				return;
-			}
+        function handleKeyUp(event) {
+            const movementKey = mapKeyToMovement(event.code);
 
-			const action = mapKeyToAction(event.code);
+            if (movementKey) {
+                event.preventDefault();
+                emitMovement({
+                    ...movementRef.current,
+                    [movementKey]: false,
+                });
+                return;
+            }
 
-			if (action === null)
-				return;
+            const action = mapKeyToAction(event.code);
 
-			event.preventDefault();
+            if (action === null)
+                return;
 
-			if (actionRef.current === action)
-				emitAction(PLAYER_ACTION.NONE);
-		}
+            event.preventDefault();
 
-		function releaseAllInputs()
-		{
-			emitMovement(INITIAL_MOVEMENT);
-			emitAction(PLAYER_ACTION.NONE);
-		}
+            if (actionRef.current === action)
+                emitAction(PLAYER_ACTION.NONE);
+        }
 
-		window.addEventListener('keydown', handleKeyDown);
-		window.addEventListener('keyup', handleKeyUp);
-		window.addEventListener('blur', releaseAllInputs);
+        function releaseAllInputs() {
+            emitMovement(INITIAL_MOVEMENT);
+            emitAction(PLAYER_ACTION.NONE);
+        }
 
-		return () =>
-		{
-			window.removeEventListener('keydown', handleKeyDown);
-			window.removeEventListener('keyup', handleKeyUp);
-			window.removeEventListener('blur', releaseAllInputs);
-			releaseAllInputs();
-		};
-	}, [socket, roomId, enabled, actionsEnabled]);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        window.addEventListener('blur', releaseAllInputs);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+            window.removeEventListener('blur', releaseAllInputs);
+            releaseAllInputs();
+        };
+    }, [socket, roomId, enabled, actionsEnabled]);
 }

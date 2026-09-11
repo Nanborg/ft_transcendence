@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
-import { getCurrentPath } from './routing/hashRouter';
+import { getCurrentPath, matchCurrentPage } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
 import { refreshAccessToken } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { PublicProfilePage } from './pages/PublicProfilePage';
 import { useProfile } from './features/profile/useProfile';
 import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
@@ -95,7 +96,7 @@ function App() {
   }, []);
 
   const currentPage = useMemo(() => {
-    return pages.find(page => page.path === currentPath) || pages[0];
+    return matchCurrentPage(currentPath, pages);
   }, [currentPath]);
   const handleSessionExpired = useCallback((message) => {
     if (sessionExpiredRef.current) {
@@ -307,7 +308,7 @@ function App() {
               onLogout={handleLogout}
             />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'public-profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'privacy' && (
@@ -338,6 +339,14 @@ function App() {
                 }
               }}
               onUpdateProfile={updateCurrentUser}
+            />
+          )}
+          {currentPage.id === 'public-profile' && (
+            <PublicProfilePage
+              userId={currentPage.params.userId}
+              currentUser={currentUser}
+              friends={friends}
+              onSessionExpired={handleSessionExpired}
             />
           )}
           {currentPage.id === 'room' && (

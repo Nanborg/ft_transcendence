@@ -19,7 +19,11 @@ router.post ("/", async (req, res) =>
 				return res.status(400).json({ error: 'userName is empty' });
 			if (cleanEmail === '')
 				return res.status(400).json({ error: 'email is empty' });
-			const existingUser = await prisma.user.findUnique({where: { username: cleanName }});
+			if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
+				return res.status(400).json({ error: 'invalid email' });
+			const existingUser = await prisma.user.findUnique({
+				where: { username: cleanName }
+			});
 			if (existingUser)
 				return res.status(400).send('Username is already taken') // need to be set to 409 Conflict
 

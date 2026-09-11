@@ -54,12 +54,21 @@ sequenceDiagram
 - `game_engine/src/`
 - `game_engine/src/entities/`
 - `backend/src/services/gameEngineService.js`
+- `backend/src/services/gameEngine/constants.js`
+- `backend/src/services/gameEngine/mapFiles.js`
+- `backend/src/services/gameEngine/sessionStore.js`
+- `backend/src/services/gameEngine/roomReadyTracker.js`
 - `backend/src/services/gameService.js`
 - `backend/src/socket/socketHandler.js`
 - `backend/src/socket/handlers/gameHandlers.js`
 - `frontend/src/pages/GamePage.jsx`
 - `frontend/src/features/game/`
 - `frontend/src/features/game/canvas/`
+- `frontend/src/features/game/canvas/enemySprites.js`
+- `frontend/src/features/game/canvas/enemies/walkingRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/shootingRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/tankRobotSprite.js`
+- `frontend/src/features/game/canvas/enemies/lordGoobSprite.js`
 - `frontend/src/assets/game/`
 
 ## Socket Events
