@@ -56,6 +56,17 @@ bool AbstractEntity::checkCollision( const AbstractEntity& o ) const {
 	return distanceSquared(collisionX, collisionY) < static_cast<unsigned long long>(dist) * dist;
 }
 
+bool AbstractEntity::canReachCollision( const AbstractEntity& o ) const {
+	long radius = (_size + o._size) / 2;
+	long velX = o.getVelX(), velY = o.getVelY();
+	long travelX = velX < 0 ? -velX : velX;
+	long travelY = velY < 0 ? -velY : velY;
+
+	radius += travelX + travelY;
+	return distanceSquared(o.getPosX(), o.getPosY()) <=
+		static_cast<unsigned long long>(radius) * radius;
+}
+
 json AbstractEntity::toJson( void ) const {
 	json entityJson;
 

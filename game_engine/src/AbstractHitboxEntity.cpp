@@ -48,6 +48,8 @@ bool	AbstractHitboxEntity::_templateTick( void ) {
 			continue;
 		if (entity->getPassableHitBox())				// check if entity ignores hitboxes
 			continue;
+		if (!entity->canReachCollision(*this))
+			continue;
 		if (!entity->checkCollision(*this))				// check for collision with entity
 			continue;
 

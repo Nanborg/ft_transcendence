@@ -23,6 +23,7 @@ public:
 
 	// true means collision, false means no collision
 	bool checkCollision( const AbstractEntity& ) const;
+	bool canReachCollision( const AbstractEntity& ) const;
 
 	json	toJson( void ) const;
 

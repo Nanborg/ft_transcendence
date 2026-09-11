@@ -404,6 +404,8 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 			continue;
 		if (!canBlockMovement(entity, other))
 			continue;
+		if (!other->canReachCollision(*entity))
+			continue;
 		if (other->checkCollision(*entity))
 			return true;
 	}
