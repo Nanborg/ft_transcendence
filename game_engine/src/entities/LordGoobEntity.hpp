@@ -7,19 +7,19 @@
 class LordGoobEntity: public AbstractEntity
 {
 public:
-        LordGoobEntity( int posX, int posY );
-        ~LordGoobEntity( void );
+		LordGoobEntity( int posX, int posY );
+		~LordGoobEntity( void );
 
-        bool    tick( void ) override;
+		bool	tick( void ) override;
 
 private:
 		int		_getPhase( void ) const;
-        void    _updateDirection( const AbstractEntity* target );
-        void    _startPhaseOneAttack( const AbstractEntity* target );
+		void	_updateDirection( int diffX, int diffY );
+		void	_startPhaseOneAttack( const AbstractEntity* target );
 		void	_startPhaseTwoAttack( const AbstractEntity* target);
 		bool	_tickPhaseTwoAttack( void );
-        bool    _tickPhaseOneAttack( void );
-        void    _firePhaseOneAttack( void );
+		bool	_tickPhaseOneAttack( void );
+		void	_firePhaseOneAttack( void );
 		void	_firePhaseTwoAttack( void );
 		void	_firePhaseTwoFan( void );
 		void	_firePhaseTwoRadial( void );
@@ -31,32 +31,35 @@ private:
 		void	_firePhaseThreeLaser( void );
 		bool	_applyContactDamage( void );
 		AbstractEntity*	_getPatternTarget( void );
-		void	_spawnProjectileAtAngle( double angle, double speedMultiplier, double spawnMultiplier, int damage );
+		void	_spawnProjectileAtAngle( float angle, float speedMultiplier, float spawnMultiplier, int damage );
 		void	_fireCloseRangeNova( int projectileCount );
 		void	_fireCrossLasers( void );
 		void	_fireFanAtEveryPlayer( void );
 
-        int     _targetEntityId;
-        int     _attackCooldown;
-        int     _attackFrame;
-        int     _attackFrameTicks;
+		void	_fanAttack( float dist, float interval, float offset, float speed, int shots );
+		void	_radialAttack( float speed, float dist, int shots );
+
+		int		_targetEntityId;
+		int		_attackCooldown;
+		int		_attackFrame;
+		int		_attackFrameTicks;
 		int		_contactDamageCooldown;
 		int		_targetCursor;
 		int		_currentPhase;
 		int		_phaseTwoPattern;
 		int		_phaseThreePattern;
-        int     _dirX;
-        int     _dirY;
-        long    _aimX;
-        long    _aimY;
+		int		_dirX;
+		int		_dirY;
+		int		_aimX;
+		int		_aimY;
 
-        static const float      _attackRange;
-        static const float      _projectileSpeed;
-        static const float      _projectileSpawnDistance;
-        static const int        _projectileDamage;
-        static const int        _attackCooldownTicks;
-        static const int        _attackFrameDurationTicks;
-        static const int        _attackFrameCount;
+		static const float		_attackRange;
+		static const float		_projectileSpeed;
+		static const float		_projectileSpawnDistance;
+		static const int		_projectileDamage;
+		static const int		_attackCooldownTicks;
+		static const int		_attackFrameDurationTicks;
+		static const int		_attackFrameCount;
 		static const int		_phaseTwoCooldownTicks;
 		static const int		_phaseTwoFrameCount;
 		static const int		_phaseTwoFrameDurationTicks;
@@ -71,9 +74,9 @@ private:
 		static const float		_contactDamageRange;
 		static const float		_phaseThreeLaserSpeed;
 		static const float		_phaseThreeLaserSpawnDistance;
-		static const double		_phaseThreeFanAngleStep;
-		static const double		_phaseTwoFanSpread;
-        static const double     _projectileSpread;
+		static const float		_phaseThreeFanAngleStep;
+		static const float		_phaseTwoFanSpread;
+		static const float		_projectileSpread;
 };
 
 #endif
