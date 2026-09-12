@@ -43,7 +43,7 @@ LordGoobEntity::~LordGoobEntity( void ) {}
 AbstractEntity*	LordGoobEntity::_getPatternTarget( void ) {
 	AbstractEntity* nearest = NULL;
 	AbstractEntity* selected = NULL;
-	unsigned long nearestDistance = 0xFFFFFFFFFFFFFFFF;
+	long nearestDistance = 0x7FFFFFFFFFFFFFFF;
 	int playerCount = 0;
 	int selectedIndex = 0;
 	const GameEngine::entityList_t& entities = g_game->getEntityList();
@@ -52,7 +52,7 @@ AbstractEntity*	LordGoobEntity::_getPatternTarget( void ) {
 		AbstractEntity* entity = it->get();
 		if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
 			continue;
-		const unsigned long distance = entity->distance2(_posX, _posY);
+		const long distance = entity->distance2(_posX, _posY);
 		if (distance < nearestDistance) {
 			nearest = entity;
 			nearestDistance = distance;
