@@ -1,5 +1,6 @@
 const prisma = require("../db");
 const { gameEngineService } = require("../services/gameEngineService");
+const { cleanInput } = require('../services/sanitize');
 const playerInputs = new Map();
 const MIN_PLAYERS = 1;
 const MAX_PLAYERS = 4;
@@ -24,7 +25,17 @@ function createPlayer(playerId, playerName) {
 }
 
 async function createRoom(ownerId, roomName) {
-    if (typeof roomName !== "string" || !roomName.trim()) {
+    if (typeof roomName !== "string") {
+        return {
+            room: null,
+            error: {
+                code: "INVALID_ROOM_NAME",
+                message: "Room name must be a non-empty string",
+            },
+        };
+    }
+    const cleanRoomName = cleanInput(roomName.trim());
+    if (cleanRoomName === '') {
         return {
             room: null,
             error: {
@@ -48,8 +59,6 @@ async function createRoom(ownerId, roomName) {
         };
     }
     const roomId = generateRoomId();
-    const cleanRoomName = roomName.trim();
-
     const existingRoom = await prisma.room.findUnique({
         where: {
             name: cleanRoomName,

@@ -21,6 +21,17 @@ export async function addFriend(friendId) {
 	}
 }
 
+export async function acceptFriends(friendId) {
+
+	try{
+		return await apiRequest(`/api/friends/${friendId}/accept`, {method: "PATCH"});
+	} catch (err) {
+		if (err.status === 401 || err.status === 403)
+			throw err;
+		throw new Error("Unable to accept friends");
+	}
+}
+
 export async function removeFriend(friendId) {
 	try{
 		return await apiRequest(`/api/friends/${friendId}`, {method: "DELETE",});

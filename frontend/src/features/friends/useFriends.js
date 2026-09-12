@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { addFriend, fetchFriends, removeFriend } from '../../api/friends';
+import { acceptFriends, addFriend, fetchFriends, removeFriend } from '../../api/friends';
 
-export function useFriends(currentUser, accessToken, onSessionExpired) {
+export function useFriends(socket, currentUser, onSessionExpired) {
     const [friends, setFriends] = useState([]);
     const [friendIdInput, setFriendIdInput] = useState('');
     const [friendsStatus, setFriendsStatus] = useState('idle');
     const [friendsError, setFriendsError] = useState('');
 
     const loadFriends = useCallback(async () => {
-        if (!currentUser || !accessToken) {
+        if (!currentUser) {
             setFriends([]);
             setFriendsStatus('empty');
             setFriendsError('');
@@ -18,7 +18,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsError('');
 
         try {
-            const nextFriends = await fetchFriends(accessToken);
+            const nextFriends = await fetchFriends();
             setFriends(nextFriends);
             setFriendsStatus('loaded');
         } catch (error) {
@@ -30,11 +30,39 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
             setFriendsStatus('error');
             setFriendsError(error.message);
         }
-    }, [currentUser, accessToken, onSessionExpired]);
+    }, [currentUser, onSessionExpired]);
 
     useEffect(() => {
         loadFriends();
     }, [loadFriends]);
+
+    useEffect(() => {
+        if(!socket)
+            return undefined;
+        function handleUserStatus(payload)
+        {
+            setFriends((currentFriends) => {
+                if (!currentFriends?.friends)
+                    return currentFriends;
+                const updatedFriends = currentFriends.friends.map((friend) => {
+                    if(Number(friend.id) === Number(payload?.userId))
+                        return { ...friend, isOnline: payload.isOnline };
+                    return friend;
+                });
+                return { ...currentFriends, friends: updatedFriends };
+            });
+        }
+        function handleFriendshipUpdate()
+        {
+            loadFriends();
+        }
+        socket.on('user:status', handleUserStatus);
+        socket.on('friends:update', handleFriendshipUpdate);
+        return () => {
+            socket.off('user:status', handleUserStatus);
+            socket.off('friends:update', handleFriendshipUpdate);
+        };
+    }, [socket, loadFriends]);
 
     async function submitAddFriend(event) {
         event.preventDefault();
@@ -48,7 +76,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsStatus('loading');
         setFriendsError('');
         try {
-            await addFriend(accessToken, friendId);
+            await addFriend(friendId);
             setFriendIdInput('');
             await loadFriends();
         } catch (error) {
@@ -65,7 +93,23 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         setFriendsStatus('loading');
         setFriendsError('');
         try {
-            await removeFriend(accessToken, friendId);
+            await removeFriend(friendId);
+            await loadFriends();
+        } catch (error) {
+            if (error.status === 401 || error.status === 403) {
+                onSessionExpired(error.message);
+                return;
+            }
+            setFriendsStatus('error');
+            setFriendsError(error.message);
+        }
+    }
+
+    async function submitAcceptFriend(friendId) {
+        setFriendsStatus('loading');
+        setFriendsError('');
+        try {
+            await acceptFriends(friendId);
             await loadFriends();
         } catch (error) {
             if (error.status === 401 || error.status === 403) {
@@ -84,6 +128,7 @@ export function useFriends(currentUser, accessToken, onSessionExpired) {
         friendsError,
         loadFriends,
         submitAddFriend,
+        submitAcceptFriend,
         submitRemoveFriend,
     };
 }

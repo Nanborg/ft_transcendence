@@ -49,6 +49,20 @@ function areMovementsEqual(left, right) {
     );
 }
 
+function getDirectionFromMovement(movement, fallbackDirection)
+{
+    const dirX = Number(movement.right) - Number(movement.left);
+    const dirY = Number(movement.down) - Number(movement.up);
+
+    if (dirX === 0 && dirY === 0)
+        return fallbackDirection;
+    if (Math.abs(dirX) > Math.abs(dirY))
+        return { dirX: Math.sign(dirX), dirY: 0 };
+    if (Math.abs(dirY) > Math.abs(dirX))
+        return { dirX: 0, dirY: Math.sign(dirY) };
+    return { dirX: Math.sign(dirX), dirY: Math.sign(dirY) };
+}
+
 export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true }) {
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
@@ -61,22 +75,12 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             return undefined;
         }
 
-        function updateLastDirection(movementKey) {
-            if (movementKey === 'up')
-                lastDirectionRef.current = { dirX: 0, dirY: -1 };
-            else if (movementKey === 'down')
-                lastDirectionRef.current = { dirX: 0, dirY: 1 };
-            else if (movementKey === 'left')
-                lastDirectionRef.current = { dirX: -1, dirY: 0 };
-            else if (movementKey === 'right')
-                lastDirectionRef.current = { dirX: 1, dirY: 0 };
-        }
-
         function emitMovement(nextMovement) {
             if (areMovementsEqual(movementRef.current, nextMovement))
                 return;
 
             movementRef.current = nextMovement;
+            lastDirectionRef.current = getDirectionFromMovement(nextMovement, lastDirectionRef.current);
             socket.emit('player:input', {
                 roomId,
                 input: nextMovement,
@@ -102,7 +106,6 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
 
             if (movementKey) {
                 event.preventDefault();
-                updateLastDirection(movementKey);
                 emitMovement({
                     ...movementRef.current,
                     [movementKey]: true,

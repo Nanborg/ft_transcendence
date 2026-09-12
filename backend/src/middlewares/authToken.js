@@ -4,17 +4,17 @@ const jwt = require("jsonwebtoken");
 
 
 //	Middleware that validates a JWT access token.
-//	
+//
 //	Process:
 //	1. Extracts the token from the Authorization header.
 //	2. Verifies the token using the access token secret.
 //	3. Attaches the decoded user payload to `req.user`.
 //	4. Allows the request to continue if the token is valid.
-//	
+//
 //	param {Request} req - Express request containing the Authorization header.
 //	param {Response} res - Express response object.
 //	param {NextFunction} next - Express next middleware function.
-//	
+//
 //	throws {401} If no token is provided.
 //	throws {401} If the token is expired.
 //	throws {403} If the token is invalid.
@@ -23,8 +23,7 @@ const jwt = require("jsonwebtoken");
 
 function authToken(req, res, next) {
 	try {
-		const authHeader = req.headers['authorization'];
-		const token = authHeader && authHeader.split(' ')[1];
+		const token = req.cookies ? req.cookies.accessToken : null;
 
 		if (!token)
 			return res.status(401).json({

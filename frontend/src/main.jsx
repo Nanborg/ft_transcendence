@@ -9,7 +9,5 @@ const rootElement = document.getElementById('root');
 
 // Start React / render the App
 createRoot(rootElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );

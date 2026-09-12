@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
-import { getCurrentPath } from './routing/hashRouter';
+import { getCurrentPath, matchCurrentPage } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
 import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
-import { refreshAuthSession } from './api/tokenRefresh';
+import { refreshAccessToken } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { PublicProfilePage } from './pages/PublicProfilePage';
 import { useProfile } from './features/profile/useProfile';
-import { AppHeader } from './components/AppHeader';
 import { StatusPanel } from './components/StatusPanel';
 import { HomePage } from './pages/HomePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -20,6 +20,12 @@ import { useFriends } from './features/friends/useFriends';
 import { LobbyPage } from './pages/LobbyPage';
 import { LeaderboardPage } from './pages/LeaderboardPage';
 import { MatchHistoryPage } from './pages/MatchHistoryPage';
+import { useChat } from './features/chat/useChat';
+import { LegalPage } from './pages/LegalPage';
+import { useDirectChat } from './features/chat/useDirectChat';
+import { GlobalChatDock } from './features/chat/GlobalChatDock';
+import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
+import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
 function App() {
   const [socket, setSocket] = useState(null);
@@ -33,10 +39,13 @@ function App() {
   const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
   const [authStatus, setAuthStatus] = useState('idle');
   const [authError, setAuthError] = useState('');
-  const sessionExpiredRef = useRef(false); //test-nico
+  const sessionExpiredRef = useRef(false);
 
   const [password, setPassword] = useState('');
   const room = useRoom(socket, currentUser);
+  const directChat = useDirectChat(socket, currentUser);
+  const chat = useChat(socket, currentUser, room.currentRoom, directChat.blockedUserIds);
+  const [isGlobalChatInputFocused, setIsGlobalChatInputFocused] = useState(false);
 
 
   const [authMode, setAuthMode] = useState('login');
@@ -49,7 +58,7 @@ function App() {
     }
   }, [currentUser]);
 
-  useEffect(() => { //test-nico
+  useEffect(() => {
     function applySession(session) {
       setAuthSession(session);
       setCurrentUser(session?.user || null);
@@ -87,9 +96,9 @@ function App() {
   }, []);
 
   const currentPage = useMemo(() => {
-    return pages.find(page => page.path === currentPath) || pages[0];
+    return matchCurrentPage(currentPath, pages);
   }, [currentPath]);
-  const handleSessionExpired = useCallback((message) => { //test-nico
+  const handleSessionExpired = useCallback((message) => {
     if (sessionExpiredRef.current) {
       return;
     }
@@ -111,28 +120,24 @@ function App() {
     }
 
     const params = new URLSearchParams(hash.slice(queryIndex + 1));
-    const isFortyTwoOauth = params.get('oauth') === '42';
-    const accessToken = params.get('accessToken');
-    const refreshToken = params.get('refreshToken');
+    const isFortyTwoOauth = params.get('oauth') === 'success';
 
-    if (!isFortyTwoOauth || !accessToken || !refreshToken) {
+    if (!isFortyTwoOauth) {
       return;
     }
-    window.history.replaceState(null, '', '#/login'); //test-nico
+        window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
         setAuthError('');
       try {
-        const pendingSession = { accessToken, refreshToken };
-        writeAuthSession(pendingSession); //test-nico
-        const user = await fetchCurrentUser(accessToken);
-        const session = { ...pendingSession, user };
+        const user = await fetchCurrentUser();
+        const session = { user };
 
-        writeAuthSession(session); //test-nico
+        writeAuthSession(session);
         setCurrentUser(user);
         setAuthStatus('authenticated');
-        window.location.hash = '#/profile';
+        window.location.hash = '#/';
       } catch (error) {
         setCurrentUser(null);
         setAuthSession(null);
@@ -146,26 +151,15 @@ function App() {
     finishFortyTwoLogin();
   }, []);
 
-  const friends = useFriends(currentUser, authSession?.accessToken, handleSessionExpired,);
+  const friends = useFriends(socket, currentUser, handleSessionExpired,);
   const { profileUser, profileStatus, profileError } = useProfile(
     currentPage.id,
     currentUser,
-    authSession?.accessToken,
     handleSessionExpired,
   );
 
-  useEffect(() => { //test-nico
-    if (!socket || !authSession?.accessToken) {
-      return;
-    }
-    socket.auth = {
-      ...(socket.auth || {}),
-      token: authSession.accessToken,
-    };
-  }, [socket, authSession?.accessToken]);
-
-  useEffect(() => { //test-nico
-    if (!currentUser || !authSession?.accessToken) {
+  useEffect(() => {
+    if (!currentUser) {
       setSocket(null);
       setSocketStatus('disconnected');
       return undefined;
@@ -173,25 +167,24 @@ function App() {
     const nextSocket = io({
       path: '/socket.io',
       transports: ['websocket'],
-      auth: {
-        token: authSession.accessToken,
-      },
+      withCredentials: true,
+      forceNew: true,
     });
     let connectionReplacedMessage = '';
     let reconnectAfterRefresh = false;
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
-        connectionReplacedMessage =
-            typeof payload.message === 'string'
-                ? payload.message
-                : 'This account was opened in another tab or browser.';
+        connectionReplacedMessage = 'This account was opened in another tab or browser.';
+        if (typeof payload.message === 'string')
+            connectionReplacedMessage = payload.message;
 
         setSocketStatus(
             `connection replaced: ${connectionReplacedMessage}`
         );
     });
     nextSocket.on('connect', () => {
+      reconnectAfterRefresh = false;
       setSocketStatus(`connected: ${nextSocket.id}`);
     });
 
@@ -205,41 +198,32 @@ function App() {
         }
     });
 
-    nextSocket.on('connect_error', async (error) => { //test-nico
+    nextSocket.on('connect_error', async (error) => {
       setSocketStatus(`connection error: ${error.message}`);
-      const code = error.data?.code;
-      if (code === 'TOKEN_INVALID' || code === 'TOKEN_MISSING') {
+      if (error.data?.code !== 'ACCESS_TOKEN_EXPIRED' && error.data?.code !== 'ACCESS_TOKEN_MISSING') {
         handleSessionExpired(error.message);
+        nextSocket.disconnect();
         return;
       }
-      if (code !== 'TOKEN_EXPIRED' || reconnectAfterRefresh) {
+      if (reconnectAfterRefresh) {
+        handleSessionExpired(error.message);
+        nextSocket.disconnect();
         return;
       }
       reconnectAfterRefresh = true;
       try {
-        const latestSession = getStoredAuthSession();
-        if (!latestSession?.accessToken) {
-          handleSessionExpired(error.message);
-          return;
-        }
-        let nextSession = latestSession;
-        if (latestSession.accessToken === nextSocket.auth?.token) {
-          nextSession = await refreshAuthSession(latestSession);
-        }
-        nextSocket.auth = {
-          ...(nextSocket.auth || {}),
-          token: nextSession.accessToken,
-        };
+        await refreshAccessToken();
         nextSocket.connect();
       } catch (refreshError) {
         handleSessionExpired(refreshError.message);
+        nextSocket.disconnect();
       }
     });
     return () => {
       nextSocket.disconnect();
       setSocket(null);
     };
-  }, [currentUser?.id, Boolean(authSession?.accessToken), handleSessionExpired]);
+  }, [currentUser, handleSessionExpired]);
 
   async function handleDevLogin(event) {
     event.preventDefault();
@@ -251,24 +235,17 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
-      const tokens = await loginUser(trimmedName, password);
-      const pendingSession = {
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      };
-      writeAuthSession(pendingSession); //test-nico
-      const user = await fetchCurrentUser(tokens.accessToken);
+      await loginUser(trimmedName, password);
+      const user = await fetchCurrentUser();
 
-      const session = {
-        ...pendingSession,
-        user,
-      };
+      const session = { user };
 
-      writeAuthSession(session); //test-nico
+      writeAuthSession(session);
       setCurrentUser(user);
       setAuthStatus('authenticated');
       setDevUserName('');
       setPassword('');
+      window.location.hash = '#/';
     } catch (error) {
       setCurrentUser(null);
       setAuthSession(null);
@@ -304,12 +281,13 @@ function App() {
   }
 
   async function handleLogout() {
-    const session = getStoredAuthSession();
     try {
-      await logoutUser(session?.refreshToken); //test-nico
+      await logoutUser();
     } catch {
       // Local logout must complete even when the network request fails.
     }
+    if (socket)
+      socket.disconnect();
     setCurrentUser(null);
     setAuthSession(null);
     clearAuthSession();
@@ -319,35 +297,56 @@ function App() {
 
   return (
     <div className="app-shell">
-      {currentPage.id !== 'home' && (<AppHeader pages={pages} currentPageId={currentPage.id} />)}
       <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (
             <HomePage
               title={currentPage.title}
               description={currentPage.description}
-              pages={pages}
-              currentPageId={currentPage.id}
+              currentUser={currentUser}
+              room={room}
+              onLogout={handleLogout}
             />
           )}
-          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && (
+          {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'public-profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
+          )}
+          {currentPage.id === 'privacy' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={privacyPolicy}
+            />
+          )}
+          {currentPage.id === 'terms' && (
+            <LegalPage
+              title={currentPage.title}
+              description={currentPage.description}
+              content={termsOfService}
+            />
           )}
           {currentPage.id === 'profile' && (
             <ProfilePage
               profileStatus={profileStatus}
               profileError={profileError}
               profileUser={profileUser}
-              accessToken={authSession?.accessToken}
               onSessionExpired={handleSessionExpired}
               onProfileUpdated={(user) => {
                 setCurrentUser(user);
                 const latestSession = getStoredAuthSession();
                 if (latestSession) {
-                  writeAuthSession({ ...latestSession, user }); //test-nico
+                  writeAuthSession({ ...latestSession, user });
                 }
               }}
               onUpdateProfile={updateCurrentUser}
+            />
+          )}
+          {currentPage.id === 'public-profile' && (
+            <PublicProfilePage
+              userId={currentPage.params.userId}
+              currentUser={currentUser}
+              friends={friends}
+              onSessionExpired={handleSessionExpired}
             />
           )}
           {currentPage.id === 'room' && (
@@ -357,6 +356,7 @@ function App() {
               socket={socket}
               currentUser={currentUser}
               room={room}
+              chat={chat}
             />
           )}
           {currentPage.id === 'game' && (
@@ -372,6 +372,7 @@ function App() {
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}
+              chatInputFocused={isGlobalChatInputFocused}
               currentRoom={room.currentRoom}
               gameStarted={room.gameStarted}
               onLeaveGame={room.leaveGame}
@@ -400,7 +401,9 @@ function App() {
               title={currentPage.title}
               description={currentPage.description}
               currentUser={currentUser}
+              currentRoom={room.currentRoom}
               friends={friends}
+              directChat={directChat}
             />
           )}
           {currentPage.id === 'lobby' && (
@@ -410,6 +413,8 @@ function App() {
               currentUser={currentUser}
               socket={socket}
               room={room}
+              friends={friends}
+              directChat={directChat}
             />
           )}
           {currentPage.id === 'leaderboard' && (
@@ -422,12 +427,20 @@ function App() {
             <MatchHistoryPage
               title={currentPage.title}
               description={currentPage.description}
-              accessToken={authSession?.accessToken}
             />
           )}
         </section>
-        {currentPage.id !== 'home' && currentPage.id !== 'profile' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
+        {currentPage.id === 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
+      <GlobalChatDock
+        currentUser={currentUser}
+        currentRoom={room.currentRoom}
+        roomChat={chat}
+        directChat={directChat}
+        friends={friends}
+        onInputFocusChange={setIsGlobalChatInputFocused}
+        keyboardShortcutEnabled={currentPage.id === 'game'}
+      />
     </div>
   );
 }

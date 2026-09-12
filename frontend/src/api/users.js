@@ -3,6 +3,7 @@ import { apiRequest } from "./apiReq";
 export async function loginUser(username, password) {
   const response = await fetch('/api/login', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -22,6 +23,7 @@ export async function loginUser(username, password) {
 export async function registerUser(username, email, password) {
   const response = await fetch('/api/register', {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -39,7 +41,7 @@ export async function registerUser(username, email, password) {
   return response.json();
 }
 
-export async function fetchCurrentUser(accessToken) {
+export async function fetchCurrentUser() {
 	try{
 		return await apiRequest("/api/users/me", {});
 	} catch (err) {
@@ -49,10 +51,25 @@ export async function fetchCurrentUser(accessToken) {
 	}
 }
 
-export async function updateCurrentUser(accessToken, profileData) {
+export async function fetchPublicUserProfile(userId) {
+  const normalizedUserId = Number(userId);
 
+  if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0)
+    throw new Error("Invalid user id");
+  try {
+    return await apiRequest(`/api/users/${normalizedUserId}`,{});
+  } catch (error) {
+      if (error.status === 401 || error.status === 403)
+        throw error;
+      if (error.status === 404)
+        throw new Error("User profile not found");
+      throw new Error("Unable to load user profile");
+    }
+}
+
+export async function updateCurrentUser(profileData) {
 	try{
-		return await apiRequest("/api/users/me", 
+		return await apiRequest("/api/users/me",
 			{
 				method: "PATCH",
 				headers: {'Content-type': 'application/json',},
@@ -65,15 +82,12 @@ export async function updateCurrentUser(accessToken, profileData) {
 	}
 }
 
-export async function logoutUser(refreshToken) {
-	if (!refreshToken) {
-		return;
-	}
+export async function logoutUser() {
 	await fetch('/api/logout', {
 		method: 'DELETE',
+		credentials: 'include',
 		headers: {
 			'Content-Type': 'application/json',
 		},
-		body: JSON.stringify({ token: refreshToken }),
 	});
 }
