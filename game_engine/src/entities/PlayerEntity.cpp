@@ -62,7 +62,7 @@ void	PlayerEntity::playerAction( const json& in ) {
 	switch (action)
 	{
 	case PlayerActions::NOACTION:
-		_action_melee(in);
+		_action_none(in);
 		break;
 
 	case PlayerActions::MELEEATT:
