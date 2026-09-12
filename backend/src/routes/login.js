@@ -44,7 +44,7 @@ function getOAuth42Config()
 	return { clientId, clientSecret, redirectUri };
 }
 
-router.get("/42", (res) =>
+router.get("/42", (_, res) =>
 {
 	const config = getOAuth42Config();
 
