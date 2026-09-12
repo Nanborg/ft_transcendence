@@ -20,12 +20,15 @@ const int		LordGoobEntity::_phaseThreeFrameCount = 6;
 const int		LordGoobEntity::_phaseThreeFrameDurationTicks = 3;
 const int		LordGoobEntity::_phaseThreeRadialProjectileCount = 12;
 const int		LordGoobEntity::_phaseThreeLaserDamage = 12;
+const int		LordGoobEntity::_contactDamage = 4;
+const int		LordGoobEntity::_contactDamageCooldownTicks = 18;
+const float		LordGoobEntity::_contactDamageRange = 1.4f;
 const float		LordGoobEntity::_phaseThreeLaserSpeed = 0.22f;
 const float		LordGoobEntity::_phaseThreeLaserSpawnDistance = 1.4f;
 const float		LordGoobEntity::_phaseThreeFanAngleStep = 0.14;
 
 LordGoobEntity::LordGoobEntity( int posX, int posY ):
-	AbstractEntity(EntityTypes::LORDGOOB, g_game->getScale(), posX, posY, 10000, false), _targetEntityId(-1), _attackCooldown(0), _attackFrame(-1), _attackFrameTicks(0), _targetCursor(0), _currentPhase(1), _phaseTwoPattern(0), _phaseThreePattern(0), _dirX(0), _dirY(1), _aimX(0), _aimY(1)
+	AbstractEntity(EntityTypes::LORDGOOB, g_game->getScale(), posX, posY, 10000, false), _targetEntityId(-1), _attackCooldown(0), _attackFrame(-1), _attackFrameTicks(0), _contactDamageCooldown(0), _targetCursor(0), _currentPhase(1), _phaseTwoPattern(0), _phaseThreePattern(0), _dirX(0), _dirY(1), _aimX(0), _aimY(1)
 {
 	_state["phase"] = 1;
 	_state["action"] = "idle";
@@ -49,7 +52,7 @@ AbstractEntity*	LordGoobEntity::_getPatternTarget( void ) {
 		AbstractEntity* entity = it->get();
 		if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
 			continue;
-		unsigned int distance = entity->distance(_posX, _posY);
+		const unsigned int distance = entity->distance(_posX, _posY);
 		if (distance < nearestDistance) {
 			nearest = entity;
 			nearestDistance = distance;
@@ -68,6 +71,31 @@ AbstractEntity*	LordGoobEntity::_getPatternTarget( void ) {
 	}
 	_targetCursor = (selectedIndex + 1) % playerCount;
 	return selected;
+}
+
+bool	LordGoobEntity::_applyContactDamage( void ) {
+	bool changed = false;
+	const unsigned int contactRange = static_cast<unsigned int>(
+		static_cast<float>(g_game->getScale()) * _contactDamageRange
+	);
+	const GameEngine::entityList_t& entities = g_game->getEntityList();
+
+	if (_contactDamageCooldown > 0)
+		_contactDamageCooldown--;
+	for (GameEngine::entityList_t::const_iterator it = entities.begin(); it != entities.end(); it++) {
+		AbstractEntity* entity = it->get();
+		if (!entity || entity->getType() != EntityTypes::PLAYERENTITY)
+			continue;
+		if (entity->distance(_posX, _posY) > contactRange)
+			continue;
+		if (_contactDamageCooldown == 0) {
+			g_game->applyDamage(entity, _contactDamage, _id);
+			_contactDamageCooldown = _contactDamageCooldownTicks;
+			changed = true;
+		}
+	}
+	_state["dangerRadius"] = contactRange;
+	return changed;
 }
 
 int	LordGoobEntity::_getPhase( void ) const {
@@ -409,18 +437,20 @@ void	LordGoobEntity::_firePhaseThreeLaser( void ) {
 }
 
 bool	LordGoobEntity::tick( void ) {
+	bool changed = _applyContactDamage();
+
 	if (_attackCooldown > 0)
 		_attackCooldown--;
 	if (_attackFrame >= 0) {
 		switch (_currentPhase) {
 		case 1:
-			return _tickPhaseOneAttack();
+			return _tickPhaseOneAttack() || changed;
 		case 2:
-			return _tickPhaseTwoAttack();
+			return _tickPhaseTwoAttack() || changed;
 		case 3:
-			return _tickPhaseThreeAttack();
+			return _tickPhaseThreeAttack() || changed;
 		default:
-			return false;
+			return changed;
 		}
 	}
 	const int newPhase = _getPhase();
@@ -436,7 +466,7 @@ bool	LordGoobEntity::tick( void ) {
 	}
 	AbstractEntity* nearest = _getPatternTarget();
 	if (!nearest)
-		return phaseChanged;
+		return phaseChanged || changed;
 	const unsigned int distanceToPlayer = nearest->distance(_posX, _posY);
 	const unsigned int attackRange = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _attackRange);
 	if (distanceToPlayer <= attackRange && _attackCooldown == 0) {
@@ -455,5 +485,5 @@ bool	LordGoobEntity::tick( void ) {
 		}
 		return true;
 	}
-	return phaseChanged;
+	return phaseChanged || changed;
 }
