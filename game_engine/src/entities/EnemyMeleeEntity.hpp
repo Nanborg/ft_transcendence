@@ -6,7 +6,7 @@
 class EnemyMeleeEntity: public AbstractHitboxEntity
 {
 public:
-	EnemyMeleeEntity( int posX, int posY, int ownerId, int damage, int size );
+	EnemyMeleeEntity( int posX, int posY, int ownerId, int damage, float sizeScale );
 	~EnemyMeleeEntity( void );
 };
 
