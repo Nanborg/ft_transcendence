@@ -1,8 +1,7 @@
 #ifndef ABSTRACT_HPP
 #define ABSTRACT_HPP
-#include <cstdint>
-#include <enumEntityTypes.h>
 #include <json.hpp>
+#include <enumEntityTypes.h>
 
 #define INVINCIBLE_HEALTH (0x7FFFFFFF)
 
@@ -17,7 +16,6 @@ public:
 	// write override tick behavior here
 	// return true to send updates to client
 	virtual bool tick( void );
-
 
 	bool doTick( void );
 
@@ -46,9 +44,11 @@ public:
 	void	setPassableHitBox( bool passableHitBox );
 
 	unsigned int	distance( int posX, int posY ) const;
+	unsigned long	distance2( int posX, int posY ) const;
 
 	protected:
-	virtual bool _templateTick( void );
+	// DO NOT OVERRIDE THIS IN LEAVES
+	virtual bool	_templateTick( void );
 
 	json				_state;
 	const unsigned int	_id, _typeId;

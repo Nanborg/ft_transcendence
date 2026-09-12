@@ -2,7 +2,6 @@
 #define WALLENTITY_HPP
 
 #include <AbstractEntity.hpp>
-#include <GameEngine.hpp>
 
 class WallEntity: public AbstractEntity
 {

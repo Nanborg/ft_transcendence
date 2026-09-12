@@ -1,8 +1,8 @@
 #ifndef ABSTRACTMOVINGENTITY_HPP
 #define ABSTRACTMOVINGENTITY_HPP
 
-#include <iostream>
 #include <AbstractEntity.hpp>
+#include <enumEntityTypes.h>
 
 class AbstractMovingEntity: public AbstractEntity
 {

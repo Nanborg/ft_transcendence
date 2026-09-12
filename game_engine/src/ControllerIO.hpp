@@ -6,7 +6,7 @@
 #include <poll.h>
 #include <unistd.h>
 #include <exception>
-#include "json.hpp"
+#include <json.hpp>
 
 using namespace nlohmann;
 
@@ -21,8 +21,6 @@ public:
 	void sendMsg( std::string object );
 
 private:
-	void		_setApiAddr( sockaddr& );
-
 	int				_sockfd;
 	struct pollfd	_pollFd;
 	sockaddr_in		_apiAddr, _servAddr;
