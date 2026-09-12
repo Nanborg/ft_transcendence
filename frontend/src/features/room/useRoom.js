@@ -117,6 +117,8 @@ export function useRoom(socket, currentUser) {
             if (gameStateUpdatePayload.entityDelete.length > 0)
                 setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
             setGameEntities(previousEntities => {
+                if (gameStateUpdatePayload.entityUpdate.length === 0 && gameStateUpdatePayload.entityDelete.length === 0)
+                    return previousEntities;
                 const updateEntities = new Map(
                     previousEntities.map(entity => [
                         entity.entityId,
