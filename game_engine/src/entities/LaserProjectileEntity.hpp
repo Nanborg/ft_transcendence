@@ -2,7 +2,6 @@
 #define LASERPROJECTILEENTITY_HPP
 
 #include <AbstractHitboxEntity.hpp>
-#include <GameEngine.hpp>
 
 class LaserProjectileEntity: public AbstractHitboxEntity {
 public:
@@ -11,7 +10,6 @@ public:
 	~LaserProjectileEntity( void );
 private:
 	static const float	_speed;
-	static const int	_lifetimeTicks;
 };
 
 #endif

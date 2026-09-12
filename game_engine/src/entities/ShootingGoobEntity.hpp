@@ -2,19 +2,18 @@
 #define SHOOTINGGOOBENTITY_HPP
 
 #include <AbstractMovingEntity.hpp>
-#include <GameEngine.hpp>
 
 class ShootingGoobEntity: public AbstractMovingEntity
 {
 public:
-	ShootingGoobEntity( int posX, int posY);
+	ShootingGoobEntity( int posX, int posY );
 	~ShootingGoobEntity();
 
 	bool	tick( void ) override;
 
 private:
-	void				_shoot( const AbstractEntity* target);
-	void				_updateDirection( const AbstractEntity* target );
+	void				_shoot( int diffX, int diffY );
+	void				_updateDirection( int diffX, int diffY );
 
 	int					_shootCooldown;
 	int					_shootFrame;
