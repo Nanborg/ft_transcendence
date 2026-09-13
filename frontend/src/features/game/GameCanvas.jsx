@@ -8,6 +8,7 @@ import {
     INTERPOLATION_DURATION_MS,
     WALL_TILE_SOURCE_SIZE,
     wallRuinsSprite,
+    STATIC_MAP_ENTITY_TYPES,
 } from './canvas/spriteAssets';
 import { getEntityType, getPlayerDirectionRow, getDirectionRowToward } from './canvas/spriteUtils';
 import { getInterpolatedPosition, getFocusPosition, getCamera, worldToScreen } from './canvas/cameraUtils';
@@ -298,7 +299,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         {
             if (!entity || typeof entity.entityId !== 'number' || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
                 return;
-
+            if (STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)))
+                return;
             receivedEntityIds.add(entity.entityId);
 
             const previousTrack = entityTracksRef.current.get(entity.entityId);
