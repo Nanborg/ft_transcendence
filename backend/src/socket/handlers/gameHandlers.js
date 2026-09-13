@@ -27,7 +27,7 @@ function getNormalizedAction(input)
     return PLAYER_ACTION.NONE;
 }
 
-function registerGameHandlers(io, socket)
+function registerGameHandlers(io, socket, gameStateBatcher)
 {
     socket.on('game:start', async (payload) =>
     {
@@ -85,6 +85,7 @@ function registerGameHandlers(io, socket)
                 enginePlayers: engineSession.players,
                 timestamp: Date.now(),
             });
+            gameStateBatcher.flush(roomId);
             const initialState = gameEngineService.getStateSnapshot(roomId);
             if (initialState)
             {
@@ -125,6 +126,8 @@ function registerGameHandlers(io, socket)
                 });
                 return;
             }
+            const room = await getRoom(roomId);
+            gameStateBatcher.flush(roomId);
             const snapshot = gameEngineService.getStateSnapshot(roomId);
             if (!snapshot)
             {
@@ -135,7 +138,6 @@ function registerGameHandlers(io, socket)
                 });
                 return;
             }
-            const room = await getRoom(roomId);
             const engineSession = gameEngineService.getSession(room.id);
             const connection = getConnection(socket.user.id);
             if (connection?.reconnectTimer && connection.keepOnReconnect)

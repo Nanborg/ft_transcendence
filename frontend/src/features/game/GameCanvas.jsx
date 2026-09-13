@@ -71,15 +71,6 @@ function getMapWallMask(rows, row, col)
     return mask;
 }
 
-function getActionCooldownKey(action)
-{
-    if (action === PLAYER_ACTION.MELEE)
-        return 'melee';
-    if (action === PLAYER_ACTION.RANGED)
-        return 'ranged';
-    return null;
-}
-
 function drawMapWalls(context, gameMap, camera)
 {
     if (!Array.isArray(gameMap?.rows) || !(gameMap?.scale > 0))
@@ -237,22 +228,23 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     {
         if (!socket)
             return undefined;
-        function handlePlayerInput(payload)
+        function handlePlayerAttack(payload)
         {
-            const action = payload?.input?.action;
-            if (typeof payload?.playerId === 'undefined' || (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED))
+            if (!payload || payload.roomId !== renderDataRef.current.gameMap?.roomId ||
+                typeof payload.playerId !== 'number')
                 return;
-            const cooldownKey = getActionCooldownKey(action);
-            const playerData = renderDataRef.current.gamePlayerData.find((player) => String(player.playerId) === String(payload.playerId));
-            const cooldown = Number(playerData?.cooldowns?.[cooldownKey]) || 0;
-            if (cooldown > 0)
+            const action = payload.action;
+            if (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED)
                 return;
-            playerAttackRef.current.set(String(payload.playerId), {action, startedAt: performance.now()});
+            playerAttackRef.current.set(String(payload.playerId), {
+                action,
+                startedAt: performance.now(),
+            });
         }
-        socket.on('player:input', handlePlayerInput);
+        socket.on('player:attack', handlePlayerAttack);
         return () =>
         {
-            socket.off('player:input', handlePlayerInput);
+            socket.off('player:attack', handlePlayerAttack);
             playerAttackRef.current.clear();
         };
     }, [socket]);
