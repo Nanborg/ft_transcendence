@@ -419,7 +419,13 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 const entityType = getEntityType(track.entity);
                 if  (entityType === ENTITY_TYPE.WALL || entityType === ENTITY_TYPE.CHECKPOINT || entityType === ENTITY_TYPE.SPAWN_POINT)
                     return;
-                const playerData = renderData.gamePlayerData.find((player) => String(player.playerEntityId) === String(track.entity.entityId));
+                let playerData = null;
+                if (entityType === ENTITY_TYPE.PLAYER)
+                {
+                    playerData = renderData.gamePlayerData.find(
+                        (player) => String(player.playerEntityId) === String(track.entity.entityId)
+                    );
+                }
                 let playerId = playerData?.playerId ?? null;
                 if (playerId === null && track.entity.entityId === localEntityId)
                 {
