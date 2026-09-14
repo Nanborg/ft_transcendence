@@ -23,7 +23,6 @@ export function useProfile(currentPageId, currentUser, onSessionExpired,)
 		async function loadProfile()
 		{
 			try {
-				/*const user = await fetchCurrentUser(currentUser.username);*/
 				const user = await fetchCurrentUser();
 				setProfileUser(user);
 				setProfileStatus('loaded');

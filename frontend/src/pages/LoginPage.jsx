@@ -2,6 +2,7 @@ import { CurrentUserCard } from '../features/auth/CurrentUserCard';
 import { DevLoginForm } from '../features/auth/DevLoginForm';
 import { PageHeading } from '../components/PageHeading';
 
+// WHY: Login page composes form, current user and legal links.
 export function LoginPage({
 	devUserName, authStatus, authError, currentUser, onDevUserNameChange,
 	onSubmit, onLogout, password, onPasswordChange, authMode, onAuthModeChange,

@@ -4,6 +4,7 @@ import { PublicProfilePanel } from './PublicProfilePanel';
 
 function formatMessageTime(timestamp)
 {
+	// FALLBACK: Invalid timestamp hides time.
 	const date = new Date(Number(timestamp));
 
 	if (Number.isNaN(date.getTime()))
@@ -17,6 +18,7 @@ function formatMessageTime(timestamp)
 
 export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFocusChange,})
 {
+	// WHY: Panel switches between list and active thread.
 	const
 	{
 		conversations,
@@ -36,11 +38,14 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 	} = directChat;
 
 	const [isProfileOpen, setIsprofileOpen] = useState(false);
+	// SYNC: Changing conversation closes profile preview.
 	useEffect(() => { setIsprofileOpen(false); }, [selectedUser?.id]);
 	if (selectedUser && isProfileOpen)
+		// DECISION: Profile preview stays inside chat dock.
 		return ( <PublicProfilePanel user={selectedUser} onBack={() => setIsprofileOpen(false)} /> );
 	if (!selectedUser)
 	{
+		// FALLBACK: No selected user shows conversation list.
 		return (
 			<div className="direct-chat-panel direct-chat-panel--compact">
 				<h3>Private conversations</h3>
@@ -59,6 +64,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 								<span>{conversation.user.name}</span>
 
 								{conversation.unreadCount > 0 && (
+									// SYNC: Unread count comes from backend.
 									<span className="badge text-bg-info">
 										{conversation.unreadCount}
 									</span>
@@ -128,6 +134,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 					{currentRoom?.id &&
 						currentRoom.status === 'waiting' &&
 						!isSelectedUserBlocked && (
+							// DECISION: Invite appears only before game starts.
 							<button
 								type="button"
 								className="btn btn-outline-primary"
@@ -138,6 +145,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 						)}
 
 					{isSelectedUserBlocked ? (
+						// DECISION: Block button toggles state.
 						<button
 							type="button"
 							className="btn btn-outline-success"
@@ -165,6 +173,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 					const isOwnMessage = Number(message.author?.id) === Number(currentUser?.id);
 
 					return (
+						// SYNC: Own messages render on own side.
 						<li
 							key={message.id}
 							className={ isOwnMessage ? 'direct-chat-message direct-chat-message--own' : 'direct-chat-message' }
@@ -198,6 +207,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 					}
 					onFocus={() => onInputFocusChange?.(true)}
 					onBlur={() => onInputFocusChange?.(false)}
+					// SAFETY: Chat typing pauses game input.
 					maxLength={MAX_CHAT_MESSAGE_LENGTH}
 					disabled={isSelectedUserBlocked}
 					placeholder={ isSelectedUserBlocked ? 'Unblock this user to send messages' : 'Write a private message' }

@@ -4,8 +4,6 @@ import App from './app.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles.css';
 
-// Find the HTML element where React render app
 const rootElement = document.getElementById('root');
 
-// Start React / render the App
 createRoot(rootElement).render(<App />);

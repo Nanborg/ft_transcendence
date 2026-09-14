@@ -1,7 +1,6 @@
 const fs = require('fs');
 
 'use strict';
-// '.' (floor) is not as game engine don't want them (see IGNORED_CHARS below).
 const CHAR_CONFIG = {
 	'#': { typeId: 2, state: { blocking: true } },
 	B: { typeId: 109, state: { blocking: true } },
@@ -12,16 +11,15 @@ const CHAR_CONFIG = {
 	'3': { typeId: 102, state: { blocking: false } },
 };
 
-// Characters that are just terrain and should never become entities.
+// DECISION: Ignore terrain-only chars.
 const IGNORED_CHARS = new Set(['.', 'S', 'X']);
 
-// Reads map file and converts the entities to the JSON format.
 function mapConv(filePath, roomId)
 {
 	const raw = fs.readFileSync(filePath, 'utf8');
 	const lines = raw.split(/\r?\n/);
 
-	// Everything before the "Seed:" line is the grid. Metadata comes after a blank line at the end of the file.
+	// REQUIRED: Grid ends before metadata.
 	const seedLineIdx = lines.findIndex((l) => l.trim().startsWith('Seed:'));
 	let mapLines = lines;
 	if (seedLineIdx !== -1)
@@ -44,11 +42,8 @@ function mapConv(filePath, roomId)
 	const HALF_SCALE = Math.floor(SCALE / 2);
 	const width = gridLines[0].length * SCALE;
 	const height = gridLines.length * SCALE;
-	// const SCALE = 1;
 	gridLines.forEach((line, row) =>
 	{
-
-		// (x, y) -> (col*SCALE, row*SCALE).
 		for (let col = 0; col < line.length; col++)
 		{
 			const ch = line[col];
@@ -59,7 +54,7 @@ function mapConv(filePath, roomId)
 			if (!config)
 			{
 				unknownChars.add(ch);
-				continue; // unknown characters are skipped
+				continue;
 			}
 
 			entities.push({

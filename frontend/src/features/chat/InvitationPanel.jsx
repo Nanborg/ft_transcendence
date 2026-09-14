@@ -1,5 +1,6 @@
 function formatExpiration(expiresAt)
 {
+	// FALLBACK: Invalid expiry shows nothing.
 	const expirationDate = new Date(Number(expiresAt));
 	if (Number.isNaN(expirationDate.getTime()))
 		return '';
@@ -8,6 +9,7 @@ function formatExpiration(expiresAt)
 
 function getInvitationStatusLabel(status)
 {
+	// WHY: Backend statuses become readable labels.
 	switch (status)
 	{
 		case 'PENDING':
@@ -27,6 +29,7 @@ function getInvitationStatusLabel(status)
 
 export function InvitationPanel({currentUser, directChat, friends})
 {
+	// WHY: Notification tab merges friends and game invites.
 	const {invitations, respondToInvitation,} = directChat;
 	const { friends: friendsData, friendsStatus, friendsError, submitAcceptFriend, submitRemoveFriend } = friends;
 	const pendingFriendRequests = friendsData?.pendingReceived ?? [];
@@ -52,6 +55,7 @@ export function InvitationPanel({currentUser, directChat, friends})
 			) : (
 				<ul className="chat-invitation-list">
 					{pendingFriendRequests.map(friend => (
+						// DECISION: Incoming requests can accept/decline.
 						<li
 							key={friend.id}
 							className="chat-invitation-card"
@@ -95,6 +99,7 @@ export function InvitationPanel({currentUser, directChat, friends})
 			) : (
 				<ul className="chat-invitation-list">
 					{pendingSentFriendRequests.map(friend => (
+						// SYNC: Sent requests are read-only here.
 						<li
 							key={friend.id}
 							className="chat-invitation-card"
@@ -127,14 +132,17 @@ export function InvitationPanel({currentUser, directChat, friends})
 				{invitations.map(message => {
 					const invitation = message.invitation;
 					if (!invitation)
+						// SAFETY: Ignore malformed invitation message.
 						return null;
 					const isOutgoing =
+						// DECISION: Sender and receiver see different text.
 						Number(message.author?.id) ===
 						Number(currentUser?.id);
 					const otherUser = isOutgoing
 						? message.recipient
 						: message.author;
 					const roomName =
+						// FALLBACK: Deleted room still renders safely.
 						invitation.room?.name ||
 						invitation.room?.id ||
 						'Unavailable room';
@@ -165,6 +173,7 @@ export function InvitationPanel({currentUser, directChat, friends})
 
 							{!isOutgoing &&
 								invitation.status === 'PENDING' ? (
+									// REQUIRED: Only receiver can respond.
 									<div className="chat-invitation-actions">
 										<button
 											type="button"

@@ -3,6 +3,7 @@ import { ChatPanel } from './ChatPanel';
 import { DirectChatPanel } from './DirectChatPanel';
 import { InvitationPanel } from './InvitationPanel';
 
+// WHY: One dock centralizes room chat, DM and notifications.
 export function GlobalChatDock({
     currentUser,
     currentRoom,
@@ -17,6 +18,7 @@ export function GlobalChatDock({
     const [activeTab, setActiveTab] = useState(currentRoom?.id ? 'room' : 'private');
     const [seenRoomMessageCount, setSeenRoomMessageCount] = useState(roomChat.liveMessageCount);
     const directUnreadCount = useMemo(
+        // SYNC: Conversation list owns direct unread count.
         () => directChat.conversations.reduce(
             (total, conversation) =>
                 total + (Number(conversation.unreadCount) || 0),
@@ -25,12 +27,14 @@ export function GlobalChatDock({
         [directChat.conversations]
     );
     const pendingReceivedInvitationCount = directChat.invitations.filter(message =>
+        // SYNC: Only invitations received by current user count.
         Number(message.recipient?.id) === Number(currentUser?.id) &&
         message.invitation?.status === 'PENDING'
     ).length;
     const pendingFriendRequests = friends?.friends?.pendingReceived ?? [];
     const notificationCount = pendingReceivedInvitationCount + directChat.unreadInvitationResponseCount + pendingFriendRequests.length;
     const roomUnreadCount = Math.max(
+        // DECISION: Room unread uses live counter delta.
         0,
         roomChat.liveMessageCount - seenRoomMessageCount
     );
@@ -38,8 +42,10 @@ export function GlobalChatDock({
 
     useEffect(() => {
         if (!currentRoom?.id)
+            // FALLBACK: No room means private tab.
             setActiveTab('private');
 
+        // SYNC: New room resets room unread marker.
         setSeenRoomMessageCount(roomChat.liveMessageCount);
     }, [currentRoom?.id]);
 
@@ -47,12 +53,14 @@ export function GlobalChatDock({
         if (!directChat.openRequestId)
             return;
 
+        // SYNC: External "message" button opens dock.
         setActiveTab('private');
         setIsOpen(true);
     }, [directChat.openRequestId]);
 
     useEffect(() => {
         if (isOpen && activeTab === 'room' && currentRoom?.id)
+            // SYNC: Open room tab marks room messages seen.
             setSeenRoomMessageCount(roomChat.liveMessageCount);
     }, [isOpen, activeTab, currentRoom?.id, roomChat.liveMessageCount, ]);
 
@@ -62,10 +70,12 @@ export function GlobalChatDock({
         function handleChatShortcut(event)
         {
             const target = event.target;
+            // SAFETY: Do not steal Enter while typing.
             const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
             if (event.key === 'Enter' && !isOpen && !isTyping)
             {
                 event.preventDefault();
+                // SYNC: Opening chat refreshes DM overview.
                 directChat.refreshDirectOverview();
                 setActiveTab(currentRoom?.id ? 'room' : 'private');
                 setIsOpen(true);
@@ -73,6 +83,7 @@ export function GlobalChatDock({
             }
             if (event.key === 'Escape' && isOpen)
             {
+                // DECISION: Escape closes dock in game.
                 event.preventDefault();
                 onInputFocusChange?.(false);
                 setIsOpen(false);
@@ -86,14 +97,17 @@ export function GlobalChatDock({
 
     useEffect(() => {
         if (isOpen && activeTab === 'notification' && directChat.unreadInvitationResponseCount > 0)
+            // SYNC: Viewing notifications clears badge.
             directChat.markInvitationResponsesSeen();
     }, [isOpen, activeTab, directChat.unreadInvitationResponseCount,]);
 
     if (!currentUser)
+        // SAFETY: Chat dock is authenticated UI.
         return null;
 
     function openDock()
     {
+        // SYNC: Refresh before showing dock.
         directChat.refreshDirectOverview();
         setIsOpen(true);
         if (!currentRoom?.id)
@@ -102,6 +116,7 @@ export function GlobalChatDock({
 
     function closeDock()
     {
+        // SYNC: Closing chat releases game input focus.
         onInputFocusChange?.(false);
         setIsOpen(false);
     }
@@ -109,6 +124,7 @@ export function GlobalChatDock({
     function selectRoomTab()
     {
         if (!currentRoom?.id)
+            // SAFETY: Room tab disabled without room.
             return;
         onInputFocusChange?.(false);
         setActiveTab('room');
@@ -117,6 +133,7 @@ export function GlobalChatDock({
 
     function selectPrivateTab()
     {
+        // SYNC: Private tab refreshes conversations.
         onInputFocusChange?.(false);
         directChat.refreshDirectOverview();
         setActiveTab('private');
@@ -124,6 +141,7 @@ export function GlobalChatDock({
 
     function selectNotificationsTab()
     {
+        // SYNC: Notification tab clears invite badge.
         onInputFocusChange?.(false);
         directChat.markInvitationResponsesSeen();
         directChat.refreshDirectOverview();

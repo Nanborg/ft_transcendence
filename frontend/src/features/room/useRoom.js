@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-/*
-function getPlayerName(currentUser) {
-    return currentUser?.username || currentUser?.email || 'Player';
-}*/
-
+// WHY: Centralize room and live game socket state.
 export function useRoom(socket, currentUser) {
     const [roomIdInput, setRoomIdInput] = useState('');
     const [currentRoom, setCurrentRoom] = useState(null);
@@ -12,7 +8,6 @@ export function useRoom(socket, currentUser) {
     const [roomError, setRoomError] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
-    // const [latestGameState, setLatestGameState] = useState(null);
     const [gameEntities, setGameEntities] = useState([]);
     const [deletedGameEntities, setDeletedGameEntities] = useState([]);
     const [gameResult, setGameResult] = useState(null);
@@ -21,19 +16,23 @@ export function useRoom(socket, currentUser) {
     const [gamePlayerData, setGamePlayerData] = useState([]);
     const [gameStartedAt, setGameStartedAt] = useState(null);
     const [gameMap, setGameMap] = useState(null);
+    // REQUIRED: Socket callbacks need latest room id.
     const currentRoomIdRef = useRef(null);
 
     useEffect(() => {
+        // SAFETY: Register listeners only when socket exists.
         if (!socket) {
             return undefined;
         }
 
         function setActiveRoom(room) {
+            // SYNC: Ref avoids stale closure in handlers.
             currentRoomIdRef.current = room?.id ?? null;
             setCurrentRoom(room);
         }
 
         function isCurrentRoomPayload(payload) {
+            // SAFETY: Ignore stale room events.
             return (payload && typeof payload.roomId === 'string' && payload.roomId === currentRoomIdRef.current);
         }
 
@@ -57,9 +56,9 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             if (!isCurrentRoomPayload(gameStartPayload))
                 return;
+            // SYNC: Reset old game state before navigation.
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
-            // setLatestGameState(null);
             setGameEntities([]);
             setDeletedGameEntities([]);
             setGamePlayerData([]);
@@ -74,6 +73,7 @@ export function useRoom(socket, currentUser) {
 
         function handleGameStateInit(gameStateInitPayload)
         {
+            // SAFETY: Init snapshot must be complete.
             if (
                 !gameStateInitPayload ||
                 typeof gameStateInitPayload.roomId !== 'string' ||
@@ -87,12 +87,12 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateInitPayload))
                 return;
+            // SYNC: Initial snapshot hydrates game screen.
             setGameStarted(true);
             setGameMap(gameStateInitPayload.map ?? null);
             setGameEntities(gameStateInitPayload.entities);
             setGamePlayerData(gameStateInitPayload.playerData);
             setGameStartedAt(gameStateInitPayload.serverStartedAt);
-            // setLatestGameState(null);
             setGameError('');
             setGameResult(null);
             setRoomStatus('started');
@@ -102,6 +102,7 @@ export function useRoom(socket, currentUser) {
 
         function handleGameStateUpdate(gameStateUpdatePayload)
         {
+            // SAFETY: Delta update must contain arrays.
             if (
                 !gameStateUpdatePayload ||
                 typeof gameStateUpdatePayload.roomId !== 'string' ||
@@ -115,8 +116,10 @@ export function useRoom(socket, currentUser) {
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
             if (gameStateUpdatePayload.entityDelete.length > 0)
+                // SYNC: Canvas plays delete effects.
                 setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
             setGameEntities(previousEntities => {
+                // SYNC: Merge deltas into local entity cache.
                 const updateEntities = new Map(
                     previousEntities.map(entity => [
                         entity.entityId,
@@ -127,6 +130,7 @@ export function useRoom(socket, currentUser) {
                     if (!entity || typeof entity.entityId !== 'number')
                         return;
                     const previousEntity = updateEntities.get(entity.entityId);
+                    // SYNC: Preserve nested state between deltas.
                     updateEntities.set(entity.entityId, {
                         ...previousEntity,
                         ...entity,
@@ -144,6 +148,7 @@ export function useRoom(socket, currentUser) {
             });
             if (gameStateUpdatePayload.playerData.length > 0) {
                 setGamePlayerData(previousPlayers => {
+                    // SYNC: Merge player deltas by player id.
                     const playersById = new Map(
                         previousPlayers.map(player => [
                             player.playerId,
@@ -172,17 +177,8 @@ export function useRoom(socket, currentUser) {
             }
         }
 
-        // function handleGameState(gameStatePayload) {
-        //     if (!gameStatePayload || typeof gameStatePayload.state !== 'object' || gameStatePayload.state === null)
-        //     {
-        //         console.error("Invalid game:state payload:", gameStatePayload);
-        //         return;
-        //     }
-        //     setGameEntities([]);
-        //     setLatestGameState(gameStatePayload.state);
-        // }
-
         function handleGameError(gameErrorPayload) {
+            // SAFETY: Error payload must be readable.
             if (!gameErrorPayload || typeof gameErrorPayload.message !== 'string')
             {
                 console.error('Invalid game:error payload:', gameErrorPayload);
@@ -198,6 +194,7 @@ export function useRoom(socket, currentUser) {
         function handleRoomRemoved(payload) {
             if (!isCurrentRoomPayload(payload))
                 return;
+            // SYNC: Deleted room returns user to room page.
             resetRoom();
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
@@ -213,6 +210,7 @@ export function useRoom(socket, currentUser) {
 		}
 
         function handleGameEnd(gameEndPayload) {
+            // SAFETY: End payload must include final snapshot.
             if (!gameEndPayload || typeof gameEndPayload.roomId !== 'string' || typeof gameEndPayload.tick !== 'number' ||
                 typeof gameEndPayload.durationSeconds !== 'number' || gameEndPayload.end !== true || typeof gameEndPayload.win !== 'boolean' ||
                 typeof gameEndPayload.reason !== 'string' || !Array.isArray(gameEndPayload.entities) || !Array.isArray(gameEndPayload.playerData))
@@ -222,9 +220,9 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameEndPayload))
                 return;
+            // SYNC: Final state feeds result screen.
             setGameStarted(false);
             setGameStartInfo(null);
-            // setLatestGameState(null);
             setGameEntities(gameEndPayload.entities);
             setGamePlayerData(gameEndPayload.playerData);
             setGameStartedAt(null);
@@ -234,13 +232,13 @@ export function useRoom(socket, currentUser) {
             setRoomError('');
         }
 
+        // REQUIRED: Pair every socket.on with socket.off.
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
         socket.on('game:start', handleGameStart);
         socket.on('game:state:init', handleGameStateInit);
         socket.on('game:state:update', handleGameStateUpdate);
-        // socket.on('game:state', handleGameState);
         socket.on('game:end', handleGameEnd);
         socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
@@ -253,7 +251,6 @@ export function useRoom(socket, currentUser) {
             socket.off('game:start', handleGameStart);
             socket.off('game:state:init', handleGameStateInit);
             socket.off('game:state:update', handleGameStateUpdate);
-            // socket.off('game:state', handleGameState);
             socket.off('game:end', handleGameEnd);
             socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
@@ -264,10 +261,11 @@ export function useRoom(socket, currentUser) {
 	useEffect(() => {
 		if (!socket) return;
 		const interval = setInterval(() => {
+            // SYNC: Lightweight latency probe for debug UI.
 			socket.emit("debug:latency:check", {
 			clientSentAt: Date.now(),
 			});
-		}, 15000); // 15 secs
+		}, 15000);
 
         return () => clearInterval(interval);
     }, [socket]);
@@ -276,6 +274,7 @@ export function useRoom(socket, currentUser) {
         if (!socket || !currentRoom || currentRoom.status !== 'started')
             return undefined;
         function requestGameResync() {
+            // SYNC: Reconnect asks server for latest snapshot.
             socket.emit('game:resync', { roomId: currentRoom.id });
         }
         requestGameResync();
@@ -285,19 +284,20 @@ export function useRoom(socket, currentUser) {
 
     useEffect(() => {
         if (!currentUser) {
+            // SAFETY: Logout clears room state.
             resetRoom();
         }
     }, [currentUser]);
 
     function createRoom(event) {
         event.preventDefault();
+        // SAFETY: Creating room requires auth and socket.
         if (!socket || !currentUser) {
             return;
         }
         setRoomStatus('loading');
         setRoomError('');
         socket.emit('room:create', {
-            /*playerName: getPlayerName(currentUser),*/
             roomName: roomNameInput.trim() || undefined,
         });
     }
@@ -305,11 +305,13 @@ export function useRoom(socket, currentUser) {
     function joinRoom(event) {
         event.preventDefault();
 
+        // SAFETY: Joining room requires auth and socket.
         if (!socket || !currentUser) {
             return;
         }
         const roomId = roomIdInput.trim();
         if (!roomId) {
+            // SAFETY: Empty room id cannot be joined.
             setRoomStatus('error');
             setRoomError('Enter the room id');
             return;
@@ -318,11 +320,11 @@ export function useRoom(socket, currentUser) {
         setRoomError('');
         socket.emit('room:join', {
             roomId,
-            /*playerName: getPlayerName(currentUser),*/
         });
     }
 
     function resetRoom() {
+        // SYNC: Reset all room/game state together.
         currentRoomIdRef.current = null;
         setCurrentRoom(null);
         setRoomStatus('idle');
@@ -331,7 +333,6 @@ export function useRoom(socket, currentUser) {
         setRoomNameInput('');
         setGameStarted(false);
         setGameStartInfo(null);
-        // setLatestGameState(null);
         setGameError('');
         setGameEntities([]);
         setDeletedGameEntities([]);
@@ -342,6 +343,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function leaveRoom() {
+        // SAFETY: Leave only active room.
         if (!socket || !currentRoom) {
             return;
         }
@@ -353,6 +355,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function leaveGame() {
+        // DECISION: Leaving game returns to lobby.
         if (!socket || !currentRoom)
             return;
         socket.emit('room:leave', {roomId: currentRoom.id});
@@ -361,6 +364,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function toggleReady() {
+        // SAFETY: Ready state belongs to current room.
         if (!socket || !currentRoom) {
             return;
         }
@@ -372,6 +376,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function startGame() {
+        // SAFETY: Only current room can start.
         if (!socket || !currentRoom) {
             return;
         }
@@ -394,7 +399,6 @@ export function useRoom(socket, currentUser) {
         toggleReady,
         startGame,
         gameStartInfo,
-        // latestGameState,
         gameStarted,
         roomNameInput,
         setRoomNameInput,

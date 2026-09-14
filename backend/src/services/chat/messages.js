@@ -18,8 +18,10 @@ async function createRoomMessage({
     content,
 })
 {
+    // REQUIRED: Room messages need valid content.
     const normalizedContent = normalizeMessageContent(content);
     const normalizedRoomId = typeof roomId === 'string' ? roomId.trim() : '';
+    // SAFETY: Only room members can write room chat.
     await requireRoomMembership(normalizedRoomId, senderId);
     const chatMessage = await prisma.chatMessage.create({
         data: {
@@ -39,7 +41,9 @@ async function createDirectMessage({
     content,
 })
 {
+    // REQUIRED: Direct messages need valid content.
     const normalizedContent = normalizeMessageContent(content);
+    // SAFETY: Blocks stop direct messages.
     await requireMessagingAllowed(senderId, recipientId);
     const chatMessage = await prisma.chatMessage.create({
         data: {
@@ -60,9 +64,11 @@ async function getRoomHistory({
     limit,
 })
 {
+    // SAFETY: History is limited to room members.
     const normalizedRoomId = typeof roomId === 'string' ? roomId.trim() : '';
     await requireRoomMembership(normalizedRoomId, userId);
     const historyOptions = normalizeHistoryOptions({ beforeId, limit });
+    // DECISION: Fetch newest first, return oldest first.
     const messages = await prisma.chatMessage.findMany({
         where: {
             roomId: normalizedRoomId,
@@ -88,9 +94,11 @@ async function getDirectHistory({
     limit,
 })
 {
+    // SAFETY: Both users must be valid.
     requireUserId(userId);
     await requireExistingUser(otherUserId);
     if (userId === otherUserId)
+        // SAFETY: Self-conversations are invalid.
         throw new ChatServiceError('CANNOT_MESSAGE_SELF', 'You cannot open a conversation with yourself');
     const historyOptions = normalizeHistoryOptions({ beforeId, limit });
     const messages = await prisma.chatMessage.findMany({
@@ -131,9 +139,11 @@ async function markDirectMessagesRead({
     otherUserId,
 })
 {
+    // REQUIRED: Read receipt needs both users.
     requireUserId(userId);
     requireUserId(otherUserId);
     const latestUnreadMessage = await prisma.chatMessage.findFirst({
+        // DECISION: Mark everything up to latest unread.
         where: {
             senderId: otherUserId,
             recipientId: userId,
@@ -144,6 +154,7 @@ async function markDirectMessagesRead({
     });
     if (!latestUnreadMessage)
     {
+        // FALLBACK: No unread messages is valid.
         return {
             updatedCount: 0,
             upToMessageId: null,
@@ -172,6 +183,7 @@ async function markDirectMessagesRead({
 async function getDirectConversations(userId)
 {
     requireUserId(userId);
+    // WHY: SQL finds latest message and unread count per user.
     const conversations = await prisma.$queryRaw`
         WITH direct_messages As (
             SELECT
@@ -223,6 +235,7 @@ async function getDirectConversations(userId)
         LIMIT 100
     `;
     const otherUserIds = conversations.map((conversation) => conversation.otherUserId);
+    // REQUIRED: Serialize users from Prisma records.
     const users = await prisma.user.findMany({
         where: {
             id: {
@@ -237,6 +250,7 @@ async function getDirectConversations(userId)
     });
     const userById = new Map(users.map((user) => [user.id, user]));
     return conversations
+        // SAFETY: Ignore rows for deleted users.
         .filter((conversation) => userById.has(conversation.otherUserId))
         .map((conversation) => ({
             user: serializeUser(userById.get(conversation.otherUserId)),

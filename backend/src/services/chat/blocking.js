@@ -8,6 +8,7 @@ const {
 
 async function getBlockingRelationship(firstUserId, secondUserId)
 {
+    // REQUIRED: Check both directions.
     requireUserId(firstUserId);
     requireUserId(secondUserId);
     return prisma.userBlock.findFirst({
@@ -28,11 +29,14 @@ async function getBlockingRelationship(firstUserId, secondUserId)
 
 async function requireMessagingAllowed(senderId, recipientId)
 {
+    // SAFETY: Validate both message participants.
     requireUserId(senderId);
     requireUserId(recipientId);
     if (senderId === recipientId)
+        // SAFETY: Users cannot message themselves.
         throw new ChatServiceError('CANNOT_MESSAGE_SELF', 'You cannot message yourself');
     await requireExistingUser(recipientId);
+    // SAFETY: Either user can block the conversation.
     const blockingRelationship = await getBlockingRelationship(senderId, recipientId);
     if (blockingRelationship)
         throw new ChatServiceError('USER_BLOCKED', 'Messaging is not allowed between these users');
@@ -43,11 +47,14 @@ async function blockUser({
     blockedId,
 })
 {
+    // SAFETY: Blocker must be authenticated user.
     requireUserId(blockerId);
     await requireExistingUser(blockedId);
     if (blockerId === blockedId)
+        // SAFETY: Self-block has no meaning.
         throw new ChatServiceError('CANNOT_BLOCK_SELF', 'You cannot block yourself');
     return prisma.userBlock.upsert({
+        // DECISION: Blocking is idempotent.
         where: {
             blockerId_blockedId: {
                 blockerId,
@@ -67,6 +74,7 @@ async function unblockUser({
     blockedId,
 })
 {
+    // DECISION: Unblock is idempotent.
     requireUserId(blockerId);
     requireUserId(blockedId);
     await prisma.userBlock.deleteMany({
@@ -79,6 +87,7 @@ async function unblockUser({
 
 async function getBlockedUsers(userId)
 {
+    // WHY: Frontend filters blocked users locally.
     requireUserId(userId);
     const blocks = await prisma.userBlock.findMany({
         where: { blockerId: userId },

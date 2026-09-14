@@ -4,9 +4,11 @@ import { getEntityType } from './spriteUtils';
 
 export function getInterpolatedPosition(track, now)
 {
+	// SAFETY: Teleported entities skip interpolation.
 	if (track.duration === 0)
 		return { x: track.targetX, y: track.targetY };
 
+	// SYNC: Smooth server snapshots over time.
 	const progress = Math.min(1, (now - track.startedAt) / track.duration);
 
 	return {
@@ -17,9 +19,11 @@ export function getInterpolatedPosition(track, now)
 
 export function getFocusPosition({ tracks, playerData, currentPlayerId, now, gameMap, spectatorIndex })
 {
+	// DECISION: Camera follows local player first.
 	const localPlayer = playerData.find((player) => String(player.playerId) === String(currentPlayerId));
 	if (localPlayer && localPlayer.alive === false)
 	{
+		// DECISION: Dead player spectates alive players.
 		const playerTracks = [];
 		for (const track of tracks.values())
 		{
@@ -28,10 +32,12 @@ export function getFocusPosition({ tracks, playerData, currentPlayerId, now, gam
 		}
 		if (playerTracks.length > 0)
 		{
+			// SAFETY: Spectator index wraps safely.
 			const safeIndex = Math.max(0, spectatorIndex) % playerTracks.length;
 			return getInterpolatedPosition(playerTracks[safeIndex], now);
 		}
 		return {
+			// FALLBACK: Death position or map center.
 			x: localPlayer.death_posX || (gameMap?.width ?? 0) / 2,
 			y: localPlayer.death_posY || (gameMap?.height ?? 0) / 2,
 		};
@@ -39,12 +45,14 @@ export function getFocusPosition({ tracks, playerData, currentPlayerId, now, gam
 	const localEntityId = localPlayer?.playerEntityId;
 	if (localEntityId != null)
 	{
+		// SYNC: Player data maps user to entity.
 		const localTrack = tracks.get(localEntityId);
 		if (localTrack)
 			return getInterpolatedPosition(localTrack, now);
 	}
 	for (const track of tracks.values())
 	{
+		// FALLBACK: Focus first player entity.
 		if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
 			return getInterpolatedPosition(track, now);
 	}
@@ -53,6 +61,7 @@ export function getFocusPosition({ tracks, playerData, currentPlayerId, now, gam
 
 export function getCamera({ canvas, gameMap, focusPosition })
 {
+	// FALLBACK: Canvas size works before map loads.
 	let worldWidth = canvas.width;
 	if (gameMap?.width > 0)
 		worldWidth = gameMap.width;
@@ -61,7 +70,9 @@ export function getCamera({ canvas, gameMap, focusPosition })
 		worldHeight = gameMap.height;
 	let tileSize = Math.max(1, worldWidth / 50);
 	if (gameMap?.scale > 0)
+		// SYNC: Tile size comes from server map.
 		tileSize = gameMap.scale;
+	// DECISION: View width stays stable in tiles.
 	const wantedViewWidth = Math.min(worldWidth, tileSize * VIEW_WIDTH_IN_TILES);
 	const wantedViewHeight = wantedViewWidth * (canvas.height / canvas.width);
 	const scale = Math.min(canvas.width / wantedViewWidth, canvas.height / wantedViewHeight);
@@ -69,6 +80,7 @@ export function getCamera({ canvas, gameMap, focusPosition })
 	const viewportHeight = canvas.height / scale;
 	const maxLeft = Math.max(0, worldWidth - viewportWidth);
 	const maxTop = Math.max(0, worldHeight - viewportHeight);
+	// SAFETY: Camera clamps inside map bounds.
 	const left = Math.max(0, Math.min(maxLeft, focusPosition.x - viewportWidth / 2));
 	const top = Math.max(0, Math.min(maxTop, focusPosition.y - viewportHeight / 2));
 	return {
@@ -85,6 +97,7 @@ export function getCamera({ canvas, gameMap, focusPosition })
 
 export function worldToScreen(position, camera)
 {
+	// WHY: Renderer draws world coordinates on canvas.
 	return {
 		x: camera.offsetX + (position.x - camera.left) * camera.scale,
 		y: camera.offsetY + (position.y - camera.top) * camera.scale,

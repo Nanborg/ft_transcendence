@@ -11,6 +11,7 @@ class AuthRefreshError extends Error
 {
 	constructor(status, code, message)
 	{
+		// WHY: Refresh errors need HTTP status and app code.
 		super(message);
 		this.status = status;
 		this.code = code;
@@ -20,8 +21,10 @@ class AuthRefreshError extends Error
 function verifyRefreshToken(refreshToken)
 {
 	try {
+		// REQUIRED: Refresh token uses separate secret.
 		return jwt.verify(refreshToken, process.env.REFRESH_SECRET_TOKEN);
 	} catch (error) {
+		// SYNC: Frontend reads exact refresh failure code.
 		const code = error.name === "TokenExpiredError" ? "REFRESH_TOKEN_EXPIRED" : "REFRESH_TOKEN_INVALID";
 		throw new AuthRefreshError(401, code, "Invalid refresh token");
 	}
@@ -29,6 +32,7 @@ function verifyRefreshToken(refreshToken)
 
 function setAuthCookies(res, accessToken, refreshToken)
 {
+	// SAFETY: httpOnly keeps tokens away from JS.
 	res.cookie('accessToken', accessToken,
 	{
 		httpOnly: true,
@@ -47,23 +51,28 @@ function setAuthCookies(res, accessToken, refreshToken)
 
 router.post("/", async (req, res) =>
 {
+	// REQUIRED: Refresh token is stored in cookie.
 	const refreshToken = req.cookies?.refreshToken;
 
 	if (!refreshToken)
 		return res.status(401).json({ error: "Missing refresh token", code: "REFRESH_TOKEN_MISSING" });
 
 	try {
+		// SAFETY: JWT must verify before DB lookup.
 		const decoded = verifyRefreshToken(refreshToken);
 
 		const tokens = await prisma.$transaction(async (tx) =>
 		{
+			// SAFETY: Rotation must be atomic.
 			const tokenRecord = await tx.refreshToken.findUnique({ where: { token: refreshToken } });
 
 			if (!tokenRecord || tokenRecord.userId !== decoded.id)
+				// SAFETY: Token must belong to decoded user.
 				throw new AuthRefreshError(401, "REFRESH_TOKEN_INVALID", "Invalid refresh token");
 			if (tokenRecord.expiresAt < new Date())
 				throw new AuthRefreshError(401, "REFRESH_TOKEN_EXPIRED", "Refresh token expired");
 			if (tokenRecord.isRevoked)
+				// SAFETY: Reuse of rotated token is rejected.
 				throw new AuthRefreshError(401, "REFRESH_TOKEN_REVOKED", "Refresh token revoked");
 
 			const revoked = await tx.refreshToken.updateMany(
@@ -77,14 +86,17 @@ router.post("/", async (req, res) =>
 				});
 
 			if (revoked.count !== 1)
+				// SAFETY: Concurrent refresh loses here.
 				throw new AuthRefreshError(401, "REFRESH_TOKEN_REVOKED", "Refresh token revoked");
 
 			const userPayload =
 				{
+					// SYNC: Access and refresh share same user payload.
 					id: decoded.id,
 					username: decoded.username
 				};
 			const accessToken = generateAccessToken(userPayload);
+			// DECISION: Refresh token rotates on every refresh.
 			const nextRefreshToken = jwt.sign( userPayload, process.env.REFRESH_SECRET_TOKEN,
 				{
 					expiresIn: "7d",
@@ -96,6 +108,7 @@ router.post("/", async (req, res) =>
 
 			await tx.refreshToken.create(
 				{
+					// REQUIRED: New token is persisted before response.
 					data:
 					{
 						token: nextRefreshToken,
@@ -107,6 +120,7 @@ router.post("/", async (req, res) =>
 			return { accessToken, refreshToken: nextRefreshToken };
 		});
 
+		// SYNC: Browser receives rotated cookies.
 		setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
 		return res.json({ message: "Access granted" });
 	} catch (error) {

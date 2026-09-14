@@ -27,13 +27,14 @@ import { GlobalChatDock } from './features/chat/GlobalChatDock';
 import privacyPolicy from 'legal-docs/privacy-policy.md?raw';
 import termsOfService from 'legal-docs/terms-of-service.md?raw';
 
+// WHY: App owns routing, auth session, sockets and global chat.
 function App() {
   const [socket, setSocket] = useState(null);
   const [socketStatus, setSocketStatus] = useState('connecting');
   const [currentPath, setCurrentPath] = useState(getCurrentPath);
 
   const [devUserName, setDevUserName] = useState('');
-  /*const [currentUser, setCurrentUser] = useState(getStoredDevUser);*/
+  // REQUIRED: Restore session after page refresh.
   const storedSession = getStoredAuthSession();
   const [authSession, setAuthSession] = useState(storedSession);
   const [currentUser, setCurrentUser] = useState(storedSession?.user || null,);
@@ -42,6 +43,7 @@ function App() {
   const sessionExpiredRef = useRef(false);
 
   const [password, setPassword] = useState('');
+  // DECISION: Feature hooks keep App as coordinator only.
   const room = useRoom(socket, currentUser);
   const directChat = useDirectChat(socket, currentUser);
   const chat = useChat(socket, currentUser, room.currentRoom, directChat.blockedUserIds);
@@ -53,6 +55,7 @@ function App() {
 
 
   useEffect(() => {
+    // SYNC: Existing user means UI is authenticated.
     if (currentUser) {
       setAuthStatus('authenticated');
     }
@@ -60,6 +63,7 @@ function App() {
 
   useEffect(() => {
     function applySession(session) {
+      // SYNC: Keep React state aligned with storage.
       setAuthSession(session);
       setCurrentUser(session?.user || null);
       if (session?.user) {
@@ -69,9 +73,11 @@ function App() {
       }
     }
     function handleSessionChanged(event) {
+      // SYNC: Same-tab auth events update App.
       applySession(event.detail);
     }
     function handleStorage(event) {
+      // SYNC: Other tabs can update auth storage.
       if (event.key !== 'ft_transcendence_auth_session') {
         return;
       }
@@ -87,6 +93,7 @@ function App() {
 
   useEffect(() => {
     const handleHashChange = () => {
+      // SYNC: Hash router is the single page source.
       setCurrentPath(getCurrentPath());
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -96,9 +103,11 @@ function App() {
   }, []);
 
   const currentPage = useMemo(() => {
+    // DECISION: Match route once per hash change.
     return matchCurrentPage(currentPath, pages);
   }, [currentPath]);
   const handleSessionExpired = useCallback((message) => {
+    // SAFETY: Avoid repeated logout side effects.
     if (sessionExpiredRef.current) {
       return;
     }
@@ -122,15 +131,18 @@ function App() {
     const params = new URLSearchParams(hash.slice(queryIndex + 1));
     const isFortyTwoOauth = params.get('oauth') === 'success';
 
+    // REQUIRED: Only OAuth callback uses this flow.
     if (!isFortyTwoOauth) {
       return;
     }
+        // DECISION: Remove callback query from URL.
         window.history.replaceState(null, '', '#/login');
 
     async function finishFortyTwoLogin() {
       setAuthStatus('loading');
         setAuthError('');
       try {
+        // SYNC: OAuth cookies are already set by backend.
         const user = await fetchCurrentUser();
         const session = { user };
 
@@ -139,6 +151,7 @@ function App() {
         setAuthStatus('authenticated');
         window.location.hash = '#/';
       } catch (error) {
+        // SAFETY: Failed OAuth leaves no stale session.
         setCurrentUser(null);
         setAuthSession(null);
         clearAuthSession();
@@ -160,11 +173,13 @@ function App() {
 
   useEffect(() => {
     if (!currentUser) {
+      // SAFETY: No user means no authenticated socket.
       setSocket(null);
       setSocketStatus('disconnected');
       return undefined;
     }
     const nextSocket = io({
+      // REQUIRED: Backend Socket.IO path.
       path: '/socket.io',
       transports: ['websocket'],
       withCredentials: true,
@@ -175,6 +190,7 @@ function App() {
     setSocket(nextSocket);
 
     nextSocket.on('connection:replaced', (payload = {}) => {
+        // DECISION: One active socket per account.
         connectionReplacedMessage = 'This account was opened in another tab or browser.';
         if (typeof payload.message === 'string')
             connectionReplacedMessage = payload.message;
@@ -184,11 +200,13 @@ function App() {
         );
     });
     nextSocket.on('connect', () => {
+      // SYNC: Successful connect clears refresh retry.
       reconnectAfterRefresh = false;
       setSocketStatus(`connected: ${nextSocket.id}`);
     });
 
     nextSocket.on('disconnect', () => {
+        // SYNC: Preserve replaced-connection message.
         if (connectionReplacedMessage) {
             setSocketStatus(
                 `connection replaced: ${connectionReplacedMessage}`
@@ -200,18 +218,21 @@ function App() {
 
     nextSocket.on('connect_error', async (error) => {
       setSocketStatus(`connection error: ${error.message}`);
+      // SAFETY: Non-refreshable auth errors end session.
       if (error.data?.code !== 'ACCESS_TOKEN_EXPIRED' && error.data?.code !== 'ACCESS_TOKEN_MISSING') {
         handleSessionExpired(error.message);
         nextSocket.disconnect();
         return;
       }
       if (reconnectAfterRefresh) {
+        // SAFETY: Avoid infinite refresh loops.
         handleSessionExpired(error.message);
         nextSocket.disconnect();
         return;
       }
       reconnectAfterRefresh = true;
       try {
+        // FALLBACK: Refresh token then reconnect socket.
         await refreshAccessToken();
         nextSocket.connect();
       } catch (refreshError) {
@@ -228,6 +249,7 @@ function App() {
   async function handleDevLogin(event) {
     event.preventDefault();
     const trimmedName = devUserName.trim();
+    // SAFETY: Avoid empty credential request.
     if (!trimmedName) {
       setAuthError('Enter a username to login');
       return;
@@ -235,6 +257,7 @@ function App() {
     setAuthStatus('loading');
     setAuthError('');
     try {
+      // REQUIRED: Login first, then read session user.
       await loginUser(trimmedName, password);
       const user = await fetchCurrentUser();
 
@@ -247,6 +270,7 @@ function App() {
       setPassword('');
       window.location.hash = '#/';
     } catch (error) {
+      // SAFETY: Failed login clears local session.
       setCurrentUser(null);
       setAuthSession(null);
       clearAuthSession();
@@ -261,6 +285,7 @@ function App() {
     const trimmedName = devUserName.trim();
     const trimmedEmail = email.trim();
 
+    // SAFETY: Backend requires all three fields.
     if (!trimmedName || !trimmedEmail || !password) {
       setAuthError('Enter username, email and password');
       return;
@@ -269,6 +294,7 @@ function App() {
     setAuthError('');
     try {
       await registerUser(trimmedName, trimmedEmail, password);
+      // DECISION: New accounts return to login form.
       setAuthMode('login');
       setAuthStatus('idle');
       setAuthError('Account created. you can login now');
@@ -284,9 +310,10 @@ function App() {
     try {
       await logoutUser();
     } catch {
-      // Local logout must complete even when the network request fails.
+      // SAFETY: Always clear local session.
     }
     if (socket)
+      // SYNC: Close realtime channel on logout.
       socket.disconnect();
     setCurrentUser(null);
     setAuthSession(null);
@@ -300,6 +327,7 @@ function App() {
       <main className={`page-content page-content--${currentPage.id}`}>
         <section className="page-panel" aria-labelledby="page-title">
           {currentPage.id === 'home' && (
+            // DECISION: Home owns landing dashboard actions.
             <HomePage
               title={currentPage.title}
               description={currentPage.description}
@@ -309,6 +337,7 @@ function App() {
             />
           )}
           {currentPage.id !== 'home' && currentPage.id !== 'match-history' && currentPage.id !== 'leaderboard' && currentPage.id !== 'login' && currentPage.id !== 'profile' && currentPage.id !== 'public-profile' && currentPage.id !== 'room' && currentPage.id !== 'game' && currentPage.id !== 'friends' && currentPage.id !== 'lobby' && currentPage.id !== 'privacy' && currentPage.id !== 'terms' && (
+            // FALLBACK: Unknown routes show a placeholder.
             <PlaceholderPage title={currentPage.title} description={currentPage.description} />
           )}
           {currentPage.id === 'privacy' && (
@@ -326,6 +355,7 @@ function App() {
             />
           )}
           {currentPage.id === 'profile' && (
+            // SYNC: Profile updates refresh auth session user.
             <ProfilePage
               profileStatus={profileStatus}
               profileError={profileError}
@@ -360,6 +390,7 @@ function App() {
             />
           )}
           {currentPage.id === 'game' && (
+            // SYNC: Game page receives room hook state.
             <GamePage
               title={currentPage.title}
               description={currentPage.description}
@@ -433,6 +464,7 @@ function App() {
         {currentPage.id === 'home' && ( <StatusPanel socketStatus={socketStatus} currentUser={currentUser} />)}
       </main>
       <GlobalChatDock
+        // DECISION: Chat stays available across pages.
         currentUser={currentUser}
         currentRoom={room.currentRoom}
         roomChat={chat}

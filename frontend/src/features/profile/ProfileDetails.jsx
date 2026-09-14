@@ -7,9 +7,11 @@ const BADGE_SPRITE_Y = [1, 61, 122, 184];
 
 function getMilestone(value, steps)
 {
+	// DECISION: Progress bar targets next milestone.
 	return steps.find((step) => value < step) ?? steps[steps.length - 1];
 }
 
+// WHY: Badge config maps stats to sprite columns and tiers.
 const BADGE_GROUPS = [
 	['Experience', 'gamesPlayed', 0, [['Rookie', 5], ['Regular', 20], ['Veteran', 50], ['Legend', 200]]],
 	['Victories', 'wins', 1, [['First Win', 3], ['Winner', 10], ['Champion', 25], ['Conqueror', 50]]],
@@ -20,6 +22,7 @@ const BADGE_GROUPS = [
 
 function getCurrentBadge(value, badges)
 {
+	// DECISION: Highest unlocked badge is displayed.
 	const unlockedBadges = badges.filter((badge) => value >= badge.threshold);
 	const badge = unlockedBadges[unlockedBadges.length - 1] ?? badges[0];
 	const tier = badges.indexOf(badge);
@@ -29,6 +32,7 @@ function getCurrentBadge(value, badges)
 
 function getBadgeBackgroundPosition(iconColumn, tier)
 {
+	// SYNC: Sprite sheet offsets select badge icon.
 	return `translate(-${BADGE_SPRITE_X[iconColumn]}px, -${BADGE_SPRITE_Y[tier]}px)`;
 }
 
@@ -36,6 +40,7 @@ function ProgressRow({ label, value, target })
 {
 	let ratio = 0;
 	if (target > 0)
+		// SAFETY: Progress never exceeds 100%.
 		ratio = Math.min(100, Math.round((value / target) * 100));
 	return (
 		<div className="profile-progress-row">
@@ -52,6 +57,7 @@ function ProgressRow({ label, value, target })
 
 export function ProfileDetails({ profileUser, editForm = null })
 {
+	// FALLBACK: Missing stats become zero.
 	const stats = profileUser.stats ?? {};
 	const gamesPlayed = stats.gamesPlayed ?? 0;
 	const wins = stats.wins ?? 0;
@@ -62,6 +68,7 @@ export function ProfileDetails({ profileUser, editForm = null })
 	const avatarUrl = profileUser.avatar?.trim();
 	const avatarFallback = displayName.charAt(0).toUpperCase();
 	const [avatarFailed, setAvatarFailed] = useState(false);
+	// SYNC: New avatar URL retries image load.
 	useEffect(() =>	{ setAvatarFailed(false); }, [avatarUrl]);
 	const badges = BADGE_GROUPS.map((group) =>
 	({
@@ -71,6 +78,7 @@ export function ProfileDetails({ profileUser, editForm = null })
 	}));
 	let avatarContent = <span className="profile-avatar-fallback">{avatarFallback}</span>;
 	if (avatarUrl && !avatarFailed)
+		// FALLBACK: onError returns to initial letter.
 		avatarContent = <img src={avatarUrl} alt="" onError={() => setAvatarFailed(true)} />;
 
 	return (
@@ -108,6 +116,7 @@ export function ProfileDetails({ profileUser, editForm = null })
 					{
 						let badgeClass = 'is-locked';
 						if (badge.unlocked)
+							// SYNC: CSS shows unlocked badge style.
 							badgeClass = 'is-unlocked';
 						return (
 							<article className={`badge-cell ${badgeClass}`} key={`${badge.label}-${badge.name}`}>

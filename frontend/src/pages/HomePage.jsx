@@ -9,25 +9,31 @@ const authenticatedActions =
 	{ label: 'Match History', href: '#/match-history' },
 ];
 
+// WHY: Home page decides main menu according to session.
 export function HomePage({ title, description, currentUser, room, onLogout })
 {
 	const currentRoom = room?.currentRoom;
 	let resumeAction = null;
 	if (currentRoom?.status === 'playing')
+		// SYNC: Player can return to live game.
 		resumeAction = { label: 'Resume Game', href: '#/game' };
 	else if (currentRoom)
+		// SYNC: Player can return to waiting room.
 		resumeAction = { label: 'Resume Room', href: '#/room' };
 	let actions = authenticatedActions;
 	if (resumeAction)
+		// DECISION: Resume action appears first.
 		actions = [resumeAction, ...authenticatedActions];
 	let menuContent =
 	(
+		// SAFETY: Logged-out users only see login.
 		<div className="home-menu-actions home-menu-actions--locked">
 			<a className="home-menu-card home-menu-card--primary" href="#/login"><strong>Login</strong></a>
 		</div>
 	);
 	if (currentUser)
 	{
+		// DECISION: Authenticated menu exposes app areas.
 		menuContent =
 		(
 			<nav className="home-menu-actions" aria-label="Main menu">

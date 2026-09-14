@@ -3,6 +3,7 @@ import { PageHeading } from '../components/PageHeading';
 import { apiRequest } from '../api/apiReq';
 import { addFriend } from '../api/friends';
 
+// WHY: Friends page combines search, requests, DM and invites.
 export function FriendsPage({ title, description, currentUser, currentRoom, friends, directChat, }) {
     const {
         friends: friendsData,
@@ -24,6 +25,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
     useEffect(() =>
     {
         const search = friendSearchInput.trim();
+        // DECISION: Wait for two chars before search.
         if (!currentUser || search.length < 2)
         {
             setFriendSearchResults([]);
@@ -33,6 +35,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
         }
 
         let cancelled = false;
+        // PERF: Debounce user search.
         setFriendSearchStatus('loading');
         setFriendSearchError('');
 
@@ -40,21 +43,25 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
         {
             try
             {
+                // REQUIRED: Query string is encoded safely.
                 const params = new URLSearchParams({ search });
                 const results = await apiRequest(`/api/users/search?${params.toString()}`, {});
                 if (!cancelled)
                 {
+                    // SAFETY: Hide current user from results.
                     setFriendSearchResults(results.filter((user) => user.id !== currentUser.id));
                     setFriendSearchStatus('loaded');
                 }
             }
             catch (error)
             {
+                // SAFETY: Ignore stale async results.
                 if (cancelled)
                     return;
                 setFriendSearchResults([]);
                 if (error.status === 404)
                 {
+                    // DECISION: No result is not a fatal error.
                     setFriendSearchStatus('loaded');
                     setFriendSearchError('');
                 }
@@ -68,6 +75,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
 
         return () =>
         {
+            // SAFETY: Cancel pending debounced search.
             cancelled = true;
             clearTimeout(timeoutId);
         };
@@ -77,6 +85,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
     {
         try
         {
+            // SYNC: Add from search then reload list.
             setFriendSearchError('');
             await addFriend(friendId);
             setFriendSearchInput('');
@@ -91,6 +100,7 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
 
     function getRelationStatus(user)
     {
+        // DECISION: Search actions depend on relation state.
         if(friendList.some(friend => { return (friend.id === user.id) }))
             return ("friend");
         if(pendingReceived.some(friend => { return (friend.id === user.id) }))
@@ -102,11 +112,13 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
 
     function openDirectChat(user)
     {
+        // SYNC: Reuse global direct chat state.
         directChat.openConversation(user);
     }
 
     function hasPendingInvitation(friendId)
     {
+        // SAFETY: Avoid duplicate room invites.
         return directChat.invitations.some(message =>
             message.invitation?.status === 'PENDING' &&
             Number(message.author?.id) === Number(currentUser?.id) &&
@@ -117,9 +129,11 @@ export function FriendsPage({ title, description, currentUser, currentRoom, frie
 
     function inviteFriend(friendId)
     {
+        // REQUIRED: Invite uses current room id.
         directChat.sendGameInvitation(currentRoom.id, friendId);
     }
 
+    // DECISION: Invites only make sense before game starts.
     const canInvite = currentRoom?.id && currentRoom.status === 'waiting';
 
     return (

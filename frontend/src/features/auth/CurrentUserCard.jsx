@@ -1,5 +1,6 @@
 export function CurrentUserCard({ currentUser, onLogout })
 {
+	// FALLBACK: Display id when name is missing.
 	const displayName = currentUser.username || currentUser.name || `User ${currentUser.id}`;
 	return (
 		<div className="current-user-card">

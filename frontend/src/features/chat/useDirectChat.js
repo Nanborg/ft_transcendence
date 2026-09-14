@@ -8,9 +8,11 @@ function mergeDirectMessages(...messageLists)
     const messageById = new Map();
 
     messageLists.flat().forEach(message => {
+        // SAFETY: Ignore malformed socket payloads.
         if (!message || typeof message !== 'object')
             return;
 
+        // FALLBACK: Some invitation messages may lack ids.
         const key = Number.isInteger(message.id)
             ? `id:${message.id}`
             : [
@@ -25,6 +27,7 @@ function mergeDirectMessages(...messageLists)
 
     return Array.from(messageById.values()).sort(
         (firstMessage, secondMessage) => {
+            // SYNC: Merge history and live messages in order.
             const timestampDifference =
                 (Number(firstMessage.timestamp) || 0) -
                 (Number(secondMessage.timestamp) || 0);
@@ -42,6 +45,7 @@ function mergeDirectMessages(...messageLists)
 
 function normalizeConversationUser(user)
 {
+    // SAFETY: Conversations require stable numeric ids.
     if (!user || !Number.isInteger(Number(user.id)))
         return null;
 
@@ -67,6 +71,7 @@ export function useDirectChat(socket, currentUser)
     const selectedUserIdRef = useRef(null);
 
     useEffect(() => {
+        // SYNC: Handlers read the latest selected user.
         selectedUserIdRef.current = selectedUser?.id ?? null;
     }, [selectedUser?.id]);
 
@@ -76,6 +81,7 @@ export function useDirectChat(socket, currentUser)
 
         function requestDirectOverview()
         {
+            // SYNC: Refresh all direct-chat side panels.
             socket.emit('chat:direct:conversations:request');
             socket.emit('chat:blocked:request');
             socket.emit('chat:invitation:list:request');
@@ -83,6 +89,7 @@ export function useDirectChat(socket, currentUser)
 
         function handleDirectMessage(message)
         {
+            // SAFETY: Ignore invalid direct payloads.
             if (!message || typeof message !== 'object')
                 return;
 
@@ -90,6 +97,7 @@ export function useDirectChat(socket, currentUser)
             const authorId = Number(message.author?.id);
             const recipientId = Number(message.recipient?.id);
 
+            // SAFETY: Ignore messages not involving us.
             if (authorId !== currentUserId && recipientId !== currentUserId)
                 return;
             const otherUserId = authorId === currentUserId
@@ -97,6 +105,7 @@ export function useDirectChat(socket, currentUser)
                 : authorId;
             if (otherUserId === selectedUserIdRef.current)
             {
+                // SYNC: Append live message to open thread.
                 setDirectMessages(previousMessages =>
                     mergeDirectMessages(
                         previousMessages,
@@ -104,13 +113,16 @@ export function useDirectChat(socket, currentUser)
                     )
                 );
                 if (recipientId === currentUserId)
+                    // SYNC: Mark visible incoming messages read.
                     socket.emit('chat:direct:read', { userId: otherUserId, });
             }
+            // SYNC: Sidebar unread counts may change.
             socket.emit('chat:direct:conversations:request');
         }
 
         function handleDirectHistory(payload)
         {
+            // SAFETY: Ignore history for another thread.
             if (!payload || Number(payload.userId) !== selectedUserIdRef.current || !Array.isArray(payload.messages))
                 return;
             setDirectMessages(previousMessages =>
@@ -123,6 +135,7 @@ export function useDirectChat(socket, currentUser)
 
         function handleConversations(payload)
         {
+            // SAFETY: Ignore invalid conversation lists.
             if (!payload || !Array.isArray(payload.conversations))
                 return;
             setConversations(payload.conversations);
@@ -130,6 +143,7 @@ export function useDirectChat(socket, currentUser)
 
         function handleBlockedUsers(payload)
         {
+            // SAFETY: Ignore invalid block lists.
             if (!payload || !Array.isArray(payload.users))
                 return;
             setBlockedUsers(payload.users);
@@ -137,12 +151,14 @@ export function useDirectChat(socket, currentUser)
 
         function handleBlockUpdate()
         {
+            // SYNC: Blocking affects lists and visibility.
             socket.emit('chat:blocked:request');
             socket.emit('chat:direct:conversations:request');
         }
 
         function handleInvitationList(payload)
         {
+            // SAFETY: Ignore invalid invitation lists.
             if (!payload || !Array.isArray(payload.invitations))
                 return;
             setInvitations(payload.invitations);
@@ -152,6 +168,7 @@ export function useDirectChat(socket, currentUser)
         {
             const invitationMessage = payload?.invitation;
             const invitation = invitationMessage?.invitation;
+            // SAFETY: Invitation updates need a stable id.
             if (!invitationMessage || typeof invitationMessage !== 'object' || !invitation || !Number.isInteger(Number(invitation.id)))
                 return;
             const currentUserId = Number(currentUser.id);
@@ -166,28 +183,34 @@ export function useDirectChat(socket, currentUser)
                         Number(invitation.id)
                     );
                 if (invitation.status === 'PENDING' && (isSender || isRecipient))
+                    // SYNC: Keep pending invites visible.
                     return mergeDirectMessages(remainingInvitations, [invitationMessage]);
                 if (isSender)
+                    // SYNC: Sender sees final response.
                     return mergeDirectMessages(remainingInvitations, [invitationMessage]);
                 return remainingInvitations;
             });
             if (isSender && invitation.status !== 'PENDING')
+                // SYNC: Badge counts unseen responses.
                 setUnreadInvitationResponseCount(previousCount => previousCount + 1);
             const otherUserId = isSender
                 ? recipientId
                 : authorId;
             if (otherUserId === selectedUserIdRef.current) {
+                // SYNC: Open thread shows invite status.
                 setDirectMessages(previousMessages =>
                     mergeDirectMessages(previousMessages, [invitationMessage])
                 );
             }
             socket.emit('chat:direct:conversations:request');
             if (invitation.status === 'ACCEPTED' && isRecipient && payload.room?.id)
+                // DECISION: Accepted invite opens the room page.
                 window.location.hash = '#/room';
         }
 
         function handleChatError(error)
         {
+            // SAFETY: Only direct-chat errors update this panel.
             if (!error || typeof error.event !== 'string' || typeof error.message !== 'string')
                 return;
             const isDirectChatError =
@@ -202,9 +225,11 @@ export function useDirectChat(socket, currentUser)
 
         function handleDirectRead(payload)
         {
+            // SAFETY: Ignore invalid read receipts.
             if (!payload || !Number.isInteger(Number(payload.readerId)))
                 return;
             socket.emit('chat:direct:conversations:request');
+            // SAFETY: Only update the open thread.
             if (Number(payload.otherUserId) !== Number(currentUser.id) || Number(payload.readerId) !== selectedUserIdRef.current || !payload.readAt)
                 return;
             setDirectMessages(previousMessages =>
@@ -216,6 +241,7 @@ export function useDirectChat(socket, currentUser)
                         messageId <= upToMessageId
                     )
                     {
+                        // SYNC: Mark sent messages read.
                         return {
                             ...message,
                             readAt: payload.readAt,
@@ -255,6 +281,7 @@ export function useDirectChat(socket, currentUser)
     useEffect(() => {
         if (currentUser)
             return;
+        // SAFETY: Logout clears direct-chat state.
         selectedUserIdRef.current = null;
         setConversations([]);
         setSelectedUser(null);
@@ -268,6 +295,7 @@ export function useDirectChat(socket, currentUser)
 
     function refreshDirectOverview()
     {
+        // SAFETY: Avoid socket calls when logged out.
         if (!socket || !currentUser?.id)
             return;
         socket.emit('chat:direct:conversations:request');
@@ -279,6 +307,7 @@ export function useDirectChat(socket, currentUser)
     {
         const normalizedUser = normalizeConversationUser(user);
 
+        // SAFETY: Only open valid conversations.
         if (!socket || !normalizedUser)
             return;
         selectedUserIdRef.current = normalizedUser.id;
@@ -291,11 +320,13 @@ export function useDirectChat(socket, currentUser)
             userId: normalizedUser.id,
             limit: DIRECT_HISTORY_LIMIT,
         });
+        // SYNC: Opening a thread marks it read.
         socket.emit('chat:direct:read', { userId: normalizedUser.id, });
     }
 
     function closeConversation()
     {
+        // SYNC: Closing clears thread state.
         selectedUserIdRef.current = null;
         setSelectedUser(null);
         setDirectMessages([]);
@@ -307,9 +338,11 @@ export function useDirectChat(socket, currentUser)
     {
         event?.preventDefault();
 
+        // SAFETY: Do not send without a recipient.
         if (!socket || !selectedUser)
             return;
         const message = directInput.trim();
+        // REQUIRED: Backend enforces the same limit.
         if (!message || message.length > MAX_CHAT_MESSAGE_LENGTH)
             return;
         setDirectError('');
@@ -322,6 +355,7 @@ export function useDirectChat(socket, currentUser)
 
     function blockSelectedUser()
     {
+        // SAFETY: Blocking needs an open conversation.
         if (!socket || !selectedUser)
             return;
         setDirectError('');
@@ -332,6 +366,7 @@ export function useDirectChat(socket, currentUser)
 
     function unblockSelectedUser()
     {
+        // SAFETY: Unblocking needs an open conversation.
         if (!socket || !selectedUser)
             return;
         setDirectError('');
@@ -342,12 +377,14 @@ export function useDirectChat(socket, currentUser)
 
     function markInvitationResponsesSeen()
     {
+        // SYNC: User opened the response indicator.
         setUnreadInvitationResponseCount(0);
     }
 
     function sendGameInvitation(roomId, recipientId = selectedUser?.id)
     {
         const normalizedRecipientId = Number(recipientId);
+        // SAFETY: Invitations require valid users.
         if (!socket || !Number.isInteger(normalizedRecipientId) || normalizedRecipientId <= 0)
             return;
         setDirectError('');
@@ -359,6 +396,7 @@ export function useDirectChat(socket, currentUser)
 
     function respondToInvitation(invitationId, response)
     {
+        // SAFETY: Socket owns invitation state.
         if (!socket)
             return;
         setDirectError('');

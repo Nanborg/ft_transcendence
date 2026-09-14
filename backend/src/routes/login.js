@@ -116,7 +116,7 @@ router.get("/42/callback", async (req, res) =>
 		if (!code || typeof req.query.code !== "string")
 			return res.status(400).send("Missing code");
 
-		// exchange code for a token
+		// REQUIRED: Exchange OAuth code first.
 		const response = await fetch("https://api.intra.42.fr/oauth/token",
 		{
 			method: "POST",
@@ -141,7 +141,7 @@ router.get("/42/callback", async (req, res) =>
 		if (!data.access_token)
 			return res.status(401).json(data);
 
-		// call /v2/me to get user data
+		// REQUIRED: Fetch stable 42 id.
 		const infos_response = await fetch("https://api.intra.42.fr/v2/me",
 		{
 			method: "GET",
@@ -158,7 +158,6 @@ router.get("/42/callback", async (req, res) =>
 		if (!userData.id || !userData.email)
 			return res.sendStatus(500);
 
-		// search/create user
 		let user = await prisma.user.findUnique({ where: { fortyTwoId: userData.id } });
 
 		if (user)

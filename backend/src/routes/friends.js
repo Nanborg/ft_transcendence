@@ -7,6 +7,7 @@ const { getConnection, isOnline } = require("../socket/connections");
 
 function notifyFriendshipUpdate(...userIds)
 {
+	// SYNC: Notify each affected online user once.
 	const uniqueUserIds = new Set(userIds.map(userId => Number(userId)).filter(userId => Number.isInteger(userId)));
 	uniqueUserIds.forEach(userId =>
 	{
@@ -18,6 +19,7 @@ function notifyFriendshipUpdate(...userIds)
 router.get("/", authToken, async (req, res) =>
 {
 	try {
+		// REQUIRED: Friendships can be sent or received.
 		const userData = await prisma.user.findUnique(
 		{
 			where: { id: req.user.id },
@@ -35,12 +37,14 @@ router.get("/", authToken, async (req, res) =>
 		});
 		if (!userData)
 			return res.status(404).json({ error: "User not found" });
+		// DECISION: Merge both directions for display.
 		const friends =
 		[
 			...userData.sentRequests.filter(f => f.status === "ACCEPTED").map(f => ({ ...f.friend, friendSince: f.updatedAt, isOnline: isOnline(f.friend.id)})),
 			...userData.receivedRequests.filter(f => f.status === "ACCEPTED").map(f => ({ ...f.user, friendSince: f.updatedAt, isOnline: isOnline(f.user.id)}))
 		];
 		const pendingSent = userData.sentRequests.filter(f => f.status === "PENDING").map(f => f.friend);
+		// SYNC: UI shows received requests separately.
 		const pendingReceived = userData.receivedRequests.filter(f => f.status === "PENDING").map(f => f.user);
 		res.status(200).json({ friends, pendingReceived, pendingSent });
 	} catch (error) {
@@ -53,8 +57,10 @@ router.post("/:id", authToken, async (req, res) =>
 {
 	try {
 		const friendId = parseInt(req.params.id, 10);
+		// SAFETY: Friend id must come from route.
 		if (isNaN(friendId))
 			return res.status(400).json({ error: "invalid id" });
+		// SAFETY: User cannot friend themself.
 		if (friendId === req.user.id)
 			return res.status(409).json({ error: "conflict" });
 		const targetUser = await prisma.user.findUnique({ where: { id: friendId } });
@@ -72,12 +78,15 @@ router.post("/:id", authToken, async (req, res) =>
 		});
 		if (existingFriendship)
 		{
+			// DECISION: Existing accepted relation is final.
 			if (existingFriendship.status === "ACCEPTED")
 				return res.status(409).json({ error: "already friends" });
+			// SAFETY: Avoid duplicate pending requests.
 			if (existingFriendship.userId === req.user.id && existingFriendship.status === "PENDING")
 				return res.status(409).json({ error: "request already sent" });
 			if (existingFriendship.userId === friendId && existingFriendship.status === "PENDING")
 			{
+				// DECISION: Opposite pending request becomes accepted.
 				await prisma.friendship.update(
 				{
 					where: { id: existingFriendship.id },
@@ -107,6 +116,7 @@ router.patch("/:id/accept", authToken, async (req, res) =>
 {
 	try {
 		const friendId = parseInt(req.params.id, 10);
+		// SAFETY: Accept target must be valid.
 		if (isNaN(friendId))
 			return res.status(400).json({ error: "invalid id" });
 
@@ -121,6 +131,7 @@ router.patch("/:id/accept", authToken, async (req, res) =>
 		{
 			where:
 			{
+				// REQUIRED: Only receiver can accept request.
 				userId: friendId,
 				friendId: req.user.id,
 				status: "PENDING"
@@ -145,6 +156,7 @@ router.delete("/:id", authToken, async (req, res) =>
 {
 	try {
 		const friendId = parseInt(req.params.id, 10);
+		// SAFETY: Delete target must be valid.
 		if (isNaN(friendId))
 			return res.status(400).json({ error: "invalid id" });
 
@@ -159,6 +171,7 @@ router.delete("/:id", authToken, async (req, res) =>
 		{
 			where:
 			{
+				// REQUIRED: Friendship can exist either way.
 				OR:
 				[
 					{ userId: req.user.id, friendId: friendId },

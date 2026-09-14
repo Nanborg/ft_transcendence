@@ -25,7 +25,7 @@ router.post ("/", async (req, res) =>
 				where: { username: cleanName }
 			});
 			if (existingUser)
-				return res.status(400).send('Username is already taken') // need to be set to 409 Conflict
+				return res.status(400).send('Username is already taken')
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10)
 

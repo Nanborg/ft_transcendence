@@ -1,3 +1,4 @@
+// WHY: Central route table keeps nav and page metadata aligned.
 export const pages = [
   {
     id: 'home',

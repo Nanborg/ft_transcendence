@@ -11,6 +11,7 @@ const INITIAL_MOVEMENT = Object.freeze(
 
 function mapKeyToMovement(code)
 {
+	// DECISION: Support arrows and WASD.
 	switch (code)
 	{
 		case 'ArrowUp':
@@ -32,6 +33,7 @@ function mapKeyToMovement(code)
 
 function mapKeyToAction(code)
 {
+	// DECISION: J/K/L map to abilities.
 	switch (code)
 	{
 		case 'KeyJ':
@@ -47,6 +49,7 @@ function mapKeyToAction(code)
 
 function areMovementsEqual(left, right)
 {
+	// PERF: Avoid duplicate movement emits.
 	return (
 		left.up === right.up &&
 		left.down === right.down &&
@@ -57,6 +60,7 @@ function areMovementsEqual(left, right)
 
 function getDirectionFromMovement(movement, fallbackDirection)
 {
+    // DECISION: Last direction is kept when idle.
     const dirX = Number(movement.right) - Number(movement.left);
     const dirY = Number(movement.down) - Number(movement.up);
 
@@ -70,22 +74,26 @@ function getDirectionFromMovement(movement, fallbackDirection)
 }
 
 export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true }) {
+    // WHY: Keep input state outside React renders.
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
     const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
 
     useEffect(() => {
         if (!socket || !roomId || !enabled) {
+            // SAFETY: Disabled input releases controls.
             movementRef.current = INITIAL_MOVEMENT;
             actionRef.current = PLAYER_ACTION.NONE;
             return undefined;
         }
 
         function emitMovement(nextMovement) {
+            // PERF: Send only movement changes.
             if (areMovementsEqual(movementRef.current, nextMovement))
                 return;
 
             movementRef.current = nextMovement;
+            // SYNC: Actions reuse last movement direction.
             lastDirectionRef.current = getDirectionFromMovement(nextMovement, lastDirectionRef.current);
             socket.emit('player:input', {
                 roomId,
@@ -94,6 +102,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         }
 
         function emitAction(nextAction) {
+            // PERF: Do not repeat same action state.
             if (actionRef.current === nextAction)
                 return;
 
@@ -101,6 +110,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             socket.emit('player:input', {
                 roomId,
                 input: {
+                    // REQUIRED: Backend validates action direction.
                     action: nextAction,
                     ...lastDirectionRef.current,
                 },
@@ -111,6 +121,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             const movementKey = mapKeyToMovement(event.code);
 
             if (movementKey) {
+                // DECISION: Game keys should not scroll page.
                 event.preventDefault();
                 emitMovement({
                     ...movementRef.current,
@@ -127,6 +138,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             event.preventDefault();
 
             if (!event.repeat)
+                // SAFETY: Hold key should not spam attacks.
                 emitAction(action);
         }
 
@@ -134,6 +146,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             const movementKey = mapKeyToMovement(event.code);
 
             if (movementKey) {
+                // SYNC: Keyup releases one direction.
                 event.preventDefault();
                 emitMovement({
                     ...movementRef.current,
@@ -150,10 +163,12 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             event.preventDefault();
 
             if (actionRef.current === action)
+                // SYNC: Action keyup returns to idle.
                 emitAction(PLAYER_ACTION.NONE);
         }
 
         function releaseAllInputs() {
+            // SAFETY: Window blur stops stuck movement.
             emitMovement(INITIAL_MOVEMENT);
             emitAction(PLAYER_ACTION.NONE);
         }
@@ -163,6 +178,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         window.addEventListener('blur', releaseAllInputs);
 
         return () => {
+            // SAFETY: Cleanup removes global listeners.
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('blur', releaseAllInputs);

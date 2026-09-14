@@ -83,7 +83,7 @@ class GameEngineService extends EventEmitter
                     console.error(`Unable to ping room ${roomId}:`, error);
                 });
             }
-        }, 30000); // 30 secs
+        }, 30000);
     }
 
     send(command)
@@ -249,7 +249,6 @@ class GameEngineService extends EventEmitter
         return removeMapFile(filePath);
     }
 
-    // n is the number of players in the room
     randomMap(n)
     {
         return pickRandomMapFile(n);

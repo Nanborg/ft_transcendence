@@ -9,8 +9,10 @@ function mergeChatMessages(...messageLists)
 
 	messageLists.flat().forEach(message =>
 	{
+		// SAFETY: Ignore malformed socket payloads.
 		if (!message || typeof message !== "object")
 			return;
+		// FALLBACK: Legacy messages may not have ids.
 		const key = Number.isInteger(message.id) ? `id:${message.id}` :
 			[
 				'legacy',
@@ -23,6 +25,7 @@ function mergeChatMessages(...messageLists)
 	});
 	return Array.from(messagesByKey.values()).sort((firstMessage, secondMessage) =>
 	{
+		// SYNC: Keep history and live messages ordered.
 		const timestampDifference = (Number(firstMessage.timestamp) || 0) - (Number(secondMessage.timestamp) || 0);
 		if (timestampDifference !== 0)
 			return timestampDifference;
@@ -45,6 +48,7 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 
 		if (currentRoomIdRef.current !== nextRoomId)
 		{
+			// SYNC: Room change resets room chat state.
 			currentRoomIdRef.current = nextRoomId;
 			setChatMessages([]);
 			setChatInput('');
@@ -55,6 +59,7 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 
 	useEffect(() =>
 	{
+		// SYNC: Remove blocked authors from current view.
 		const nextBlockedUserIds = new Set( blockedUserIds.map(userId => Number(userId)).filter(userId => Number.isInteger(userId)));
 		blockedUserIdsRef.current = nextBlockedUserIds;
 		setChatMessages(previousMessages => previousMessages.filter(message => !nextBlockedUserIds.has(Number(message.author?.id))));
@@ -67,8 +72,10 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 
 		function handleChatMessage(chatMessage)
 		{
+			// SAFETY: Ignore messages from old rooms.
 			if (!chatMessage || chatMessage.roomId !== currentRoomIdRef.current)
 				return;
+			// SAFETY: Blocked users stay hidden live.
 			if (blockedUserIdsRef.current.has(Number(chatMessage.author?.id)))
 				return;
 			setChatMessages(previousMessages => mergeChatMessages( previousMessages, [chatMessage]));
@@ -77,6 +84,7 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 
 		function handleChatHistory(payload)
 		{
+			// SAFETY: Only merge history for current room.
 			if (!payload || payload.scope !== 'room' || payload.roomId !== currentRoomIdRef.current || !Array.isArray(payload.messages))
 				return;
 			const visibleMessages = payload.messages.filter(message => !blockedUserIdsRef.current.has(Number(message.author?.id)));
@@ -110,6 +118,7 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 
 		function requestRoomChatHistory()
 		{
+			// SYNC: Reload history after reconnect.
 			socket.emit('chat:history:request', { roomId: currentRoom.id, limit: ROOM_HISTORY_LIMIT,});
 		}
 		requestRoomChatHistory();
@@ -122,6 +131,7 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 		if (currentUser)
 			return;
 
+		// SAFETY: Logout clears private chat state.
 		currentRoomIdRef.current = null;
 		setChatMessages([]);
 		setChatInput('');
@@ -132,9 +142,11 @@ export function useChat(socket, currentUser, currentRoom, blockedUserIds = [])
 	function sendChatMessage(event)
 	{
 		event?.preventDefault();
+		// SAFETY: Do not send without an active room.
 		if (!socket || !currentRoom?.id)
 			return;
 		const message = chatInput.trim();
+		// REQUIRED: Backend enforces the same limit.
 		if (!message || message.length > MAX_CHAT_MESSAGE_LENGTH)
 			return;
 		setChatError('');
