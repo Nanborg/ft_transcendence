@@ -46,8 +46,8 @@ X#.....#XX#......#XX#...3......#X#.............#XX
 X#......#X#......#XXX#....#.....##......B......#XX
 X#.....#XX#......#XX#.....##....##.............#XX
 XX#....#XX#......#XXX##...#X#...##.............#XX
-XXX####XXXX##...#XXXXX#.##XXX#####XX###########XXX
-XXXXXXXXXXXXX###XXXXXXX#XXXXXXXXXXXXXXXXXXXXXXXXXX
+XXX####XXXX##...#XXXXX####XXX##################XXX
+XXXXXXXXXXXXX###XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 Seed: 4153361530
 Spawn: (5, 6)
