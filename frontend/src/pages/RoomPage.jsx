@@ -64,7 +64,7 @@ export function RoomPage({ title, description, socket, currentUser, room, chat }
 		let readyLabel = 'Ready';
 		if (currentPlayer?.ready)
 			readyLabel = 'Not ready';
-		lfrontend/src/pages/RoomPage.jsxet startButton =
+		let startButton =
 		(
 			<button type="button" className="room-start-button btn btn-primary"
 			onClick={startGame} disabled={!canStartGame}>Start game</button>
