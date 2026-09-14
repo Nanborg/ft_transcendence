@@ -45,29 +45,25 @@ app.use('/friends', friendsRouter);
 app.use('/scores', scoresRoutes);
 
 
-function shutdown(signal) {
-    console.log(`${signal} received, shutting down`);
-    gameEngineService.close();
-    server.close(() => {
-        process.exit(0);
-    });
+function shutdown(signal)
+{
+	console.log(`${signal} received, shutting down`);
+	gameEngineService.close();
+	server.close(() => { process.exit(0); });
 }
 
-if (process.env.NODE_ENV !== 'test') {
-    gameEngineService.start();
-    gameEngineService.on("message", (message) => {
-        if (message.type === "ping") {
-            console.log("Game engine ping:", message);
-        }
-    });
-    gameEngineService.on("invalid-message", ({ raw }) => {
-        console.error("Invalid game engine message:", raw);
-    });
-    process.on("SIGINT", () => shutdown("SIGINT"));
-    process.on("SIGTERM", () => shutdown("SIGTERM"));
-    server.listen(port, "0.0.0.0", () => {
-        console.log(`backend listening on port ${port}`);
-    });
+if (process.env.NODE_ENV !== 'test')
+{
+	gameEngineService.start();
+	gameEngineService.on("message", (message) =>
+	{
+		if (message.type === "ping")
+			console.log("Game engine ping:", message);
+	});
+	gameEngineService.on("invalid-message", ({ raw }) => { console.error("Invalid game engine message:", raw); });
+	process.on("SIGINT", () => shutdown("SIGINT"));
+	process.on("SIGTERM", () => shutdown("SIGTERM"));
+	server.listen(port, "0.0.0.0", () => { console.log(`backend listening on port ${port}`); });
 }
 
 module.exports = app;

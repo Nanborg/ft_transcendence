@@ -1,8 +1,5 @@
 const jwt = require("jsonwebtoken");
 
-
-
-
 //	Middleware that validates a JWT access token.
 //
 //	Process:
@@ -21,29 +18,22 @@ const jwt = require("jsonwebtoken");
 //	throws {500} If an unexpected server error occurs.
 
 
-function authToken(req, res, next) {
+function authToken(req, res, next)
+{
 	try {
 		const token = req.cookies ? req.cookies.accessToken : null;
 
 		if (!token)
-			return res.status(401).json({
-				error: "Access token missing",
-				code: "ACCESS_TOKEN_MISSING"
-			});
+			return (res.status(401).json({ error: "Access token missing", code: "ACCESS_TOKEN_MISSING"}));
 
-		jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, user) => {
+		jwt.verify(token, process.env.ACCESS_SECRET_TOKEN, (err, user) =>
+		{
 			if (err)
 			{
 				console.error("Token verification failed:", err.message);
 				if (err.name === "TokenExpiredError")
-					return res.status(401).json({
-						error: "Token expired",
-						code: "ACCESS_TOKEN_EXPIRED"
-					});
-				return res.status(403).json({
-					error: "Invalid token",
-					code: "ACCESS_TOKEN_INVALID"
-				});
+					return res.status(401).json({ error: "Token expired", code: "ACCESS_TOKEN_EXPIRED" });
+				return (res.status(403).json({ error: "Invalid token", code: "ACCESS_TOKEN_INVALID" }));
 			}
 
 			req.user = user;

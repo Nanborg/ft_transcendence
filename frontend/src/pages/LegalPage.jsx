@@ -10,7 +10,7 @@ function renderMarkdownLine(line, index)
 		return null;
 	if (!line.trim())
 		return null;
-	return <p key={index}>{line}</p>;
+	return (<p key={index}>{line}</p>);
 }
 
 function renderMarkdown(markdown)
@@ -34,15 +34,12 @@ function renderMarkdown(markdown)
 			listItems = [];
 		}
 		if (renderedLine)
-		{
 			elements.push(renderedLine);
-		}
 	});
 
 	if (listItems.length > 0)
-	{
 		elements.push(<ul key="list-last">{listItems}</ul>);
-	}
+
 	return elements;
 }
 
@@ -50,11 +47,7 @@ export function LegalPage({ title, description, content })
 {
 	return (
 		<div className="shell-screen legal-page">
-			<PageHeading
-				title={title}
-				description={description}
-				actions={[{ label: 'Back to Menu', href: '#/' }]}
-			/>
+			<PageHeading title={title} description={description} actions={[{ label: 'Back to Menu', href: '#/' }]}/>
 			<div className="legal-content shell-window">{renderMarkdown(content)}</div>
 		</div>
 	);

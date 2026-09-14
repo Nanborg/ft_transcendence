@@ -17,8 +17,6 @@ const router = express.Router();
 
 //		{"status":"ok"}
 
-router.get("/", (req, res) => {
-	res.json({ status: "ok" });
-});
+router.get("/", (_, res) => {res.json({ status: "ok" });});
 
 module.exports = router;

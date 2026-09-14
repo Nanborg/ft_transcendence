@@ -8,6 +8,4 @@ import './styles.css';
 const rootElement = document.getElementById('root');
 
 // Start React / render the App
-createRoot(rootElement).render(
-  <App />
-);
+createRoot(rootElement).render(<App />);

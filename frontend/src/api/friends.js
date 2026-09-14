@@ -1,9 +1,10 @@
 import { apiRequest } from "./apiReq"
 
-export async function fetchFriends() {
+export async function fetchFriends()
+{
 
 	try{
-		return await apiRequest("/api/friends", {});
+		return (await apiRequest("/api/friends", {}));
 	} catch (err) {
 		if (err.status === 401 || err.status === 403)
 			throw err
@@ -11,9 +12,10 @@ export async function fetchFriends() {
 	}
 }
 
-export async function addFriend(friendId) {
+export async function addFriend(friendId)
+{
 	try{
-		return await apiRequest(`/api/friends/${friendId}`, {method: "POST"});
+		return (await apiRequest(`/api/friends/${friendId}`, {method: "POST"}));
 	} catch (err) {
 		if (err.status === 401 || err.status === 403)
 			throw err;
@@ -21,10 +23,11 @@ export async function addFriend(friendId) {
 	}
 }
 
-export async function acceptFriends(friendId) {
+export async function acceptFriends(friendId)
+{
 
 	try{
-		return await apiRequest(`/api/friends/${friendId}/accept`, {method: "PATCH"});
+		return (await apiRequest(`/api/friends/${friendId}/accept`, {method: "PATCH"}));
 	} catch (err) {
 		if (err.status === 401 || err.status === 403)
 			throw err;
@@ -32,9 +35,10 @@ export async function acceptFriends(friendId) {
 	}
 }
 
-export async function removeFriend(friendId) {
+export async function removeFriend(friendId)
+{
 	try{
-		return await apiRequest(`/api/friends/${friendId}`, {method: "DELETE",});
+		return (await apiRequest(`/api/friends/${friendId}`, {method: "DELETE",}));
 	} catch (err) {
 		if (err.status === 401 || err.status === 403)
 			throw err;

@@ -1,5 +1,7 @@
-export class ApiError extends Error {
-	constructor(message, status = null, code = null) {
+export class ApiError extends Error
+{
+	constructor(message, status = null, code = null)
+	{
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
@@ -9,7 +11,8 @@ export class ApiError extends Error {
 
 let refreshPromise = null;
 
-export async function apiError(response) {
+export async function apiError(response)
+{
 	let body = null;
 	try {
 		body = await response.json();
@@ -23,22 +26,22 @@ export async function apiError(response) {
 	);
 }
 
-export async function refreshAccessToken() {
-	if (!refreshPromise) {
-		refreshPromise = fetch('/api/token', {
-			method: 'POST',
-			credentials: 'include',
-		})
-			.then(async (response) => {
-				if (!response.ok) {
+export async function refreshAccessToken()
+{
+	if (!refreshPromise)
+	{
+		refreshPromise = fetch('/api/token', { method: 'POST', credentials: 'include', })
+			.then(async (response) =>
+			{
+				if (!response.ok)
 					throw await apiError(response);
-				}
 				return response.json();
 			})
-			.finally(() => {
+			.finally(() =>
+			{
 				refreshPromise = null;
 			});
 	}
 
-	return refreshPromise;
+	return (refreshPromise);
 }

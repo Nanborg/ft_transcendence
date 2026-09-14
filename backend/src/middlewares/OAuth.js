@@ -6,7 +6,8 @@ const crypto = require("crypto");
 //		parammeters: user object (name and id).
 //		returns: signed JWT access token valid for 15 minutes.
 
-function generateAccessToken(user) {
+function generateAccessToken(user)
+{
 	return jwt.sign(user, process.env.ACCESS_SECRET_TOKEN, { expiresIn: '15m', algorithm: 'HS256', jwtid: crypto.randomUUID()})
 }
 
