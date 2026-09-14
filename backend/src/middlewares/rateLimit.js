@@ -4,7 +4,7 @@ const loginLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 min
 	max: 10, // 10 login attempts per IP
 	
-	handler: (_, res, options) =>
+	handler: (req, res, next, options) =>
 	{
 		const resetTime = Math.floor(Date.now() / 1000) + (options.windowMs / 1000);
 		
