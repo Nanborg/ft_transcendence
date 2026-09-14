@@ -29,14 +29,22 @@ private:
 		void	_firePhaseThreeFan( void );
 		void	_firePhaseThreeRadial( void );
 		void	_firePhaseThreeLaser( void );
+		bool	_applyContactDamage( void );
+		AbstractEntity*	_getPatternTarget( void );
+		void	_firePhaseThreeCrossLasers( void );
+		void	_fireNova( int shots );
+		void	_fireFanAtEveryPlayer( void );
 
 		void	_fanAttack( float dist, float interval, float offset, float speed, int shots );
 		void	_radialAttack( float speed, float dist, int shots );
+		void	_radialAttack( float speed, float dist, int shots, float angleOffset );
 
 		int		_targetEntityId;
 		int		_attackCooldown;
 		int		_attackFrame;
 		int		_attackFrameTicks;
+		int		_contactDamageCooldown;
+		int		_targetCursor;
 		int		_currentPhase;
 		int		_phaseTwoPattern;
 		int		_phaseThreePattern;
@@ -61,6 +69,9 @@ private:
 		static const int		_phaseThreeFrameDurationTicks;
 		static const int		_phaseThreeRadialProjectileCount;
 		static const int		_phaseThreeLaserDamage;
+		static const int		_contactDamage;
+		static const int		_contactDamageCooldownTicks;
+		static const float		_contactDamageRange;
 		static const float		_phaseThreeLaserSpeed;
 		static const float		_phaseThreeLaserSpawnDistance;
 		static const float		_phaseThreeFanAngleStep;
