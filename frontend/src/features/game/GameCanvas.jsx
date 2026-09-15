@@ -132,7 +132,7 @@ function drawMapWalls(context, gameMap, camera)
     }
 }
 
-export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameEntities = [], gamePlayerData, goldFeedbacks = [], socket})
+export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks = [], socket})
 {
     const canvasRef = useRef(null);
     const gameSoilImageRef = useRef(null);
@@ -142,7 +142,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     const renderDataRef = useRef({
         currentPlayerId,
         gameMap,
-        gamePlayerData,
+        gameStore,
     });
     const spectatorIndexRef = useRef(0);
     const shieldBreakEffectsRef = useRef(new Map());
@@ -160,13 +160,9 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     renderDataRef.current = {
         currentPlayerId,
         gameMap,
-        gamePlayerData: [],
+        gameStore,
         goldFeedbacks: [],
     };
-    if (Array.isArray(gamePlayerData))
-    {
-        renderDataRef.current.gamePlayerData = gamePlayerData;
-    }
     if (Array.isArray(goldFeedbacks))
     {
         renderDataRef.current.goldFeedbacks = goldFeedbacks;
@@ -191,7 +187,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             if (handleDebugHitboxKeyDown(event, debugHitboxesRef)) //test-nico-hitbox
                 return;
 
-            const players = renderDataRef.current.gamePlayerData;
+            const players = renderDataRef.current.gameStore.getPlayers();
             const myPlayer = players.find((p) => String(p.playerId) === String(currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
@@ -252,66 +248,32 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
 
     useEffect(() =>
     {
-        if (!Array.isArray(deletedGameEntities))
-            return;
-        if (deletedGameEntities.length === 0)
-        {
-            shieldBreakEffectsRef.current.clear();
-            return;
-        }
-        const now = performance.now();
-        deletedGameEntities.forEach((entity) =>
-        {
-            if (
-                !entity ||
-                typeof entity.entityId !== 'number' ||
-                getEntityType(entity) !== ENTITY_TYPE.LASER_SHIELD ||
-                typeof entity.health !== 'number' ||
-                entity.health > 0 ||
-                typeof entity.posX !== 'number' ||
-                typeof entity.posY !== 'number'
-            )
-            {
-                return;
-            }
-            shieldBreakEffectsRef.current.set(entity.entityId, {
-                posX: entity.posX,
-                posY: entity.posY,
-                startedAt: now,
-            });
-        });
-    }, [deletedGameEntities]);
-
-    useEffect(() =>
-    {
-        if (!Array.isArray(gameEntities))
-            return;
-
-        const now = performance.now();
-        const receivedEntityIds = new Set();
         let teleportDistance = 150;
         if (gameMap?.scale > 0)
-        {
             teleportDistance = gameMap.scale * 3;
-        }
-
-        gameEntities.forEach((entity) =>
+        function updateTrack(entity, now)
         {
-            if (!entity || typeof entity.entityId !== 'number' || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
+            if (!entity || typeof entity.entityId !== 'number')
                 return;
-            if (STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)))
-                return;
-            receivedEntityIds.add(entity.entityId);
-
-            const previousTrack = entityTracksRef.current.get(entity.entityId);
-
-            if (previousTrack && previousTrack.targetX === entity.posX && previousTrack.targetY === entity.posY)
+            if (typeof entity.posX !== 'number' ||
+                typeof entity.posY !== 'number' ||
+                STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)))
             {
-                previousTrack.directionRow = getPlayerDirectionRow(entity, previousTrack.directionRow);
+                entityTracksRef.current.delete(entity.entityId);
+                return;
+            }
+            const previousTrack = entityTracksRef.current.get(entity.entityId);
+            if (previousTrack &&
+                previousTrack.targetX === entity.posX &&
+                previousTrack.targetY === entity.posY)
+            {
+                previousTrack.directionRow = getPlayerDirectionRow(
+                    entity,
+                    previousTrack.directionRow
+                );
                 previousTrack.entity = entity;
                 return;
             }
-
             const currentPosition = { x: entity.posX, y: entity.posY };
             if (previousTrack)
             {
@@ -319,17 +281,18 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 currentPosition.x = interpolated.x;
                 currentPosition.y = interpolated.y;
             }
-
-            const distance = Math.hypot(entity.posX - currentPosition.x, entity.posY - currentPosition.y);
-
+            const distance = Math.hypot(
+                entity.posX - currentPosition.x,
+                entity.posY - currentPosition.y
+            );
             const mustTeleport = !previousTrack || distance >= teleportDistance;
-            const directionRow = getPlayerDirectionRow(entity, previousTrack?.directionRow ?? 0);
+            const directionRow = getPlayerDirectionRow(
+                entity,
+                previousTrack?.directionRow ?? 0
+            );
             let duration = INTERPOLATION_DURATION_MS;
             if (mustTeleport)
-            {
                 duration = 0;
-            }
-
             let fromX = currentPosition.x;
             let fromY = currentPosition.y;
             if (mustTeleport)
@@ -337,7 +300,6 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 fromX = entity.posX;
                 fromY = entity.posY;
             }
-
             entityTracksRef.current.set(entity.entityId, {
                 entity,
                 directionRow,
@@ -348,15 +310,45 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 startedAt: now,
                 duration,
             });
-        });
-        entityTracksRef.current.forEach((track, entityId) =>
+        }
+        function applyChange(change)
         {
-            if (!receivedEntityIds.has(entityId))
+            const now = performance.now();
+            if (change.reset)
             {
-                entityTracksRef.current.delete(entityId);
+                entityTracksRef.current.clear();
+                maxHealthRef.current.clear();
+                shieldBreakEffectsRef.current.clear();
+                playerAttackRef.current.clear();
+                spectatorIndexRef.current = 0;
             }
-        });
-    }, [gameEntities, gameMap?.scale]);
+            const updates = change.reset
+                ? gameStore.getEntities()
+                : change.entityUpdate;
+            for (const entity of updates)
+                updateTrack(entity, now);
+            for (const entity of change.entityDelete)
+            {
+                entityTracksRef.current.delete(entity.entityId);
+                maxHealthRef.current.delete(entity.entityId);
+                if (getEntityType(entity) === ENTITY_TYPE.LASER_SHIELD &&
+                    typeof entity.health === 'number' &&
+                    entity.health <= 0 &&
+                    typeof entity.posX === 'number' &&
+                    typeof entity.posY === 'number')
+                {
+                    shieldBreakEffectsRef.current.set(entity.entityId, {
+                        posX: entity.posX,
+                        posY: entity.posY,
+                        startedAt: now,
+                    });
+                }
+            }
+        }
+        const unsubscribe = gameStore.subscribe(applyChange);
+        applyChange({ reset: true, entityDelete: [] });
+        return unsubscribe;
+    }, [gameStore, gameMap?.scale]);
 
     useEffect(() =>
     {
@@ -376,7 +368,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             }
             const context = canvas.getContext('2d');
             const renderData = renderDataRef.current;
-            const localPlayer = renderData.gamePlayerData.find((player) => String(player.playerId) === String(renderData.currentPlayerId));
+            const gamePlayerData = renderData.gameStore.getPlayers();
+            const localPlayer = gamePlayerData.find((player) => String(player.playerId) === String(renderData.currentPlayerId));
             let localEntityId = localPlayer?.playerEntityId;
             if (typeof localEntityId !== 'number')
             {
@@ -391,7 +384,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             }
             const focusPosition = getFocusPosition({
                 tracks: entityTracksRef.current,
-                playerData: renderData.gamePlayerData,
+                playerData: gamePlayerData,
                 currentPlayerId: renderData.currentPlayerId,
                 now,
                 gameMap: renderData.gameMap,
@@ -422,7 +415,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 let playerData = null;
                 if (entityType === ENTITY_TYPE.PLAYER)
                 {
-                    playerData = renderData.gamePlayerData.find(
+                    playerData = gamePlayerData.find(
                         (player) => String(player.playerEntityId) === String(track.entity.entityId)
                     );
                 }
@@ -482,7 +475,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             });
             drawDebugHitboxesIfEnabled(debugHitboxesRef, context, entityTracksRef.current, renderData.gameMap, camera, now, worldToScreen, getInterpolatedPosition); //test-nico-hitbox
             drawGoldFeedbacks({ context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now });
-            const myPlayer = renderData.gamePlayerData.find((p) => String(p.playerId) === String(renderData.currentPlayerId));
+            const myPlayer = gamePlayerData.find((p) => String(p.playerId) === String(renderData.currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
                 context.fillStyle = 'red';
