@@ -8,6 +8,7 @@ import { MatchHistoryPage } from './MatchHistoryPage';
 
 function getRelationStatus(userId, friendsData)
 {
+  // WHY: Public profile action depends on friendship state
   const friendList = friendsData?.friends || [];
   const pendingReceived = friendsData?.pendingReceived || [];
   const pendingSent = friendsData?.pendingSent || [];
@@ -29,10 +30,12 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
   const [addStatus, setAddStatus] = useState('idle');
   const [addError, setAddError] = useState('');
   const relationStatus = useMemo(
+    // SYNC: Recompute when visited user or friend list changes
     () => getRelationStatus(userId, friends.friends),
     [userId, friends.friends]
   );
   const loadVisitedMatchHistory = useCallback(
+    // DECISION: MatchHistoryPage receives loader dependency
     () => fetchUserMatchHistory(userId),
     [userId]
   );
@@ -41,6 +44,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
   {
     if (!currentUser)
     {
+      // SAFETY: Public profiles still require login
       setProfileStatus('empty');
       setProfileUser(null);
       setProfileError('');
@@ -48,6 +52,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
     }
     if (Number(currentUser.id) === Number(userId))
     {
+      // DECISION: Own profile uses editable profile page
       window.location.hash = '#/profile';
       return undefined;
     }
@@ -55,6 +60,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
     let cancelled = false;
     async function loadProfile()
     {
+      // SYNC: Load profile for route user id
       setProfileStatus('loading');
       setProfileError('');
       try
@@ -70,6 +76,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
       {
         if (error.status === 401 || error.status === 403)
         {
+          // SAFETY: Auth error handled by App
           onSessionExpired(error.message);
           return;
         }
@@ -84,12 +91,14 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
     loadProfile();
     return () =>
     {
+      // SAFETY: Ignore stale profile response
       cancelled = true;
     };
   }, [currentUser, onSessionExpired, userId]);
 
   async function submitAddFriend()
   {
+    // SYNC: Friendship mutation refreshes relation state
     setAddStatus('loading');
     setAddError('');
     try
@@ -113,6 +122,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
   let friendAction = null;
   if (profileStatus === 'loaded' && relationStatus === 'none')
   {
+    // DECISION: No relation can send request
     friendAction = (
       <button className="btn btn-primary" type="button" onClick={submitAddFriend} disabled={addStatus === 'loading'}>
         {addStatus === 'loading' ? 'Adding...' : 'Add friend'}
@@ -121,6 +131,7 @@ export function PublicProfilePage({ userId, currentUser, friends, onSessionExpir
   }
   if (profileStatus === 'loaded' && relationStatus === 'accept')
   {
+    // DECISION: Incoming request can be accepted here
     friendAction = (
       <button className="btn btn-outline-success" type="button" onClick={submitAddFriend} disabled={addStatus === 'loading'}>
         {addStatus === 'loading' ? 'Accepting...' : 'Accept friend'}

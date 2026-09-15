@@ -1,3 +1,5 @@
+// WHY: Profile hook centralizes loading state so profile pages stay focused on rendering
+// SAFETY: Session expiration handling stays in the hook that performs the protected request
 import { useEffect, useState } from 'react';
 import { fetchCurrentUser } from '../../api/users';
 
@@ -23,7 +25,6 @@ export function useProfile(currentPageId, currentUser, onSessionExpired,)
 		async function loadProfile()
 		{
 			try {
-				/*const user = await fetchCurrentUser(currentUser.username);*/
 				const user = await fetchCurrentUser();
 				setProfileUser(user);
 				setProfileStatus('loaded');
@@ -42,3 +43,4 @@ export function useProfile(currentPageId, currentUser, onSessionExpired,)
 
 	return { profileUser, profileStatus, profileError, };
 }
+// WHY: Profile hook loads current-user profile state for the profile page

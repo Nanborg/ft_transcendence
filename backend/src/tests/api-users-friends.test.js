@@ -1,3 +1,5 @@
+// WHY: API friends test documents the expected friend request workflow
+// DECISION: Test data stays local to the file so scenarios are easy to reset
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const app = require('../server');
@@ -153,3 +155,4 @@ describe("Tests de l'API Users & Friends", () => {
         });
     });
 });
+// WHY: Tests cover user profile and friendship API behavior

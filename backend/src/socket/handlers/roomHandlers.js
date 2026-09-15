@@ -1,3 +1,5 @@
+// WHY: Room handlers own lobby actions like create, join, ready, leave, and start
+// SYNC: Every room mutation emits fresh state so connected clients stay aligned
 const { createRoom, joinRoom, leaveRoom, getRoom, setPlayerReady } = require('../rooms');
 const { gameEngineService } = require('../../services/gameEngineService');
 
@@ -121,3 +123,4 @@ function registerRoomHandlers(io, socket)
 }
 
 module.exports = { registerRoomHandlers };
+// WHY: Room handlers expose create, join, leave and ready socket events

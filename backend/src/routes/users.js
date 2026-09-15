@@ -8,6 +8,7 @@ router.get("/me", authToken, async (req, res) =>
 {
 	try{
 		const UserId = req.user.id
+		// REQUIRED: Auth token decides the profile owner
 		const userProfile = await prisma.user.findUnique(
 		{
 			where: { id: UserId },
@@ -20,6 +21,7 @@ router.get("/me", authToken, async (req, res) =>
 		if (!userProfile)
 			return res.status(404).json({ error: "not found" });
 
+		// DECISION: Build profile stats from stored runs
 		const wins = userProfile.playerStats.filter(stat => stat.gameRun.won).length;
 		const losses = userProfile.playerStats.filter(stat => stat.gameRun.lost).length;
 		const gamesPlayed = userProfile.playerStats.length;
@@ -59,6 +61,7 @@ router.get("/search", authToken, async (req, res) =>
 {
 	try{
 		const srcuser = req.query.search
+		// SAFETY: Empty search would match too much
 		if (!srcuser || typeof srcuser !== 'string' || srcuser.trim() === '')
 			return res.status(400).json({ error: "invalid search" });
 
@@ -68,6 +71,7 @@ router.get("/search", authToken, async (req, res) =>
 			{
 				username:
 				{
+					// DECISION: Search is partial and case-insensitive
 					contains: srcuser.trim(),
 					mode: 'insensitive'
 				}
@@ -88,6 +92,7 @@ router.get("/:userId", authToken, async (req, res) =>
 	try {
 		const userId = Number(req.params.userId);
 
+		// SAFETY: Public profile ids must be positive
 		if (!Number.isInteger(userId) || userId <= 0)
 		{
 			return res.status(400).json({
@@ -127,6 +132,7 @@ router.get("/:userId", authToken, async (req, res) =>
 		if (!userProfile)
 			return res.status(404).json({ error: "not found", });
 
+		// DECISION: Public stats hide private email
 		const wins = userProfile.playerStats.filter( stat => stat.gameRun.won ).length;
 		const losses = userProfile.playerStats.filter( stat => stat.gameRun.lost ).length;
 		const gamesPlayed = userProfile.playerStats.length;
@@ -183,6 +189,7 @@ router.patch('/me', authToken, async (req, res) =>
 		const updateData = {};
 		if (username !== undefined)
 		{
+			// SAFETY: Sanitize username before storing
 			if (typeof username !== 'string')
 				return res.status(400).json({ error: "invalid username" });
 			const cleanUserName = cleanInput(username.trim());
@@ -192,16 +199,19 @@ router.patch('/me', authToken, async (req, res) =>
 		}
 		if (avatar !== undefined)
 		{
+			// DECISION: Empty avatar resets to default
 			if (avatar === null || (typeof avatar === 'string' && avatar === ''))
 				updateData.avatar = null;
 			else if (typeof avatar !== 'string')
 				return res.status(400).json({ error: "invalid avatar" });
 			else {
 				const avatarUrl = cleanInput(avatar.trim());
+				// SAFETY: Keep stored avatar URLs bounded
 				if (avatarUrl.length > 500)
 					return res.status(400).json({ error: "invalid avatar" });
 				try {
 					const parsedAvatarUrl = new URL(avatarUrl);
+					// SAFETY: Only browser-loadable URLs allowed
 					if (!['http:', 'https:'].includes(parsedAvatarUrl.protocol))
 						return res.status(400).json({ error: "invalid avatar" });
 				} catch {return res.status(400).json({ error: "invalid avatar" });}

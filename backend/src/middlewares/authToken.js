@@ -1,26 +1,15 @@
 const jwt = require("jsonwebtoken");
 
-//	Middleware that validates a JWT access token.
-//
-//	Process:
-//	1. Extracts the token from the Authorization header.
-//	2. Verifies the token using the access token secret.
-//	3. Attaches the decoded user payload to `req.user`.
-//	4. Allows the request to continue if the token is valid.
-//
-//	param {Request} req - Express request containing the Authorization header.
-//	param {Response} res - Express response object.
-//	param {NextFunction} next - Express next middleware function.
-//
-//	throws {401} If no token is provided.
-//	throws {401} If the token is expired.
-//	throws {403} If the token is invalid.
-//	throws {500} If an unexpected server error occurs.
-
-
+// REQUIRED: Protect private API routes
+// Flow:
+//   1. Read access token from cookies
+//   2. Verify JWT signature and expiry
+//   3. Attach decoded payload to req.user
+//   4. Continue route handling
 function authToken(req, res, next)
 {
 	try {
+		// REQUIRED: Browser sends token as httpOnly cookie
 		const token = req.cookies ? req.cookies.accessToken : null;
 
 		if (!token)
@@ -31,11 +20,14 @@ function authToken(req, res, next)
 			if (err)
 			{
 				console.error("Token verification failed:", err.message);
+				// SYNC: Frontend can refresh only expired tokens
 				if (err.name === "TokenExpiredError")
 					return res.status(401).json({ error: "Token expired", code: "ACCESS_TOKEN_EXPIRED" });
+				// SAFETY: Invalid tokens must force logout
 				return (res.status(403).json({ error: "Invalid token", code: "ACCESS_TOKEN_INVALID" }));
 			}
 
+			// SYNC: Routes read authenticated user from req.user
 			req.user = user;
 			next();
 		});

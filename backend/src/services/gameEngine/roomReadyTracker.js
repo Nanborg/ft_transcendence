@@ -1,3 +1,5 @@
+// WHY: Ready tracker waits for the engine to confirm rooms before gameplay starts
+// SAFETY: Timeouts prevent rooms from staying blocked forever when the engine is silent
 class RoomReadyTracker
 {
     constructor(timeoutMs)
@@ -54,3 +56,4 @@ class RoomReadyTracker
 }
 
 module.exports = { RoomReadyTracker };
+// WHY: RoomReadyTracker waits for engine readiness without blocking socket handlers

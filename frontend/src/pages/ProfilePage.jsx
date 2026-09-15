@@ -2,6 +2,7 @@ import { ProfileDetails } from '../features/profile/ProfileDetails';
 import { useEffect, useState } from 'react';
 import { PageHeading } from '../components/PageHeading';
 
+// WHY: Profile page owns editable current-user profile
 export function ProfilePage({
 	profileStatus, profileError, profileUser,
 	onSessionExpired, onProfileUpdated, onUpdateProfile,
@@ -16,6 +17,7 @@ export function ProfilePage({
 	{
 		if (profileUser)
 		{
+			// SYNC: Form resets when profile reloads
 			setUsername(profileUser.username || profileUser.name || '');
 			setAvatar(profileUser.avatar || '');
 		}
@@ -25,13 +27,16 @@ export function ProfilePage({
 	{
 		event.preventDefault();
 		if (!onUpdateProfile)
+			// SAFETY: Missing update handler disables submit
 			return;
 		setSaveStatus('loading');
 		setSaveError('');
 		try
 		{
+			// REQUIRED: Backend receives trimmed profile fields
 			const result = await onUpdateProfile({ username: username.trim(), avatar: avatar.trim(), });
 			const updateUser = result.user || result;
+			// SYNC: App auth session gets updated user
 			onProfileUpdated(updateUser);
 			setSaveStatus('saved');
 		}
@@ -39,6 +44,7 @@ export function ProfilePage({
 		{
 			if (error.status === 401 || error.status === 403)
 			{
+				// SAFETY: Auth error handled by App
 				onSessionExpired(error.message);
 				return;
 			}

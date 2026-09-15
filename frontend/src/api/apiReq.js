@@ -7,6 +7,7 @@ if (typeof window !== 'undefined')
 {
 	window.addEventListener(AUTH_SESSION_CHANGED_EVENT, (event) =>
 	{
+		// SYNC: New login allows future expiry handling
 		if (event.detail)
 			sessionExpiredHandled = false;
 	});
@@ -14,6 +15,7 @@ if (typeof window !== 'undefined')
 
 function expireSession(onSessionExpired, error)
 {
+	// SAFETY: Show session expiry only once
 	if (sessionExpiredHandled)
 		return;
 	sessionExpiredHandled = true;
@@ -23,6 +25,7 @@ function expireSession(onSessionExpired, error)
 
 function fetchWithSession(endpoint, opt)
 {
+	// REQUIRED: Cookies carry the auth tokens
 	return fetch(endpoint, { ...opt, credentials: 'include', });
 }
 
@@ -33,12 +36,14 @@ export async function apiRequest(endpoint, opt = {}, onSessionExpired = null)
 	if (response.status === 401)
 	{
 		const error = await apiError(response);
+		// DECISION: Refresh only for expired/missing access token
 		if (error.code !== "ACCESS_TOKEN_EXPIRED" && error.code !== "ACCESS_TOKEN_MISSING")
 		{
 			expireSession(onSessionExpired, error);
 			throw error;
 		}
 		try {
+			// FALLBACK: Retry request after refreshing cookies
 			await refreshAccessToken();
 			response = await fetchWithSession(endpoint, opt);
 		} catch (refreshError) {
@@ -49,6 +54,7 @@ export async function apiRequest(endpoint, opt = {}, onSessionExpired = null)
 
 	if (response.status === 401 || response.status === 403)
 	{
+		// SAFETY: Clear invalid sessions immediately
 		const error = await apiError(response);
 		expireSession(onSessionExpired, error);
 		throw error;

@@ -1,3 +1,5 @@
+// WHY: Register route creates local users and returns a fresh authenticated session
+// REQUIRED: Password hashing stays here before any user data is stored
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
@@ -25,7 +27,7 @@ router.post ("/", async (req, res) =>
 				where: { username: cleanName }
 			});
 			if (existingUser)
-				return res.status(400).send('Username is already taken') // need to be set to 409 Conflict
+				return res.status(400).send('Username is already taken')
 
 		const hashedPassword = await bcrypt.hash(req.body.password, 10)
 
@@ -55,3 +57,4 @@ router.post ("/", async (req, res) =>
 });
 
 module.exports = router;
+// WHY: Register route validates and creates local username/password accounts

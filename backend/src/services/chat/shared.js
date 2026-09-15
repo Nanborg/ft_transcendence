@@ -3,12 +3,14 @@ const prisma = require('../../db');
 const MAX_CHAT_MESSAGE_LENGTH = 2000;
 const DEFAULT_HISTORY_LIMIT = 50;
 const MAX_HISTORY_LIMIT = 100;
+// DECISION: Game invites expire after 15 minutes
 const GAME_INVITATION_TTL_MS = 15 * 60 * 1000;
 
 class ChatServiceError extends Error
 {
     constructor(code, message)
     {
+        // WHY: Services throw client-safe chat errors
         super(message);
         this.name = 'ChatServiceError';
         this.code = code;
@@ -16,6 +18,7 @@ class ChatServiceError extends Error
 }
 
 const CHAT_MESSAGE_INCLUDE = {
+    // WHY: One include shape powers all chat serializers
     sender: {
         select: {
             id: true,
@@ -45,6 +48,7 @@ const CHAT_MESSAGE_INCLUDE = {
 
 function requireUserId(userId)
 {
+    // SAFETY: User ids must be positive integers
     if (!Number.isInteger(userId) || userId <= 0)
         throw new ChatServiceError('INVALID_USER_ID', 'Invalid user id');
     return userId;
@@ -52,6 +56,7 @@ function requireUserId(userId)
 
 function requireInvitationId(invitationId)
 {
+    // SAFETY: Route/socket ids arrive as strings
     const normalizedInvitationId = Number(invitationId);
     if (!Number.isInteger(normalizedInvitationId) || normalizedInvitationId <= 0)
         throw new ChatServiceError('INVALID_INVITATION_ID', 'Invalid invitation id');
@@ -60,18 +65,22 @@ function requireInvitationId(invitationId)
 
 function normalizeMessageContent(content)
 {
+    // SAFETY: Messages must be strings
     if (typeof content !== 'string')
         throw new ChatServiceError('INVALID_MESSAGE', 'Message must be a string');
     const normalizedContent = content.trim();
     if (!normalizedContent)
+        // SAFETY: Empty messages are ignored
         throw new ChatServiceError('EMPTY_MESSAGE', 'Message cannot be empty');
     if (normalizedContent.length > MAX_CHAT_MESSAGE_LENGTH)
+        // REQUIRED: Frontend uses same max length
         throw new ChatServiceError('MESSAGE_TOO_LONG', `Message cannot exceed ${MAX_CHAT_MESSAGE_LENGTH} characters`);
     return normalizedContent;
 }
 
 function normalizeHistoryOptions(options = {})
 {
+    // SAFETY: Clamp pagination input
     const parsedLimit = Number(options.limit);
     const parsedBeforeId = Number(options.beforeId);
     const limit = Number.isInteger(parsedLimit)
@@ -85,6 +94,7 @@ function normalizeHistoryOptions(options = {})
 
 function serializeUser(user)
 {
+    // FALLBACK: System messages have no user
     if (!user)
         return null;
     return {
@@ -96,6 +106,7 @@ function serializeUser(user)
 
 function serializeChatMessage(chatMessage)
 {
+    // WHY: Socket payloads use frontend-friendly names
     return {
         id: chatMessage.id,
         type: chatMessage.type,
@@ -108,6 +119,7 @@ function serializeChatMessage(chatMessage)
         author: chatMessage.sender
             ? serializeUser(chatMessage.sender)
             : {
+                // FALLBACK: Messages can be system-authored
                 id: null,
                 name: 'System',
                 avatar: null,
@@ -129,6 +141,7 @@ function serializeChatMessage(chatMessage)
 
 async function requireExistingUser(userId)
 {
+    // SAFETY: Chat targets must exist
     requireUserId(userId);
     const user = await prisma.user.findUnique({
         where: { id: userId },
@@ -145,6 +158,7 @@ async function requireExistingUser(userId)
 
 async function requireRoomMembership(roomId, userId)
 {
+    // SAFETY: Room chat requires membership
     requireUserId(userId);
     if (typeof roomId !== 'string' || !roomId.trim())
         throw new ChatServiceError('INVALID_ROOM_ID', 'Invalid room id');

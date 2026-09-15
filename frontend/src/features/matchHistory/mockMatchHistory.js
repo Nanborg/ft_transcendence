@@ -1,4 +1,6 @@
 
+// WHY: Mock match history keeps profile pages populated without depending on live game records
+// DECISION: Static records document the display contract used by match history components
 export const mockMatchHistory = [
 	{
 		roomId: 'room-101',
@@ -37,3 +39,4 @@ export const mockMatchHistory = [
 		],
 	},
 ];
+// WHY: Mock match history keeps sample rows available for UI development

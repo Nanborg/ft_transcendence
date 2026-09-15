@@ -1,3 +1,6 @@
+// WHY: Legal page renders markdown legal documents imported as raw text
+// DECISION: Minimal markdown support is enough for static legal pages and avoids extra dependencies
+// FALLBACK: Unsupported markdown lines render as plain paragraphs
 import { PageHeading } from '../components/PageHeading';
 
 function renderMarkdownLine(line, index)

@@ -2,6 +2,9 @@ import { CurrentUserCard } from '../features/auth/CurrentUserCard';
 import { DevLoginForm } from '../features/auth/DevLoginForm';
 import { PageHeading } from '../components/PageHeading';
 
+// WHY: Login page composes form, current user and legal links
+// DECISION: Auth state is passed from App so login stays a presentational page
+// REQUIRED: Legal links remain reachable from the access screen
 export function LoginPage({
 	devUserName, authStatus, authError, currentUser, onDevUserNameChange,
 	onSubmit, onLogout, password, onPasswordChange, authMode, onAuthModeChange,

@@ -4,6 +4,7 @@ const { gameEngineService, PLAYER_ACTION, PLAYER_UPGRADE } = require('../../serv
 
 function getGameEngineStartMessage(errorCode)
 {
+    // DECISION: Hide internal engine details from clients
     if (errorCode === 'GAME_ENGINE_ROOM_READY_TIMEOUT')
         return 'Game engine did not confirm room readiness in time';
     if (errorCode === 'GAME_ENGINE_INIT_FAILED')
@@ -13,6 +14,7 @@ function getGameEngineStartMessage(errorCode)
 
 function getPayloadRoomId(payload)
 {
+    // FALLBACK: Error payloads still need a room id
     if (payload?.roomId !== null && payload?.roomId !== undefined)
         return payload.roomId;
     return '';
@@ -20,6 +22,7 @@ function getPayloadRoomId(payload)
 
 function getNormalizedAction(input)
 {
+    // FALLBACK: Old clients send action as boolean
     if (typeof input.action !== 'boolean')
         return input.action;
     if (input.action)
@@ -31,6 +34,7 @@ function registerGameHandlers(io, socket)
 {
     socket.on('game:start', async (payload) =>
     {
+        // SAFETY: Game start must target one room
         if (!payload || typeof payload.roomId !== 'string')
         {
             socket.emit('room:error', {
@@ -52,14 +56,17 @@ function registerGameHandlers(io, socket)
                 return;
             }
             let engineSession;
+            // SYNC: Lobby sees the starting state first
             io.to(roomId).emit('room:update', room);
 
             try
             {
+                // REQUIRED: Engine must prepare map/session
                 engineSession = await gameEngineService.startGame(room);
             }
             catch (error)
             {
+                // FALLBACK: Restore room if engine start fails
                 console.error('Unable to start game engine session:', error);
                 const restoredRoom = await resetGameStart(roomId);
                 io.to(roomId).emit('room:update', restoredRoom);
@@ -77,6 +84,7 @@ function registerGameHandlers(io, socket)
             }
             room = await markGamePlaying(roomId);
 
+            // SYNC: Clients enter game with same room data
             io.to(roomId).emit('room:update', room);
             io.to(roomId).emit('game:start', {
                 roomId: room.id,
@@ -88,6 +96,7 @@ function registerGameHandlers(io, socket)
             const initialState = gameEngineService.getStateSnapshot(roomId);
             if (initialState)
             {
+                // SYNC: First snapshot avoids blank canvas
                 io.to(roomId).emit('game:state:init', initialState);
             }
             console.log(`game starting in room ${room.id}`);
@@ -103,6 +112,7 @@ function registerGameHandlers(io, socket)
 
     socket.on('game:resync', async (payload) =>
     {
+        // SAFETY: Resync must target one room
         if (!payload || typeof payload.roomId !== 'string')
         {
             socket.emit('game:error', {
@@ -118,6 +128,7 @@ function registerGameHandlers(io, socket)
             const player = await getPlayerInRoom(roomId, socket.user.id);
             if (!player)
             {
+                // SAFETY: Spectators cannot resync game state
                 socket.emit('game:error', {
                     roomId,
                     code: 'PLAYER_NOT_IN_ROOM',
@@ -128,6 +139,7 @@ function registerGameHandlers(io, socket)
             const snapshot = gameEngineService.getStateSnapshot(roomId);
             if (!snapshot)
             {
+                // SAFETY: No snapshot means game is stopped
                 socket.emit('game:error', {
                     roomId,
                     code: 'GAME_NOT_RUNNING',
@@ -140,12 +152,14 @@ function registerGameHandlers(io, socket)
             const connection = getConnection(socket.user.id);
             if (connection?.reconnectTimer && connection.keepOnReconnect)
             {
+                // SYNC: Reconnect cancels delayed cleanup
                 clearTimeout(connection.reconnectTimer);
                 connection.reconnectTimer = null;
                 connection.keepOnReconnect = false;
                 connection.disconnectedAt = null;
             }
             socket.emit('game:start', {
+                // SYNC: Rebuild client game screen
                 roomId: room.id,
                 status: room.status,
                 players: room.players,
@@ -167,6 +181,7 @@ function registerGameHandlers(io, socket)
 
     socket.on('player:input', async (payload) =>
     {
+        // SAFETY: Input payload must be structured
         if (
             !payload ||
             typeof payload.roomId !== 'string' ||
@@ -191,9 +206,11 @@ function registerGameHandlers(io, socket)
             const hasAction = Object.hasOwn(input, 'action');
             const hasDirection = Object.hasOwn(input, 'dirX') || Object.hasOwn(input, 'dirY');
             const hasInvalidKey = inputKeys.some((key) => !validKeys.includes(key));
+            // SAFETY: Reject unknown client controls
             const hasInvalidMovement = hasMovement && movementKeys.some((key) => typeof input[key] !== 'boolean');
             const normalizedAction = getNormalizedAction(input);
             const requiresDirection =
+                // REQUIRED: Attacks need an aim direction
                 hasAction &&
                 (
                     normalizedAction === PLAYER_ACTION.MELEE ||
@@ -213,6 +230,7 @@ function registerGameHandlers(io, socket)
             const hasMissingDirection = requiresDirection && !hasDirection;
             const hasInvalidAction = hasAction && !Object.values(PLAYER_ACTION).includes(normalizedAction);
             if (
+                // SAFETY: Invalid input never reaches engine
                 inputKeys.length === 0 ||
                 (!hasMovement && !hasAction) ||
                 hasInvalidKey ||
@@ -229,6 +247,7 @@ function registerGameHandlers(io, socket)
                 return;
             }
             const normalizedInput = {
+                // DECISION: Send only fields that changed
                 ...(hasMovement && {
                     up: input.up,
                     down: input.down,
@@ -256,6 +275,7 @@ function registerGameHandlers(io, socket)
             {
                 if (hasMovement)
                 {
+                    // SYNC: Movement is continuous input
                     await gameEngineService.sendPlayerInput(
                         roomId,
                         socket.user.id,
@@ -264,6 +284,7 @@ function registerGameHandlers(io, socket)
                 }
                 if (hasAction)
                 {
+                    // SYNC: Actions are discrete commands
                     await gameEngineService.sendPlayerAction(
                         roomId,
                         socket.user.id,
@@ -285,6 +306,7 @@ function registerGameHandlers(io, socket)
                 return;
             }
             io.to(roomId).emit('player:input', {
+                // SYNC: Other clients can mirror input
                 playerId: socket.user.id,
                 input: normalizedInput,
                 timestamp: Date.now(),
@@ -301,6 +323,7 @@ function registerGameHandlers(io, socket)
 
     socket.on('checkpoint:upgrade', async (payload) =>
     {
+        // SAFETY: Upgrade must be known by engine
         if (
             !payload ||
             typeof payload.roomId !== 'string' ||
@@ -320,6 +343,7 @@ function registerGameHandlers(io, socket)
             const player = await getPlayerInRoom(roomId, socket.user.id);
             if (!player)
             {
+                // SAFETY: Only room players can upgrade
                 socket.emit('checkpoint:error', {
                     roomId,
                     code: 'PLAYER_NOT_IN_ROOM',
@@ -330,6 +354,7 @@ function registerGameHandlers(io, socket)
             const playerData = gameEngineService.getPlayerData(roomId, socket.user.id);
             if (!playerData)
             {
+                // SAFETY: Upgrade needs current player state
                 socket.emit('checkpoint:error', {
                     roomId,
                     code: 'PLAYER_DATA_UNAVAILABLE',
@@ -339,6 +364,7 @@ function registerGameHandlers(io, socket)
             }
             if (playerData.atACheckpoint !== true)
             {
+                // REQUIRED: Upgrade only at checkpoint
                 socket.emit('checkpoint:error', {
                     roomId,
                     code: 'PLAYER_NOT_AT_CHECKPOINT',
