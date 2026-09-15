@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-// WHY: Simple endpoint for backend health checks.
-//
+// WHY: Simple endpoint for backend health checks//
 // Example:
 //   curl -i http://localhost:3000/health
 //

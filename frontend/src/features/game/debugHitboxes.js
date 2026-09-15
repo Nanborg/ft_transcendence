@@ -1,10 +1,10 @@
 import { ENTITY_TYPE } from './gameProtocol';
-// DEBUG: Hitbox overlay helps tune collisions.
+// DEBUG: Hitbox overlay helps tune collisions
 const DEBUG_HITBOX_KEY = 'h';
 
 const ATTACK_ENTITY_TYPES = new Set(
 [
-	// WHY: Attack hitboxes use a different color.
+	// WHY: Attack hitboxes use a different color
 	ENTITY_TYPE.LASER_SLASH,
 	ENTITY_TYPE.LASER_PROJECTILE,
 	ENTITY_TYPE.LASER_SHIELD,
@@ -16,7 +16,7 @@ const ATTACK_ENTITY_TYPES = new Set(
 
 export function handleDebugHitboxKeyDown(event, debugHitboxesRef)
 {
-	// SAFETY: Ignore repeats and shortcut combos.
+	// SAFETY: Ignore repeats and shortcut combos
 	if (
 		event.key?.toLowerCase() === DEBUG_HITBOX_KEY &&
 		!event.repeat &&
@@ -25,7 +25,7 @@ export function handleDebugHitboxKeyDown(event, debugHitboxesRef)
 		!event.altKey
 	)
 	{
-		// DEBUG: Toggle overlay from keyboard.
+		// DEBUG: Toggle overlay from keyboard
 		debugHitboxesRef.current = !debugHitboxesRef.current;
 		return true;
 	}
@@ -37,7 +37,7 @@ export function drawDebugHitboxesIfEnabled(
 	camera, now, worldToScreen, getInterpolatedPosition
 )
 {
-	// PERF: Skip all debug drawing when disabled.
+	// PERF: Skip all debug drawing when disabled
 	if (!debugHitboxesRef.current)
 		return;
 	drawDebugHitboxes(
@@ -54,13 +54,13 @@ export function drawDebugHitboxesIfEnabled(
 
 function getEntityType(entity)
 {
-	// FALLBACK: Support old engine field name.
+	// FALLBACK: Support old engine field name
 	return entity.typeId ?? entity.entityTypeId;
 }
 
 function getHitboxStyle(entityType)
 {
-	// DECISION: Colors group players, enemies, attacks.
+	// DECISION: Colors group players, enemies, attacks
 	if (entityType === ENTITY_TYPE.PLAYER)
 		return {stroke: '#22c55e', fill: 'rgba(34, 197, 94, 0.10)', label: 'player'};
 	if (
@@ -77,7 +77,7 @@ function getHitboxStyle(entityType)
 
 function getHitboxSize(entity, gameMap)
 {
-	// FALLBACK: Entity size can be omitted.
+	// FALLBACK: Entity size can be omitted
 	const size = Number(entity?.size);
 	if (Number.isFinite(size) && size > 0)
 		return size;
@@ -93,7 +93,7 @@ function getHitboxSize(entity, gameMap)
 
 function drawOneHitbox({context, entity, position, camera, gameMap, worldToScreen})
 {
-	// SAFETY: Invalid entities are skipped.
+	// SAFETY: Invalid entities are skipped
 	if (!entity || typeof position?.x !== 'number' || typeof position?.y !== 'number')
 		return;
 
@@ -131,13 +131,13 @@ export function drawDebugHitboxes({
 	now, worldToScreen, getInterpolatedPosition,
 })
 {
-	// DECISION: Debug drawing is isolated with save/restore.
+	// DECISION: Debug drawing is isolated with save/restore
 	context.save();
 	context.setLineDash([5, 4]);
 
 	if (Array.isArray(gameMap?.entities))
 	{
-		// SYNC: Static map entities have hitboxes too.
+		// SYNC: Static map entities have hitboxes too
 		gameMap.entities.forEach(entity =>
 		{
 			if (!entity || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
@@ -154,7 +154,7 @@ export function drawDebugHitboxes({
 		});
 	}
 
-	// SYNC: Dynamic entities use interpolated positions.
+	// SYNC: Dynamic entities use interpolated positions
 	tracks.forEach(track =>
 	{
 		drawOneHitbox(

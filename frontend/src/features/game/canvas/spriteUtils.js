@@ -1,12 +1,12 @@
 export function getEntityType(entity)
 {
-	// FALLBACK: Backend normalizes, renderer accepts both.
+	// FALLBACK: Backend normalizes, renderer accepts both
 	return entity.typeId ?? entity.entityTypeId;
 }
 
 export function getPlayerDirectionRow(entity, fallbackRow = 0)
 {
-	// DECISION: Direction follows strongest velocity axis.
+	// DECISION: Direction follows strongest velocity axis
 	let velocityX = 0;
 	if (typeof entity.velX === 'number')
 		velocityX = entity.velX;
@@ -32,7 +32,7 @@ export function getPlayerDirectionRow(entity, fallbackRow = 0)
 
 	if (typeof direction === 'string')
 	{
-		// FALLBACK: Engine may send cardinal direction text.
+		// FALLBACK: Engine may send cardinal direction text
 		if (direction.includes('W'))
 			return 1;
 		if (direction.includes('E'))
@@ -45,13 +45,13 @@ export function getPlayerDirectionRow(entity, fallbackRow = 0)
 
 export function getDirectionRowToward(sourcePosition, targetPosition, fallbackRow = 0)
 {
-	// SAFETY: Missing positions keep previous direction.
+	// SAFETY: Missing positions keep previous direction
 	if (!sourcePosition || !targetPosition)
 		return fallbackRow;
 	const deltaX = targetPosition.x - sourcePosition.x;
 	const deltaY = targetPosition.y - sourcePosition.y;
 	if (deltaX === 0 && deltaY === 0)
-		// SAFETY: Same position keeps previous direction.
+		// SAFETY: Same position keeps previous direction
 		return fallbackRow;
 	if (Math.abs(deltaX) > Math.abs(deltaY))
 	{
@@ -67,11 +67,11 @@ export function getDirectionRowToward(sourcePosition, targetPosition, fallbackRo
 
 export function getSpriteSource({ columns, rows, frame, directionRow, anchorXs = null, anchorYs = null })
 {
-	// FALLBACK: Unknown frame/row uses first sprite.
+	// FALLBACK: Unknown frame/row uses first sprite
 	const column = columns[frame] ?? columns[0];
 	const row = rows[directionRow] ?? rows[0];
 	const anchorX = anchorXs?.[directionRow]?.[frame] ?? 0.5;
-	// DECISION: Anchors keep sprites visually grounded.
+	// DECISION: Anchors keep sprites visually grounded
 	const anchorY = anchorYs?.[directionRow]?.[frame] ?? 0.5;
 	return {
 		x: column.x,

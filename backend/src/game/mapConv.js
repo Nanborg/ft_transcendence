@@ -1,3 +1,5 @@
+// WHY: Map converter turns text maps into engine-ready entity payloads
+// DECISION: Character mapping keeps level design readable while preserving numeric engine types
 const fs = require('fs');
 
 'use strict';
@@ -11,7 +13,7 @@ const CHAR_CONFIG = {
 	'3': { typeId: 102, state: { blocking: false } },
 };
 
-// DECISION: Ignore terrain-only chars.
+// DECISION: Ignore terrain-only chars
 const IGNORED_CHARS = new Set(['.', 'S', 'X']);
 
 function mapConv(filePath, roomId)
@@ -19,7 +21,7 @@ function mapConv(filePath, roomId)
 	const raw = fs.readFileSync(filePath, 'utf8');
 	const lines = raw.split(/\r?\n/);
 
-	// REQUIRED: Grid ends before metadata.
+	// REQUIRED: Grid ends before metadata
 	const seedLineIdx = lines.findIndex((l) => l.trim().startsWith('Seed:'));
 	let mapLines = lines;
 	if (seedLineIdx !== -1)

@@ -1,3 +1,5 @@
+// WHY: Room page groups ready state, start controls, and room chat in one screen
+// SYNC: UI derives button states from socket room data so clients match server authority
 import { PageHeading } from '../components/PageHeading';
 import { ChatPanel } from '../features/chat/ChatPanel';
 
@@ -120,3 +122,4 @@ export function RoomPage({ title, description, socket, currentUser, room, chat }
 		</div>
 	);
 }
+// WHY: Room page displays lobby state, ready controls and room chat before game start

@@ -1,3 +1,5 @@
+// WHY: Canvas effects stay grouped so gameplay rendering can reuse the same feedback rules
+// PERF: Effects draw from existing tracks instead of creating extra React state
 import { SHIELD_BREAK_DURATION_MS } from './spriteAssets';
 import { getInterpolatedPosition, worldToScreen } from './cameraUtils';
 
@@ -155,3 +157,4 @@ export function drawShieldBreakEffects({ context, effects, camera, now })
 		context.restore();
 	});
 }
+// WHY: Canvas effects draw non-entity visuals such as grid, gold and shield VFX

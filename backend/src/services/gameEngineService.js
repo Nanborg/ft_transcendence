@@ -1,3 +1,5 @@
+// WHY: Game engine service owns UDP communication and room session coordination
+// SYNC: It translates app room events into the protocol expected by the gameplay engine
 const dgram = require('dgram');
 const EventEmitter = require('events');
 const { mapConv } = require('../game/mapConv');
@@ -507,3 +509,4 @@ module.exports = {
     GameEngineService,
     gameEngineService,
 };
+// WHY: GameEngineService bridges Socket.IO rooms with the UDP game engine

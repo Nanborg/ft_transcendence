@@ -1,3 +1,5 @@
+// WHY: SessionStore keeps live game state in memory between engine events
+// SYNC: Engine ids are mapped back to user ids before data reaches clients or database
 class SessionStore
 {
     constructor()
@@ -169,3 +171,4 @@ class SessionStore
 }
 
 module.exports = { SessionStore };
+// WHY: SessionStore maps room/user ids to engine player ids during a game

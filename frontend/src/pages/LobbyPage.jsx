@@ -1,23 +1,23 @@
 import { useEffect } from 'react';
 import { PageHeading } from '../components/PageHeading';
 
-// WHY: Lobby owns create/join entry point before room page.
+// WHY: Lobby owns create/join entry point before room page
 export function LobbyPage({ title, description, currentUser, socket, room, friends, directChat })
 {
 	const isDisabled = !socket || !currentUser || room.roomStatus === 'loading';
-	// SYNC: Friends list comes from useFriends hook.
+	// SYNC: Friends list comes from useFriends hook
 	const friendList = friends?.friends?.friends || [];
 	const onlineFriends = friendList.filter((friend) => friend.isConnected);
 	useEffect(() =>
 	{
 		if (room.currentRoom)
-			// SYNC: Existing room redirects to room page.
+			// SYNC: Existing room redirects to room page
 			window.location.hash = '#/room';
 	}, [room.currentRoom]);
 	let onlineFriendsContent = <p className="lobby-muted">No connected friends right now.</p>;
 	if (onlineFriends.length > 0)
 	{
-		// DECISION: Online friends can be messaged fast.
+		// DECISION: Online friends can be messaged fast
 		onlineFriendsContent = (
 			<ul className="lobby-friend-list">
 				{onlineFriends.map((friend) => (

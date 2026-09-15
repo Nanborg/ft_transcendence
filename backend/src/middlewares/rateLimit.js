@@ -1,3 +1,5 @@
+// WHY: Rate limit protects auth and API routes from repeated automated requests
+// DECISION: Limit is shared here so routes do not duplicate throttling config
 const rateLimit = require('express-rate-limit')
 
 const loginLimiter = rateLimit({
@@ -29,3 +31,4 @@ const loginLimiter = rateLimit({
 
 });
 module.exports = loginLimiter;
+// WHY: Login rate limit slows brute-force attempts before auth logic runs

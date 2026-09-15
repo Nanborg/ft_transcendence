@@ -12,7 +12,7 @@ const { requireMessagingAllowed } = require('./blocking');
 
 async function expireGameInvitations(recipientId)
 {
-    // SAFETY: Expire only one recipient scope.
+    // SAFETY: Expire only one recipient scope
     requireUserId(recipientId);
     await prisma.gameInvitation.updateMany({
         where: {
@@ -35,12 +35,12 @@ async function createGameInvitation({
     roomId,
 })
 {
-    // REQUIRED: Both users must exist and be valid.
+    // REQUIRED: Both users must exist and be valid
     requireUserId(senderId);
     requireUserId(recipientId);
     await requireMessagingAllowed(senderId, recipientId);
     const normalizedRoomId = typeof roomId === 'string' ? roomId.trim() : '';
-    // SAFETY: Invitation must target a room.
+    // SAFETY: Invitation must target a room
     if (!normalizedRoomId)
         throw new ChatServiceError('INVALID_ROOM_ID', 'Invalid room id');
     const room = await prisma.room.findUnique({
@@ -56,11 +56,11 @@ async function createGameInvitation({
     if (!room)
         throw new ChatServiceError('ROOM_NOT_FOUND', 'Room not found');
     if (room.status !== 'waiting')
-        // SAFETY: Cannot join already-started game.
+        // SAFETY: Cannot join already-started game
         throw new ChatServiceError('GAME_ALREADY_STARTED', 'Game already started');
     const senderIsMember = room.players.some((player) => player.userId === senderId);
     if (!senderIsMember)
-        // REQUIRED: Sender invites from their room.
+        // REQUIRED: Sender invites from their room
         throw new ChatServiceError('PLAYER_NOT_IN_ROOM', 'You are not in this room');
     if (room.players.length >= 4)
         throw new ChatServiceError('ROOM_FULL', 'Room is full');
@@ -69,9 +69,9 @@ async function createGameInvitation({
         select: { roomId: true },
     });
     if (recipientMembership)
-        // SAFETY: Recipient cannot be in two rooms.
+        // SAFETY: Recipient cannot be in two rooms
         throw new ChatServiceError('RECIPIENT_ALREADY_IN_ROOM', 'This user is already in a room');
-    // SYNC: Clear expired invites before duplicate check.
+    // SYNC: Clear expired invites before duplicate check
     await expireGameInvitations(recipientId);
     const existingInvitation = await prisma.gameInvitation.findFirst({
         where: {
@@ -86,11 +86,11 @@ async function createGameInvitation({
         select: { id: true },
     });
     if (existingInvitation)
-        // SAFETY: Avoid duplicate active invites.
+        // SAFETY: Avoid duplicate active invites
         throw new ChatServiceError('INVITATION_ALREADY_PENDING', 'An invitation is already pending');
     const sender = await requireExistingUser(senderId);
     const expiresAt = new Date(Date.now() + GAME_INVITATION_TTL_MS);
-    // DECISION: Invitation appears as direct chat item.
+    // DECISION: Invitation appears as direct chat item
     const chatMessage = await prisma.chatMessage.create({
         data: {
             senderId,
@@ -114,7 +114,7 @@ async function createGameInvitation({
 async function getPendingGameInvitations(userId)
 {
     requireUserId(userId);
-    // SYNC: Expire stale invites before listing.
+    // SYNC: Expire stale invites before listing
     await prisma.gameInvitation.updateMany({
         where: {
             status: 'PENDING',
@@ -130,7 +130,7 @@ async function getPendingGameInvitations(userId)
         },
     });
     const messages = await prisma.chatMessage.findMany({
-        // DECISION: Sender sees handled invite history.
+        // DECISION: Sender sees handled invite history
         where: {
             type: 'GAME_INVITATION',
             invitation: {
@@ -158,7 +158,7 @@ async function getPendingGameInvitation({
     recipientId,
 })
 {
-    // REQUIRED: Accept/decline needs valid invite id.
+    // REQUIRED: Accept/decline needs valid invite id
     const normalizedInvitationId = requireInvitationId(invitationId);
     requireUserId(recipientId);
     const invitation = await prisma.gameInvitation.findUnique({
@@ -174,11 +174,11 @@ async function getPendingGameInvitation({
         },
     });
     if (!invitation || invitation.recipientId !== recipientId)
-        // SAFETY: Only recipient can handle invite.
+        // SAFETY: Only recipient can handle invite
         throw new ChatServiceError('INVITATION_NOT_FOUND', 'Invitation not found');
     if (invitation.status === 'PENDING' && invitation.expiresAt <= new Date())
     {
-        // SYNC: Expired invite is persisted before error.
+        // SYNC: Expired invite is persisted before error
         await prisma.gameInvitation.update({
             where: { id: invitation.id },
             data: {
@@ -189,7 +189,7 @@ async function getPendingGameInvitation({
         throw new ChatServiceError('INVITATION_EXPIRED', 'Invitation has expired');
     }
     if (invitation.status !== 'PENDING')
-        // SAFETY: Invite can be handled once.
+        // SAFETY: Invite can be handled once
         throw new ChatServiceError('INVITATION_ALREADY_HANDLED', 'Invitation has already been handled');
     if (!invitation.roomId)
         throw new ChatServiceError('ROOM_NOT_FOUND', 'Room no longer exists');
@@ -202,13 +202,13 @@ async function respondToGameInvitation({
     response,
 })
 {
-    // SAFETY: Re-read pending invitation before update.
+    // SAFETY: Re-read pending invitation before update
     const invitation = await getPendingGameInvitation({ invitationId, recipientId });
     if (response !== 'ACCEPTED' && response !== 'DECLINED')
-        // REQUIRED: Only two final invite states.
+        // REQUIRED: Only two final invite states
         throw new ChatServiceError('INVALID_INVITATION_RESPONSE', 'Invalid invitation response');
     const updateResult = await prisma.gameInvitation.updateMany({
-        // SAFETY: Atomic guard prevents double response.
+        // SAFETY: Atomic guard prevents double response
         where: {
             id: invitation.id,
             recipientId,

@@ -1,4 +1,6 @@
-// WHY: Central route table keeps nav and page metadata aligned.
+// WHY: Central route table keeps nav and page metadata aligned
+// DECISION: Page ids are stable keys used by routing, headings, and page-specific hooks
+// REQUIRED: Hash paths must match the router matcher in hashRouter
 export const pages = [
   {
     id: 'home',

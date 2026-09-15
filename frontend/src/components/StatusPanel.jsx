@@ -1,6 +1,8 @@
+// WHY: Status panel gives quick debug context for socket state and active session
+// FALLBACK: Missing user data is displayed as a stable unauthenticated state
 export function StatusPanel({ socketStatus, currentUser })
 {
-	// FALLBACK: Anonymous session gets stable label.
+	// FALLBACK: Anonymous session gets stable label
 	const displayName = currentUser ? currentUser.username || currentUser.name || `User ${currentUser.id}` : 'not logged in';
 	return (
 		<aside className="status-panel" aria-label="Connection status">

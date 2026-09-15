@@ -1,14 +1,14 @@
 import { useEffect, useRef } from "react";
 import { MAX_CHAT_MESSAGE_LENGTH } from "./useChat";
 
-// WHY: Room chat UI stays reusable in room and dock.
+// WHY: Room chat UI stays reusable in room and dock
 export function ChatPanel({chat, disabled = false, compact = false, onInputFocusChange})
 {
 	const { chatInput, setChatInput, chatMessages, chatError, sendChatMessage } = chat;
 	const messageRef = useRef(null);
 	useEffect(() =>
 	{
-		// SYNC: New messages scroll to bottom.
+		// SYNC: New messages scroll to bottom
 		const messagesElement = messageRef.current;
 		if (messagesElement)
 			messagesElement.scrollTop = messagesElement.scrollHeight;
@@ -46,7 +46,7 @@ export function ChatPanel({chat, disabled = false, compact = false, onInputFocus
 					onChange={event => setChatInput(event.target.value)}
 					onFocus={() => onInputFocusChange?.(true)}
 					onBlur={() => onInputFocusChange?.(false)}
-					// SAFETY: Chat focus disables game controls.
+					// SAFETY: Chat focus disables game controls
 					placeholder="Write a message"
 					disabled={disabled}
 					maxLength={MAX_CHAT_MESSAGE_LENGTH}

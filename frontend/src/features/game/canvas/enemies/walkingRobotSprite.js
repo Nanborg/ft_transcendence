@@ -1,3 +1,5 @@
+// WHY: Walking robot sprite keeps the basic enemy silhouette reusable and easy to tune
+// DECISION: Charge visuals stay here because they are part of the walking enemy identity
 import {
     WALKING_ROBOT_FRAME_COUNT,
     WALKING_ROBOT_IDLE_FRAME_DURATION_MS,
@@ -143,3 +145,4 @@ export function drawWalkingRobotSprite({
     );
     return true;
 }
+// WHY: Walking robot sprite config groups movement and charge animations

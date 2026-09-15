@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-// WHY: Centralize room and live game socket state.
+// WHY: Centralize room and live game socket state
 export function useRoom(socket, currentUser) {
     const [roomIdInput, setRoomIdInput] = useState('');
     const [currentRoom, setCurrentRoom] = useState(null);
@@ -16,23 +16,23 @@ export function useRoom(socket, currentUser) {
     const [gamePlayerData, setGamePlayerData] = useState([]);
     const [gameStartedAt, setGameStartedAt] = useState(null);
     const [gameMap, setGameMap] = useState(null);
-    // REQUIRED: Socket callbacks need latest room id.
+    // REQUIRED: Socket callbacks need latest room id
     const currentRoomIdRef = useRef(null);
 
     useEffect(() => {
-        // SAFETY: Register listeners only when socket exists.
+        // SAFETY: Register listeners only when socket exists
         if (!socket) {
             return undefined;
         }
 
         function setActiveRoom(room) {
-            // SYNC: Ref avoids stale closure in handlers.
+            // SYNC: Ref avoids stale closure in handlers
             currentRoomIdRef.current = room?.id ?? null;
             setCurrentRoom(room);
         }
 
         function isCurrentRoomPayload(payload) {
-            // SAFETY: Ignore stale room events.
+            // SAFETY: Ignore stale room events
             return (payload && typeof payload.roomId === 'string' && payload.roomId === currentRoomIdRef.current);
         }
 
@@ -56,7 +56,7 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             if (!isCurrentRoomPayload(gameStartPayload))
                 return;
-            // SYNC: Reset old game state before navigation.
+            // SYNC: Reset old game state before navigation
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
             setGameEntities([]);
@@ -73,7 +73,7 @@ export function useRoom(socket, currentUser) {
 
         function handleGameStateInit(gameStateInitPayload)
         {
-            // SAFETY: Init snapshot must be complete.
+            // SAFETY: Init snapshot must be complete
             if (
                 !gameStateInitPayload ||
                 typeof gameStateInitPayload.roomId !== 'string' ||
@@ -87,7 +87,7 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateInitPayload))
                 return;
-            // SYNC: Initial snapshot hydrates game screen.
+            // SYNC: Initial snapshot hydrates game screen
             setGameStarted(true);
             setGameMap(gameStateInitPayload.map ?? null);
             setGameEntities(gameStateInitPayload.entities);
@@ -102,7 +102,7 @@ export function useRoom(socket, currentUser) {
 
         function handleGameStateUpdate(gameStateUpdatePayload)
         {
-            // SAFETY: Delta update must contain arrays.
+            // SAFETY: Delta update must contain arrays
             if (
                 !gameStateUpdatePayload ||
                 typeof gameStateUpdatePayload.roomId !== 'string' ||
@@ -116,10 +116,10 @@ export function useRoom(socket, currentUser) {
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
             if (gameStateUpdatePayload.entityDelete.length > 0)
-                // SYNC: Canvas plays delete effects.
+                // SYNC: Canvas plays delete effects
                 setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
             setGameEntities(previousEntities => {
-                // SYNC: Merge deltas into local entity cache.
+                // SYNC: Merge deltas into local entity cache
                 const updateEntities = new Map(
                     previousEntities.map(entity => [
                         entity.entityId,
@@ -130,7 +130,7 @@ export function useRoom(socket, currentUser) {
                     if (!entity || typeof entity.entityId !== 'number')
                         return;
                     const previousEntity = updateEntities.get(entity.entityId);
-                    // SYNC: Preserve nested state between deltas.
+                    // SYNC: Preserve nested state between deltas
                     updateEntities.set(entity.entityId, {
                         ...previousEntity,
                         ...entity,
@@ -148,7 +148,7 @@ export function useRoom(socket, currentUser) {
             });
             if (gameStateUpdatePayload.playerData.length > 0) {
                 setGamePlayerData(previousPlayers => {
-                    // SYNC: Merge player deltas by player id.
+                    // SYNC: Merge player deltas by player id
                     const playersById = new Map(
                         previousPlayers.map(player => [
                             player.playerId,
@@ -178,7 +178,7 @@ export function useRoom(socket, currentUser) {
         }
 
         function handleGameError(gameErrorPayload) {
-            // SAFETY: Error payload must be readable.
+            // SAFETY: Error payload must be readable
             if (!gameErrorPayload || typeof gameErrorPayload.message !== 'string')
             {
                 console.error('Invalid game:error payload:', gameErrorPayload);
@@ -194,7 +194,7 @@ export function useRoom(socket, currentUser) {
         function handleRoomRemoved(payload) {
             if (!isCurrentRoomPayload(payload))
                 return;
-            // SYNC: Deleted room returns user to room page.
+            // SYNC: Deleted room returns user to room page
             resetRoom();
             setRoomError('Room no longer exists.');
             window.location.hash = '#/room';
@@ -210,7 +210,7 @@ export function useRoom(socket, currentUser) {
 		}
 
         function handleGameEnd(gameEndPayload) {
-            // SAFETY: End payload must include final snapshot.
+            // SAFETY: End payload must include final snapshot
             if (!gameEndPayload || typeof gameEndPayload.roomId !== 'string' || typeof gameEndPayload.tick !== 'number' ||
                 typeof gameEndPayload.durationSeconds !== 'number' || gameEndPayload.end !== true || typeof gameEndPayload.win !== 'boolean' ||
                 typeof gameEndPayload.reason !== 'string' || !Array.isArray(gameEndPayload.entities) || !Array.isArray(gameEndPayload.playerData))
@@ -220,7 +220,7 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameEndPayload))
                 return;
-            // SYNC: Final state feeds result screen.
+            // SYNC: Final state feeds result screen
             setGameStarted(false);
             setGameStartInfo(null);
             setGameEntities(gameEndPayload.entities);
@@ -232,7 +232,7 @@ export function useRoom(socket, currentUser) {
             setRoomError('');
         }
 
-        // REQUIRED: Pair every socket.on with socket.off.
+        // REQUIRED: Pair every socket.on with socket.off
         socket.on('room:created', handleRoomCreated);
         socket.on('room:update', handleRoomUpdate);
         socket.on('room:error', handleRoomError);
@@ -261,7 +261,7 @@ export function useRoom(socket, currentUser) {
 	useEffect(() => {
 		if (!socket) return;
 		const interval = setInterval(() => {
-            // SYNC: Lightweight latency probe for debug UI.
+            // SYNC: Lightweight latency probe for debug UI
 			socket.emit("debug:latency:check", {
 			clientSentAt: Date.now(),
 			});
@@ -274,7 +274,7 @@ export function useRoom(socket, currentUser) {
         if (!socket || !currentRoom || currentRoom.status !== 'started')
             return undefined;
         function requestGameResync() {
-            // SYNC: Reconnect asks server for latest snapshot.
+            // SYNC: Reconnect asks server for latest snapshot
             socket.emit('game:resync', { roomId: currentRoom.id });
         }
         requestGameResync();
@@ -284,14 +284,14 @@ export function useRoom(socket, currentUser) {
 
     useEffect(() => {
         if (!currentUser) {
-            // SAFETY: Logout clears room state.
+            // SAFETY: Logout clears room state
             resetRoom();
         }
     }, [currentUser]);
 
     function createRoom(event) {
         event.preventDefault();
-        // SAFETY: Creating room requires auth and socket.
+        // SAFETY: Creating room requires auth and socket
         if (!socket || !currentUser) {
             return;
         }
@@ -305,13 +305,13 @@ export function useRoom(socket, currentUser) {
     function joinRoom(event) {
         event.preventDefault();
 
-        // SAFETY: Joining room requires auth and socket.
+        // SAFETY: Joining room requires auth and socket
         if (!socket || !currentUser) {
             return;
         }
         const roomId = roomIdInput.trim();
         if (!roomId) {
-            // SAFETY: Empty room id cannot be joined.
+            // SAFETY: Empty room id cannot be joined
             setRoomStatus('error');
             setRoomError('Enter the room id');
             return;
@@ -324,7 +324,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function resetRoom() {
-        // SYNC: Reset all room/game state together.
+        // SYNC: Reset all room/game state together
         currentRoomIdRef.current = null;
         setCurrentRoom(null);
         setRoomStatus('idle');
@@ -343,7 +343,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function leaveRoom() {
-        // SAFETY: Leave only active room.
+        // SAFETY: Leave only active room
         if (!socket || !currentRoom) {
             return;
         }
@@ -355,7 +355,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function leaveGame() {
-        // DECISION: Leaving game returns to lobby.
+        // DECISION: Leaving game returns to lobby
         if (!socket || !currentRoom)
             return;
         socket.emit('room:leave', {roomId: currentRoom.id});
@@ -364,7 +364,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function toggleReady() {
-        // SAFETY: Ready state belongs to current room.
+        // SAFETY: Ready state belongs to current room
         if (!socket || !currentRoom) {
             return;
         }
@@ -376,7 +376,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function startGame() {
-        // SAFETY: Only current room can start.
+        // SAFETY: Only current room can start
         if (!socket || !currentRoom) {
             return;
         }

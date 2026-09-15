@@ -1,3 +1,5 @@
+// WHY: Tank robot sprite owns heavy enemy effects like slam waves and armor shapes
+// DECISION: Tank animation rules stay together because idle, fly, and slam states share timing
 import {
     TANK_ROBOT_FRAME_COUNT,
     TANK_ROBOT_FRAME_DURATION_MS,
@@ -217,3 +219,4 @@ export function drawTankRobotSprite({
     );
     return true;
 }
+// WHY: Tank robot sprite config groups idle, slam and fly animations

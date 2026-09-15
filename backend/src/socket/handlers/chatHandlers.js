@@ -22,7 +22,7 @@ const { getUserSocketRoom, emitChatError } = require('../socketUtils');
 
 function getHistoryRoomId(payload)
 {
-	// FALLBACK: History response still names room.
+	// FALLBACK: History response still names room
 	if (typeof payload.roomId === 'string')
 		return payload.roomId.trim();
 	return '';
@@ -30,7 +30,7 @@ function getHistoryRoomId(payload)
 
 function getCleanContent(rawMessage)
 {
-	// SAFETY: Sanitize chat before service layer.
+	// SAFETY: Sanitize chat before service layer
 	if (typeof rawMessage === 'string')
 		return cleanInput(rawMessage.trim());
 	return rawMessage;
@@ -38,7 +38,7 @@ function getCleanContent(rawMessage)
 
 function getInvitationResponse(payload)
 {
-	// REQUIRED: Service expects uppercase response.
+	// REQUIRED: Service expects uppercase response
 	if (typeof payload?.response === 'string')
 		return payload.response.trim().toUpperCase();
 	return '';
@@ -46,12 +46,12 @@ function getInvitationResponse(payload)
 
 function registerChatHandlers(io, socket)
 {
-	// WHY: Register all chat events for one socket.
+	// WHY: Register all chat events for one socket
 	socket.on('chat:message', async (payload = {}) =>
 	{
 		try
 		{
-			// SAFETY: Service validates room membership.
+			// SAFETY: Service validates room membership
 			const rawMessage = payload?.message;
 			const content = getCleanContent(rawMessage);
 			const chatMessage = await createRoomMessage(
@@ -63,7 +63,7 @@ function registerChatHandlers(io, socket)
 			io.to(chatMessage.roomId).emit('chat:message', chatMessage);
 
 		} catch (error) {
-			// SAFETY: Normalize service errors for client.
+			// SAFETY: Normalize service errors for client
 			emitChatError(socket, 'chat:message', error);
 		}
 	});
@@ -72,7 +72,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// REQUIRED: History is scoped to current user.
+			// REQUIRED: History is scoped to current user
 			const messages = await getRoomHistory(
 			{
 				roomId: payload.roomId,
@@ -96,7 +96,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SYNC: Sidebar needs latest conversations.
+			// SYNC: Sidebar needs latest conversations
 			const conversations = await getDirectConversations(socket.user.id);
 			socket.emit('chat:direct:conversations', { conversations });
 
@@ -109,7 +109,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// REQUIRED: Invitation is stored as chat message.
+			// REQUIRED: Invitation is stored as chat message
 			const invitationMessage = await createGameInvitation(
 			{
 				senderId: socket.user.id,
@@ -118,7 +118,7 @@ function registerChatHandlers(io, socket)
 			});
 			io.to(getUserSocketRoom(socket.user.id))
 				.to(getUserSocketRoom(invitationMessage.recipient.id))
-				// SYNC: Both users see invitation immediately.
+				// SYNC: Both users see invitation immediately
 				.emit('chat:direct:message', invitationMessage);
 			io.to(getUserSocketRoom(socket.user.id))
 				.to(getUserSocketRoom(invitationMessage.recipient.id))
@@ -132,7 +132,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SYNC: Expired invites are filtered in service.
+			// SYNC: Expired invites are filtered in service
 			const invitations = await getPendingGameInvitations(socket.user.id);
 			socket.emit('chat:invitation:list', { invitations });
 
@@ -146,10 +146,10 @@ function registerChatHandlers(io, socket)
 		try
 		{
 			// Flow:
-			//   1. Validate pending invite.
-			//   2. Join room if accepted.
-			//   3. Store invite response.
-			//   4. Notify both users.
+			//   1. Validate pending invite
+			//   2. Join room if accepted
+			//   3. Store invite response
+			//   4. Notify both users
 			const invitationId = Number(payload?.invitationId);
 			const response = getInvitationResponse(payload);
 			const pendingInvitation = await getPendingGameInvitation(
@@ -160,7 +160,7 @@ function registerChatHandlers(io, socket)
 			let joinedRoom = null;
 			if (response === 'ACCEPTED')
 			{
-				// REQUIRED: Accepting invite joins target room.
+				// REQUIRED: Accepting invite joins target room
 				const joinResult = await joinRoom(pendingInvitation.roomId, socket.user.id);
 				if (joinResult.error)
 					throw new ChatServiceError(joinResult.error.code, joinResult.error.message);
@@ -174,7 +174,7 @@ function registerChatHandlers(io, socket)
 			});
 			if (joinedRoom)
 			{
-				// SYNC: Socket joins room after DB membership.
+				// SYNC: Socket joins room after DB membership
 				await socket.join(joinedRoom.id);
 				io.to(joinedRoom.id).emit('room:update', joinedRoom);
 			}
@@ -200,7 +200,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SAFETY: Service checks block status.
+			// SAFETY: Service checks block status
 			const rawMessage = payload?.message;
 			const content = getCleanContent(rawMessage);
 			const chatMessage = await createDirectMessage(
@@ -222,7 +222,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// REQUIRED: Client chooses the other user.
+			// REQUIRED: Client chooses the other user
 			const otherUserId = Number(payload?.userId);
 			const messages = await getDirectHistory(
 			{
@@ -246,7 +246,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SYNC: Read receipts notify both users.
+			// SYNC: Read receipts notify both users
 			const otherUserId = Number(payload?.userId);
 			const result = await markDirectMessagesRead({ userId: socket.user.id, otherUserId });
 			const readUpdate = { readerId: socket.user.id, otherUserId, ...result };
@@ -263,7 +263,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SAFETY: Block relation is user-scoped.
+			// SAFETY: Block relation is user-scoped
 			const blockedId = Number(payload?.userId);
 			await blockUser({ blockerId: socket.user.id, blockedId });
 			socket.emit('chat:block:update', { userId: blockedId, blocked: true });
@@ -277,7 +277,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SYNC: Unblock refreshes client visibility.
+			// SYNC: Unblock refreshes client visibility
 			const blockedId = Number(payload?.userId);
 			await unblockUser({ blockerId: socket.user.id, blockedId });
 			socket.emit('chat:block:update', { userId: blockedId, blocked: false });
@@ -291,7 +291,7 @@ function registerChatHandlers(io, socket)
 	{
 		try
 		{
-			// SYNC: Client filters blocked authors locally.
+			// SYNC: Client filters blocked authors locally
 			const users = await getBlockedUsers(socket.user.id);
 			socket.emit('chat:blocked', { users });
 

@@ -1,3 +1,5 @@
+// WHY: Sprite assets are centralized so every renderer shares the same image cache and metadata
+// PERF: Image objects are reused across frames to avoid repeated browser decoding
 import { ENTITY_TYPE } from '../gameProtocol';
 import playerWalkSpriteUrl from '../../../assets/game/player/player-walk.png';
 import playerMeleeAttackSpriteUrl from '../../../assets/game/player/player-melee-attack.png';
@@ -410,3 +412,4 @@ export const SHIELD_BREAK_DURATION_MS = 400;
 export const WALL_TILE_SOURCE_SIZE = 256;
 export const wallRuinsSprite = new Image();
 wallRuinsSprite.src = wallRuinsSpriteUrl;
+// WHY: Sprite assets expose shared canvas sizes and preloaded images

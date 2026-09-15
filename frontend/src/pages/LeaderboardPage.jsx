@@ -2,7 +2,7 @@ import { PageHeading } from '../components/PageHeading';
 import { useEffect, useState } from 'react';
 import { fetchLeaderBoard } from '../api/scores';
 
-// WHY: Leaderboard displays fastest successful games.
+// WHY: Leaderboard displays fastest successful games
 export function LeaderboardPage({ title, description })
 {
 	const [status, setStatus] = useState('loading');
@@ -14,14 +14,14 @@ export function LeaderboardPage({ title, description })
 		let cancelled = false;
 		async function loadLeaderboard()
 		{
-			// SYNC: Load once when page opens.
+			// SYNC: Load once when page opens
 			setStatus('loading');
 			setError('');
 			try {
 				const data = await fetchLeaderBoard();
 				if (!cancelled)
 				{
-					// SAFETY: API must return an array.
+					// SAFETY: API must return an array
 					let nextLeaderboard = [];
 					if (Array.isArray(data))
 						nextLeaderboard = data;
@@ -31,7 +31,7 @@ export function LeaderboardPage({ title, description })
 			} catch (loadError) {
 				if (!cancelled)
 				{
-					// SAFETY: Ignore stale errors after unmount.
+					// SAFETY: Ignore stale errors after unmount
 					setError(loadError.message);
 					setStatus('error');
 				}
@@ -63,17 +63,17 @@ export function LeaderboardPage({ title, description })
 						{
 							let rowKey = index;
 							if (entry.roomId !== null && entry.roomId !== undefined)
-								// FALLBACK: Room id keys old rows.
+								// FALLBACK: Room id keys old rows
 								rowKey = entry.roomId;
 							if (entry.gameRunId !== null && entry.gameRunId !== undefined)
-								// DECISION: Game run id is best key.
+								// DECISION: Game run id is best key
 								rowKey = entry.gameRunId;
 							let rank = index + 1;
 							if (entry.rank !== null && entry.rank !== undefined)
 								rank = entry.rank;
 							let playersLabel = entry.roomId;
 							if (Array.isArray(entry.players))
-								// SYNC: Player names replace room id.
+								// SYNC: Player names replace room id
 								playersLabel = entry.players.map((player) => player.username).join(', ') || entry.roomId;
 							let createdAtLabel = '-';
 							if (entry.createdAt)

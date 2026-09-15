@@ -18,13 +18,13 @@ import gameSoilUrl from '../../assets/game/game_soil.png';
 
 function drawMapBackgroundImage(context, image, camera, gameMap)
 {
-    // FALLBACK: Skip texture until image is loaded.
+    // FALLBACK: Skip texture until image is loaded
     if (!image?.complete || image.naturalWidth <= 0 || image.naturalHeight <= 0)
         return;
     if (!(gameMap?.scale > 0))
         return;
     const textureWorldSize = gameMap.scale * 16;
-    // PERF: Draw only visible repeated tiles.
+    // PERF: Draw only visible repeated tiles
     const texturePixls = textureWorldSize * camera.scale;
     const firstCol = Math.floor(camera.left / textureWorldSize);
     const lastCol = Math.floor(camera.right / textureWorldSize);
@@ -51,7 +51,7 @@ function drawMapBackgroundImage(context, image, camera, gameMap)
 
 function isMapWall(rows, row, col)
 {
-    // SAFETY: Mask lookup can ask outside grid.
+    // SAFETY: Mask lookup can ask outside grid
     if (row < 0 || row >= rows.length)
         return false;
     const line = rows[row];
@@ -62,7 +62,7 @@ function isMapWall(rows, row, col)
 
 function getMapWallMask(rows, row, col)
 {
-    // DECISION: Bitmask selects wall autotile.
+    // DECISION: Bitmask selects wall autotile
     let mask = 0;
     if (isMapWall(rows, row - 1, col))
         mask |= 1;
@@ -77,7 +77,7 @@ function getMapWallMask(rows, row, col)
 
 function getActionCooldownKey(action)
 {
-    // SYNC: Cooldowns are stored by skill name.
+    // SYNC: Cooldowns are stored by skill name
     if (action === PLAYER_ACTION.MELEE)
         return 'melee';
     if (action === PLAYER_ACTION.RANGED)
@@ -87,7 +87,7 @@ function getActionCooldownKey(action)
 
 function drawMapWalls(context, gameMap, camera)
 {
-    // SAFETY: Walls need map rows and scale.
+    // SAFETY: Walls need map rows and scale
     if (!Array.isArray(gameMap?.rows) || !(gameMap?.scale > 0))
         return;
     const rows = gameMap.rows;
@@ -115,7 +115,7 @@ function drawMapWalls(context, gameMap, camera)
 
             if (!wallRuinsSprite.complete || wallRuinsSprite.naturalWidth <= 0)
             {
-                // FALLBACK: Solid wall before sprite load.
+                // FALLBACK: Solid wall before sprite load
                 context.fillStyle = '#334155';
                 context.fillRect(
                     x,
@@ -163,7 +163,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     const shieldBreakEffectsRef = useRef(new Map());
     const debugHitboxesRef = useRef(false); //test-nico-hitbox
 
-    // DECISION: Canvas world uses fixed internal width.
+    // DECISION: Canvas world uses fixed internal width
     const width = CANVAS_WIDTH;
     let mapAspectRatio = 0.5625;
     if (gameMap?.width > 0 && gameMap?.height > 0)
@@ -174,7 +174,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     const height = Math.max(MIN_CANVAS_HEIGHT, Math.min(MAX_CANVAS_HEIGHT, Math.round(width * mapAspectRatio)));
 
     renderDataRef.current = {
-        // SYNC: Render loop reads latest props from ref.
+        // SYNC: Render loop reads latest props from ref
         currentPlayerId,
         gameMap,
         gamePlayerData: [],
@@ -191,7 +191,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
 
     useEffect(() =>
     {
-        // REQUIRED: Background image loads outside render loop.
+        // REQUIRED: Background image loads outside render loop
         const image = new Image();
         image.src = gameSoilUrl;
         gameSoilImageRef.current = image;
@@ -206,7 +206,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
     {
         function handleKeyDown(event)
         {
-            // DEBUG: Toggle hitboxes without UI controls.
+            // DEBUG: Toggle hitboxes without UI controls
             if (handleDebugHitboxKeyDown(event, debugHitboxesRef)) //test-nico-hitbox
                 return;
 
@@ -214,7 +214,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             const myPlayer = players.find((p) => String(p.playerId) === String(currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
             {
-                // DECISION: Dead players can spectate alive ones.
+                // DECISION: Dead players can spectate alive ones
                 const alivePlayers = players.filter((p) => p.alive === true);
 
                 if (alivePlayers.length > 0)
@@ -251,7 +251,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             return undefined;
         function handlePlayerInput(payload)
         {
-            // SYNC: Input event triggers local attack anim.
+            // SYNC: Input event triggers local attack anim
             const action = payload?.input?.action;
             if (typeof payload?.playerId === 'undefined' || (action !== PLAYER_ACTION.MELEE && action !== PLAYER_ACTION.RANGED))
                 return;
@@ -259,7 +259,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             const playerData = renderDataRef.current.gamePlayerData.find((player) => String(player.playerId) === String(payload.playerId));
             const cooldown = Number(playerData?.cooldowns?.[cooldownKey]) || 0;
             if (cooldown > 0)
-                // SAFETY: Cooldown blocks fake animations.
+                // SAFETY: Cooldown blocks fake animations
                 return;
             playerAttackRef.current.set(String(payload.playerId), {action, startedAt: performance.now()});
         }
@@ -273,7 +273,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
 
     useEffect(() =>
     {
-        // SYNC: Deleted shield entities become VFX.
+        // SYNC: Deleted shield entities become VFX
         if (!Array.isArray(deletedGameEntities))
             return;
         if (deletedGameEntities.length === 0)
@@ -306,7 +306,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
 
     useEffect(() =>
     {
-        // SYNC: Server snapshots update render tracks.
+        // SYNC: Server snapshots update render tracks
         if (!Array.isArray(gameEntities))
             return;
 
@@ -315,7 +315,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         let teleportDistance = 150;
         if (gameMap?.scale > 0)
         {
-            // DECISION: Large jumps snap instead of lerp.
+            // DECISION: Large jumps snap instead of lerp
             teleportDistance = gameMap.scale * 3;
         }
 
@@ -330,7 +330,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
 
             if (previousTrack && previousTrack.targetX === entity.posX && previousTrack.targetY === entity.posY)
             {
-                // PERF: Reuse track when position unchanged.
+                // PERF: Reuse track when position unchanged
                 previousTrack.directionRow = getPlayerDirectionRow(entity, previousTrack.directionRow);
                 previousTrack.entity = entity;
                 return;
@@ -339,7 +339,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             const currentPosition = { x: entity.posX, y: entity.posY };
             if (previousTrack)
             {
-                // SYNC: Continue from interpolated position.
+                // SYNC: Continue from interpolated position
                 const interpolated = getInterpolatedPosition(previousTrack, now);
                 currentPosition.x = interpolated.x;
                 currentPosition.y = interpolated.y;
@@ -352,7 +352,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             let duration = INTERPOLATION_DURATION_MS;
             if (mustTeleport)
             {
-                // SAFETY: Teleport avoids long wrong lerp.
+                // SAFETY: Teleport avoids long wrong lerp
                 duration = 0;
             }
 
@@ -377,7 +377,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         });
         entityTracksRef.current.forEach((track, entityId) =>
         {
-            // SYNC: Remove entities missing from snapshot.
+            // SYNC: Remove entities missing from snapshot
             if (!receivedEntityIds.has(entityId))
             {
                 entityTracksRef.current.delete(entityId);
@@ -390,7 +390,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
         let animationFrameId;
         function render(now)
         {
-            // PERF: One animation loop owns canvas drawing.
+            // PERF: One animation loop owns canvas drawing
             const canvas = canvasRef.current;
             if (!canvas)
                 return;
@@ -399,7 +399,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             const nextHeight = Math.max(1, Math.round(rect.height));
             if (canvas.width !== nextWidth || canvas.height !== nextHeight)
             {
-                // SYNC: Canvas buffer follows CSS size.
+                // SYNC: Canvas buffer follows CSS size
                 canvas.width = nextWidth;
                 canvas.height = nextHeight;
             }
@@ -409,7 +409,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             let localEntityId = localPlayer?.playerEntityId;
             if (typeof localEntityId !== 'number')
             {
-                // FALLBACK: Focus first player if mapping missing.
+                // FALLBACK: Focus first player if mapping missing
                 for (const track of entityTracksRef.current.values())
                 {
                     if (getEntityType(track.entity) === ENTITY_TYPE.PLAYER)
@@ -420,7 +420,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 }
             }
             const focusPosition = getFocusPosition({
-                // SYNC: Camera follows player or spectator target.
+                // SYNC: Camera follows player or spectator target
                 tracks: entityTracksRef.current,
                 playerData: renderData.gamePlayerData,
                 currentPlayerId: renderData.currentPlayerId,
@@ -449,7 +449,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
             {
                 const entityType = getEntityType(track.entity);
                 if  (entityType === ENTITY_TYPE.WALL || entityType === ENTITY_TYPE.CHECKPOINT || entityType === ENTITY_TYPE.SPAWN_POINT)
-                    // DECISION: Static map entities draw earlier.
+                    // DECISION: Static map entities draw earlier
                     return;
                 const playerData = renderData.gamePlayerData.find((player) => String(player.playerEntityId) === String(track.entity.entityId));
                 let playerId = playerData?.playerId ?? null;
@@ -460,7 +460,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 let playerSpriteTint = null;
                 if (entityType === ENTITY_TYPE.PLAYER)
                 {
-                    // DECISION: Tint distinguishes players.
+                    // DECISION: Tint distinguishes players
                     playerSpriteTint = getPlayerSpriteTint(track.entity.state?.playerId);
                 }
                 let attack = null;
@@ -470,7 +470,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 }
                 if (attack && now - attack.startedAt >= getPlayerAttackDuration(attack.action))
                 {
-                    // SYNC: Attack animation expires locally.
+                    // SYNC: Attack animation expires locally
                     playerAttackRef.current.delete(String(playerId));
                     attack = null;
                 }
@@ -479,13 +479,13 @@ export function GameCanvas({currentPlayerId, gameMap, gameEntities, deletedGameE
                 let renderDirectionRow = track.directionRow;
                 if (facesPlayer)
                 {
-                    // DECISION: Heavy enemies face camera focus.
+                    // DECISION: Heavy enemies face camera focus
                     renderDirectionRow = getDirectionRowToward(position, focusPosition, track.directionRow);
                 }
                 let spriteDirectionRow = renderDirectionRow;
                 if (attack)
                 {
-                    // SYNC: Attack keeps initial direction.
+                    // SYNC: Attack keeps initial direction
                     if (!Number.isInteger(attack.directionRow))
                     {
                         attack.directionRow = renderDirectionRow;

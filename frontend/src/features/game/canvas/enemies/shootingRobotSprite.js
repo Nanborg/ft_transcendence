@@ -1,3 +1,5 @@
+// WHY: Shooting robot sprite keeps ranged enemy visuals separate from movement logic
+// DECISION: Attack frames stay in this renderer because only ranged enemies use them
 import {
     SHOOTING_ROBOT_FRAME_COUNT,
     SHOOTING_ROBOT_FRAME_DURATION_MS,
@@ -137,3 +139,4 @@ export function drawShootingRobotSprite({
 
     return true;
 }
+// WHY: Shooting robot sprite config groups idle and attack animation data

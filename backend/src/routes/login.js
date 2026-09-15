@@ -1,3 +1,5 @@
+// WHY: Login route supports both local credentials and 42 OAuth callbacks
+// SAFETY: Rate limiting is applied before credential checks to slow repeated attempts
 const express = require("express");
 const router = express.Router();
 router.use(express.json());
@@ -116,7 +118,7 @@ router.get("/42/callback", async (req, res) =>
 		if (!code || typeof req.query.code !== "string")
 			return res.status(400).send("Missing code");
 
-		// REQUIRED: Exchange OAuth code first.
+		// REQUIRED: Exchange OAuth code first
 		const response = await fetch("https://api.intra.42.fr/oauth/token",
 		{
 			method: "POST",
@@ -141,7 +143,7 @@ router.get("/42/callback", async (req, res) =>
 		if (!data.access_token)
 			return res.status(401).json(data);
 
-		// REQUIRED: Fetch stable 42 id.
+		// REQUIRED: Fetch stable 42 id
 		const infos_response = await fetch("https://api.intra.42.fr/v2/me",
 		{
 			method: "GET",

@@ -1,3 +1,5 @@
+// WHY: Connection handlers keep socket lifecycle events separate from game and chat features
+// SAFETY: Disconnect cleanup removes stale socket references from room state
 const { removeConnection, scheduleDisconnect, isOnline } = require('../connections');
 const { leaveAllRooms, getRoomsByUserId } = require('../rooms');
 const { gameEngineService } = require('../../services/gameEngineService');
@@ -54,3 +56,4 @@ function registerConnectionHandlers(io, socket)
 }
 
 module.exports = { registerConnectionHandlers };
+// WHY: Connection handlers manage latency debug and disconnect cleanup

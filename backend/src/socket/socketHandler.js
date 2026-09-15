@@ -1,3 +1,5 @@
+// WHY: Socket handler is the bridge between browser rooms, chat, and game engine events
+// SAFETY: Game end processing is locked per room so duplicate engine messages do not double-save results
 const { addConnection } = require('./connections');
 const { getRoomsByUserId, resetGameStart } = require('./rooms');
 const { gameEngineService } = require('../services/gameEngineService');
@@ -64,7 +66,7 @@ function getEnginePayloadPlayer(player, session)
     const sessionPlayer = session?.players.find((sp) => sp.enginePlayerId === player.playerId);
     if (sessionPlayer)
     {
-        // SYNC: Store user id, not engine id.
+        // SYNC: Store user id, not engine id
         return {
             ...player,
             playerId: sessionPlayer.userId,
@@ -171,7 +173,7 @@ module.exports = (io) =>
                 playerData: playerData.map((p) => getEnginePayloadPlayer(p, session)),
             };
             const dbData = adaptPayloadForDB(enginePayload);
-            // DECISION: Save final engine result now.
+            // DECISION: Save final engine result now
             await saveGameResults(dbData);
             let roomToUpdate = null;
             try

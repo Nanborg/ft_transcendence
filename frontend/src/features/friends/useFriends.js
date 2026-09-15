@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { acceptFriends, addFriend, fetchFriends, removeFriend } from '../../api/friends';
 
-// WHY: Hook groups friend API state and realtime updates.
+// WHY: Hook groups friend API state and realtime updates
 export function useFriends(socket, currentUser, onSessionExpired)
 {
 	const [friends, setFriends] = useState([]);
@@ -13,7 +13,7 @@ export function useFriends(socket, currentUser, onSessionExpired)
 	{
 		if (!currentUser)
 		{
-			// SAFETY: Logged-out users have no friend list.
+			// SAFETY: Logged-out users have no friend list
 			setFriends([]);
 			setFriendsStatus('empty');
 			setFriendsError('');
@@ -23,14 +23,14 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		setFriendsError('');
 
 		try {
-			// SYNC: Fetch canonical friendship state.
+			// SYNC: Fetch canonical friendship state
 			const nextFriends = await fetchFriends();
 			setFriends(nextFriends);
 			setFriendsStatus('loaded');
 		} catch (error) {
 			if (error.status === 401 || error.status === 403)
 			{
-				// SAFETY: Auth errors leave hook to App.
+				// SAFETY: Auth errors leave hook to App
 				onSessionExpired(error.message);
 				return;
 			}
@@ -44,12 +44,12 @@ export function useFriends(socket, currentUser, onSessionExpired)
 
 	useEffect(() =>
 	{
-		// SAFETY: Realtime updates need socket.
+		// SAFETY: Realtime updates need socket
 		if(!socket)
 			return undefined;
 		function handleUserStatus(payload)
 		{
-			// SYNC: Update online flag without full reload.
+			// SYNC: Update online flag without full reload
 			setFriends((currentFriends) =>
 			{
 				if (!currentFriends?.friends)
@@ -65,7 +65,7 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		}
 		function handleFriendshipUpdate()
 		{
-			// SYNC: Friendship changes reload canonical list.
+			// SYNC: Friendship changes reload canonical list
 			loadFriends();
 		}
 		socket.on('user:status', handleUserStatus);
@@ -82,7 +82,7 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		event.preventDefault();
 
 		const friendId = friendIdInput.trim();
-		// SAFETY: Empty id cannot become a request.
+		// SAFETY: Empty id cannot become a request
 		if (!friendId)
 		{
 			setFriendsStatus('error');
@@ -92,14 +92,14 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		setFriendsStatus('loading');
 		setFriendsError('');
 		try {
-			// SYNC: Reload after mutation.
+			// SYNC: Reload after mutation
 			await addFriend(friendId);
 			setFriendIdInput('');
 			await loadFriends();
 		} catch (error) {
 			if (error.status === 401 || error.status === 403)
 			{
-				// SAFETY: Expired sessions bubble to App.
+				// SAFETY: Expired sessions bubble to App
 				onSessionExpired(error.message);
 				return;
 			}
@@ -113,7 +113,7 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		setFriendsStatus('loading');
 		setFriendsError('');
 		try {
-			// SYNC: Reload after removal.
+			// SYNC: Reload after removal
 			await removeFriend(friendId);
 			await loadFriends();
 		} catch (error) {
@@ -132,7 +132,7 @@ export function useFriends(socket, currentUser, onSessionExpired)
 		setFriendsStatus('loading');
 		setFriendsError('');
 		try {
-			// SYNC: Reload after accept.
+			// SYNC: Reload after accept
 			await acceptFriends(friendId);
 			await loadFriends();
 		} catch (error) {

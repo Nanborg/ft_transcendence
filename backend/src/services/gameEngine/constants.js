@@ -1,3 +1,6 @@
+// WHY: Shared game-engine constants keep UDP protocol values in one place
+// REQUIRED: Numeric ids must stay aligned with the C++ gameplay engine protocol
+// DECISION: Environment defaults keep Docker setup usable without extra local config
 const DEFAULT_ENGINE_HOST = process.env.GAMEPLAY_HOST || 'gameplay-cpp';
 const DEFAULT_ENGINE_PORT = Number(process.env.GAMEPLAY_PORT || 7297);
 const DEFAULT_ENGINE_MAP_DIRECTORY = process.env.GAME_MAP_DIRECTORY || '/tmp/ft-transcendence-game-maps';

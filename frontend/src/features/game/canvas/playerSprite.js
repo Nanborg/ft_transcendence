@@ -1,4 +1,6 @@
 import { PLAYER_ACTION } from '../gameProtocol';
+// WHY: Player sprite renderer keeps character visuals independent from input and socket state
+// DECISION: Player animation details stay here because they depend on sprite sheet layout
 import {
     PLAYER_ATTACK_FRAME_COUNT,
     PLAYER_MELEE_FRAME_DURATION_MS,
@@ -282,3 +284,4 @@ export function drawPlayerWalkSprite({ context, entity, screen, tilePixels, now,
 
     return true;
 }
+// WHY: Player sprite config centralizes animation frames, colors and attack timing

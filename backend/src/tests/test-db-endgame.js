@@ -1,3 +1,5 @@
+// WHY: Endgame DB test checks that final game results are persisted correctly
+// REQUIRED: Seeded users mirror the player ids emitted by the engine result payload
 const prisma = require('../db');
 const { adaptPayloadForDB, saveGameResults } = require('../services/gameService');
 const bcrypt = require('bcrypt');
@@ -79,3 +81,4 @@ async function runTest() {
 }
 
 runTest();
+// WHY: Manual DB endgame test checks saved game/stat relationships
