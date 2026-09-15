@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
 import goldIcon from '../assets/game/gold/gold_icon.png';
 import healIcon from '../assets/game/checkpoint/heal.png';
+import { useGameView } from '../features/game/useGameView';
 
 function formatDuration(totalSeconds)
 {
@@ -100,10 +101,8 @@ export function GamePage({
     description,
     currentPlayerId,
     gameMap,
-    gameEntities,
-    deletedGameEntities,
+    gameStore,
     gameStartedAt,
-    gamePlayerData,
     gameResult,
     socket,
     chatInputFocused = false,
@@ -117,22 +116,16 @@ export function GamePage({
     const roomStatus = currentRoom?.status;
     const isStarting = roomStatus === 'starting';
     const isPlaying = roomStatus === 'playing';
-    const hasLiveGameState = Array.isArray(gameEntities) && gameEntities.length > 0;
+    const gameView = useGameView(gameStore, currentPlayerId);
+    const hasLiveGameState = gameView.hasEntities;
     const isGameReady = hasRoom && isPlaying && gameStarted;
     const elapsedSeconds = useGameTimer(gameStartedAt, isGameReady);
     const playerStats = Array.isArray(gameResult?.playerData) ? gameResult.playerData : [];
-    const currentPlayer = Array.isArray(gamePlayerData) ? gamePlayerData.find(player => String(player.playerId) === String(currentPlayerId)) : null;
+    const currentPlayer = gameView.player;
     const currentGold = currentPlayer?.gold ?? 0;
     const currentPlayerEntityId = currentPlayer?.playerEntityId;
     const isAtCheckpoint = currentPlayer?.atACheckpoint === true;
-    const currentPlayerEntity = currentPlayer && Array.isArray(gameEntities)
-        ? gameEntities.find(entity =>
-            entity.entityId === currentPlayer.playerEntityId
-        )
-        : null;
-    const playerHealth = Number.isFinite(currentPlayerEntity?.health)
-        ? Math.max(0, currentPlayerEntity.health)
-        : null;
+    const playerHealth = gameView.health;
     const skillLevels = {
         melee: currentPlayer?.upgrades?.melee ?? 0,
         ranged: currentPlayer?.upgrades?.ranged ?? 0,
@@ -256,6 +249,11 @@ export function GamePage({
             setIsCheckpointMenuOpen(false);
         }
     }, [isAtCheckpoint]);
+
+    useEffect(() => {
+        previousGoldRef.current = null;
+        setGoldFeedbacks([]);
+    }, [gameStore, gameView.revision]);
 
     useEffect(() =>
     {
@@ -384,9 +382,7 @@ export function GamePage({
                     <GameCanvas
                         currentPlayerId={currentPlayerId}
                         gameMap={gameMap}
-                        gameEntities={gameEntities}
-                        deletedGameEntities={deletedGameEntities}
-                        gamePlayerData={gamePlayerData}
+                        gameStore={gameStore}
                         goldFeedbacks={goldFeedbacks}
                         socket={socket}
                     />
@@ -533,9 +529,7 @@ export function GamePage({
                 <GameCanvas
                     currentPlayerId={currentPlayerId}
                     gameMap={gameMap}
-                    gameEntities={gameEntities}
-                    deletedGameEntities={deletedGameEntities}
-                    gamePlayerData={gamePlayerData}
+                    gameStore={gameStore}
                     goldFeedbacks={goldFeedbacks}
                     socket={socket}
                 />

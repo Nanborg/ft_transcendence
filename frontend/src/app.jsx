@@ -365,10 +365,8 @@ function App() {
               description={currentPage.description}
               currentPlayerId={currentUser?.id}
               gameMap={room.gameMap}
-              gameEntities={room.gameEntities}
-              deletedGameEntities={room.deletedGameEntities}
+              gameStore={room.gameStore}
               gameStartedAt={room.gameStartedAt}
-              gamePlayerData={room.gamePlayerData}
               gameError={room.gameError}
               gameResult={room.gameResult}
               socket={socket}

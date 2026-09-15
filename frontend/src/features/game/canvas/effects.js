@@ -84,30 +84,41 @@ export function drawDiamond(context, x, y, radius, color)
 
 export function drawHealthBar({ context, screen, entity, tilePixels, maxHealthRef })
 {
-	const health = Number(entity.health);
-	if (!Number.isFinite(health))
-		return;
-	const entityId = entity.entityId ?? entity.id;
-	if (!maxHealthRef.current.has(entityId))
-		maxHealthRef.current.set(entityId, health);
-	const maxHealth = maxHealthRef.current.get(entityId);
-	const ratio = Math.max(0, Math.min(1, health / maxHealth));
-	const width = tilePixels * 0.9;
-	const height = 5;
-	const x = screen.x - width / 2;
-	const y = screen.y - tilePixels * 0.72;
+    const health = Number(entity.health);
+    if (!Number.isFinite(health))
+        return;
+    const entityId = entity.entityId ?? entity.id;
+    let maxHealth = Number(entity.healthBarMax);
+    if (!Number.isFinite(maxHealth) || maxHealth <= 0)
+    {
+        const previousMax = maxHealthRef.current.get(entityId);
+        maxHealth = Math.max(
+            1,
+            Number.isFinite(previousMax) ? previousMax : 0,
+            health
+        );
+    }
+    maxHealthRef.current.set(entityId, maxHealth);
 
-	context.fillStyle = 'rgba(15, 20, 42, 0.9)';
-	context.fillRect(x, y, width, height);
-	if (ratio > 0.85)
-		context.fillStyle = '#22c55e';
-	else if (ratio > 0.66)
-		context.fillStyle = '#eab308';
-	else if (ratio > 0.33)
-		context.fillStyle = '#f97316';
-	else
-		context.fillStyle = '#ef4444';
-	context.fillRect(x, y, width * ratio, height);
+    const ratio = Math.max(0, Math.min(1, health / maxHealth));
+    const width = tilePixels * 0.9;
+    const height = 5;
+    const x = screen.x - width / 2;
+    const y = screen.y - tilePixels * 0.72;
+
+    context.fillStyle = 'rgba(15, 20, 42, 0.9)';
+    context.fillRect(x, y, width, height);
+
+    if (ratio > 0.85)
+        context.fillStyle = '#22c55e';
+    else if (ratio > 0.66)
+        context.fillStyle = '#eab308';
+    else if (ratio > 0.33)
+        context.fillStyle = '#f97316';
+    else
+        context.fillStyle = '#ef4444';
+
+    context.fillRect(x, y, width * ratio, height);
 }
 
 export function drawShieldBreakEffects({ context, effects, camera, now })
