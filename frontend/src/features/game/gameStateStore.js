@@ -15,6 +15,7 @@ function shallowEqual(first, second)
 
 function mergeEntry(previous, update, nestedKeys)
 {
+    // SYNC: Server deltas omit unchanged nested fields
     const next = { ...previous, ...update };
 
     for (const key of nestedKeys)
@@ -30,6 +31,7 @@ function mergeEntry(previous, update, nestedKeys)
 
 export function createGameStateStore()
 {
+    // WHY: Keep high-frequency game state outside React render state
     const entities = new Map();
     const players = new Map();
     const listeners = new Set();
@@ -51,6 +53,7 @@ export function createGameStateStore()
 
     function reset(snapshot = {})
     {
+        // SYNC: Full snapshots replace every cached entity/player
         entities.clear();
         players.clear();
         ended = snapshot.ended === true;
@@ -74,6 +77,7 @@ export function createGameStateStore()
 
     function applyUpdate(payload)
     {
+        // SAFETY: Final snapshots should not be changed by late deltas
         if (ended)
             return;
 
@@ -83,6 +87,7 @@ export function createGameStateStore()
 
         for (const update of payload.entityUpdate)
         {
+            // SYNC: Entity deltas merge into the cached snapshot
             if (!update || typeof update.entityId !== 'number')
                 continue;
 
@@ -98,6 +103,7 @@ export function createGameStateStore()
 
         for (const deleted of payload.entityDelete)
         {
+            // SYNC: Deleted entities are passed to subscribers once for effects
             if (!deleted || typeof deleted.entityId !== 'number')
                 continue;
 
@@ -108,6 +114,7 @@ export function createGameStateStore()
 
         for (const update of payload.playerData)
         {
+            // SYNC: Player deltas preserve nested upgrades/cooldowns
             if (!update || typeof update.playerId !== 'number')
                 continue;
 
@@ -137,6 +144,7 @@ export function createGameStateStore()
 
     function createPlayerView(playerId)
     {
+        // PERF: Stable snapshots avoid rerendering unchanged HUD data
         let previous;
 
         return () =>

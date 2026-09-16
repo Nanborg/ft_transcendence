@@ -238,7 +238,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
             return undefined;
         function handlePlayerAttack(payload)
         {
-            // SYNC: Server attack event triggers local attack animation
+            // SYNC: Server-confirmed attacks drive local animation
             if (!payload || payload.roomId !== renderDataRef.current.gameMap?.roomId ||
                 typeof payload.playerId !== 'number')
                 return;
@@ -260,6 +260,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
 
     useEffect(() =>
     {
+        // SYNC: Canvas subscribes to store changes without React rerenders
         let teleportDistance = 150;
         if (gameMap?.scale > 0)
             // DECISION: Large jumps snap instead of lerp
@@ -341,6 +342,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
             const updates = change.reset
                 ? gameStore.getEntities()
                 : change.entityUpdate;
+            // SYNC: Full snapshots rebuild tracks, deltas update only changed entities
             for (const entity of updates)
                 updateTrack(entity, now);
             for (const entity of change.entityDelete)

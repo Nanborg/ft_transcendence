@@ -8,6 +8,7 @@ export function useRoom(socket, currentUser) {
     const [roomError, setRoomError] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
+    // WHY: Live game data changes too often for normal React state
     const gameStoreRef = useRef(null);
     if (gameStoreRef.current === null)
         gameStoreRef.current = createGameStateStore();
@@ -57,7 +58,7 @@ export function useRoom(socket, currentUser) {
         function handleGameStart(gameStartPayload) {
             if (!isCurrentRoomPayload(gameStartPayload))
                 return;
-            // SYNC: Reset old game state before navigation
+            // SYNC: Clear previous match data before navigation
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
             gameStore.reset();
@@ -86,7 +87,7 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateInitPayload))
                 return;
-            // SYNC: Initial snapshot hydrates game screen
+            // SYNC: Initial snapshot hydrates the external game store
             setGameStarted(true);
             setGameMap(gameStateInitPayload.map ?? null);
             gameStore.reset(gameStateInitPayload);
@@ -113,7 +114,7 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
-            // SYNC: Store merges deltas and notifies canvas subscribers
+            // SYNC: Deltas stay in gameStore and notify subscribers
             gameStore.applyUpdate(gameStateUpdatePayload);
         }
 
@@ -160,7 +161,7 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameEndPayload))
                 return;
-            // SYNC: Final state feeds result screen
+            // SYNC: Final snapshot freezes gameStore for result screen
             setGameStarted(false);
             setGameStartInfo(null);
             gameStore.reset({ ...gameEndPayload, ended: true });
@@ -263,7 +264,7 @@ export function useRoom(socket, currentUser) {
     }
 
     function resetRoom() {
-        // SYNC: Reset all room/game state together
+        // SYNC: Reset room state and external game store together
         currentRoomIdRef.current = null;
         setCurrentRoom(null);
         setRoomStatus('idle');
