@@ -1,9 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-
-/*
-function getPlayerName(currentUser) {
-    return currentUser?.username || currentUser?.email || 'Player';
-}*/
+import { createGameStateStore } from '../game/gameStateStore';
 
 export function useRoom(socket, currentUser) {
     const [roomIdInput, setRoomIdInput] = useState('');
@@ -12,13 +8,13 @@ export function useRoom(socket, currentUser) {
     const [roomError, setRoomError] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
-    // const [latestGameState, setLatestGameState] = useState(null);
-    const [gameEntities, setGameEntities] = useState([]);
-    const [deletedGameEntities, setDeletedGameEntities] = useState([]);
+    const gameStoreRef = useRef(null);
+    if (gameStoreRef.current === null)
+        gameStoreRef.current = createGameStateStore();
+    const gameStore = gameStoreRef.current;
     const [gameResult, setGameResult] = useState(null);
     const [gameError, setGameError] = useState('');
     const [roomNameInput, setRoomNameInput] = useState('');
-    const [gamePlayerData, setGamePlayerData] = useState([]);
     const [gameStartedAt, setGameStartedAt] = useState(null);
     const [gameMap, setGameMap] = useState(null);
     const currentRoomIdRef = useRef(null);
@@ -59,10 +55,7 @@ export function useRoom(socket, currentUser) {
                 return;
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
-            // setLatestGameState(null);
-            setGameEntities([]);
-            setDeletedGameEntities([]);
-            setGamePlayerData([]);
+            gameStore.reset();
             setGameStartedAt(null);
             setGameError('');
             setGameResult(null);
@@ -89,10 +82,8 @@ export function useRoom(socket, currentUser) {
                 return;
             setGameStarted(true);
             setGameMap(gameStateInitPayload.map ?? null);
-            setGameEntities(gameStateInitPayload.entities);
-            setGamePlayerData(gameStateInitPayload.playerData);
+            gameStore.reset(gameStateInitPayload);
             setGameStartedAt(gameStateInitPayload.serverStartedAt);
-            // setLatestGameState(null);
             setGameError('');
             setGameResult(null);
             setRoomStatus('started');
@@ -114,73 +105,8 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
-            if (gameStateUpdatePayload.entityDelete.length > 0)
-                setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
-            setGameEntities(previousEntities => {
-                const updateEntities = new Map(
-                    previousEntities.map(entity => [
-                        entity.entityId,
-                        entity,
-                    ])
-                );
-                gameStateUpdatePayload.entityUpdate.forEach(entity => {
-                    if (!entity || typeof entity.entityId !== 'number')
-                        return;
-                    const previousEntity = updateEntities.get(entity.entityId);
-                    updateEntities.set(entity.entityId, {
-                        ...previousEntity,
-                        ...entity,
-                        state: {
-                            ...previousEntity?.state,
-                            ...entity.state,
-                        },
-                    });
-                });
-                gameStateUpdatePayload.entityDelete.forEach(entity => {
-                    if (entity && typeof entity.entityId === 'number')
-                        updateEntities.delete(entity.entityId);
-                });
-                return Array.from(updateEntities.values());
-            });
-            if (gameStateUpdatePayload.playerData.length > 0) {
-                setGamePlayerData(previousPlayers => {
-                    const playersById = new Map(
-                        previousPlayers.map(player => [
-                            player.playerId,
-                            player,
-                        ])
-                    );
-                    gameStateUpdatePayload.playerData.forEach(player => {
-                        if (!player || typeof player.playerId !== 'number')
-                            return;
-                        const previousPlayer = playersById.get(player.playerId);
-                        playersById.set(player.playerId, {
-                            ...previousPlayer,
-                            ...player,
-                            upgrades: {
-                                ...previousPlayer?.upgrades,
-                                ...player.upgrades,
-                            },
-                            cooldowns: {
-                                ...previousPlayer?.cooldowns,
-                                ...player.cooldowns,
-                            },
-                        });
-                    });
-                    return Array.from(playersById.values());
-                });
-            }
+            gameStore.applyUpdate(gameStateUpdatePayload);
         }
-
-        // function handleGameState(gameStatePayload) {
-        //     if (!gameStatePayload || typeof gameStatePayload.state !== 'object' || gameStatePayload.state === null)
-        //     {
-        //         console.error("Invalid game:state payload:", gameStatePayload);
-        //         return;
-        //     }
-        //     setGameEntities([]);
-        //     setLatestGameState(gameStatePayload.state);
-        // }
 
         function handleGameError(gameErrorPayload) {
             if (!gameErrorPayload || typeof gameErrorPayload.message !== 'string')
@@ -224,9 +150,7 @@ export function useRoom(socket, currentUser) {
                 return;
             setGameStarted(false);
             setGameStartInfo(null);
-            // setLatestGameState(null);
-            setGameEntities(gameEndPayload.entities);
-            setGamePlayerData(gameEndPayload.playerData);
+            gameStore.reset({ ...gameEndPayload, ended: true });
             setGameStartedAt(null);
             setGameResult(gameEndPayload);
             setGameError('');
@@ -240,7 +164,6 @@ export function useRoom(socket, currentUser) {
         socket.on('game:start', handleGameStart);
         socket.on('game:state:init', handleGameStateInit);
         socket.on('game:state:update', handleGameStateUpdate);
-        // socket.on('game:state', handleGameState);
         socket.on('game:end', handleGameEnd);
         socket.on('game:error', handleGameError);
         socket.on('room:removed', handleRoomRemoved);
@@ -253,13 +176,12 @@ export function useRoom(socket, currentUser) {
             socket.off('game:start', handleGameStart);
             socket.off('game:state:init', handleGameStateInit);
             socket.off('game:state:update', handleGameStateUpdate);
-            // socket.off('game:state', handleGameState);
             socket.off('game:end', handleGameEnd);
             socket.off('game:error', handleGameError);
             socket.off('room:removed', handleRoomRemoved);
 			socket.off("debug:latency:result", pingBackend);
         };
-    }, [socket]);
+    }, [socket, gameStore]);
 
 	useEffect(() => {
 		if (!socket) return;
@@ -331,11 +253,8 @@ export function useRoom(socket, currentUser) {
         setRoomNameInput('');
         setGameStarted(false);
         setGameStartInfo(null);
-        // setLatestGameState(null);
         setGameError('');
-        setGameEntities([]);
-        setDeletedGameEntities([]);
-        setGamePlayerData([]);
+        gameStore.reset();
         setGameStartedAt(null);
         setGameResult(null);
         setGameMap(null);
@@ -394,17 +313,14 @@ export function useRoom(socket, currentUser) {
         toggleReady,
         startGame,
         gameStartInfo,
-        // latestGameState,
         gameStarted,
         roomNameInput,
         setRoomNameInput,
         gameResult,
         gameMap,
-        gameEntities,
-        deletedGameEntities,
+        gameStore,
         gameError,
         leaveGame,
-        gamePlayerData,
         gameStartedAt,
     };
 }
