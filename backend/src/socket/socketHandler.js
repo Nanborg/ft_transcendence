@@ -2,13 +2,14 @@
 // SAFETY: Game end processing is locked per room so duplicate engine messages do not double-save results
 const { addConnection } = require('./connections');
 const { getRoomsByUserId, resetGameStart } = require('./rooms');
-const { gameEngineService } = require('../services/gameEngineService');
+const { gameEngineService, PLAYER_ACTION } = require('../services/gameEngineService');
 const { adaptPayloadForDB, saveGameResults } = require('../services/gameService');
 const { registerConnectionHandlers } = require('./handlers/connectionHandlers');
 const { registerRoomHandlers } = require('./handlers/roomHandlers');
 const { registerGameHandlers } = require('./handlers/gameHandlers');
 const { registerChatHandlers } = require('./handlers/chatHandlers');
 const { getUserSocketRoom, normalizeEngineEntity } = require('./socketUtils');
+const { createGameStateBatcher } = require('./gameStateBatcher');
 
 const processingGameEnds = new Set();
 
@@ -80,6 +81,8 @@ function getEnginePayloadPlayer(player, session)
 
 module.exports = (io) =>
 {
+    const gameStateBatcher = createGameStateBatcher(io, roomId => gameEngineService.getSession(roomId));
+    gameEngineService.on('close', gameStateBatcher.clear);
     gameEngineService.on('playerUpdate', (message) =>
     {
         const roomId = getMessageRoomId(message);
@@ -94,6 +97,9 @@ module.exports = (io) =>
             console.error('Invalid playerUpdate received from game engine:', message);
             return;
         }
+        const previousPlayer = gameEngineService.getSession(roomId)?.playerData.find(
+            player => player.enginePlayerId === message.playerData.playerId
+        );
         const normalizedPlayer = gameEngineService.cachePlayerUpdate(
             roomId,
             message.playerData,
@@ -104,8 +110,27 @@ module.exports = (io) =>
             console.error(`Unable to map playerupdate for room ${roomId}:`, message.playerData);
             return;
         }
+        if (previousPlayer && !processingGameEnds.has(roomId))
+        {
+            for (const [key, action] of [
+                ['melee', PLAYER_ACTION.MELEE],
+                ['ranged', PLAYER_ACTION.RANGED],
+            ])
+            {
+                const before = previousPlayer.cooldowns?.[key];
+                const after = normalizedPlayer.cooldowns?.[key];
+                if (Number.isFinite(before) && Number.isFinite(after) && after > before)
+                {
+                    io.to(roomId).emit('player:attack', {
+                        roomId,
+                        playerId: normalizedPlayer.playerId,
+                        action,
+                    });
+                }
+            }
+        }
         const session = gameEngineService.getSession(roomId);
-        io.to(roomId).emit('game:state:update', {
+        gameStateBatcher.enqueue({
             roomId,
             tick: getMessageTick(message, session),
             end: false,
@@ -129,8 +154,19 @@ module.exports = (io) =>
             return;
         }
         const entity = normalizeEngineEntity(message.entity);
+        const session = gameEngineService.getSession(roomId);
+        const previousEntity = session?.entities.get(entity.entityId);
+        if (Number.isFinite(entity.health))
+        {
+            const previousMax = previousEntity?.healthBarMax;
+            entity.healthBarMax = Math.max(
+                1,
+                Number.isFinite(previousMax) ? previousMax : 0,
+                entity.health
+            );
+        }
         gameEngineService.cacheEntityUpdate(roomId, entity, message.tick);
-        io.to(roomId).emit('game:state:update', {
+        gameStateBatcher.enqueue({
             roomId,
             tick: message.tick,
             end: false,
@@ -153,6 +189,7 @@ module.exports = (io) =>
             console.log(`[GameEnd] Duplicate event ignored for room: ${roomId}`);
             return;
         }
+        gameStateBatcher.end(roomId);
         processingGameEnds.add(roomId);
         const snapshot = gameEngineService.getStateSnapshot(roomId);
         const endedAt = Date.now();
@@ -239,7 +276,7 @@ module.exports = (io) =>
         }
         const deletedEntity = normalizeEngineEntity(message.entity);
         gameEngineService.cacheEntityDelete(roomId, deletedEntity.entityId, message.tick);
-        io.to(roomId).emit('game:state:update', {
+        gameStateBatcher.enqueue({
             roomId,
             tick: message.tick,
             end: false,
@@ -269,7 +306,7 @@ module.exports = (io) =>
 
         registerConnectionHandlers(io, socket);
         registerRoomHandlers(io, socket);
-        registerGameHandlers(io, socket);
+        registerGameHandlers(io, socket, gameStateBatcher);
         registerChatHandlers(io, socket);
     });
 };

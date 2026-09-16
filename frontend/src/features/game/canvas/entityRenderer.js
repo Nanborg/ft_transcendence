@@ -13,6 +13,8 @@ import {
     drawLordGoobSprite,
 } from './enemySprites';
 
+const staticMapEntitiesCache = new WeakMap();
+
 export function drawEntity({ context, entity, position, camera, now, attack, directionRow = 0, playerSpriteTint = null, maxHealthRef })
 {
     const type = getEntityType(entity);
@@ -379,10 +381,18 @@ export function drawStaticMapEntities({ context, gameMap, camera, now })
 {
     if (!Array.isArray(gameMap?.entities))
         return;
-    gameMap.entities.forEach((entity) =>
+    let staticEntities = staticMapEntitiesCache.get(gameMap.entities);
+    if (!staticEntities)
     {
-        if (!entity || getEntityType(entity) === ENTITY_TYPE.WALL || !STATIC_MAP_ENTITY_TYPES.has(getEntityType(entity)) || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
-            return;
+        staticEntities = gameMap.entities.filter(entity => {
+            if (!entity || typeof entity.posX !== 'number' || typeof entity.posY !== 'number')
+                return false;
+            const type = getEntityType(entity);
+            return type !== ENTITY_TYPE.WALL && STATIC_MAP_ENTITY_TYPES.has(type);
+        });
+        staticMapEntitiesCache.set(gameMap.entities, staticEntities);
+    }
+    staticEntities.forEach(entity => {
         drawEntity({
             context,
             entity,

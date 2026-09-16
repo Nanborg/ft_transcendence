@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { createGameStateStore } from '../game/gameStateStore';
 
-// WHY: Centralize room and live game socket state
 export function useRoom(socket, currentUser) {
     const [roomIdInput, setRoomIdInput] = useState('');
     const [currentRoom, setCurrentRoom] = useState(null);
@@ -8,12 +8,13 @@ export function useRoom(socket, currentUser) {
     const [roomError, setRoomError] = useState('');
     const [gameStarted, setGameStarted] = useState(false);
     const [gameStartInfo, setGameStartInfo] = useState(null);
-    const [gameEntities, setGameEntities] = useState([]);
-    const [deletedGameEntities, setDeletedGameEntities] = useState([]);
+    const gameStoreRef = useRef(null);
+    if (gameStoreRef.current === null)
+        gameStoreRef.current = createGameStateStore();
+    const gameStore = gameStoreRef.current;
     const [gameResult, setGameResult] = useState(null);
     const [gameError, setGameError] = useState('');
     const [roomNameInput, setRoomNameInput] = useState('');
-    const [gamePlayerData, setGamePlayerData] = useState([]);
     const [gameStartedAt, setGameStartedAt] = useState(null);
     const [gameMap, setGameMap] = useState(null);
     // REQUIRED: Socket callbacks need latest room id
@@ -59,9 +60,7 @@ export function useRoom(socket, currentUser) {
             // SYNC: Reset old game state before navigation
             setGameStarted(true);
             setGameStartInfo(gameStartPayload);
-            setGameEntities([]);
-            setDeletedGameEntities([]);
-            setGamePlayerData([]);
+            gameStore.reset();
             setGameStartedAt(null);
             setGameError('');
             setGameResult(null);
@@ -90,8 +89,7 @@ export function useRoom(socket, currentUser) {
             // SYNC: Initial snapshot hydrates game screen
             setGameStarted(true);
             setGameMap(gameStateInitPayload.map ?? null);
-            setGameEntities(gameStateInitPayload.entities);
-            setGamePlayerData(gameStateInitPayload.playerData);
+            gameStore.reset(gameStateInitPayload);
             setGameStartedAt(gameStateInitPayload.serverStartedAt);
             setGameError('');
             setGameResult(null);
@@ -115,66 +113,8 @@ export function useRoom(socket, currentUser) {
             }
             if (!isCurrentRoomPayload(gameStateUpdatePayload))
                 return;
-            if (gameStateUpdatePayload.entityDelete.length > 0)
-                // SYNC: Canvas plays delete effects
-                setDeletedGameEntities(gameStateUpdatePayload.entityDelete);
-            setGameEntities(previousEntities => {
-                // SYNC: Merge deltas into local entity cache
-                const updateEntities = new Map(
-                    previousEntities.map(entity => [
-                        entity.entityId,
-                        entity,
-                    ])
-                );
-                gameStateUpdatePayload.entityUpdate.forEach(entity => {
-                    if (!entity || typeof entity.entityId !== 'number')
-                        return;
-                    const previousEntity = updateEntities.get(entity.entityId);
-                    // SYNC: Preserve nested state between deltas
-                    updateEntities.set(entity.entityId, {
-                        ...previousEntity,
-                        ...entity,
-                        state: {
-                            ...previousEntity?.state,
-                            ...entity.state,
-                        },
-                    });
-                });
-                gameStateUpdatePayload.entityDelete.forEach(entity => {
-                    if (entity && typeof entity.entityId === 'number')
-                        updateEntities.delete(entity.entityId);
-                });
-                return Array.from(updateEntities.values());
-            });
-            if (gameStateUpdatePayload.playerData.length > 0) {
-                setGamePlayerData(previousPlayers => {
-                    // SYNC: Merge player deltas by player id
-                    const playersById = new Map(
-                        previousPlayers.map(player => [
-                            player.playerId,
-                            player,
-                        ])
-                    );
-                    gameStateUpdatePayload.playerData.forEach(player => {
-                        if (!player || typeof player.playerId !== 'number')
-                            return;
-                        const previousPlayer = playersById.get(player.playerId);
-                        playersById.set(player.playerId, {
-                            ...previousPlayer,
-                            ...player,
-                            upgrades: {
-                                ...previousPlayer?.upgrades,
-                                ...player.upgrades,
-                            },
-                            cooldowns: {
-                                ...previousPlayer?.cooldowns,
-                                ...player.cooldowns,
-                            },
-                        });
-                    });
-                    return Array.from(playersById.values());
-                });
-            }
+            // SYNC: Store merges deltas and notifies canvas subscribers
+            gameStore.applyUpdate(gameStateUpdatePayload);
         }
 
         function handleGameError(gameErrorPayload) {
@@ -223,8 +163,7 @@ export function useRoom(socket, currentUser) {
             // SYNC: Final state feeds result screen
             setGameStarted(false);
             setGameStartInfo(null);
-            setGameEntities(gameEndPayload.entities);
-            setGamePlayerData(gameEndPayload.playerData);
+            gameStore.reset({ ...gameEndPayload, ended: true });
             setGameStartedAt(null);
             setGameResult(gameEndPayload);
             setGameError('');
@@ -256,7 +195,7 @@ export function useRoom(socket, currentUser) {
             socket.off('room:removed', handleRoomRemoved);
 			socket.off("debug:latency:result", pingBackend);
         };
-    }, [socket]);
+    }, [socket, gameStore]);
 
 	useEffect(() => {
 		if (!socket) return;
@@ -334,9 +273,7 @@ export function useRoom(socket, currentUser) {
         setGameStarted(false);
         setGameStartInfo(null);
         setGameError('');
-        setGameEntities([]);
-        setDeletedGameEntities([]);
-        setGamePlayerData([]);
+        gameStore.reset();
         setGameStartedAt(null);
         setGameResult(null);
         setGameMap(null);
@@ -404,11 +341,9 @@ export function useRoom(socket, currentUser) {
         setRoomNameInput,
         gameResult,
         gameMap,
-        gameEntities,
-        deletedGameEntities,
+        gameStore,
         gameError,
         leaveGame,
-        gamePlayerData,
         gameStartedAt,
     };
 }
