@@ -6,6 +6,7 @@ import { PageHeading } from '../components/PageHeading';
 export function ProfilePage({
 	profileStatus, profileError, profileUser,
 	onSessionExpired, onProfileUpdated, onUpdateProfile,
+	onDeleteAccount, onAccountDeleted,
 })
 {
 	const [username, setUsername] = useState('');
@@ -53,6 +54,29 @@ export function ProfilePage({
 		}
 	}
 
+	const [deleteStatus, setDeleteStatus] = useState('idle');
+
+    async function handleDeleteAccount()
+    {
+        if (!window.confirm('Delete your account permanently? This cannot be undone.'))
+            return;
+        setDeleteStatus('loading');
+        try
+        {
+            await onDeleteAccount();
+            onAccountDeleted();
+        }
+        catch (error)
+        {
+            if (error.status === 401 || error.status === 403)
+            {
+                onSessionExpired(error.message);
+                return;
+            }
+            setDeleteStatus('error');
+        }
+    }
+
 	let saveLabel = 'Save Profile';
 	if (saveStatus === 'loading')
 		saveLabel = 'Saving...';
@@ -89,6 +113,9 @@ export function ProfilePage({
 									<input id="profile-avatar-url" name="avatarUrl" className="form-control" value={avatar} onChange={(event) => setAvatar(event.target.value)} autoComplete="url" />
 								</label>
 								<button className="btn btn-success" type="submit" disabled={saveStatus === 'loading' || !username.trim()}>{saveLabel}</button>
+								<button className="btn btn-outline-danger" type="button" onClick={handleDeleteAccount} disabled={deleteStatus === 'loading'}>
+    								Delete account
+								</button>
 								{saveStatus === 'saved' && <p className="alert alert-success">Profile saved.</p>}
 								{saveStatus === 'error' && <p className="alert alert-danger" role="alert">{saveError}</p>}
 							</form>
