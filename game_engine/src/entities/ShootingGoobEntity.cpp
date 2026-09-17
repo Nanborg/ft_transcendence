@@ -36,30 +36,33 @@ void	ShootingGoobEntity::_updateDirection( int diffX, int diffY ) {
 }
 
 void ShootingGoobEntity::_shoot( int diffX, int diffY ) {
-	const unsigned int dist = std::hypot(diffX, diffY);
-	if (dist == 0)
+	if (diffX == 0 && diffY == 0)
 		return;
-
-	const double velocityScale = static_cast<double>(g_game->getScale()) * _projectileSpeed / static_cast<double>(dist);
-
-	const int projectileVelX = static_cast<int>(static_cast<double>(diffX) * velocityScale);
-	const int projectileVelY = static_cast<int>(static_cast<double>(diffY) * velocityScale);
 
 		const double scale = static_cast<double>(g_game->getScale());
 		int muzzlePosX = _posX;
 		int muzzlePosY = _posY;
 		if (_dirX < 0) {
 			muzzlePosX -= scale * 0.55;
-			muzzlePosY -= scale * 0.65;
+			muzzlePosY -= scale * 0.01;
 		} else if (_dirX > 0) {
 			muzzlePosX += scale * 0.55;
-			muzzlePosY -= scale * 0.65;
+			muzzlePosY -= scale * 0.01;
 		} else if (_dirY < 0) {
-			muzzlePosY -= scale * 1.15;
+			muzzlePosY -= scale * 0.39;
 		} else {
 			muzzlePosX -= scale * 0.28;
-			muzzlePosY -= scale * 0.45;
+			muzzlePosY += scale * 0.19;
 		}
+
+	const double aimX = static_cast<double>(_posX) + diffX - muzzlePosX;
+	const double aimY = static_cast<double>(_posY) + diffY - muzzlePosY;
+	const double aimDist = std::hypot(aimX, aimY);
+	if (aimDist == 0)
+		return;
+	const double velocityScale = scale * _projectileSpeed / aimDist;
+	const int projectileVelX = static_cast<int>(aimX * velocityScale);
+	const int projectileVelY = static_cast<int>(aimY * velocityScale);
 
 	g_game->spawnEntity(new EnemyProjectileEntity(muzzlePosX, muzzlePosY, projectileVelX, projectileVelY, _id, _projectileDamage));
 

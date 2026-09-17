@@ -22,6 +22,9 @@ import {
 } from '../spriteAssets';
 import { getSpriteSource } from '../spriteUtils';
 
+// Sprite sheet anchors are near the feet; the engine hitbox is centered on screen.
+const HITBOX_ANCHOR_OFFSET_Y = 0.4;
+
 export function drawShootingRobotSprite({
     context,
     entity,
@@ -132,7 +135,7 @@ export function drawShootingRobotSprite({
         source.width,
         source.height,
         centerX - source.anchorX * spriteWidth,
-        centerY - source.anchorY * spriteHeight,
+        centerY - (source.anchorY - HITBOX_ANCHOR_OFFSET_Y) * spriteHeight,
         spriteWidth,
         spriteHeight,
     );
