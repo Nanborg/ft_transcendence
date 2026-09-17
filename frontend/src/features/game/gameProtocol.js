@@ -1,3 +1,5 @@
+// WHY: Game protocol constants document the shared contract between UI and backend
+// WHY: Numeric action ids must match backend/game engine
 export const PLAYER_ACTION = Object.freeze({
 	NONE: 0,
 	MELEE: 1,
@@ -5,6 +7,7 @@ export const PLAYER_ACTION = Object.freeze({
 	SHIELD: 3,
 });
 
+// WHY: Entity ids define render and gameplay categories
 export const ENTITY_TYPE = Object.freeze({
 	PLAYER: 1,
 	WALL: 2,

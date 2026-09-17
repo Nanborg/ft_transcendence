@@ -1,3 +1,5 @@
+// WHY: Socket handler is the bridge between browser rooms, chat, and game engine events
+// SAFETY: Game end processing is locked per room so duplicate engine messages do not double-save results
 const { addConnection } = require('./connections');
 const { getRoomsByUserId, resetGameStart } = require('./rooms');
 const { gameEngineService, PLAYER_ACTION } = require('../services/gameEngineService');
@@ -10,12 +12,6 @@ const { getUserSocketRoom, normalizeEngineEntity } = require('./socketUtils');
 const { createGameStateBatcher } = require('./gameStateBatcher');
 
 const processingGameEnds = new Set();
-
-//Princiamf2
-// TODO(princiamf2): Add Socket.IO tests for room lifecycle, gameplay events,
-// invalid payloads, disconnects, and multi-room isolation.
-// These tests should cover create, join, ready, start, input, state, end,
-// leave, reconnect, and room deletion.
 
 function getMessageRoomId(message)
 {
@@ -71,6 +67,7 @@ function getEnginePayloadPlayer(player, session)
     const sessionPlayer = session?.players.find((sp) => sp.enginePlayerId === player.playerId);
     if (sessionPlayer)
     {
+        // SYNC: Store user id, not engine id
         return {
             ...player,
             playerId: sessionPlayer.userId,
@@ -213,7 +210,7 @@ module.exports = (io) =>
                 playerData: playerData.map((p) => getEnginePayloadPlayer(p, session)),
             };
             const dbData = adaptPayloadForDB(enginePayload);
-            // TEMP: Saving stats immediately here. Logic might change when real win conditions are implemented.
+            // DECISION: Save final engine result now
             await saveGameResults(dbData);
             let roomToUpdate = null;
             try

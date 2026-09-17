@@ -1,3 +1,6 @@
+// WHY: Chat service exposes the complete chat API from one import point
+// DECISION: Sub-services stay split by feature while routes keep a simple dependency
+// REQUIRED: Export names match the handlers that import chat operations
 const {
     MAX_CHAT_MESSAGE_LENGTH,
     ChatServiceError,

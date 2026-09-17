@@ -6,9 +6,11 @@ export function DevLoginForm(
 {
 	function handleFortyTwoLogin()
 	{
+		// REQUIRED: OAuth starts with backend redirect
 		window.location.href = '/api/login/42';
 	}
 	return (
+		// DECISION: One form switches login/register mode
 		<form className="login-form" onSubmit={authMode === 'register' ? onRegister : onSubmit}>
 			<label className="form-label" htmlFor="dev-user-name">Username</label>
 			<input
@@ -23,6 +25,7 @@ export function DevLoginForm(
 				required
 			/>
 			{authMode === 'register' && (
+				// REQUIRED: Email is only needed for register
 				<>
 					<label className="form-label" htmlFor="email">Email</label>
 					<input
@@ -57,6 +60,7 @@ export function DevLoginForm(
 				{authMode === 'login' ? 'Create account' : 'Back to login'}
 			</button>
 			{authMode === 'login' && (
+				// DECISION: 42 login only appears in login mode
 				<button className="btn btn-outline-light" type="button" onClick={handleFortyTwoLogin}>
 					Login with 42
 				</button>

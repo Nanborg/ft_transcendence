@@ -4,6 +4,8 @@ import { getEntityType } from './spriteUtils';
 import { worldToScreen } from './cameraUtils';
 import { drawDiamond, drawHealthBar } from './effects';
 import { drawPlayerAttackSprite, drawPlayerWalkSprite } from './playerSprite';
+// WHY: Entity renderer decides which sprite drawer matches each server entity type
+// FALLBACK: Unknown entities can still be handled without breaking the whole canvas pass
 import {
     drawWalkingRobotSprite,
     drawShootingRobotSprite,
@@ -400,3 +402,4 @@ export function drawStaticMapEntities({ context, gameMap, camera, now })
         });
     });
 }
+// WHY: Entity renderer chooses the correct sprite/effect for every game entity

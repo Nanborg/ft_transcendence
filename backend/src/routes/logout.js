@@ -5,14 +5,17 @@ router.use(express.json());
 
 router.delete("/", async(req, res) => {
 	try {
+		// REQUIRED: Logout revokes refresh token
 		const token = req.cookies ? req.cookies.refreshToken : null;
 		if (!token)
+			// SAFETY: Missing cookie cannot be revoked
 			return res.sendStatus(400)
 		await prisma.refreshToken.updateMany(
 		{
 			where: { token: token },
 			data: { isRevoked: true }
 		});
+		// SYNC: Browser cookies are cleared after DB revoke
 		res.clearCookie('accessToken');
         res.clearCookie('refreshToken');
 		return (res.sendStatus(204));

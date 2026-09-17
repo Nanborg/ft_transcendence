@@ -2,6 +2,7 @@ import { apiRequest } from "./apiReq";
 
 export async function loginUser(username, password)
 {
+	// REQUIRED: Login sets auth cookies server-side
 	const response = await fetch('/api/login',
 		{
 			method: 'POST',
@@ -18,6 +19,7 @@ export async function loginUser(username, password)
 
 export async function registerUser(username, email, password)
 {
+	// REQUIRED: Registration creates the login identity
 	const response = await fetch('/api/register', 
 		{
 			method: 'POST',
@@ -37,8 +39,10 @@ export async function registerUser(username, email, password)
 export async function fetchCurrentUser()
 {
 	try{
+		// WHY: Profile page needs the server session user
 		return await apiRequest("/api/users/me", {});
 	} catch (err) {
+		// SAFETY: Let auth errors expire the session upstream
 		if (err.status === 401 || err.status === 403)
 			throw err;
 		throw new Error("Unable to load profile");
@@ -49,6 +53,7 @@ export async function fetchPublicUserProfile(userId)
 {
 	const normalizedUserId = Number(userId);
 
+	// SAFETY: Reject invalid route ids before calling API
 	if (!Number.isInteger(normalizedUserId) || normalizedUserId <= 0)
 		throw new Error("Invalid user id");
 	try {
@@ -65,6 +70,7 @@ export async function fetchPublicUserProfile(userId)
 export async function updateCurrentUser(profileData)
 {
 	try{
+		// DECISION: PATCH keeps profile updates partial
 		return await apiRequest("/api/users/me",
 			{
 				method: "PATCH",
@@ -80,6 +86,7 @@ export async function updateCurrentUser(profileData)
 
 export async function logoutUser()
 {
+	// DECISION: App clears local state even if this fails
 	await fetch('/api/logout',
 	{
 		method: 'DELETE',

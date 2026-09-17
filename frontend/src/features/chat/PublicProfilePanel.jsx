@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchPublicUserProfile } from '../../api/users';
 import { ProfileDetails } from '../profile/ProfileDetails';
 
+// WHY: Direct chat can preview a user profile inline
 export function PublicProfilePanel({user, onBack,})
 {
 	const [profile, setProfile] = useState(null);
@@ -13,23 +14,27 @@ export function PublicProfilePanel({user, onBack,})
 		let cancelled = false;
 		async function loadProfile()
 		{
+			// SYNC: Load profile for selected DM user
 			setProfile(null);
 			setStatus('loading');
 			setError('');
 			try {
 				const loadedProfile = await fetchPublicUserProfile(user?.id);
 				if (cancelled)
+					// SAFETY: Ignore stale profile response
 					return;
 				setProfile(loadedProfile);
 				setStatus('loaded');
 			} catch (loadError) {
 				if (cancelled)
+					// SAFETY: Ignore stale load errors
 					return;
 				setStatus('error');
 				setError(loadError.message);
 			}
 		}
 		loadProfile();
+		// SAFETY: Mark request stale on user change
 		return () => { cancelled = true; };
 	}, [user?.id]);
 

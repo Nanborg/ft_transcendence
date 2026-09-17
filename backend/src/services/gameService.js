@@ -1,3 +1,5 @@
+// WHY: Game service adapts final engine payloads into database score records
+// REQUIRED: User ids must be normalized before persistence so scores attach to real accounts
 const prisma = require('../db');
 
 function adaptPayloadForDB(enginePayload)
@@ -63,3 +65,4 @@ async function saveGameResults(gameData)
 }
 
 module.exports = { adaptPayloadForDB, saveGameResults };
+// WHY: Game service converts final engine payloads into database game stats

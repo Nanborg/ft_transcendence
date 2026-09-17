@@ -1,3 +1,5 @@
+// WHY: Map file helpers prepare temporary JSON files consumed by the gameplay engine
+// SAFETY: Room ids are encoded before becoming filenames to avoid unsafe paths
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -31,6 +33,7 @@ async function writeMapFile(mapDirectory, mapPayload)
     });
     try
     {
+        // SAFETY: Rename only after full write
         await fs.writeFile(temporaryPath, serializedPayload, {
             encoding: 'utf8',
             flag: 'wx',
@@ -72,7 +75,6 @@ async function removeMapFile(filePath)
     }
 }
 
-// n is the number of players in the room
 async function pickRandomMapFile(n)
 {
     if (n <= 0 || n > 4)

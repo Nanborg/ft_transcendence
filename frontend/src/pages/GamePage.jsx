@@ -9,6 +9,7 @@ import { useGameView } from '../features/game/useGameView';
 
 function formatDuration(totalSeconds)
 {
+    // DECISION: Timer uses mm:ss for compact HUD
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
@@ -19,6 +20,7 @@ function useGameTimer(startedAt, enabled)
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     useEffect(() =>
     {
+        // SAFETY: Stop timer until game is ready
         if (!enabled || typeof startedAt !== 'number')
         {
             setElapsedSeconds(0);
@@ -26,6 +28,7 @@ function useGameTimer(startedAt, enabled)
         }
         function updateTimer()
         {
+            // SYNC: Server start time is reference
             setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
         }
         updateTimer();
@@ -67,17 +70,20 @@ const UPGRADE_STATS = {
 
 function getUpgradeValue(skill, level)
 {
+    // DECISION: UI mirrors upgrade formula
     const stat = UPGRADE_STATS[skill];
     return stat.baseValue + level * stat.valuePerLevel;
 }
 
 function SkillSlot({ skill, hotkey, lvl, cooldown })
 {
+    // SAFETY: Clamp level before sprite lookup
     const safeLvl = Math.max(0, Math.min(3, lvl));
     const safeCooldown = Number.isFinite(cooldown) ? Math.max(0, cooldown) : 0;
     const onCooldown = safeCooldown > 0;
     const cooldownText = safeCooldown.toFixed(2);
     const iconStyle = {
+        // SYNC: Sprite sheet row follows skill level
         backgroundImage: `url(${skillSprites})`,
         backgroundPosition: `${SKILL_COLUMNS[skill] * 50}% ${safeLvl * (100 / 3)}%`,
     };
@@ -142,6 +148,7 @@ export function GamePage({
     {
         if (skill === 'health')
         {
+            // DECISION: Health uses fixed checkpoint price
             const canAfford = currentGold >= HEALTH_UPGRADE_COST;
             const buttonClass = ['checkpoint-upgrade-card', 'checkpoint-upgrade-card--shield', !canAfford ? 'upgrade-unavailable' : '', ].filter(Boolean).join(' ');
             const iconStyle = { backgroundImage: `url(${healIcon})`, backgroundSize: '70%', backgroundPosition: 'center', };
@@ -168,6 +175,7 @@ export function GamePage({
             );
         }
         const level = skillLevels[skill] ?? 0;
+        // SAFETY: Do not render upgrade above max
         const isMaxLevel = level >= MAX_SKILL_LEVEL;
         const nextLevel = Math.min(MAX_SKILL_LEVEL, level + 1);
         const cost = getUpgradeCost(level);
@@ -182,6 +190,7 @@ export function GamePage({
             !canBuy ? 'upgrade-unavailable' : '',
         ].filter(Boolean).join(' ');
         const iconPosition = `${SKILL_COLUMNS[skill] * 50}% ${nextLevel * (100 / 3)}%`;
+        // SYNC: Preview icon shows next level
         const iconStyle = { backgroundImage: `url(${skillSprites})`, backgroundPosition: iconPosition, };
 
         return (
@@ -228,6 +237,7 @@ export function GamePage({
             return undefined;
         function handleCheckpointError(payload)
         {
+            // SAFETY: Ignore errors from other rooms
             if (payload?.roomId && payload.roomId !== currentRoom?.id)
                 return;
             setPendingUpgrade(null);
@@ -244,6 +254,7 @@ export function GamePage({
     {
         if (!isAtCheckpoint)
         {
+            // SYNC: Leaving checkpoint closes shop
             setPendingUpgrade(null);
             setCheckpointError('');
             setIsCheckpointMenuOpen(false);
@@ -261,6 +272,7 @@ export function GamePage({
             return;
         if (previousGoldRef.current === null)
         {
+            // DECISION: First gold value sets baseline
             previousGoldRef.current = currentGold;
             return;
         }
@@ -268,6 +280,7 @@ export function GamePage({
         previousGoldRef.current = currentGold;
         if (delta === 0)
             return;
+        // SYNC: Gold delta animates above player
         const feedback = {
             id: `${Date.now()}-${Math.random()}`,
             amount: Math.abs(delta),
@@ -285,11 +298,13 @@ export function GamePage({
     useEffect(() =>
     {
         if (pendingUpgrade)
+            // SYNC: New stats confirm upgrade response
             setPendingUpgrade(null);
     }, [currentGold, playerHealth, skillLevels.melee, skillLevels.ranged, skillLevels.shield]);
 
     function selectCheckpointUpgrade(upgrade)
     {
+        // SAFETY: Upgrade only when shop is valid
         if (!socket || !currentRoom || !isAtCheckpoint || pendingUpgrade)
             return;
         setPendingUpgrade(upgrade);
@@ -301,6 +316,7 @@ export function GamePage({
     }
 
     usePlayerInput({
+        // SAFETY: Chat focus disables game input
         socket,
         roomId: currentRoom?.id,
         enabled: isGameReady && !chatInputFocused,
@@ -311,6 +327,7 @@ export function GamePage({
     {
         function handleKeyDown(event)
         {
+            // SAFETY: Shop hotkeys only at checkpoint
             if (!isAtCheckpoint || chatInputFocused)
                 return;
             if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
@@ -319,6 +336,7 @@ export function GamePage({
                 setIsCheckpointMenuOpen(false);
             if (isCheckpointMenuOpen) {
                 const tryBuy = (skill) => {
+                    // SAFETY: Hotkeys obey same affordability rules
                     if (skill === 'health') {
                         if (currentGold >= HEALTH_UPGRADE_COST)
                             selectCheckpointUpgrade(skill);
@@ -349,6 +367,7 @@ export function GamePage({
 
     if (!hasRoom)
     {
+        // FALLBACK: Game route opened without room
         return (
             <>
                 <PageHeading title={title} description={description} />
@@ -362,6 +381,7 @@ export function GamePage({
     }
     if (gameError)
     {
+        // FALLBACK: Show recoverable game error
         return (
             <>
                 <PageHeading title={title} description={description} />
@@ -375,6 +395,7 @@ export function GamePage({
     }
     if (gameResult)
     {
+        // DECISION: Final result replaces live canvas
         return (
             <div className="game-fullscreen">
                 <PageHeading title={title} description={description} />

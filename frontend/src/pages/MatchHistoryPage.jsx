@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchMatchHistory } from '../api/scores';
 import { PageHeading } from '../components/PageHeading';
 
+// WHY: Reusable for own history and visited profiles
 export function MatchHistoryPage({ title, description, loadMatches = fetchMatchHistory, compact = false })
 {
     const [matches, setMatches] = useState([]);
@@ -13,6 +14,7 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
         let cancelled = false;
         async function loadHistory()
         {
+            // SYNC: Loader decides whose history is shown
             setStatus('loading');
             setError('');
             try
@@ -20,6 +22,7 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
                 const data = await loadMatches();
                 if (!cancelled)
                 {
+                    // SAFETY: API must return an array
                     let nextMatches = [];
                     if (Array.isArray(data))
                         nextMatches = data;
@@ -55,10 +58,12 @@ export function MatchHistoryPage({ title, description, loadMatches = fetchMatchH
                         createdAtLabel = new Date(match.createdAt).toLocaleString();
                     let nextExpandedMatchId = match.gameRunId;
                     if (expandedMatchId === match.gameRunId)
+                        // DECISION: Clicking open row closes it
                         nextExpandedMatchId = null;
                     let playerList = null;
                     if (expandedMatchId === match.gameRunId && Array.isArray(match.players) && match.players.length > 0)
                     {
+                        // DECISION: Player stats stay hidden until expanded
                         playerList = (
                             <ul className="match-history-players">
                                 {match.players.map((player) => (

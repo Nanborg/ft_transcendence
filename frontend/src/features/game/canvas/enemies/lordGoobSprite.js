@@ -1,3 +1,5 @@
+// WHY: Boss sprite drawing stays isolated because it has unique body proportions and attack states
+// DECISION: Frame constants stay near the boss renderer because they only apply to this asset
 import {
     SOURCE_GRID_1254_COLUMNS,
     SOURCE_GRID_1254_ROWS,
@@ -158,3 +160,4 @@ export function drawLordGoobSprite({ context, entity, screen, tilePixels, now, d
     );
     return true;
 }
+// WHY: Boss sprite config keeps phase animations and anchors together
