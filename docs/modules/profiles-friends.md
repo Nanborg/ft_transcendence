@@ -98,6 +98,3 @@ Automatic checks:
 - test invalid friend id;
 - check profile stats.
 
-## Current Limitations
-
-- avatar is URL only.

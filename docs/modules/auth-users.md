@@ -124,8 +124,3 @@ Automatic checks:
 - verify backend logout revokes refresh token;
 - try invalid credentials;
 - test OAuth 42.
-
-## Current Limitations
-
-- auth form validation must be reviewed before final evaluation;
-- OAuth 42 needs real credentials and redirect URI verification during demo.

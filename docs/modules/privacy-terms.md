@@ -29,7 +29,3 @@
 - compare with database schema.
 - compare with auth/session behavior.
 - compare with chat/game behavior.
-
-## Current Limitations
-
-- policy content must be rechecked if stored data changes again.

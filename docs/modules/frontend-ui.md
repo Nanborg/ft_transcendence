@@ -59,8 +59,3 @@
 - check leaderboard/history;
 - check Chrome console.
 
-## Current Limitations
-
-- form attributes need review;
-- browser console must be cleaned;
-- final console and form review still needed before evaluation.

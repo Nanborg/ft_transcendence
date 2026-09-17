@@ -48,12 +48,15 @@ sequenceDiagram
   participant Engine
   Frontend->>SocketIO: connect with token
   SocketIO->>Backend: verify token
+  Backend->>Database: check user
+  Database->>Backend: confirm valid user
   Backend-->>SocketIO: auth accepted
   SocketIO-->>Frontend: connected
   Frontend->>SocketIO: emit event
   SocketIO->>Backend: handle event
   Backend->>Database: update room/chat data
   Backend->>Engine: send gameplay command when needed
+  Engine->>Backend: Send back infos
   Backend-->>SocketIO: emit update
   SocketIO-->>Frontend: receive update
 ```
@@ -132,7 +135,3 @@ Automatic checks:
 - verify resync;
 - verify WSS in Chrome.
 
-## Current Limitations
-
-- browser console must be checked;
-- debug latency logs should be removed before final evaluation.
