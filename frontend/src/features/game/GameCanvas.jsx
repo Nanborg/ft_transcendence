@@ -379,8 +379,14 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
             if (!canvas)
                 return;
             const rect = canvas.getBoundingClientRect();
-            const nextWidth = Math.max(1, Math.round(rect.width));
-            const nextHeight = Math.max(1, Math.round(rect.height));
+            const renderScale = Math.min(
+                1,
+                window.devicePixelRatio || 1,
+                1920 / Math.max(1, rect.width),
+                1080 / Math.max(1, rect.height)
+            );
+            const nextWidth = Math.max(1, Math.round(rect.width * renderScale));
+            const nextHeight = Math.max(1, Math.round(rect.height * renderScale));
             if (canvas.width !== nextWidth || canvas.height !== nextHeight)
             {
                 // SYNC: Canvas buffer follows CSS size
@@ -452,7 +458,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
                 if (entityType === ENTITY_TYPE.PLAYER)
                 {
                     // DECISION: Tint distinguishes players
-                    playerSpriteTint = getPlayerSpriteTint(track.entity.state?.playerId);
+                    playerSpriteTint = getPlayerSpriteTint(playerData?.enginePlayerId);
                 }
                 let attack = null;
                 if (playerId !== null)
