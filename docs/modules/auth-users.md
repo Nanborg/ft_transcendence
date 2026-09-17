@@ -74,6 +74,7 @@ sequenceDiagram
   Frontend->>Backend: Refresh token request
   Backend->>Database: Rotate refresh token
   Backend-->>Frontend: New access + refresh token
+  User->>Frontend: Logout
   Frontend->>Backend: Logout request
   Backend->>Database: Revoke refresh token
 ```
