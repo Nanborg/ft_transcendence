@@ -91,7 +91,7 @@ model PlayerRunStats {
   gameRunId      Int
   gameRun        GameRun @relation(fields: [gameRunId], references: [id], onDelete: Cascade)
   userId         Int
-  user           User    @relation(fields: [userId], references: [id])
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   deaths         Int
   damageDealt    Int
   damageReceived Int

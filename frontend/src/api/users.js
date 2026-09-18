@@ -20,7 +20,7 @@ export async function loginUser(username, password)
 export async function registerUser(username, email, password)
 {
 	// REQUIRED: Registration creates the login identity
-	const response = await fetch('/api/register', 
+	const response = await fetch('/api/register',
 		{
 			method: 'POST',
 			credentials: 'include',
@@ -47,6 +47,17 @@ export async function fetchCurrentUser()
 			throw err;
 		throw new Error("Unable to load profile");
 	}
+}
+
+export async function deleteCurrentUser()
+{
+    try{
+        return await apiRequest("/api/users/me/delete", { method: 'DELETE' });
+    } catch (err) {
+        if (err.status === 401 || err.status === 403)
+            throw err;
+        throw new Error("Unable to delete account");
+    }
 }
 
 export async function fetchPublicUserProfile(userId)

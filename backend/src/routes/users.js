@@ -240,4 +240,22 @@ router.patch('/me', authToken, async (req, res) =>
 	}
 });
 
+router.delete("/me/delete", authToken, async (req, res) =>
+{
+	try {
+		const userId = req.user.id;
+		const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+		if (!targetUser)
+			return res.status(404).json({ error: "not found" });
+		await prisma.user.delete(
+		{
+			where: { id: userId }
+		});
+		return res.status(200).json({ message: "DELETE user succes" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ error: "internal error" });
+	}
+});
+
 module.exports = router;

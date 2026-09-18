@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { pages } from './routing/pages';
 import { getCurrentPath, matchCurrentPage } from './routing/hashRouter';
 import { AUTH_SESSION_CHANGED_EVENT, clearAuthSession, getStoredAuthSession, setAuthSession as writeAuthSession } from './features/auth/devUserStorage';
-import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser } from './api/users';
+import { fetchCurrentUser, loginUser, logoutUser, registerUser, updateCurrentUser, deleteCurrentUser } from './api/users';
 import { refreshAccessToken } from './api/tokenRefresh';
 import { useRoom } from './features/room/useRoom';
 import { LoginPage } from './pages/LoginPage';
@@ -369,6 +369,11 @@ function App() {
                 }
               }}
               onUpdateProfile={updateCurrentUser}
+              onDeleteAccount={deleteCurrentUser}
+              onAccountDeleted={() => {
+                handleLogout();
+                window.location.hash = '#/login';
+              }}
             />
           )}
           {currentPage.id === 'public-profile' && (
