@@ -544,3 +544,28 @@
 }
 
 /*remember color can be used like darkred no need #hex_number */
+
+.game-debug-hitboxes {
+  position: absolute;
+  z-index: 3;
+  bottom: 16px;
+  left: 16px;
+  max-width: min(240px, calc(100% - 32px));
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.85);
+  font-size: 12px;
+}
+
+.game-debug-hitboxes-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+  pointer-events: none;
+}
+
+.game-debug-hitboxes-legend > :first-child {
+  width: 100%;
+  color: #fff;
+}
