@@ -117,7 +117,8 @@ bool	TankGoobEntity::tick( void ) {
 		}
 		_updateDirection(target);
 		const unsigned int attackDistance = static_cast<unsigned int>(static_cast<float>(g_game->getScale()) * _attackRange);
-		if (dist <= attackDistance) {
+		if (dist <= attackDistance &&
+		    g_game->getNavigationGrid().canTravel(_posX, _posY, target->getPosX(), target->getPosY(), _size)) {
 			_velX = 0;
 			_velY = 0;
 			if (_slamCooldown == 0) {
@@ -126,11 +127,7 @@ bool	TankGoobEntity::tick( void ) {
 			}
 			_state["action"] = "idle";
 		} else if (dist != 0) {
-			const long dx = target->getPosX() - _posX;
-			const long dy = target->getPosY() - _posY;
-			const double velocityScale = static_cast<double>(g_game->getScale()) * _moveSpeed / static_cast<double>(dist);
-			_velX = static_cast<int>(static_cast<double>(dx) * velocityScale);
-			_velY = static_cast<int>(static_cast<double>(dy) * velocityScale);
+			_navigateTo(target->getPosX(), target->getPosY(), g_game->getScale() * _moveSpeed);
 			_state["action"] = "fly";
 		}
 		const bool velocityChanged = oldVelX != _velX || oldVelY != _velY;

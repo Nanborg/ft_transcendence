@@ -120,7 +120,8 @@ bool WalkingGoobEntity::tick( void ) {
 			_velY = 0;
 			return true;
 		}
-		if (dist <= g_game->getScale() * _attackRange) {
+		if (dist <= g_game->getScale() * _attackRange &&
+		    g_game->getNavigationGrid().canTravel(_posX, _posY, target->getPosX(), target->getPosY(), _size)) {
 			const bool wasMoving = !(_velX == 0 && _velY == 0);
 			_velX = 0;
 			_velY = 0;
@@ -132,14 +133,7 @@ bool WalkingGoobEntity::tick( void ) {
 		}
 		const int oldVelX = _velX;
 		const int oldVelY = _velY;
-		if (dist != 0) {
-			long diffX = target->getPosX() - _posX;
-			long diffY = target->getPosY() - _posY;
-			diffX *= g_game->getScale() * _moveSpeed;
-			diffY *= g_game->getScale() * _moveSpeed;
-			_velX = diffX / dist;
-			_velY = diffY / dist;
-		}
+		_navigateTo(target->getPosX(), target->getPosY(), g_game->getScale() * _moveSpeed);
 		return !(oldVelX == _velX && oldVelY == _velY);
 	}
 	AbstractEntity* nearest = g_game->getNearestEntityOfType(EntityTypes::PLAYERENTITY, _posX, _posY);
