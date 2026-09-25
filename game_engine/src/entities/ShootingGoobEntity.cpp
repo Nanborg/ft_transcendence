@@ -106,10 +106,8 @@ bool ShootingGoobEntity::tick( void )
 	const int oldVelY = _velY;
 	const unsigned int fleeDistance = static_cast<unsigned int>( static_cast<float>(g_game->getScale()) * _fleeDist);
 	if (dist < fleeDistance && dist != 0) {
-		const double velocityScale = static_cast<double>(g_game->getScale()) * _fleeSpeed / static_cast<double>(dist);
-
-		_velX = static_cast<int>(static_cast<double>(-diffX) * velocityScale);
-		_velY = static_cast<int>(static_cast<double>(-diffY) * velocityScale);
+		_navigateTo(nearest->getPosX(), nearest->getPosY(),
+		            g_game->getScale() * _fleeSpeed, fleeDistance);
 	} else {
 		_velX = 0;
 		_velY = 0;
