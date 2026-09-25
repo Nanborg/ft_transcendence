@@ -13,13 +13,15 @@ Main goal:
 
 ## Team
 
-| Login | Main area |
-|---|---|
-| nicolsan | PM, Scrum Master, frontend UI, QA |
-| yaoberso | Backend API, database, Prisma |
-| mm-furi | WebSocket, rooms, multiplayer sync |
-| ylabussi | Gameplay, C++ simulation |
-| malapoug | Auth, Backend API, users, scores |
+Everyone contributed as a developer.
+
+| Login | Project role | Main development areas |
+|---|---|---|
+| nicolsan | PM, Scrum Master | Frontend UI, QA, project coordination |
+| malapoug | Tech Lead | Auth, backend API, users, scores |
+| mm-furi | Product Owner | Gameplay frontend, canvas rendering, animations and sprites, WebSocket rooms and multiplayer sync |
+| yaoberso | Developer | Backend API, database, Prisma, friends system |
+| ylabussi | Developer | Gameplay, C++ simulation |
 
 ## Run
 
@@ -86,9 +88,7 @@ make down
 
 ## Claimed Modules
 
-The claimed modules are selected from the subject module list.
-
-No custom module outside the subject list is claimed.
+Official claimed modules are selected from the subject module list.
 
 | Module | Type | Pts | Notes |
 |---|---|---:|---|
@@ -104,12 +104,26 @@ No custom module outside the subject list is claimed.
 | ORM | Minor | 1 | Prisma schema, migrations and typed database access. |
 | Game customization | Minor | 1 | Checkpoint upgrades modify gameplay during a run. |
 | Gamification | Minor | 1 | Badges and progression are derived from player statistics. |
+| Advanced chat features | Minor | 1 | Direct chat, persistent history, user blocking, profile access from chat and game invitations. |
+| Notification system | Minor | 1 | Real-time social/gameplay notifications: unread chat badges, friend request updates, game invitation updates and post-game score/history feedback. |
 
-Possible static total:
+Official module total:
 
 - 7 Major = 14 pts.
-- 5 Minor = 5 pts.
-- Total possible = 19 pts.
+- 7 Minor = 7 pts.
+- Official total = 21 pts.
+
+Additional custom module proposal:
+
+| Module | Type | Pts requested | Notes |
+|---|---|---:|---|
+| C++ authoritative game engine integrated with the web stack | Custom | 1 | Separate C++ gameplay service, backend bridge, Socket.IO synchronization, frontend canvas rendering and persisted match results. |
+
+Requested total with custom module:
+
+- Official modules = 21 pts.
+- Custom module proposal = 1 pt.
+- Total requested = 22 pts.
 
 ## Project Documentation
 

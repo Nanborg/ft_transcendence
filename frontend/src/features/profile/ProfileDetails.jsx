@@ -14,7 +14,7 @@ function getMilestone(value, steps)
 // WHY: Badge config maps stats to sprite columns and tiers
 const BADGE_GROUPS = [
 	['Experience', 'gamesPlayed', 0, [['Rookie', 5], ['Regular', 20], ['Veteran', 50], ['Legend', 200]]],
-	['Victories', 'wins', 1, [['First Win', 3], ['Winner', 10], ['Champion', 25], ['Conqueror', 50]]],
+	['Victories', 'wins', 1, [['First Win', 1], ['Winner', 10], ['Champion', 25], ['Conqueror', 50]]],
 	['Combat', 'totalDamageDealt', 2, [['Fighter', 5000], ['Striker', 15000], ['Destroyer', 30000], ['Warlord', 60000]]],
 	['Survivor', 'totalDamageReceived', 3, [['Survivor', 1000], ['Tank', 5000], ['Fortress', 15000], ['Guardian', 30000]]],
 	['Treasure', 'totalGoldEarned', 4, [['Collector', 1000], ['Hoarder', 5000], ['Tycoon', 15000], ['Golden King', 30000]]]]
