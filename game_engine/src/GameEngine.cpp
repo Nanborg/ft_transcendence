@@ -368,6 +368,8 @@ bool	GameEngine::checkCollision( AbstractEntity* entity ) const {
 				continue;
 		}
 		if (other->getType() == EntityTypes::LASERSHIELD) {
+			if (entityIsPlayer)
+				continue;
 			AbstractHitboxEntity* shield = static_cast<AbstractHitboxEntity*>(other);
 			if (shield->getOwnerId() == static_cast<int>(entity->getId()))
 				continue;
