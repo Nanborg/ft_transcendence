@@ -1,0 +1,36 @@
+.mobile-game-chat {
+    position: fixed;
+    z-index: 80;
+    top: max(64px, calc(env(safe-area-inset-top) + 56px));
+    left: max(8px, env(safe-area-inset-left));
+    width: min(360px, calc(100vw - 16px));
+    display: flex;
+    flex-direction: column;
+    max-height: clamp(40px, 15vh, 84px);
+    overflow: hidden;
+    gap: 3px;
+    pointer-events: none;
+    user-select: none;
+    font-size: clamp(10px, 2.4vmin, 13px);
+    line-height: 1.4;
+    text-shadow: 0 1px 3px #000;
+}
+
+.mobile-game-chat .mobile-game-chat-message {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 2px 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.mobile-game-chat-message--room {
+    color: #67e8f9;
+}
+
+.mobile-game-chat-message--private {
+    color: #f0abfc;
+}

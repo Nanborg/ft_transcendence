@@ -1,8 +1,10 @@
 import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
 import { MobileJoystick } from '../features/game/components/MobileJoystick';
+import { PLAYER_ACTION } from '../features/game/gameProtocol';
+import '../features/game/components/gameControls.css';
 import { PageHeading } from '../components/PageHeading';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
 import goldIcon from '../assets/game/gold/gold_icon.png';
 import healIcon from '../assets/game/checkpoint/heal.png';
@@ -76,12 +78,32 @@ function getUpgradeValue(skill, level)
     return stat.baseValue + level * stat.valuePerLevel;
 }
 
-function SkillSlot({ skill, hotkey, lvl, cooldown })
+function SkillSlot({ skill, hotkey, lvl, cooldown, disabled, onPress, onRelease })
 {
     // SAFETY: Clamp level before sprite lookup
     const safeLvl = Math.max(0, Math.min(3, lvl));
     const safeCooldown = Number.isFinite(cooldown) ? Math.max(0, cooldown) : 0;
     const onCooldown = safeCooldown > 0;
+    const action = {melee: PLAYER_ACTION.MELEE, ranged: PLAYER_ACTION.RANGED, shield: PLAYER_ACTION.SHIELD}[skill];
+    const pointerRef = useRef(null);
+    const release = useCallback(() => {
+        const pointer = pointerRef.current;
+        pointerRef.current = null;
+        if (pointer?.element.hasPointerCapture(pointer.id))
+            pointer.element.releasePointerCapture(pointer.id);
+        onRelease(action);
+    }, [onRelease, action]);
+
+    useEffect(() => {
+        if (disabled)
+            release();
+        window.addEventListener('blur', release);
+        return () => {
+            window.removeEventListener('blur', release);
+            release();
+        };
+    }, [disabled, release]);
+
     const cooldownText = safeCooldown.toFixed(2);
     const iconStyle = {
         // SYNC: Sprite sheet row follows skill level
@@ -89,17 +111,49 @@ function SkillSlot({ skill, hotkey, lvl, cooldown })
         backgroundPosition: `${SKILL_COLUMNS[skill] * 50}% ${safeLvl * (100 / 3)}%`,
     };
     return (
-        <div className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}>
+        <button
+            type="button"
+            className={`skill-slot ${onCooldown ? 'skill-cooldown-state' : 'skill-ready'}`}
+            disabled={disabled}
+            aria-disabled={disabled || onCooldown}
+            aria-label={`${skill} (${hotkey})`}
+            onPointerDown={event => {
+                if (disabled || onCooldown || event.button !== 0 || pointerRef.current)
+                    return;
+                event.preventDefault();
+                event.currentTarget.setPointerCapture(event.pointerId);
+                pointerRef.current = {id: event.pointerId, element: event.currentTarget};
+                onPress(action);
+            }}
+            onPointerUp={event => { if (pointerRef.current?.id === event.pointerId) release(); }}
+            onPointerCancel={event => { if (pointerRef.current?.id === event.pointerId) release(); }}
+            onLostPointerCapture={event => { if (pointerRef.current?.id === event.pointerId) release(); }}
+            onKeyDown={event => {
+                if (event.code !== 'Space' && event.code !== 'Enter')
+                    return;
+                event.preventDefault();
+                if (!disabled && !onCooldown && !event.repeat)
+                    onPress(action);
+            }}
+            onKeyUp={event => {
+                if (event.code === 'Space' || event.code === 'Enter') {
+                    event.preventDefault();
+                    release();
+                }
+            }}
+            onBlur={release}
+            onContextMenu={event => event.preventDefault()}
+        >
             <span className="skill-lvl">
                 Lv {safeLvl}
             </span>
-            <div className="skill-icon" style={iconStyle}>
+            <span className="skill-icon" style={iconStyle}>
                 {onCooldown && <strong className="skill-cooldown">{cooldownText}</strong>}
-            </div>
+            </span>
             <span className="skill-key">
                 {hotkey}
             </span>
-        </div>
+        </button>
     );
 }
 
@@ -316,9 +370,14 @@ export function GamePage({
         });
     }
 
+    const toggleCheckpointMenu = useCallback(() => {
+        if (isAtCheckpoint && !chatInputFocused && currentPlayer?.alive === true)
+            setIsCheckpointMenuOpen(open => !open);
+    }, [isAtCheckpoint, chatInputFocused, currentPlayer?.alive]);
+
     const movementEnabled = isGameReady && hasLiveGameState && currentPlayer?.alive === true &&
         !gameResult && !gameError && !chatInputFocused && !isCheckpointMenuOpen;
-    const {setJoystickMovement} = usePlayerInput({
+    const {setJoystickMovement, pressAction, releaseAction} = usePlayerInput({
         socket,
         roomId: currentRoom?.id,
         enabled: movementEnabled,
@@ -332,10 +391,12 @@ export function GamePage({
             // SAFETY: Shop hotkeys only at checkpoint
             if (!isAtCheckpoint || chatInputFocused)
                 return;
-            if((event.key === "e" || event.key === "E") && !isCheckpointMenuOpen)
-                setIsCheckpointMenuOpen(true);
-            else if ((event.key === "e" || event.key === "E") && isCheckpointMenuOpen)
-                setIsCheckpointMenuOpen(false);
+            if (event.key.toLowerCase() === 'e') {
+                event.preventDefault();
+                if (!event.repeat)
+                    toggleCheckpointMenu();
+                return;
+            }
             if (isCheckpointMenuOpen) {
                 const tryBuy = (skill) => {
                     // SAFETY: Hotkeys obey same affordability rules
@@ -365,7 +426,7 @@ export function GamePage({
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [isAtCheckpoint, isCheckpointMenuOpen, chatInputFocused, currentGold, skillLevels, selectCheckpointUpgrade]);
+    }, [isAtCheckpoint, isCheckpointMenuOpen, chatInputFocused, currentGold, skillLevels, selectCheckpointUpgrade, toggleCheckpointMenu]);
 
     if (!hasRoom)
     {
@@ -511,7 +572,7 @@ export function GamePage({
                             <span className="game-hud-status-dot" aria-hidden="true" />
                             Live
                         </span>
-                        <span>Room: {currentRoom.name || currentRoom.id}</span>
+                        <span className="game-hud-room">Room: {currentRoom.name || currentRoom.id}</span>
                         <strong>{formatDuration(elapsedSeconds)}</strong>
                     </div>
                     <div className="game-hud-stats">
@@ -534,18 +595,27 @@ export function GamePage({
                         hotkey="J"
                         lvl={skillLevels.melee}
                         cooldown={currentPlayer?.cooldowns?.melee ?? 0}
+                        disabled={!movementEnabled}
+                        onPress={pressAction}
+                        onRelease={releaseAction}
                     />
                     <SkillSlot
                         skill="ranged"
                         hotkey="K"
                         lvl={skillLevels.ranged}
                         cooldown={currentPlayer?.cooldowns?.ranged ?? 0}
+                        disabled={!movementEnabled}
+                        onPress={pressAction}
+                        onRelease={releaseAction}
                     />
                     <SkillSlot
                         skill="shield"
                         hotkey="L"
                         lvl={skillLevels.shield}
                         cooldown={currentPlayer?.cooldowns?.shield ?? 0}
+                        disabled={!movementEnabled}
+                        onPress={pressAction}
+                        onRelease={releaseAction}
                     />
                 </section>
                 <div className="game-fullscreen-panel">
@@ -564,19 +634,28 @@ export function GamePage({
                 />
 
                 {isAtCheckpoint && !isCheckpointMenuOpen && (
-                    <section
-                        className="checkpoint-upgrade"
-                        style={{ textAlign: 'center' }}
-                    >
-                        <h2>Press E</h2>
-                    </section>
+                    <div className="shop-prompt">
+                        <span>Appuyer sur <kbd>E</kbd> ou</span>
+                        <button
+                            type="button"
+                            onClick={toggleCheckpointMenu}
+                            disabled={chatInputFocused || currentPlayer?.alive !== true}
+                            aria-label="Ouvrir le shop"
+                            aria-expanded={false}
+                            aria-controls="game-shop"
+                        >ici</button>
+                    </div>
                 )}
 
                 {isAtCheckpoint && isCheckpointMenuOpen && (
                     <section
                         className="checkpoint-upgrade"
                         aria-label="Choose an upgrade"
+                        id="game-shop"
                     >
+                        <button type="button" className="shop-close" onClick={toggleCheckpointMenu}>
+                            Fermer
+                        </button>
                         <div className="checkpoint-upgrade-list">
                             {renderUpgradeButton('melee', 'Melee', '1')}
                             {renderUpgradeButton('ranged', 'Ranged', '2')}

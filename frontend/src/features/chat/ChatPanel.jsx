@@ -1,18 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useChatAutoScroll } from "./useChatAutoScroll";
 import { MAX_CHAT_MESSAGE_LENGTH } from "./useChat";
 
 // WHY: Room chat UI stays reusable in room and dock
 export function ChatPanel({chat, disabled = false, compact = false, onInputFocusChange})
 {
 	const { chatInput, setChatInput, chatMessages, chatError, sendChatMessage } = chat;
-	const messageRef = useRef(null);
-	useEffect(() =>
-	{
-		// SYNC: New messages scroll to bottom
-		const messagesElement = messageRef.current;
-		if (messagesElement)
-			messagesElement.scrollTop = messagesElement.scrollHeight;
-	}, [chatMessages.length]);
+	const messageRef = useChatAutoScroll(chatMessages);
 	return (
 		<section className={`room-chat${compact ? ' room-chat--compact' : ''}`} aria-label="Room chat">
 			<h3>Chat</h3>

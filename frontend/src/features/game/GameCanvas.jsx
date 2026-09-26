@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ENTITY_TYPE, PLAYER_ACTION } from './gameProtocol';
-import { drawDebugHitboxes, handleDebugHitboxKeyDown, HITBOX_STYLES } from './debugHitboxes';
+import { drawDebugHitboxes, handleDebugHitboxKeyDown } from './debugHitboxes';
 import {
     CANVAS_WIDTH,
     MIN_CANVAS_HEIGHT,
@@ -153,7 +153,6 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
     const spectatorIndexRef = useRef(0);
     const shieldBreakEffectsRef = useRef(new Map());
     const debugHitboxesRef = useRef(false);
-    const [debugHitboxes, setDebugHitboxes] = useState(false);
 
     // DECISION: Canvas world uses fixed internal width
     const width = CANVAS_WIDTH;
@@ -195,10 +194,7 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
         function handleKeyDown(event)
         {
             if (import.meta.env.DEV && handleDebugHitboxKeyDown(event, debugHitboxesRef))
-            {
-                setDebugHitboxes(debugHitboxesRef.current);
                 return;
-            }
 
             const players = renderDataRef.current.gameStore.getPlayers();
             const myPlayer = players.find((p) => String(p.playerId) === String(currentPlayerId));
@@ -539,36 +535,12 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
     }, []);
 
     return (
-        <>
-            <canvas
-                ref={canvasRef}
-                className="game-canvas"
-                width={width}
-                height={height}
-                aria-label="Live game state"
-            />
-            {import.meta.env.DEV && (
-                <div className="game-debug-hitboxes">
-                    <button
-                        type="button"
-                        aria-pressed={debugHitboxes}
-                        onClick={() => {
-                            debugHitboxesRef.current = !debugHitboxesRef.current;
-                            setDebugHitboxes(debugHitboxesRef.current);
-                        }}
-                    >
-                        Hitboxes: {debugHitboxes ? 'ON' : 'OFF'} (H)
-                    </button>
-                    {debugHitboxes && (
-                        <div className="game-debug-hitboxes-legend">
-                            <span>Server positions · World units</span>
-                            {HITBOX_STYLES.map(({label, color}) => (
-                                <span key={label} style={{color}}>{label}</span>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-        </>
+        <canvas
+            ref={canvasRef}
+            className="game-canvas"
+            width={width}
+            height={height}
+            aria-label="Live game state"
+        />
     );
 }

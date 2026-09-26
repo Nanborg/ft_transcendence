@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChatPanel } from './ChatPanel';
 import { DirectChatPanel } from './DirectChatPanel';
 import { InvitationPanel } from './InvitationPanel';
+import { MobileGameChat } from './MobileGameChat';
 
 // WHY: One dock centralizes room chat, DM and notifications
 export function GlobalChatDock({
@@ -15,6 +16,24 @@ export function GlobalChatDock({
 })
 {
     const [isOpen, setIsOpen] = useState(false);
+    const [mobileViewport, setMobileViewport] = useState(() =>
+        window.matchMedia('(any-pointer: coarse), (max-width: 768px)').matches);
+    const mobileGameChat = keyboardShortcutEnabled && mobileViewport;
+
+    useEffect(() => {
+        const media = window.matchMedia('(any-pointer: coarse), (max-width: 768px)');
+        const update = () => setMobileViewport(media.matches);
+        update();
+        media.addEventListener('change', update);
+        return () => media.removeEventListener('change', update);
+    }, []);
+
+    useEffect(() => {
+        if (mobileGameChat) {
+            setIsOpen(false);
+            onInputFocusChange?.(false);
+        }
+    }, [mobileGameChat, isOpen, onInputFocusChange]);
     const [activeTab, setActiveTab] = useState(currentRoom?.id ? 'room' : 'private');
     const [seenRoomMessageCount, setSeenRoomMessageCount] = useState(roomChat.liveMessageCount);
     const directUnreadCount = useMemo(
@@ -65,7 +84,7 @@ export function GlobalChatDock({
     }, [isOpen, activeTab, currentRoom?.id, roomChat.liveMessageCount, ]);
 
     useEffect(() => {
-        if (!keyboardShortcutEnabled)
+        if (!keyboardShortcutEnabled || mobileGameChat)
             return undefined;
         function handleChatShortcut(event)
         {
@@ -93,7 +112,7 @@ export function GlobalChatDock({
         return () => {
             window.removeEventListener('keydown', handleChatShortcut);
         };
-    }, [keyboardShortcutEnabled, isOpen, currentRoom?.id, onInputFocusChange,]);
+    }, [keyboardShortcutEnabled, mobileGameChat, isOpen, currentRoom?.id, onInputFocusChange,]);
 
     useEffect(() => {
         if (isOpen && activeTab === 'notification' && directChat.unreadInvitationResponseCount > 0)
@@ -104,6 +123,12 @@ export function GlobalChatDock({
     if (!currentUser)
         // SAFETY: Chat dock is authenticated UI
         return null;
+
+    if (mobileGameChat)
+        return <MobileGameChat
+            roomMessages={currentRoom ? roomChat.chatMessages : []}
+            privateMessages={directChat.receivedMessages}
+        />;
 
     function openDock()
     {
@@ -149,7 +174,7 @@ export function GlobalChatDock({
     }
 
     return (
-        <aside className="global-chat-dock">
+        <aside className={`global-chat-dock${keyboardShortcutEnabled ? ' global-chat-dock--game' : ''}`}>
             {!isOpen && (
                 <button
                     type="button"

@@ -23,7 +23,7 @@ export function MobileJoystick({enabled, onMovement})
     }, [enabled, reset]);
 
     useEffect(() => {
-        const media = window.matchMedia('(any-pointer: coarse)');
+        const media = window.matchMedia('(any-pointer: coarse), (max-width: 768px)');
         const handleVisibility = () => {
             if (document.hidden)
                 reset();

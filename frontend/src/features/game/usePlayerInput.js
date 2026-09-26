@@ -72,6 +72,9 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
     const joystickHandlerRef = useRef(null);
+    const actionHandlerRef = useRef(null);
+    const pressAction = useCallback(action => actionHandlerRef.current?.press(action), []);
+    const releaseAction = useCallback(action => actionHandlerRef.current?.release(action), []);
     const setJoystickMovement = useCallback(movement => {
         joystickHandlerRef.current?.(movement);
     }, []);
@@ -87,6 +90,8 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
 
         let keyboardMovement = INITIAL_MOVEMENT;
         let joystickMovement = INITIAL_MOVEMENT;
+        let keyboardAction = PLAYER_ACTION.NONE;
+        let buttonAction = PLAYER_ACTION.NONE;
 
         function emitMovement(nextMovement) {
             // PERF: Send only movement changes
@@ -133,6 +138,22 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             });
         }
 
+        actionHandlerRef.current = {
+            press(action) {
+                if (!actionsEnabled || document.hidden || isTypingTarget(document.activeElement) ||
+                    ![PLAYER_ACTION.MELEE, PLAYER_ACTION.RANGED, PLAYER_ACTION.SHIELD].includes(action))
+                    return;
+                buttonAction = action;
+                emitAction(buttonAction);
+            },
+            release(action) {
+                if (buttonAction !== action)
+                    return;
+                buttonAction = PLAYER_ACTION.NONE;
+                emitAction(keyboardAction);
+            },
+        };
+
         function handleKeyDown(event) {
             if (isTypingTarget(event.target))
                 return;
@@ -153,9 +174,10 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
 
             event.preventDefault();
 
-            if (!event.repeat)
-                // SAFETY: Hold key should not spam attacks
-                emitAction(action);
+            if (!event.repeat) {
+                keyboardAction = action;
+                emitAction(buttonAction || keyboardAction);
+            }
         }
 
         function handleKeyUp(event) {
@@ -178,9 +200,10 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
 
             event.preventDefault();
 
-            if (actionRef.current === action)
-                // SYNC: Action keyup returns to idle
-                emitAction(PLAYER_ACTION.NONE);
+            if (keyboardAction === action) {
+                keyboardAction = PLAYER_ACTION.NONE;
+                emitAction(buttonAction);
+            }
         }
 
         function releaseAllInputs() {
@@ -188,6 +211,8 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             keyboardMovement = INITIAL_MOVEMENT;
             joystickMovement = INITIAL_MOVEMENT;
             emitCombinedMovement();
+            keyboardAction = PLAYER_ACTION.NONE;
+            buttonAction = PLAYER_ACTION.NONE;
             emitAction(PLAYER_ACTION.NONE);
         }
 
@@ -210,6 +235,7 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         return () => {
             // SAFETY: Cleanup removes global listeners
             joystickHandlerRef.current = null;
+            actionHandlerRef.current = null;
             document.removeEventListener('visibilitychange', handleVisibility);
             document.removeEventListener('focusin', handleFocus);
             window.removeEventListener('keydown', handleKeyDown);
@@ -219,5 +245,5 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         };
     }, [socket, roomId, enabled, actionsEnabled]);
 
-    return {setJoystickMovement};
+    return {setJoystickMovement, pressAction, releaseAction};
 }
