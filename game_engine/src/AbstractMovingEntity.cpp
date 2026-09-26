@@ -20,10 +20,26 @@ bool AbstractMovingEntity::_templateTick( void )
 {
 	if (_velX == 0 && _velY == 0)
 		return false;
-	if (!_passableHitBox && g_game->checkCollision(this)) {
-		_velX = _velY = 0;
+	if (_passableHitBox)
+	{
+		_posX += _velX;
+		_posY += _velY;
+		return true;
 	}
+
+	const int velY = _velY;
+	_velY = 0;
+	if (_velX != 0 && g_game->checkCollision(this))
+		_velX = 0;
 	_posX += _velX;
+
+	const int velX = _velX;
+	_velX = 0;
+	_velY = velY;
+	if (_velY != 0 && g_game->checkCollision(this))
+		_velY = 0;
 	_posY += _velY;
+	_velX = velX;
+
 	return true;
 }
