@@ -61,6 +61,7 @@ export function useDirectChat(socket, currentUser)
     const [conversations, setConversations] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [directMessages, setDirectMessages] = useState([]);
+    const [receivedMessages, setReceivedMessages] = useState({userId: null, messages: []});
     const [directInput, setDirectInput] = useState('');
     const [directError, setDirectError] = useState('');
     const [blockedUsers, setBlockedUsers] = useState([]);
@@ -100,6 +101,15 @@ export function useDirectChat(socket, currentUser)
             // SAFETY: Ignore messages not involving us
             if (authorId !== currentUserId && recipientId !== currentUserId)
                 return;
+            if (recipientId === currentUserId && typeof message.message === 'string') {
+                setReceivedMessages(previous => ({
+                    userId: currentUserId,
+                    messages: mergeDirectMessages(
+                        previous.userId === currentUserId ? previous.messages : [],
+                        [message],
+                    ).slice(-20),
+                }));
+            }
             const otherUserId = authorId === currentUserId
                 ? recipientId
                 : authorId;
@@ -283,6 +293,7 @@ export function useDirectChat(socket, currentUser)
             return;
         // SAFETY: Logout clears direct-chat state
         selectedUserIdRef.current = null;
+        setReceivedMessages({userId: null, messages: []});
         setConversations([]);
         setSelectedUser(null);
         setDirectMessages([]);
@@ -412,6 +423,9 @@ export function useDirectChat(socket, currentUser)
         conversations,
         selectedUser,
         directMessages,
+        receivedMessages: receivedMessages.userId === Number(currentUser?.id)
+            ? receivedMessages.messages.filter(message => !blockedUserIds.includes(Number(message.author?.id)))
+            : [],
         directInput,
         setDirectInput,
         directError,

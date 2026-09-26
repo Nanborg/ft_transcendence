@@ -1,6 +1,7 @@
 import { MAX_CHAT_MESSAGE_LENGTH } from './useChat';
 import { useEffect, useState } from 'react';
 import { PublicProfilePanel } from './PublicProfilePanel';
+import { useChatAutoScroll } from './useChatAutoScroll';
 
 function formatMessageTime(timestamp)
 {
@@ -38,6 +39,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 	} = directChat;
 
 	const [isProfileOpen, setIsprofileOpen] = useState(false);
+	const messageRef = useChatAutoScroll(directMessages, `${selectedUser?.id}:${isProfileOpen}`);
 	// SYNC: Changing conversation closes profile preview
 	useEffect(() => { setIsprofileOpen(false); }, [selectedUser?.id]);
 	if (selectedUser && isProfileOpen)
@@ -165,7 +167,7 @@ export function DirectChatPanel({currentUser, currentRoom, directChat, onInputFo
 				</div>
 			</header>
 
-			<ul className="direct-chat-messages" aria-live="polite" >
+			<ul ref={messageRef} className="direct-chat-messages" aria-live="polite" >
 				{directMessages.length === 0 && ( <li className="room-muted"> No messages yet. </li> )}
 
 				{directMessages.map(message =>
