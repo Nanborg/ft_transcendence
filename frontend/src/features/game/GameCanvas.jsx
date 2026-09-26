@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ENTITY_TYPE, PLAYER_ACTION } from './gameProtocol';
-import { drawDebugHitboxesIfEnabled, handleDebugHitboxKeyDown } from './debugHitboxes'; //test-nico-hitbox
+import { drawDebugHitboxes, handleDebugHitboxKeyDown, HITBOX_STYLES } from './debugHitboxes';
 import {
     CANVAS_WIDTH,
     MIN_CANVAS_HEIGHT,
@@ -152,7 +152,8 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
     });
     const spectatorIndexRef = useRef(0);
     const shieldBreakEffectsRef = useRef(new Map());
-    const debugHitboxesRef = useRef(false); //test-nico-hitbox
+    const debugHitboxesRef = useRef(false);
+    const [debugHitboxes, setDebugHitboxes] = useState(false);
 
     // DECISION: Canvas world uses fixed internal width
     const width = CANVAS_WIDTH;
@@ -193,9 +194,11 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
     {
         function handleKeyDown(event)
         {
-            // DEBUG: Toggle hitboxes without UI controls
-            if (handleDebugHitboxKeyDown(event, debugHitboxesRef)) //test-nico-hitbox
+            if (import.meta.env.DEV && handleDebugHitboxKeyDown(event, debugHitboxesRef))
+            {
+                setDebugHitboxes(debugHitboxesRef.current);
                 return;
+            }
 
             const players = renderDataRef.current.gameStore.getPlayers();
             const myPlayer = players.find((p) => String(p.playerId) === String(currentPlayerId));
@@ -507,7 +510,16 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
                 camera,
                 now,
             });
-            drawDebugHitboxesIfEnabled(debugHitboxesRef, context, entityTracksRef.current, renderData.gameMap, camera, now, worldToScreen, getInterpolatedPosition); //test-nico-hitbox
+            if (import.meta.env.DEV && debugHitboxesRef.current)
+            {
+                drawDebugHitboxes({
+                    context,
+                    entities: renderData.gameStore.getEntities(),
+                    gameMap: renderData.gameMap,
+                    camera,
+                    worldToScreen,
+                });
+            }
             drawGoldFeedbacks({ context, tracks: entityTracksRef.current, feedbacks: renderData.goldFeedbacks, camera, now });
             const myPlayer = gamePlayerData.find((p) => String(p.playerId) === String(renderData.currentPlayerId));
             if (myPlayer && myPlayer.alive === false)
@@ -527,12 +539,36 @@ export function GameCanvas({currentPlayerId, gameMap, gameStore, goldFeedbacks =
     }, []);
 
     return (
-        <canvas
-            ref={canvasRef}
-            className="game-canvas"
-            width={width}
-            height={height}
-            aria-label="Live game state"
-        />
+        <>
+            <canvas
+                ref={canvasRef}
+                className="game-canvas"
+                width={width}
+                height={height}
+                aria-label="Live game state"
+            />
+            {import.meta.env.DEV && (
+                <div className="game-debug-hitboxes">
+                    <button
+                        type="button"
+                        aria-pressed={debugHitboxes}
+                        onClick={() => {
+                            debugHitboxesRef.current = !debugHitboxesRef.current;
+                            setDebugHitboxes(debugHitboxesRef.current);
+                        }}
+                    >
+                        Hitboxes: {debugHitboxes ? 'ON' : 'OFF'} (H)
+                    </button>
+                    {debugHitboxes && (
+                        <div className="game-debug-hitboxes-legend">
+                            <span>Server positions · World units</span>
+                            {HITBOX_STYLES.map(({label, color}) => (
+                                <span key={label} style={{color}}>{label}</span>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </>
     );
 }
