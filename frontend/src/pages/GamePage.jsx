@@ -1,5 +1,6 @@
 import { GameCanvas } from "../features/game/GameCanvas";
 import { usePlayerInput } from '../features/game/usePlayerInput';
+import { MobileJoystick } from '../features/game/components/MobileJoystick';
 import { PageHeading } from '../components/PageHeading';
 import { useEffect, useRef, useState } from 'react';
 import skillSprites from '../assets/game/skills/skill_color_by_lvl.png';
@@ -315,12 +316,13 @@ export function GamePage({
         });
     }
 
-    usePlayerInput({
-        // SAFETY: Chat focus disables game input
+    const movementEnabled = isGameReady && hasLiveGameState && currentPlayer?.alive === true &&
+        !gameResult && !gameError && !chatInputFocused && !isCheckpointMenuOpen;
+    const {setJoystickMovement} = usePlayerInput({
         socket,
         roomId: currentRoom?.id,
-        enabled: isGameReady && !chatInputFocused,
-        actionsEnabled: !chatInputFocused,
+        enabled: movementEnabled,
+        actionsEnabled: movementEnabled,
     });
 
     useEffect(() =>
@@ -553,6 +555,12 @@ export function GamePage({
                     gameStore={gameStore}
                     goldFeedbacks={goldFeedbacks}
                     socket={socket}
+                />
+
+                <MobileJoystick
+                    key={currentRoom.id}
+                    enabled={movementEnabled}
+                    onMovement={setJoystickMovement}
                 />
 
                 {isAtCheckpoint && !isCheckpointMenuOpen && (

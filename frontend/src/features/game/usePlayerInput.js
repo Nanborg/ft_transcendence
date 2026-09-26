@@ -1,13 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { PLAYER_ACTION } from './gameProtocol';
 
-const INITIAL_MOVEMENT = Object.freeze(
-{
-	up: false,
-	down: false,
-	left: false,
-	right: false,
-});
+import { IDLE_MOVEMENT as INITIAL_MOVEMENT, isTypingTarget } from './joystickInput';
 
 function mapKeyToMovement(code)
 {
@@ -77,6 +71,10 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
     // WHY: Keep input state outside React renders
     const movementRef = useRef(INITIAL_MOVEMENT);
     const actionRef = useRef(PLAYER_ACTION.NONE);
+    const joystickHandlerRef = useRef(null);
+    const setJoystickMovement = useCallback(movement => {
+        joystickHandlerRef.current?.(movement);
+    }, []);
     const lastDirectionRef = useRef({ dirX: 1, dirY: 0 });
 
     useEffect(() => {
@@ -86,6 +84,9 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
             actionRef.current = PLAYER_ACTION.NONE;
             return undefined;
         }
+
+        let keyboardMovement = INITIAL_MOVEMENT;
+        let joystickMovement = INITIAL_MOVEMENT;
 
         function emitMovement(nextMovement) {
             // PERF: Send only movement changes
@@ -100,6 +101,21 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
                 input: nextMovement,
             });
         }
+
+        function emitCombinedMovement() {
+            emitMovement({
+                up: keyboardMovement.up || joystickMovement.up,
+                down: keyboardMovement.down || joystickMovement.down,
+                left: keyboardMovement.left || joystickMovement.left,
+                right: keyboardMovement.right || joystickMovement.right,
+            });
+        }
+
+        joystickHandlerRef.current = movement => {
+            joystickMovement = isTypingTarget(document.activeElement) || document.hidden
+                ? INITIAL_MOVEMENT : movement;
+            emitCombinedMovement();
+        };
 
         function emitAction(nextAction) {
             // PERF: Do not repeat same action state
@@ -118,15 +134,15 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         }
 
         function handleKeyDown(event) {
+            if (isTypingTarget(event.target))
+                return;
             const movementKey = mapKeyToMovement(event.code);
 
             if (movementKey) {
                 // DECISION: Game keys should not scroll page
                 event.preventDefault();
-                emitMovement({
-                    ...movementRef.current,
-                    [movementKey]: true,
-                });
+                keyboardMovement = {...keyboardMovement, [movementKey]: true};
+                emitCombinedMovement();
                 return;
             }
 
@@ -143,15 +159,15 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
         }
 
         function handleKeyUp(event) {
+            if (isTypingTarget(event.target))
+                return;
             const movementKey = mapKeyToMovement(event.code);
 
             if (movementKey) {
                 // SYNC: Keyup releases one direction
                 event.preventDefault();
-                emitMovement({
-                    ...movementRef.current,
-                    [movementKey]: false,
-                });
+                keyboardMovement = {...keyboardMovement, [movementKey]: false};
+                emitCombinedMovement();
                 return;
             }
 
@@ -169,20 +185,39 @@ export function usePlayerInput({ socket, roomId, enabled, actionsEnabled = true 
 
         function releaseAllInputs() {
             // SAFETY: Window blur stops stuck movement
-            emitMovement(INITIAL_MOVEMENT);
+            keyboardMovement = INITIAL_MOVEMENT;
+            joystickMovement = INITIAL_MOVEMENT;
+            emitCombinedMovement();
             emitAction(PLAYER_ACTION.NONE);
         }
 
+        function handleVisibility() {
+            if (document.hidden)
+                releaseAllInputs();
+        }
+
+        function handleFocus(event) {
+            if (isTypingTarget(event.target))
+                releaseAllInputs();
+        }
+
+        document.addEventListener('visibilitychange', handleVisibility);
+        document.addEventListener('focusin', handleFocus);
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
         window.addEventListener('blur', releaseAllInputs);
 
         return () => {
             // SAFETY: Cleanup removes global listeners
+            joystickHandlerRef.current = null;
+            document.removeEventListener('visibilitychange', handleVisibility);
+            document.removeEventListener('focusin', handleFocus);
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             window.removeEventListener('blur', releaseAllInputs);
             releaseAllInputs();
         };
     }, [socket, roomId, enabled, actionsEnabled]);
+
+    return {setJoystickMovement};
 }

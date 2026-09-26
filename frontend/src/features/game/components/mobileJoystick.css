@@ -1,0 +1,32 @@
+.mobile-joystick {
+    display: none;
+}
+
+@media (any-pointer: coarse) {
+    .mobile-joystick {
+        position: absolute;
+        z-index: 3;
+        left: max(16px, env(safe-area-inset-left));
+        bottom: max(140px, calc(env(safe-area-inset-bottom) + 124px));
+        display: grid;
+        place-items: center;
+        width: clamp(112px, 30vw, 148px);
+        aspect-ratio: 1;
+        border: 2px solid rgba(226, 232, 240, 0.45);
+        border-radius: 50%;
+        background: rgba(15, 23, 42, 0.22);
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+
+    .mobile-joystick-thumb {
+        width: 44px;
+        height: 44px;
+        border: 2px solid rgba(226, 232, 240, 0.7);
+        border-radius: 50%;
+        background: rgba(148, 163, 184, 0.35);
+        pointer-events: none;
+    }
+}
