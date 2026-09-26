@@ -8,6 +8,7 @@
 #include <AbstractEntity.hpp>
 #include <json.hpp>
 #include <enumInputTypes.h>
+#include <NavigationGrid.hpp>
 
 #include <entities/importEntities.h>
 
@@ -43,6 +44,7 @@ public:
 
 	bool			isRunning( void ) const;
 	unsigned int	getScale( void ) const;
+	const NavigationGrid& getNavigationGrid( void ) const;
 
 	const entityList_t&	getEntityList( void ) const;
 
@@ -110,6 +112,7 @@ private:
 	void	_input_action( const json& in );
 	void	_updateCheckpointProximity(void);
 
+	NavigationGrid		_navigationGrid;
 	bool					_running;
 	unsigned int			_nextEntityId, _tick, _scale;
 	int						_spawnX, _spawnY;

@@ -222,6 +222,8 @@ bool	GameEngine::_invalid_entity( const json& in ) {
 	return false;
 }
 
+const NavigationGrid& GameEngine::getNavigationGrid( void ) const { return _navigationGrid; }
+
 bool	GameEngine::init( const json& in ) {
 	json	map;
 	try {
@@ -243,11 +245,14 @@ bool	GameEngine::init( const json& in ) {
 	_scale = map["scale"];
 	_spawnX = map["spawnX"];
 	_spawnY = map["spawnY"];
+	_navigationGrid.reset(_scale, map.value("width", 0), map.value("height", 0));
 	json entities = map["entities"];
 	for (size_t i = 0; i < entities.size(); i++) {
 		if (_invalid_entity(entities[i]))
 			continue;
 		std::cout << entities[i].dump() << std::endl;
+		if (entities[i]["typeId"] == EntityTypes::WALLENTITY)
+			_navigationGrid.addWall(entities[i]["posX"], entities[i]["posY"]);
 		buildNewEntity(entities[i]["typeId"], entities[i]["posX"], entities[i]["posY"], entities[i]["velX"], entities[i]["velY"]);
 	}
 	return true;

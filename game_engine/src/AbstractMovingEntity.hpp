@@ -3,6 +3,7 @@
 
 #include <AbstractEntity.hpp>
 #include <enumEntityTypes.h>
+#include <NavigationGrid.hpp>
 
 class AbstractMovingEntity: public AbstractEntity
 {
@@ -17,8 +18,16 @@ public:
 
 	protected:
 	virtual bool	_templateTick( void );
+	void		_navigateTo(int targetX, int targetY, int speed, int fleeDistance = 0);
 
 	static const float	_velCap;
+
+private:
+	std::vector<NavigationGrid::Point> _path;
+	size_t _pathIndex = 0;
+	int _pathTargetCol = -1;
+	int _pathTargetRow = -1;
+	int _pathRetryTicks = 0;
 };
 
 #endif

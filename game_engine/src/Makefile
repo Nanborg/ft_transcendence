@@ -24,6 +24,7 @@ ENTITIES = \
 SRC = \
 	run.cpp \
 	GameEngine.cpp \
+	NavigationGrid.cpp \
 	GameEngineLoop.cpp \
 	GameEngineInput.cpp \
 	ControllerIO.cpp \
