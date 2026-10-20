@@ -17,7 +17,7 @@ Everyone contributed as a developer.
 
 | Login | Project role | Main development areas |
 |---|---|---|
-| nicolsan | PM, Scrum Master | Frontend UI, QA, project coordination |
+| nicolsan | PM, Scrum Master, Tech Lead assistant, PO | Frontend UI, QA, project coordination |
 | malapoug | Tech Lead | Auth, backend API, users, scores |
 | mm-furi | Product Owner | Gameplay frontend, canvas rendering, animations and sprites, WebSocket rooms and multiplayer sync |
 | yaoberso | Developer | Backend API, database, Prisma, friends system |
